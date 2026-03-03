@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genesis Mining Zone - Hashrate Mining System</title>
     <meta name="description" content="Genesis Mining Zone - Global Real-time Hashrate Leaderboard, Click Mining, Fragment Collection">
@@ -1709,58 +1709,58 @@
                 width: 95%;
             }
         }
-    /* 移动端适配：当屏幕宽度小于 768px 时生效 */
-@media (max-width: 768px) {
-    .container {
-        padding: 10px;
-        width: 100%;
-        box-sizing: border-box;
-    }
+   /* 真正的移动端大修 */
+        @media (max-width: 768px) {
+          body {
+          padding: 0;
+          margin: 0;
+          overflow-x: hidden; /* 防止左右晃动 */
+          }
 
-    /* 让三个升级框横向排列变成纵向，或者缩小间距 */
-    .upgrade-container {
-        display: flex;
-        flex-direction: column; /* 手机端改为垂直排列，防止挤在一起 */
-        gap: 10px;
-    }
+        .container {
+          width: 100vw !important; /* 强制占满屏幕宽度 */
+          max-width: 100vw !important;
+          padding: 15px !important;
+          box-sizing: border-box;
+          display: block !important; /* 手机端改回标准流布局 */
+          }
 
-    .upgrade-section {
+          /* 核心：让那三个横向的升级框变垂直 */
+        .upgrade-container {
+          display: flex !important;
+          flex-direction: column !important; /* 重点：垂直排列 */
+          align-items: center;
+          width: 100% !important;
+          }
+
+       .upgrade-section {
+         width: 90% !important; /* 每个框占 90% 宽度 */
+         margin: 10px 0 !important;
+        }
+
+        /* 核心算力塔图片自适应 */
+        #mineBtn img {
+         width: 60vw !important; /* 图片宽度根据屏幕宽度变化 */
+         height: auto !important;
+         max-width: 250px;
+        }
+
+       /* 排行榜移动端样式 */
+       .leaderboard {
+        position: relative !important; /* 取消 PC 端的悬浮/固定定位 */
         width: 100% !important;
-        margin-bottom: 10px;
-    }
+        right: auto !important;
+        bottom: auto !important;
+        margin-top: 30px;
+        }
 
-    /* 缩小标题字体 */
-    h1 {
-        font-size: 24px !important;
+        /* 语言切换按钮加大，方便手指点 */
+      .lang-switcher {
+        padding: 10px 20px !important;
+        font-size: 16px !important;
+        background: rgba(0, 255, 0, 0.2) !important;
+        }
     }
-
-    /* 调整核心算力塔图片大小 */
-    #mineBtn img {
-        width: 180px; /* 手机端图片缩小一点，防止溢出 */
-        height: auto;
-    }
-
-    /* 让排行榜和仓库占满屏幕 */
-    .leaderboard, .collection-section {
-        width: 100% !important;
-        position: static; /* 取消可能的绝对定位 */
-        margin-top: 20px;
-    }
-
-    /* 悬浮的支付按钮在手机端加宽，更方便点击 */
-    .pay-to-win {
-        width: 90%;
-        left: 5%;
-        bottom: 20px;
-    }
-
-    /* 语言切换按钮位置微调 */
-    .lang-switcher {
-        top: 15px;
-        right: 15px;
-        padding: 8px 15px;
-    }
-}    
     </style>
 </head>
 <body>
