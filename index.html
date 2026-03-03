@@ -3198,16 +3198,21 @@ document.getElementById('payBtn').onclick = handlePayment;
             confirmBox.style.color = '#00ff41';
             confirmBox.style.fontSize = '20px';
             confirmBox.style.textAlign = 'center';
-           confirmBox.innerHTML = `
+            confirmBox.innerHTML = `
+    <span onclick="this.parentElement.remove()" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #00ff41;">&times;</span>
+    
     <div style="font-size: 24px; margin-bottom: 20px; color: #00ff41; text-shadow: 0 0 10px #00ff41;">⚠️ PROTOCOL INITIALIZING ⚠️</div>
     <div style="margin-bottom: 20px; font-weight: bold;">INSTANT RECOVERY SYSTEM</div>
     <div style="font-size: 16px; opacity: 0.9; margin-bottom: 30px; text-align: left; padding-left: 20px;">
         • Restore Hashrate to 50.0<br>
         • Reset Thermal Heat to 0%<br>
         • Instant 1,000 Coin Bonus<br>
-        • Unlock "Phoenix" Badge<br>
     </div>
     <div style="margin-bottom: 20px; font-size: 14px; color: #ffff00;">Cost: 1.00 USDT (TRC20)</div>
+    
+    <button onclick="handlePaymentConfirm(); this.parentElement.remove();" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-bottom: 10px;">ACTIVATE NOW</button>
+    
+    <button onclick="this.parentElement.remove()" style="width: 100%; background: none; color: #666; border: 1px solid #444; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px;">CANCEL / RETURN</button>
 `;
             
             document.body.appendChild(confirmBox);
