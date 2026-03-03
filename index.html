@@ -1224,11 +1224,7 @@
             border: 2px dashed rgba(100, 100, 100, 0.3);
             border-radius: 8px;
             flex-shrink: 0;
-        }
-
-       
-
-      
+        }    
         /* --- 强力移动端适配：精准覆盖 --- */
    @media (max-width: 1024px) {
     /* 1. 容器宽度自适应，不再被固定 px 撑开 */
@@ -1889,6 +1885,28 @@
             gap: 10px !important;
             width: 100% !important;
         }
+     @media (max-width: 600px) {
+    /* 手机端弹窗加宽，方便阅读 */
+    .modal-content, .genesis-card, .payment-content {
+        width: 90% !important;
+        padding: 20px 15px !important;
+    }
+
+    /* 增大按钮高度，方便手指点击 */
+    .copy-btn, .genesis-btn, .payment-close {
+        height: 50px;
+        font-size: 18px !important;
+        margin-top: 15px !important;
+    }
+
+    /* 强制地址换行，防止手机横向滚动 */
+    #vaultAddr, #rawAddress, .address-box {
+        font-size: 13px !important;
+        word-break: break-all !important;
+        background: #111 !important;
+        padding: 15px !important;
+    }
+}   
     </style> 
 </head>
 <body>
@@ -2225,11 +2243,29 @@ function closeModal() {
 }
 
 function copyAddress() {
-    const addr = document.getElementById('walletAddr').innerText;
-    navigator.clipboard.writeText(addr).then(() => {
-        // 使用更简洁的英文提示
-        alert("Address copied to clipboard. Awaiting transaction...");
-    });
+    const text = document.querySelector('#vaultAddr, #rawAddress, #genesisAddr').innerText;
+    
+    // 手机端优先使用这个 API
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert("COPIED: Address is ready for transfer.");
+        }).catch(() => {
+            manualCopy(text);
+        });
+    } else {
+        manualCopy(text);
+    }
+}
+
+function manualCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    textArea.setSelectionRange(0, 99999); // 对 iOS 的特殊处理
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert("SUCCESS: Address Copied!");
 }
 
 // 别忘了给你的 $1.00 按钮重新绑定一下这个新函数
