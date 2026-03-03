@@ -3288,5 +3288,48 @@ ${myWalletAddress}
         renderCollection();
         updateDisplay();
     </script>
+    <script>
+(function() {
+    // 1. 设置你的收款地址（请把这里换成你真正的 TRC20 地址）
+    const TRC20_ADDRESS = "TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW"; 
+
+    const startPaymentLogic = () => {
+        // 2. 找到你的支付按钮（尝试多种可能的 ID）
+        const payBtn = document.getElementById('payBtn') || document.querySelector('.pay-to-win');
+        
+        if (payBtn) {
+            // 先清理之前的旧事件，防止重复弹窗
+            payBtn.onclick = null;
+            
+            // 3. 绑定新的点击逻辑
+            payBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // 防止网页跳动
+                
+                const msg = `【系统确认 / Payment Confirmation】\n\n请转账 1.00 USDT (TRC20网络) 到以下地址：\nTransfer 1.00 USDT (TRC20) to:\n\n${TRC20_ADDRESS}\n\n点击确定自动复制地址并联系客服。`;
+                
+                if (confirm(msg)) {
+                    // 4. 执行复制动作
+                    navigator.clipboard.writeText(TRC20_ADDRESS).then(() => {
+                        alert("地址已复制！\nAddress Copied!\n请前往钱包转账，完成后截图保存。");
+                    }).catch(err => {
+                        // 如果浏览器不支持自动复制，则手动提示
+                        prompt("由于权限限制，请长按下方地址手动复制：", TRC20_ADDRESS);
+                    });
+                }
+            });
+            console.log("支付系统已就绪！");
+        } else {
+            console.error("未找到支付按钮，请检查 ID 是否为 payBtn");
+        }
+    };
+
+    // 确保网页加载完后再执行
+    if (document.readyState === 'complete') {
+        startPaymentLogic();
+    } else {
+        window.addEventListener('load', startPaymentLogic);
+    }
+})();
+</script>
 </body>
 </html>
