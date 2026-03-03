@@ -1900,7 +1900,6 @@
     <div class="warning-border left" id="warningLeft"></div>
     <div class="warning-border right" id="warningRight"></div>
     <div class="modal-header">
-    <h3>PROTOCOL ACTIVATION</h3>
     <span class="close-btn" onclick="closeModal()">&times;</span>
 </div>
     <!-- 语言切换按钮 -->
@@ -3280,37 +3279,47 @@ document.getElementById('payBtn').onclick = handlePayment;
         renderCollection();
         updateDisplay();
     </script>
-<div id="genesisModalOverlay" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center;">
-    <div class="genesis-card" style="background: #000; border: 2px solid #00ff41; padding: 25px; width: 85%; max-width: 380px; border-radius: 10px; color: #00ff41; position: relative;">
-        <span class="genesis-close" onclick="closePayModal()" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer;">&times;</span>
-        <h3 style="margin-top:0;">PROTOCOL ACTIVATION</h3>
-        <p style="font-size: 13px; color: #ccc;">Deposit 1.00 USDT (TRC20) to activate hashrate:</p>
-        <div id="rawAddress" style="background: rgba(0,255,65,0.1); border: 1px dashed #00ff41; padding: 12px; margin: 20px 0; font-size: 13px; word-break: break-all; text-align: center;">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
-        <button class="genesis-btn" onclick="doCopyAddress()" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer;">COPY VAULT ADDRESS</button>
+    <div id="finalPayModal" style="display: none; position: fixed; z-index: 999999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+    <div style="background: #000; border: 2px solid #00ff41; padding: 25px; width: 85%; max-width: 380px; border-radius: 12px; color: #00ff41; font-family: monospace; box-shadow: 0 0 20px #00ff41; position: relative;">
+        <span onclick="this.parentElement.parentElement.style.display='none'" style="position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer;">&times;</span>
+        <h3 style="margin: 0 0 15px 0; text-shadow: 0 0 8px #00ff41;">PROTOCOL ACTIVATION</h3>
+        <p style="font-size: 13px; color: #ccc; line-height: 1.4;">Transfer 1.00 USDT (TRC20) to the secure vault address below:</p>
+        <div id="targetAddr" style="background: rgba(0,255,65,0.1); border: 1px dashed #00ff41; padding: 12px; margin: 15px 0; font-size: 12px; word-break: break-all; text-align: center;">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
+        <button onclick="copyAndNotify()" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 4px;">COPY VAULT ADDRESS</button>
+        <p style="font-size: 10px; color: #666; text-align: center; margin-top: 15px;">* AWAITING DEPOSIT FROM NETWORK *</p>
     </div>
 </div>
 
 <script>
-    // 强制绑定点击功能
-    function openPayModal() {
-        document.getElementById('genesisModalOverlay').style.display = 'flex';
+    // 复制逻辑
+    function copyAndNotify() {
+        const text = document.getElementById('targetAddr').innerText;
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("ADDRESS COPIED!\nPlease complete the transfer in your wallet.");
     }
-    function closePayModal() {
-        document.getElementById('genesisModalOverlay').style.display = 'none';
-    }
-    function doCopyAddress() {
-        var addr = document.getElementById('rawAddress').innerText;
-        navigator.clipboard.writeText(addr).then(() => {
-            alert("VAULT ADDRESS COPIED!");
+
+    // 强力点击挂载
+    function bindPayAction() {
+        // 自动尝试寻找所有可能的按钮：ID为payBtn的，或者文字包含$1.00的
+        const buttons = document.querySelectorAll('button, div, a');
+        buttons.forEach(btn => {
+            if (btn.id === 'payBtn' || btn.innerText.includes('$1.00') || btn.className.includes('pay')) {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    document.getElementById('finalPayModal').style.display = 'flex';
+                };
+            }
         });
     }
 
-    // 自动寻找按钮并通电
-    window.onload = function() {
-        const btn = document.getElementById('payBtn') || document.querySelector('.pay-to-win');
-        if(btn) btn.onclick = openPayModal;
-    }
+    // 页面加载和每秒循环检查，确保按钮永远有反应
+    window.addEventListener('load', bindPayAction);
+    setInterval(bindPayAction, 1000);
 </script>
-
 </body>
 </html>
