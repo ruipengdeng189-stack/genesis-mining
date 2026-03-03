@@ -2213,6 +2213,35 @@
             document.getElementById('langSwitcher').textContent = currentLang === 'en' ? 'CN' : 'EN';
             document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
             updateAllText();
+        // 这是新增加的支付功能逻辑
+function handlePayment() {
+    // 1. 设置你的收款地址（请把下面这一串换成你自己的 TRC20 地址）
+    const myWalletAddress = "TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW"; 
+    
+    // 2. 这里的文字会根据你点开时的提示显示
+    const paymentMsg = `
+【Genesis Mining 算力升级】
+    
+请转账 1.00 USDT (TRC20) 到以下地址：
+Transfer 1.00 USDT (TRC20) to:
+
+${myWalletAddress}
+
+(点击确定将自动复制地址 / Click OK to copy)
+    `;
+
+    if (confirm(paymentMsg)) {
+        // 3. 自动复制地址
+        const tempInput = document.createElement("input");
+        tempInput.value = myWalletAddress;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        
+        alert("地址已复制！转账完成后请保存截图，系统将在确认后自动激活算力。");
+    }
+}
             function updateAllText() {
     const lang = translations[currentLang];
 
@@ -2282,6 +2311,7 @@
     // 7. 底部固定按钮
     document.querySelector('#payBtn div:first-child').textContent = lang.payToWin;
     document.querySelector('#payBtn .pay-label').textContent = lang.payLabel;
+    document.getElementById('payBtn').onclick = handlePayment;
 }
         }
         
