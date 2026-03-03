@@ -548,30 +548,6 @@
         .boost-btn:active {
             transform: scale(0.98);
         }
-
-        /* 响应式调整 */
-        @media (max-width: 1400px) {
-            .leaderboard {
-                display: none;
-            }
-        }
-
-        .grid-line {
-            position: absolute;
-            background: #00ff41;
-            opacity: 0.1;
-        }
-
-        .grid-line.horizontal {
-            width: 100%;
-            height: 1px;
-        }
-
-        .grid-line.vertical {
-            width: 1px;
-            height: 100%;
-        }
-
         @keyframes breathe {
             0%, 100% { opacity: 0.05; }
             50% { opacity: 0.2; }
@@ -1250,44 +1226,11 @@
             flex-shrink: 0;
         }
 
-        /* 响应式布局 
-        @media (max-width: 1400px) {
-            .overclock-btn {
-                position: static;
-                transform: none;
-                width: auto;
-                margin: 10px 0;
-            }
+       
 
-            #overclockBtn {
-                font-size: 12px;
-                padding: 12px 10px;
-            }
-
-            .leaderboard {
-                display: none;
-            }
-        }
-
-        @media (max-width: 900px) {
-            .upgrade-container {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .upgrade-section {
-                max-width: 350px;
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 28px;
-                letter-spacing: 3px;
-            }*/
+      
         /* --- 强力移动端适配：精准覆盖 --- */
-@media (max-width: 1024px) {
+   @media (max-width: 1024px) {
     /* 1. 容器宽度自适应，不再被固定 px 撑开 */
     .container {
         width: 100vw !important;
@@ -1875,6 +1818,79 @@
     }
 }    
     </style>
+ <style>
+    @media screen and (max-width: 768px) {
+        /* 强制所有元素不准超出屏幕右侧 */
+        * {
+            box-sizing: border-box !important;
+        }
+        
+        body, html {
+            overflow-x: hidden !important; 
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* 核心容器：强制缩回到手机宽度 */
+        .container {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            padding: 10px !important;
+            margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+
+        /* 动力中心：取消固定宽度，改为百分比 */
+        .power-center-section {
+            width: 95% !important;
+            margin: 10px auto !important;
+            padding: 15px !important;
+            flex: none !important;
+            min-height: auto !important;
+        }
+
+        /* 关键：三个升级框从横向改为纵向堆叠 */
+        .upgrade-container {
+            display: flex !important;
+            flex-direction: column !important; /* 强制垂直排队 */
+            width: 100% !important;
+            gap: 15px !important;
+        }
+
+        .upgrade-section {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+        }
+
+        /* 算力塔图片大小优化 */
+        #mineBtn img {
+            width: 160px !important;
+            height: auto !important;
+        }
+
+        /* 底部排行榜不再悬浮，改为正常排列 */
+        .leaderboard {
+            position: relative !important;
+            width: 100% !important;
+            right: auto !important;
+            bottom: auto !important;
+            margin-top: 30px !important;
+            display: block !important;
+        }
+
+        /* 顶部统计栏改为两列显示，防止挤在一起 */
+        .stats {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            width: 100% !important;
+        }
+    }
+    </style> 
 </head>
 <body>
     <canvas id="particleCanvas"></canvas>
