@@ -3027,7 +3027,7 @@ document.getElementById('payBtn').onclick = handlePayment;
             upgradeCost = calculateActualUpgradeCost();
             upgradeCostDisplay.textContent = upgradeCost;
             difficultyPercentDisplay.textContent = getDifficultyPercent();
-            difficultyIndicator.textContent = `难度: +${getDifficultyPercent()}%`;
+            difficultyIndicator.textContent = `Difficulty: +${getDifficultyPercent()}%`;
             
             autoLevelDisplay.textContent = autoLevel;
             autoCostDisplay.textContent = autoCost;
@@ -3143,7 +3143,7 @@ document.getElementById('payBtn').onclick = handlePayment;
                 
                 const upgradeParticle = document.createElement('div');
                 upgradeParticle.className = 'particle';
-                upgradeParticle.textContent = '算力 +1!';
+                upgradeParticle.textContent = 'Computing power +1!';
                 upgradeParticle.style.left = `${x}px`;
                 upgradeParticle.style.top = `${y}px`;
                 upgradeParticle.style.fontSize = '20px';
@@ -3170,7 +3170,7 @@ document.getElementById('payBtn').onclick = handlePayment;
                 
                 const upgradeParticle = document.createElement('div');
                 upgradeParticle.className = 'particle';
-                upgradeParticle.textContent = '矿机升级!';
+                upgradeParticle.textContent = 'Mining rig upgrade!';
                 upgradeParticle.style.left = `${x}px`;
                 upgradeParticle.style.top = `${y}px`;
                 upgradeParticle.style.fontSize = '20px';
@@ -3196,7 +3196,7 @@ document.getElementById('payBtn').onclick = handlePayment;
                 
                 const upgradeParticle = document.createElement('div');
                 upgradeParticle.className = 'particle';
-                upgradeParticle.textContent = '冷却升级!';
+                upgradeParticle.textContent = 'Cooling upgrade!';
                 upgradeParticle.style.left = `${x}px`;
                 upgradeParticle.style.top = `${y}px`;
                 upgradeParticle.style.fontSize = '20px';
@@ -3338,82 +3338,102 @@ document.getElementById('payBtn').onclick = handlePayment;
 }
     </script>
 <style>
-    #globalPayOverlay {
-        display: none; position: fixed; z-index: 2147483647 !important; 
+    /* 1. 强制隐藏左上角乱码区域 */
+    #protocol-overlay {
+        display: none; position: fixed; z-index: 1000000; 
         left: 0; top: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.95); align-items: center; justify-content: center;
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     }
-    .pay-card {
+    .p-card {
         background: #000; border: 2px solid #00ff41; padding: 25px; 
-        width: 90%; max-width: 350px; border-radius: 12px; color: #00ff41; 
-        font-family: monospace; text-align: center; box-shadow: 0 0 20px #00ff41;
+        width: 88%; max-width: 360px; border-radius: 12px; color: #00ff41; 
+        font-family: 'Courier New', monospace; box-shadow: 0 0 30px rgba(0,255,65,0.4);
     }
-    .addr-box {
+    .p-addr {
         background: rgba(0,255,65,0.1); border: 1px dashed #00ff41;
-        padding: 12px; margin: 15px 0; font-size: 12px; word-break: break-all;
+        padding: 12px; margin: 15px 0; font-size: 13px; word-break: break-all; color: #fff;
     }
-    .p-btn {
-        width: 100%; background: #00ff41; color: #00; border: none;
-        padding: 12px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    .p-btn-main {
+        width: 100%; background: #00ff41; color: #000; border: none;
+        padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 16px;
     }
 </style>
 
-<div id="globalPayOverlay">
-    <div class="pay-card">
-        <h3 id="pTitle">SYSTEM ACTIVATION</h3>
-        <p id="pDesc" style="font-size:12px; color:#ccc;">Deposit 1.00 USDT (TRC20) to continue:</p>
-        <div class="addr-box" id="pAddr">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
-        <button class="p-btn" onclick="copyV()">COPY ADDRESS</button>
-        <button class="p-btn" style="background:none; color:#666; border:1px solid #333;" onclick="closeP()">CLOSE</button>
+<div id="protocol-overlay">
+    <div class="p-card">
+        <h3 id="p-title">SYSTEM ACTIVATION</h3>
+        <p id="p-desc" style="font-size:12px;color:#ccc;">Required: 1.00 USDT (TRC20 Network)</p>
+        <div class="p-addr" id="p-wallet">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
+        <button class="p-btn-main" onclick="pCopy()">COPY VAULT ADDRESS</button>
+        <button class="p-btn-main" style="background:none;border:1px solid #333;color:#666;margin-top:10px;" onclick="pClose()">CLOSE</button>
     </div>
 </div>
 
 <script>
-    const WALLET = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
-
-    function showP(title, desc) {
-        document.getElementById('pTitle').innerText = title;
-        document.getElementById('pDesc').innerText = desc;
-        document.getElementById('globalPayOverlay').style.display = 'flex';
+    // --- 1. 支付核心逻辑 ---
+    const WALLET_ADDR = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
+    function pOpen(t, d) {
+        document.getElementById('p-title').innerText = t;
+        document.getElementById('p-desc').innerText = d;
+        document.getElementById('protocol-overlay').style.display = 'flex';
+    }
+    function pClose() { document.getElementById('protocol-overlay').style.display = 'none'; }
+    function pCopy() {
+        const el = document.createElement('textarea'); el.value = WALLET_ADDR;
+        document.body.appendChild(el); el.select(); document.execCommand('copy');
+        document.body.removeChild(el);
+        alert("VAULT ADDRESS COPIED!\nAwaiting Network Confirmation...");
     }
 
-    function closeP() {
-        document.getElementById('globalPayOverlay').style.display = 'none';
+    // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
+    const TRANSLATIONS = {
+        "由于算力不足，碎片正在流失": "WARNING: Insufficient hashrate. Fragments bleeding...",
+        "解锁了": "UNLOCKED:",
+        "号 Genesis 碎片": "Genesis Fragment",
+        "收入仓库": "CLAIM TO VAULT",
+        "全网爆块": "NETWORK BLOCK DETECTED",
+        "支付接口对接中": "GATEWAY INITIALIZING",
+        "瞬间满血复活": "INSTANT RECOVERY READY"
+    };
+
+    function translateUI() {
+        // 扫描页面所有文字并替换
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while(node = walker.nextNode()) {
+            for (let cn in TRANSLATIONS) {
+                if (node.nodeValue.includes(cn)) {
+                    node.nodeValue = node.nodeValue.replace(cn, TRANSLATIONS[cn]);
+                }
+            }
+        }
     }
 
-    function copyV() {
-        const t = document.getElementById('pAddr').innerText;
-        const el = document.createElement('textarea');
-        el.value = t; document.body.appendChild(el); el.select();
-        document.execCommand('copy'); document.body.removeChild(el);
-        alert("ADDRESS COPIED!\nAwaiting Network Confirmation...");
-    }
-
-    // --- 暴力挂载：直接监听全页面的点击 ---
+    // --- 3. 强力点击监听（带错误恢复） ---
     document.addEventListener('click', function(e) {
         try {
-            // 获取点击目标的文字内容
-            const btnText = e.target.innerText || "";
-            
-            // 1. 检查是否点击了 Hyper-Clock
-            if (btnText.includes('Hyper-Clock') || btnText.includes('100 SPINS')) {
-                e.preventDefault();
-                e.stopPropagation();
-                showP("HYPER-CLOCK ACTIVE", "Unlock 100x Draws & Fragments ($1.00):");
-                return false;
-            }
+            const el = e.target;
+            const txt = el.innerText || "";
 
-            // 2. 检查是否点击了 Top 10 或 Recovery
-            if (btnText.includes('$1.00') || btnText.includes('RECOVERY')) {
+            // 拦截包含 $1.00 或 Hyper-Clock 的点击
+            if (txt.includes('$1') || txt.includes('Hyper-Clock')) {
                 e.preventDefault();
-                e.stopPropagation();
-                showP("PROTOCOL ACTIVATION", "Deposit 1.00 USDT (TRC20) to confirm:");
+                e.stopImmediatePropagation();
+                if (txt.includes('Hyper')) {
+                    pOpen("HYPER-CLOCK ACTIVE", "Unlock 100x Spins & Rare Buff ($1.00):");
+                } else {
+                    pOpen("PROTOCOL ACTIVATION", "Deposit 1.00 USDT (TRC20) to confirm:");
+                }
                 return false;
             }
-        } catch (err) {
-            console.log("Pay system click bypass.");
-        }
-    }, true); // true 表示捕获阶段拦截，优先级最高
+        } catch (err) { console.warn("Interception bypassed."); }
+    }, true);
+
+    // --- 4. 运行引擎 ---
+    setInterval(() => {
+        translateUI(); // 持续翻译动态出现的中文
+    }, 500);
 </script>
 </body>
 </html>
