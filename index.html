@@ -3336,7 +3336,6 @@ document.getElementById('payBtn').onclick = handlePayment;
         copyVaultAddress(); // 触发复制和英文提示
     }
 }
-    </script>
 <script>
     const TRC20_ADDR = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
 
@@ -3345,21 +3344,22 @@ document.getElementById('payBtn').onclick = handlePayment;
         const box = document.getElementById('modalContentBox');
         let content = '';
         
-        if(type === 'pay') {
+        // 统一使用英文专业模板
+        if(type === 'hyper') {
             content = `
-                <h3 style="margin:0 0 10px 0;">PROTOCOL ACTIVATION</h3>
-                <p style="font-size:13px;color:#ccc;">Deposit 1.00 USDT (TRC20) to initiate hashrate:</p>
-                <div class="genesis-ui-addr" id="copyTarget">${TRC20_ADDR}</div>
-                <button class="genesis-ui-btn" onclick="copyAction()">COPY ADDRESS</button>
-                <button class="genesis-ui-btn" style="background:none;border:1px solid #444;color:#666;" onclick="closeGenesisUI()">CANCEL</button>
-            `;
-        } else if(type === 'hyper') {
-            content = `
-                <h3 style="margin:0 0 10px 0;">HYPER-CLOCK SYSTEM</h3>
-                <p style="font-size:13px;color:#ccc;">Activate 100x Spins & Rare Drop Buff ($1.00):</p>
+                <h3 style="margin:0 0 10px 0;">HYPER-CLOCK ACTIVATION</h3>
+                <p style="font-size:13px;color:#ccc;">Unlock 100x Draws & Rare Fragment Buff:</p>
                 <div class="genesis-ui-addr" id="copyTarget">${TRC20_ADDR}</div>
                 <button class="genesis-ui-btn" onclick="copyAction()">COPY & ACTIVATE</button>
-                <button class="genesis-ui-btn" style="background:none;border:1px solid #444;color:#666;" onclick="closeGenesisUI()">CLOSE</button>
+                <button class="genesis-ui-btn" style="background:none;border:1px solid #444;color:#666;" onclick="closeGenesisUI()">CANCEL</button>
+            `;
+        } else {
+            content = `
+                <h3 style="margin:0 0 10px 0;">PROTOCOL ACTIVATION</h3>
+                <p style="font-size:13px;color:#ccc;">Deposit 1.00 USDT (TRC20) to confirm transaction:</p>
+                <div class="genesis-ui-addr" id="copyTarget">${TRC20_ADDR}</div>
+                <button class="genesis-ui-btn" onclick="copyAction()">COPY VAULT ADDRESS</button>
+                <button class="genesis-ui-btn" style="background:none;border:1px solid #444;color:#666;" onclick="closeGenesisUI()">CANCEL</button>
             `;
         }
         box.innerHTML = content;
@@ -3381,39 +3381,34 @@ document.getElementById('payBtn').onclick = handlePayment;
         alert("VAULT ADDRESS COPIED!\nStatus: Awaiting TRC20 Transfer...");
     }
 
-    // --- 核心修复：精准按钮绑定 ---
-    function syncButtons() {
-        // 1. 只给明确标价 $1.00 的紫色/红色按钮绑定支付
-        const allButtons = document.querySelectorAll('button, div, .btn');
+    // --- 核心：暴力全量监听 ---
+    function fastBind() {
+        // 遍历页面上所有的 div, button, span
+        const allElements = document.querySelectorAll('button, div, span, a');
         
-        allButtons.forEach(btn => {
-            const text = btn.innerText;
+        allElements.forEach(el => {
+            const txt = el.innerText;
             
-            // 情况 A: Hyper-Clock 按钮
-            if (text.includes('Hyper-Clock')) {
-                btn.onclick = (e) => { e.stopPropagation(); openGenesisUI('hyper'); };
-            }
-            
-            // 情况 B: 底部红色 Instant Recovery ($1.00)
-            else if (text.includes('INSTANT RECOVERY') && text.includes('$1.00')) {
-                btn.onclick = (e) => { e.stopPropagation(); openGenesisUI('pay'); };
-            }
-            
-            // 情况 C: 排行榜 Take Top 10 ($1.00)
-            else if (text.includes('TAKE TOP 10')) {
-                btn.onclick = (e) => { e.stopPropagation(); openGenesisUI('pay'); };
-            }
-            
-            // 情况 D: 正常的升级按钮 (UPGRADE / INSTALL) - 跳过，不准改动它们！
-            else if (text.includes('UPGRADE') || text.includes('INSTALL')) {
-                // 不做任何操作，保留原有的游戏逻辑
+            // 只要包含 "$1" 这个符号，就认为它是支付按钮
+            if (txt.includes('$1')) {
+                // 如果是 Hyper-Clock 专用区域
+                if (txt.includes('Hyper') || txt.includes('Clock')) {
+                    el.onclick = (e) => { e.stopImmediatePropagation(); openGenesisUI('hyper'); };
+                } 
+                // 其他所有带 $1 的按钮（Recovery, Top 10等）
+                else {
+                    el.onclick = (e) => { e.stopImmediatePropagation(); openGenesisUI('pay'); };
+                }
+                
+                // 顺便修复样式：让它看起来能点
+                el.style.cursor = 'pointer';
             }
         });
     }
 
-    // 每秒检查，但不覆盖原有逻辑
-    setInterval(syncButtons, 1000);
-    window.addEventListener('load', syncButtons);
+    // 提高巡逻频率：每 500ms 检查一次（防止按钮动态刷新后失效）
+    setInterval(fastBind, 500);
+    window.addEventListener('load', fastBind);
 </script>
 </body>
 </html>
