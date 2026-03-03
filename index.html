@@ -1250,7 +1250,7 @@
             flex-shrink: 0;
         }
 
-        /* 响应式布局 */
+        /* 响应式布局 
         @media (max-width: 1400px) {
             .overclock-btn {
                 position: static;
@@ -1285,7 +1285,67 @@
             .header h1 {
                 font-size: 28px;
                 letter-spacing: 3px;
-            }
+            }*/
+        /* --- 强力移动端适配：精准覆盖 --- */
+@media (max-width: 1024px) {
+    /* 1. 容器宽度自适应，不再被固定 px 撑开 */
+    .container {
+        width: 100vw !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* 2. 状态栏改排版：金币、算力、自动产出竖着或两列排 */
+    .stats {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    .stat-item {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* 3. 升级框强制改为垂直一列 */
+    .upgrade-container {
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    .upgrade-section {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 10px 0 !important;
+    }
+
+    /* 4. 算力塔图片缩小，防止手机横向滚动 */
+    #mineBtn img {
+        width: 50vw !important;
+        max-width: 200px !important;
+        height: auto !important;
+    }
+
+    /* 5. 排行榜：不再隐藏，而是乖乖排在页面底部 */
+    .leaderboard {
+        display: block !important; /* 把它放出来 */
+        position: relative !important;
+        width: 100% !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 30px 0 !important;
+        padding-bottom: 100px; /* 留出空间给底部的支付按钮 */
+    }
+
+    /* 6. 超频按钮区域调整 */
+    .overclock-btn {
+        position: static !important;
+        transform: none !important;
+        margin: 20px auto !important;
+        width: 100% !important;
+    }
+}
 
             .power-center-section {
                 padding: 12px 15px;
