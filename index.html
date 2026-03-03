@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genesis Mining Zone - Hashrate Mining System</title>
     <meta name="description" content="Genesis Mining Zone - Global Real-time Hashrate Leaderboard, Click Mining, Fragment Collection">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- 
     ================================================================
     Genesis Mining Zone - Complete MVP
@@ -3075,6 +3075,58 @@
         createMatrixBackground();
         renderCollection();
         updateDisplay();
+        /* 移动端适配：当屏幕宽度小于 768px 时生效 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 让三个升级框横向排列变成纵向，或者缩小间距 */
+    .upgrade-container {
+        display: flex;
+        flex-direction: column; /* 手机端改为垂直排列，防止挤在一起 */
+        gap: 10px;
+    }
+
+    .upgrade-section {
+        width: 100% !important;
+        margin-bottom: 10px;
+    }
+
+    /* 缩小标题字体 */
+    h1 {
+        font-size: 24px !important;
+    }
+
+    /* 调整核心算力塔图片大小 */
+    #mineBtn img {
+        width: 180px; /* 手机端图片缩小一点，防止溢出 */
+        height: auto;
+    }
+
+    /* 让排行榜和仓库占满屏幕 */
+    .leaderboard, .collection-section {
+        width: 100% !important;
+        position: static; /* 取消可能的绝对定位 */
+        margin-top: 20px;
+    }
+
+    /* 悬浮的支付按钮在手机端加宽，更方便点击 */
+    .pay-to-win {
+        width: 90%;
+        left: 5%;
+        bottom: 20px;
+    }
+
+    /* 语言切换按钮位置微调 */
+    .lang-switcher {
+        top: 15px;
+        right: 15px;
+        padding: 8px 15px;
+    }
+}
     </script>
 </body>
 </html>
