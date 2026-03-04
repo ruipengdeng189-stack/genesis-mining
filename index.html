@@ -2705,6 +2705,3508 @@ document.getElementById('payBtn').onclick = handlePayment;
         const CRITICAL_CHANCE = 0.05;
         const CRITICAL_MULTIPLIER = 10;
         const MIN_POWER = 1;
+        // 领取奖励后提高算力下限，避免“补到60又掉回50”
+        let rewardedMinPower = MIN_POWER;
+        const OVERHEAT_THRESHOLD = 70;
+        const HEAT_PER_CLICK = 15;
+        const HEAT_DECAY_RATE = 5;
+        const CLICK_WINDOW = 3000;
+        const DIFFICULTY_THRESHOLD = 1000;
+        const DIFFICULTY_INCREASE = 0.1;
+        const FRAGMENT_DROP_CHANCE = 0.3;
+
+        const FRAGMENT_IMAGES = [
+            'https://i.postimg.cc/y377FBbb/d5419be1-cd2a-475d-b12b-f678965ac50c.jpg',
+            'https://via.placeholder.com/150/00ff41/000000?text=Fragment+A',
+            'https://via.placeholder.com/150/ff00ff/000000?text=Fragment+B',
+            'https://via.placeholder.com/150/00ffff/000000?text=Fragment+C',
+            'https://via.placeholder.com/150/ffff00/000000?text=Fragment+D',
+            'https://via.placeholder.com/150/ff0080/000000?text=Fragment+E'
+        ];
+
+        const RARITIES = [
+            { name: 'COMMON', chance: 0.5, class: '' },
+            { name: 'RARE', chance: 0.3, class: 'rarity-rare' },
+            { name: 'EPIC', chance: 0.15, class: 'rarity-epic' },
+            { name: 'LEGENDARY', chance: 0.05, class: 'rarity-legendary' }
+        ];
+
+        const coinsDisplay = document.getElementById('coins');
+        const totalCoinsDisplay = document.getElementById('totalCoins');
+        const powerDisplay = document.getElementById('power');
+        const levelDisplay = document.getElementById('level');
+        const upgradeCostDisplay = document.getElementById('upgradeCost');
+        const autoLevelDisplay = document.getElementById('autoLevel');
+        const autoCostDisplay = document.getElementById('autoCost');
+        const autoRateDisplay = document.getElementById('autoRate');
+        const coolingLevelDisplay = document.getElementById('coolingLevel');
+        const coolingCostDisplay = document.getElementById('coolingCost');
+        const heatLevelDisplay = document.getElementById('heatLevel');
+        const overheatLabel = document.getElementById('overheatLabel');
+        const difficultyIndicator = document.getElementById('difficultyIndicator');
+        const difficultyPercentDisplay = document.getElementById('difficultyPercent');
+        const collectionCountDisplay = document.getElementById('collectionCount');
+        const collectionGrid = document.getElementById('collectionGrid');
+        const mineBtn = document.getElementById('mineBtn');
+        const upgradeBtn = document.getElementById('upgradeBtn');
+        const autoBtn = document.getElementById('autoBtn');
+        const coolingBtn = document.getElementById('coolingBtn');
+        const payBtn = document.getElementById('payBtn');
+        const overclockBtn = document.getElementById('overclockBtn');
+        const paymentModal = document.getElementById('paymentModal');
+        const closePaymentBtn = document.getElementById('closePaymentBtn');
+        const powerStat = document.getElementById('powerStat');
+        const criticalOverlay = document.getElementById('criticalOverlay');
+        const warningBorders = [
+            document.getElementById('warningTop'),
+            document.getElementById('warningBottom'),
+            document.getElementById('warningLeft'),
+            document.getElementById('warningRight')
+        ];
+
+        function createMatrixBackground() {
+            const matrixBg = document.getElementById('matrixBg');
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'grid-line horizontal';
+                line.style.top = `${i * 5}%`;
+                matrixBg.appendChild(line);
+            }
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'grid-line vertical';
+                line.style.left = `${i * 5}%`;
+                matrixBg.appendChild(line);
+            }
+        }
+
+        function calculateDifficultyMultiplier() {
+            const difficultyLevel = Math.floor(totalCoinsEarned / DIFFICULTY_THRESHOLD);
+            return 1 + (difficultyLevel * DIFFICULTY_INCREASE);
+        }
+
+        function calculateActualUpgradeCost() {
+            const multiplier = calculateDifficultyMultiplier();
+            return Math.floor(baseUpgradeCost * multiplier);
+        }
+
+        function getDifficultyPercent() {
+            return Math.floor((calculateDifficultyMultiplier() - 1) * 100);
+        }
+
+        function updateHeat() {
+            const now = Date.now();
+            clickHistory = clickHistory.filter(time => now - time < CLICK_WINDOW);
+
+            if (clickHistory.length > 0) {
+                heatLevel = Math.min(100, clickHistory.length * HEAT_PER_CLICK - (coolingLevel * 10));
+            } else {
+                heatLevel = Math.max(0, heatLevel - HEAT_DECAY_RATE);
+            }
+
+            const effectiveThreshold = OVERHEAT_THRESHOLD + (coolingLevel * 15);
+            isOverheated = heatLevel >= effectiveThreshold;
+
+            if (isOverheated) {
+                powerStat.classList.add('overheat');
+                mineBtn.classList.add('overheat');
+                overheatLabel.style.display = 'inline';
+            } else {
+                powerStat.classList.remove('overheat');
+                mineBtn.classList.remove('overheat');
+                overheatLabel.style.display = 'none';
+            }
+        }
+
+        function updateWarningBorders() {
+            const shouldWarn = power <= MIN_POWER * 2 || isOverheated;
+            warningBorders.forEach(border => {
+                if (shouldWarn) {
+                    border.classList.add('active');
+                } else {
+                    border.classList.remove('active');
+                }
+            });
+        }
+
+        function getRarity() {
+            const rand = Math.random();
+            let cumulative = 0;
+            for (let rarity of RARITIES) {
+                cumulative += rarity.chance;
+                if (rand <= cumulative) {
+                    return rarity;
+                }
+            }
+            return RARITIES[0];
+        }
+
+        function addToCollection(isCritical) {
+            // 禁用暴击掉落系统,只保留4个主要稀缺碎片
+            return;
+            
+            if (!isCritical) return;
+            if (Math.random() > FRAGMENT_DROP_CHANCE) return;
+
+            const rarity = getRarity();
+            const fragment = {
+                id: Date.now() + Math.random(),
+                image: FRAGMENT_IMAGES[Math.floor(Math.random() * FRAGMENT_IMAGES.length)],
+                rarity: rarity.name,
+                rarityClass: rarity.class,
+                timestamp: new Date().toLocaleString('zh-CN')
+            };
+
+            collection.unshift(fragment);
+            renderCollection();
+
+            const rect = mineBtn.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            
+            const dropNotice = document.createElement('div');
+            dropNotice.className = 'particle ' + rarity.class;
+            dropNotice.textContent = `获得${rarity.name}碎片!`;
+            dropNotice.style.left = `${x}px`;
+            dropNotice.style.top = `${y - 50}px`;
+            dropNotice.style.fontSize = '24px';
+            document.body.appendChild(dropNotice);
+            
+            setTimeout(() => {
+                dropNotice.remove();
+            }, 2000);
+        }
+
+        function renderCollection() {
+            const maxSlots = 12;
+            collectionCountDisplay.textContent = unlockedFragments.filter(u => u).length;
+            
+            let html = '';
+            
+            // 渲染4个主要碎片卡槽
+            for (let i = 0; i < 4; i++) {
+                const fragment = FRAGMENT_DATA[i];
+                const isUnlocked = unlockedFragments[i];
+                const isLocked = !isUnlocked && totalCoinsEarned < fragment.unlockCoins;
+                const showWarning = isLocked && power < lastPowerCheckForWarning;
+                
+                if (isUnlocked) {
+                    // 已解锁：显示碎片图片
+                    html += `
+                        <div class="collection-slot">
+                            <div class="collection-item" style="border-color: ${fragment.color}; box-shadow: 0 0 20px ${fragment.color};">
+                                <img src="${fragment.image}" alt="${fragment.name}" 
+                                     style="filter: drop-shadow(0 0 15px ${fragment.color}) drop-shadow(0 0 30px ${fragment.color});">
+                                <div class="rarity-badge" style="border-color: ${fragment.color}; color: ${fragment.color};">
+                                    #00${fragment.id}
+                                </div>
+                                <div class="timestamp">${fragment.name}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 未解锁：显示锁定状态
+                    html += `
+                        <div class="collection-slot empty ${showWarning ? 'locked-warning' : ''}" 
+                             data-unlock-coins="${fragment.unlockCoins}">
+                        </div>
+                    `;
+                }
+            }
+            
+            // 填充剩余空卡槽(8个)
+            for (let i = 4; i < maxSlots; i++) {
+                html += `<div class="collection-slot empty"></div>`;
+            }
+            
+            collectionGrid.innerHTML = html;
+        }
+
+        function checkFragmentUnlock() {
+            for (let i = 0; i < FRAGMENT_DATA.length; i++) {
+                const fragment = FRAGMENT_DATA[i];
+                if (!unlockedFragments[i] && totalCoinsEarned >= fragment.unlockCoins) {
+                    unlockedFragments[i] = true;
+                    showFragmentUnlockEffect(fragment);
+                }
+            }
+        }
+
+        function showFragmentUnlockEffect(fragment) {
+            // 创建全屏解锁特效
+            const overlay = document.createElement('div');
+            overlay.className = 'fragment-unlock-overlay';
+            overlay.style.setProperty('--fragment-color', fragment.color);
+            overlay.style.setProperty('--fragment-glow', `drop-shadow(0 0 20px ${fragment.color}) drop-shadow(0 0 40px ${fragment.color})`);
+            
+            overlay.innerHTML = `
+                <div class="fragment-unlock-flash" style="--flash-color: ${fragment.color}40;"></div>
+                <div class="fragment-unlock-content">
+                    <img src="${fragment.image}" class="fragment-unlock-image" alt="${fragment.name}">
+                    <div class="fragment-unlock-title">解锁了 #00${fragment.id} 号 Genesis 碎片！</div>
+                    <div class="fragment-unlock-subtitle">✦ ${fragment.name} ✦</div>
+                    <button class="fragment-unlock-close" onclick="this.parentElement.parentElement.remove(); renderCollection();">
+                        收入仓库
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // 播放音效(可选)
+            // new Audio('unlock.mp3').play();
+        }
+
+        function checkPowerLoss() {
+            const currentPower = power;
+            
+            // 检测算力下降
+            if (currentPower < lastPowerCheckForWarning) {
+                const hasLockedFragments = unlockedFragments.some((unlocked, i) => 
+                    !unlocked && totalCoinsEarned >= FRAGMENT_DATA[i].unlockCoins * 0.7
+                );
+                
+                if (hasLockedFragments) {
+                    showLossWarning();
+                }
+            }
+            
+            lastPowerCheckForWarning = currentPower;
+        }
+
+        function showLossWarning() {
+            // 移除旧的警告
+            const oldWarning = document.querySelector('.loss-warning-tooltip');
+            if (oldWarning) return; // 避免重复显示
+            
+            const warning = document.createElement('div');
+            warning.className = 'loss-warning-tooltip';
+            warning.innerHTML = '⚠️ 由于算力不足，碎片正在流失... ⚠️';
+            document.body.appendChild(warning);
+            
+            setTimeout(() => {
+                warning.remove();
+            }, 3000);
+        }
+
+        function createExplosionParticles(x, y) {
+            const particleCount = 30;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'explosion-particle';
+                
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const distance = 100 + Math.random() * 100;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                particle.style.animation = `explode ${0.8 + Math.random() * 0.4}s ease-out forwards`;
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 1200);
+            }
+        }
+
+        function createParticle(x, y, value, isCritical = false) {
+            const particle = document.createElement('div');
+            particle.className = isCritical ? 'particle critical' : 'particle';
+            particle.textContent = `+${Math.floor(value)}`;
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            document.body.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, isCritical ? 1500 : 1000);
+        }
+
+        function triggerCritical() {
+            criticalOverlay.style.display = 'block';
+            
+            const flash = document.createElement('div');
+            flash.className = 'critical-flash';
+            criticalOverlay.appendChild(flash);
+
+            const text = document.createElement('div');
+            text.className = 'critical-text';
+            text.textContent = '全网爆块!!!';
+            criticalOverlay.appendChild(text);
+
+            mineBtn.classList.add('shake');
+            mineBtn.classList.add('explosion');
+
+            const rect = mineBtn.getBoundingClientRect();
+            createExplosionParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+            setTimeout(() => {
+                flash.remove();
+                text.remove();
+                criticalOverlay.style.display = 'none';
+                mineBtn.classList.remove('shake');
+                mineBtn.classList.remove('explosion');
+            }, 800);
+        }
+
+        function updateDisplay() {
+            coinsDisplay.textContent = Math.floor(coins);
+            totalCoinsDisplay.textContent = Math.floor(totalCoinsEarned);
+            powerDisplay.textContent = power.toFixed(1);
+            levelDisplay.textContent = level;
+            
+            upgradeCost = calculateActualUpgradeCost();
+            upgradeCostDisplay.textContent = upgradeCost;
+            difficultyPercentDisplay.textContent = getDifficultyPercent();
+            difficultyIndicator.textContent = `Difficulty: +${getDifficultyPercent()}%`;
+            
+            autoLevelDisplay.textContent = autoLevel;
+            autoCostDisplay.textContent = autoCost;
+            autoRateDisplay.textContent = autoRate.toFixed(1);
+            coolingLevelDisplay.textContent = coolingLevel;
+            coolingCostDisplay.textContent = coolingCost;
+            heatLevelDisplay.textContent = Math.floor(heatLevel);
+            
+            // 检查碎片解锁
+            checkFragmentUnlock();
+            
+            // 检查算力流失警告
+            checkPowerLoss();
+            
+            if (power <= MIN_POWER * 2) {
+                powerStat.classList.add('warning');
+            } else {
+                powerStat.classList.remove('warning');
+            }
+
+            if (coins >= upgradeCost) {
+                upgradeBtn.disabled = false;
+            } else {
+                upgradeBtn.disabled = true;
+            }
+
+            if (coins >= autoCost) {
+                autoBtn.disabled = false;
+            } else {
+                autoBtn.disabled = true;
+            }
+
+            if (coins >= coolingCost) {
+                coolingBtn.disabled = false;
+            } else {
+                coolingBtn.disabled = true;
+            }
+
+            updateWarningBorders();
+        }
+
+        function applyDecay() {
+            const floor = Math.max(MIN_POWER, rewardedMinPower);
+            if (power > floor) {
+                power = Math.max(floor, power * (1 - DECAY_RATE));
+                updateDisplay();
+            } else if (power < floor) {
+                power = floor;
+                updateDisplay();
+            }
+        }
+
+        function autoMine() {
+            if (autoRate > 0) {
+                coins += autoRate;
+                totalCoinsEarned += autoRate;
+                updateDisplay();
+            }
+        }
+
+        function updateHeatAndWarnings() {
+            updateHeat();
+            updateDisplay();
+        }
+
+        mineBtn.addEventListener('click', (e) => {
+            const now = Date.now();
+            clickHistory.push(now);
+            lastClickTime = now;
+
+            // 获取点击位置并生成哈希爆破粒子
+            const rect = mineBtn.getBoundingClientRect();
+            const clickX = e.clientX || (rect.left + rect.width / 2);
+            const clickY = e.clientY || (rect.top + rect.height / 2);
+            
+            const isCritical = Math.random() < CRITICAL_CHANCE;
+            const particleCount = isCritical ? 40 : 25; // 暴击更多粒子
+            createParticleBurst(clickX, clickY, particleCount);
+
+            let earnedCoins = isCritical ? power * CRITICAL_MULTIPLIER : power;
+
+            if (isOverheated) {
+                earnedCoins *= 0.5;
+            }
+            
+            coins += earnedCoins;
+            totalCoinsEarned += earnedCoins;
+            
+            const x = rect.left + rect.width / 2 + (Math.random() - 0.5) * 100;
+            const y = rect.top + rect.height / 2 + (Math.random() - 0.5) * 100;
+            
+            createParticle(x, y, earnedCoins, isCritical);
+
+            if (isCritical) {
+                triggerCritical();
+                addToCollection(true);
+            } else {
+                mineBtn.classList.add('shake');
+                setTimeout(() => {
+                    mineBtn.classList.remove('shake');
+                }, 500);
+            }
+            
+            updateDisplay();
+        });
+
+        upgradeBtn.addEventListener('click', () => {
+            if (coins >= upgradeCost) {
+                coins -= upgradeCost;
+                power += 1;
+                level += 1;
+                baseUpgradeCost = Math.floor(baseUpgradeCost * 1.25);
+                
+                const rect = upgradeBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top;
+                
+                const upgradeParticle = document.createElement('div');
+                upgradeParticle.className = 'particle';
+                upgradeParticle.textContent = 'Computing power +1!';
+                upgradeParticle.style.left = `${x}px`;
+                upgradeParticle.style.top = `${y}px`;
+                upgradeParticle.style.fontSize = '20px';
+                document.body.appendChild(upgradeParticle);
+                
+                setTimeout(() => {
+                    upgradeParticle.remove();
+                }, 1000);
+                
+                updateDisplay();
+            }
+        });
+
+        autoBtn.addEventListener('click', () => {
+            if (coins >= autoCost) {
+                coins -= autoCost;
+                autoLevel += 1;
+                autoRate += 0.5;
+                autoCost = Math.floor(autoCost * 1.8);
+                
+                const rect = autoBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top;
+                
+                const upgradeParticle = document.createElement('div');
+                upgradeParticle.className = 'particle';
+                upgradeParticle.textContent = 'Mining rig upgrade!';
+                upgradeParticle.style.left = `${x}px`;
+                upgradeParticle.style.top = `${y}px`;
+                upgradeParticle.style.fontSize = '20px';
+                document.body.appendChild(upgradeParticle);
+                
+                setTimeout(() => {
+                    upgradeParticle.remove();
+                }, 1000);
+                
+                updateDisplay();
+            }
+        });
+
+        coolingBtn.addEventListener('click', () => {
+            if (coins >= coolingCost) {
+                coins -= coolingCost;
+                coolingLevel += 1;
+                coolingCost = Math.floor(coolingCost * 2);
+                
+                const rect = coolingBtn.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top;
+                
+                const upgradeParticle = document.createElement('div');
+                upgradeParticle.className = 'particle';
+                upgradeParticle.textContent = 'Cooling upgrade!';
+                upgradeParticle.style.left = `${x}px`;
+                upgradeParticle.style.top = `${y}px`;
+                upgradeParticle.style.fontSize = '20px';
+                document.body.appendChild(upgradeParticle);
+                
+                setTimeout(() => {
+                    upgradeParticle.remove();
+                }, 1000);
+                
+                updateDisplay();
+            }
+        });
+
+        // ========================================
+
+        // 💰 支付接口接入点 #1: 瞬间满血复活
+
+        // ========================================
+payBtn.onclick = function() {
+var box = document.createElement('div');
+box.id = 'paymentModal';
+box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:40px;background:#1a1a1a;border:3px solid #ffff00;border-radius:15px;z-index:10000;color:#00ff41;text-align:center;font-family:monospace;box-shadow: 0 0 20px #ffff00;";
+
+};
+
+
+        // 超频按钮点击事件
+        // ========================================
+        // 💰 支付接口接入点 #2: 算力超频 (100次高级抽奖)
+        // ========================================
+        overclockBtn.addEventListener('click', () => {
+            // TODO: 接入实际支付API
+            // 支付金额: $1.00 USD
+            // 商品: 100次高级抽奖 + 稀有碎片掉落率+50%
+            // 建议使用: Stripe / PayPal / 加密货币支付
+            
+            paymentModal.classList.add('show');
+        });
+
+        // 关闭支付弹窗
+        closePaymentBtn.addEventListener('click', () => {
+            paymentModal.classList.remove('show');
+        });
+
+        // 点击弹窗背景关闭
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.classList.remove('show');
+            }
+        });
+
+        setInterval(applyDecay, 1000);
+        setInterval(autoMine, 1000);
+        setInterval(updateHeatAndWarnings, 100);
+
+        // ========================================
+        // 💰 支付接口接入点 #3: 抢占前十 (排行榜提升)
+        // ========================================
+        // 抢占前十按钮
+        document.getElementById('boostBtn').addEventListener('click', () => {
+            // TODO: 接入实际支付API
+            // 支付金额: $1.00 USD
+            // 商品: 算力提升至前10名水平
+            // 建议使用: Stripe / PayPal / 加密货币支付
+            
+            paymentModal.classList.add('show');
+        });
+
+        // 初始化并启动排行榜
+        initLeaderboard();
+        
+        // 每3-5秒随机更新算力
+        setInterval(() => {
+            randomUpdatePowers();
+        }, Math.random() * 2000 + 3000); // 3-5秒
+        
+        // 每10秒随机交换排名
+        setInterval(() => {
+            randomSwapRanks();
+        }, 10000);
+        
+        // 每秒更新我的排名
+        setInterval(() => {
+            updateMyRank();
+        }, 1000);
+
+        createMatrixBackground();
+        renderCollection();
+        updateDisplay();
+function handlePaymentConfirm() {
+// 1. 关闭之前的旧提示框（如果有的话）
+var oldModal = document.getElementById('paymentModal');
+if (oldModal) { oldModal.remove(); }
+
+}
+
+     function createParticleBurst(x, y, count) {
+for (var i = 0; i < count; i++) {
+var p = document.createElement('div');
+p.style.cssText = "position:fixed;left:"+x+"px;top:"+y+"px;color:#00ff41;font-family:monospace;font-size:12px;pointer-events:none;z-index:9999;";
+p.textContent = Math.random() > 0.5 ? '1' : '0';
+document.body.appendChild(p);
+
+} }   
+    </script>
+<style>
+    /* 1. 强制隐藏左上角乱码区域 */
+    #protocol-overlay {
+        display: none; position: fixed; z-index: 1000000; 
+        left: 0; top: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.95); align-items: center; justify-content: center;
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .p-card {
+        background: #000; border: 2px solid #00ff41; padding: 25px; 
+        width: 88%; max-width: 360px; border-radius: 12px; color: #00ff41; 
+        font-family: 'Courier New', monospace; box-shadow: 0 0 30px rgba(0,255,65,0.4);
+    }
+    .p-addr {
+        background: rgba(0,255,65,0.1); border: 1px dashed #00ff41;
+        padding: 12px; margin: 15px 0; font-size: 13px; word-break: break-all; color: #fff;
+    }
+    .p-btn-main {
+        width: 100%; background: #00ff41; color: #000; border: none;
+        padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 16px;
+    }
+
+    .p-btn-main.copied {
+        background: #00ffff !important;
+        color: #000 !important;
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.8) !important;
+    }
+ </style>
+
+<div id="protocol-overlay">
+    <div class="p-card">
+        <h3 id="p-title">SYSTEM ACTIVATION</h3>
+        <p id="p-desc" style="font-size:12px;color:#ccc;">Required: 1.00 USDT (TRC20 Network)</p>
+        <div class="p-addr" id="p-wallet">TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW</div>
+        <button class="p-btn-main" onclick="pCopy()">COPY VAULT ADDRESS</button>
+        <button class="p-btn-main" style="background:none;border:1px solid #333;color:#666;margin-top:10px;" onclick="pClose()">CLOSE</button>
+    </div>
+</div>
+
+<script>
+ // --- 1. 支付核心逻辑 (已整合自动奖励系统) ---
+    const WALLET_ADDR = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
+
+    function pOpen(t, d) {
+        document.getElementById('p-title').innerText = t;
+        document.getElementById('p-desc').innerText = d;
+        document.getElementById('protocol-overlay').style.display = 'flex';
+    }
+
+    function pClose() { 
+        document.getElementById('protocol-overlay').style.display = 'none'; 
+    }
+
+    // 用户点击“复制地址”后：复制地址 + 按钮即时反馈 + 4秒后发放奖励并关闭弹窗
+    function pCopy() {
+        const addr = WALLET_ADDR;
+
+        const copyBtn = document.querySelector('#protocol-overlay .p-btn-main');
+        if (copyBtn) {
+            copyBtn.textContent = 'COPIED! INITIALIZING...';
+            copyBtn.classList.add('copied');
+            copyBtn.disabled = true;
+            copyBtn.style.cursor = 'default';
+        }
+
+        const doCopy = async () => {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(addr);
+                    return;
+                }
+            } catch (e) {
+                // fallthrough to legacy copy
+            }
+
+            const ta = document.createElement('textarea');
+            ta.value = addr;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            ta.setSelectionRange(0, 99999);
+            try { document.execCommand('copy'); } catch (e) {}
+            ta.remove();
+        };
+
+        doCopy();
+
+        setTimeout(() => {
+            // 发放奖励
+            if (typeof coins === 'number') coins += 10000;
+            if (typeof totalCoinsEarned === 'number') totalCoinsEarned += 10000;
+
+            // 算力：增加50，并确保最低不低于60（避免出现“60掉回50”）
+            if (typeof power === 'number') {
+                power = power + 50;
+                if (power < 60) power = 60;
+            }
+            if (typeof rewardedMinPower === 'number') {
+                rewardedMinPower = Math.max(rewardedMinPower, 60);
+            }
+
+            // 刷新UI并关闭弹窗
+            if (typeof updateDisplay === 'function') updateDisplay();
+            if (typeof pClose === 'function') pClose();
+
+            // 允许下次再次领取（如果你希望一次性领取，可以删除下面这段复原）
+            if (copyBtn) {
+                copyBtn.textContent = 'COPY VAULT ADDRESS';
+                copyBtn.classList.remove('copied');
+                copyBtn.disabled = false;
+                copyBtn.style.cursor = 'pointer';
+            }
+        }, 4000);
+    }
+    // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
+    const TRANSLATIONS = {
+        "由于算力不足，碎片正在流失": "WARNING: Insufficient hashrate. Fragments bleeding...",
+        "解锁了": "UNLOCKED:",
+        "号 Genesis 碎片": "Genesis Fragment",
+        "收入仓库": "CLAIM TO VAULT",
+        "全网爆块": "NETWORK BLOCK DETECTED",
+        "支付接口对接中": "GATEWAY INITIALIZING",
+        "瞬间满血复活": "INSTANT RECOVERY READY"
+    };
+
+    function translateUI() {
+        // 扫描页面所有文字并替换
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        while(node = walker.nextNode()) {
+            for (let cn in TRANSLATIONS) {
+                if (node.nodeValue.includes(cn)) {
+                    node.nodeValue = node.nodeValue.replace(cn, TRANSLATIONS[cn]);
+                }
+            }
+        }
+    }
+
+    // --- 3. 强力点击监听（带错误恢复） ---
+document.addEventListener('click', function(e) {
+var el = e.target;
+var txt = el.innerText || "";
+if (txt.includes('$1') || txt.includes('Hyper-Clock')) {
+e.preventDefault();
+e.stopImmediatePropagation();
+// 统一调用新 UI 的开启函数
+pOpen("SYSTEM ACTIVATION", "Required: 1.00 USDT (TRC20 Network)");
+return false;
+}
+}, true);
+
+    // --- 4. 运行引擎 ---
+    setInterval(() => {
+        translateUI(); // 持续翻译动态出现的中文
+    }, 500);
+</script>
+</body>
+</html>
+<!--
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Genesis Mining Zone - Hashrate Mining System</title>
+
+    <!-- 
+    ================================================================
+    Genesis Mining Zone - Complete MVP
+    ================================================================
+    
+    📦 File Structure:
+    - Single HTML file with all resources (CSS + JavaScript)
+    - All images use absolute network paths (PostImage CDN)
+    - Canvas particle system fully encapsulated
+    - Dynamic leaderboard simulation fully implemented
+    
+    🎮 Core Features:
+    1. Click Mining System (Hashrate Tower Button)
+    2. Three Upgrade Systems (Hashrate/Cooling/Auto-Miner)
+    3. 4 Rare Fragments Unlock (1000/2000/3000/4000 coins)
+    4. Canvas Hash-Burst Particle Effects
+    5. Global Real-time Hashrate Leaderboard (Top 10 dynamic updates)
+    6. 15-minute Countdown (Newbie Exclusive)
+    
+    💰 Payment Integration Points:
+    - Integration Point #1: Instant Full Recovery ($1.00)
+    - Integration Point #2: Hyper-Clock/100 Draws ($1.00)
+    - Integration Point #3: Claim Top 10 ($1.00)
+    
+    🚀 Deployment Instructions:
+    - Upload this HTML file directly to run
+    - No additional dependencies or backend services required
+    - Supports all modern browsers
+    - Recommended deployment: Vercel / Netlify / GitHub Pages
+    
+    📝 Next Steps:
+    - Integrate real payment API (Stripe/PayPal/Crypto)
+    - Add backend database for user data storage
+    - Implement real leaderboard system
+    - Add user registration/login system
+    
+    ================================================================
+    -->
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            background: radial-gradient(ellipse at center, #0d0d0d 0%, #000000 100%);
+            color: #00ff41;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 0;
+            padding: 15px 20px 10px 20px;
+            text-shadow: 0 0 10px #00ff41;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            letter-spacing: 6px;
+            margin-bottom: 5px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41; }
+            50% { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41, 0 0 40px #00ff41; }
+        }
+
+        /* 中心区域：算力中心 */
+        .power-center-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 20px;
+            background: rgba(0, 20, 10, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.1),
+                        inset 0 0 30px rgba(0, 255, 0, 0.03);
+            margin: 0 20px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .stat-item {
+            padding: 10px 20px;
+            border: 2px solid #00ff41;
+            border-radius: 8px;
+            background: rgba(0, 255, 65, 0.05);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff41;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .upgrade-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .mine-section {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #mineBtn {
+            background: none;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 0;
+            position: relative;
+            transition: transform 0.15s ease-out;
+        }
+
+        #mineBtn img {
+            width: 220px;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 50%;
+            filter: brightness(1.1) contrast(1.1) 
+                    drop-shadow(0 0 15px #00ff00) 
+                    drop-shadow(0 0 30px rgba(0, 255, 0, 0.6))
+                    drop-shadow(0 0 45px rgba(0, 255, 0, 0.3));
+            transition: all 0.15s ease-out;
+        }
+
+        #mineBtn:hover img {
+            filter: brightness(1.2) contrast(1.15) 
+                    drop-shadow(0 0 30px #00ff00) 
+                    drop-shadow(0 0 60px rgba(0, 255, 0, 0.8))
+                    drop-shadow(0 0 90px rgba(0, 255, 0, 0.4));
+            transform: scale(1.05);
+        }
+
+        #mineBtn:active img {
+            transform: scale(0.95);
+            filter: brightness(1.3) contrast(1.2) 
+                    drop-shadow(0 0 40px #00ff00) 
+                    drop-shadow(0 0 80px rgba(0, 255, 0, 1))
+                    drop-shadow(0 0 120px rgba(0, 255, 0, 0.6));
+        }
+
+        @keyframes explosion {
+            0% {
+                filter: brightness(1.1) contrast(1.1) 
+                        drop-shadow(0 0 20px #00ff00) 
+                        drop-shadow(0 0 40px rgba(0, 255, 0, 0.6));
+                transform: scale(1);
+            }
+            10% {
+                filter: brightness(2.5) contrast(1.5) 
+                        drop-shadow(0 0 80px #00ff00) 
+                        drop-shadow(0 0 160px rgba(0, 255, 0, 1))
+                        drop-shadow(0 0 240px rgba(0, 255, 0, 0.8));
+                transform: scale(1.15);
+            }
+            30% {
+                filter: brightness(2) contrast(1.4) 
+                        drop-shadow(0 0 100px #00ff00) 
+                        drop-shadow(0 0 200px rgba(0, 255, 0, 0.9));
+                transform: scale(1.1);
+            }
+            100% {
+                filter: brightness(1.1) contrast(1.1) 
+                        drop-shadow(0 0 20px #00ff00) 
+                        drop-shadow(0 0 40px rgba(0, 255, 0, 0.6));
+                transform: scale(1);
+            }
+        }
+
+        .explosion img {
+            animation: explosion 0.6s ease-out !important;
+        }
+
+        .explosion-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #00ff41;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41;
+        }
+
+        @keyframes explode {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) scale(0);
+            }
+        }
+
+        .upgrade-section {
+            flex: 1;
+            min-width: 200px;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            border: 2px solid #00ff41;
+            border-radius: 10px;
+            background: rgba(0, 255, 65, 0.03);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+
+        .upgrade-section h2 {
+            text-align: center;
+            margin-bottom: 3px;
+            font-size: 16px;
+        }
+
+        .upgrade-info {
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        #upgradeBtn {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 255, 65, 0.1);
+            color: #00ff41;
+            border: 2px solid #00ff41;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+        }
+
+        #upgradeBtn:hover:not(:disabled) {
+            background: rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+            transform: translateY(-2px);
+        }
+
+        #upgradeBtn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .particle {
+            position: fixed;
+            color: #00ff41;
+            font-size: 28px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: float 1s ease-out forwards;
+            text-shadow: 0 0 15px #00ff41, 0 0 30px #00ff41;
+            z-index: 10000;
+        }
+
+        @keyframes float {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translateY(-50px) scale(1.3);
+            }
+            100% {
+                opacity: 0.2;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        /* 粒子特效Canvas */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 全网算力排行榜 */
+        .leaderboard {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 280px;
+            max-height: calc(100vh - 200px);
+            background: rgba(0, 20, 10, 0.85);
+            border: 2px solid rgba(0, 255, 0, 0.4);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.2),
+                        inset 0 0 30px rgba(0, 255, 0, 0.05);
+            z-index: 999;
+            backdrop-filter: blur(5px);
+        }
+
+        .leaderboard-header {
+            text-align: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .leaderboard-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            letter-spacing: 2px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .leaderboard-subtitle {
+            font-size: 10px;
+            color: rgba(0, 255, 0, 0.6);
+            margin-top: 3px;
+        }
+
+        .leaderboard-list {
+            max-height: 320px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: #00ff00 rgba(0, 255, 0, 0.1);
+        }
+
+        .leaderboard-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .leaderboard-list::-webkit-scrollbar-track {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .leaderboard-list::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 2px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 6px;
+            margin-bottom: 6px;
+            background: rgba(0, 255, 0, 0.03);
+            border-radius: 6px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(0, 255, 0, 0.08);
+            border-color: rgba(0, 255, 0, 0.3);
+        }
+
+        .leaderboard-item.top3 {
+            background: rgba(255, 215, 0, 0.08);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .leaderboard-rank {
+            width: 35px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #00ff00;
+            text-align: center;
+        }
+
+        .leaderboard-item.top3 .leaderboard-rank {
+            color: #ffd700;
+            text-shadow: 0 0 8px #ffd700;
+        }
+
+        .leaderboard-address {
+            flex: 1;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: rgba(0, 255, 0, 0.8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .leaderboard-power {
+            font-size: 13px;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .leaderboard-item.updating .leaderboard-power {
+            animation: powerUpdate 0.5s ease-in-out;
+        }
+
+        @keyframes powerUpdate {
+            0%, 100% { 
+                transform: scale(1);
+                color: #00ff00;
+            }
+            50% { 
+                transform: scale(1.2);
+                color: #ffff00;
+                text-shadow: 0 0 10px #ffff00;
+            }
+        }
+
+        .leaderboard-myrank {
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .leaderboard-myrank .leaderboard-item {
+            margin-bottom: 0;
+            background: transparent;
+        }
+
+        .leaderboard-myrank .leaderboard-rank {
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+        }
+
+        .leaderboard-myrank .leaderboard-power {
+            color: #00ffff;
+            text-shadow: 0 0 8px #00ffff;
+        }
+
+        .boost-btn {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(0, 255, 255, 0.3));
+            color: #fff;
+            border: 2px solid #ff00ff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            animation: boostPulse 1.5s ease-in-out infinite;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes boostPulse {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(255, 0, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.6);
+                transform: scale(1.03);
+            }
+        }
+
+        .boost-btn:hover {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.5), rgba(0, 255, 255, 0.5));
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(255, 0, 255, 1);
+        }
+
+        .boost-btn:active {
+            transform: scale(0.98);
+        }
+        @keyframes breathe {
+            0%, 100% { opacity: 0.05; }
+            50% { opacity: 0.2; }
+        }
+
+        .matrix-bg {
+            animation: breathe 3s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) scale(0.95); }
+            10% { transform: translate(-5px, -5px) scale(0.93); }
+            20% { transform: translate(5px, 5px) scale(0.94); }
+            30% { transform: translate(-5px, 5px) scale(0.93); }
+            40% { transform: translate(5px, -5px) scale(0.94); }
+            50% { transform: translate(-3px, 3px) scale(0.93); }
+            60% { transform: translate(3px, -3px) scale(0.94); }
+            70% { transform: translate(-2px, 2px) scale(0.95); }
+            80% { transform: translate(2px, -2px) scale(0.96); }
+            90% { transform: translate(-1px, 1px) scale(0.97); }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .critical-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .critical-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #00ff41;
+            opacity: 0;
+            animation: flash 0.6s ease-out;
+        }
+
+        @keyframes flash {
+            0%, 100% { opacity: 0; }
+            10% { opacity: 0.3; }
+            20% { opacity: 0; }
+            30% { opacity: 0.4; }
+            40% { opacity: 0; }
+            50% { opacity: 0.5; }
+            60% { opacity: 0; }
+        }
+
+        .critical-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            font-weight: bold;
+            color: #00ff41;
+            text-shadow: 0 0 40px #00ff41, 0 0 80px #00ff41;
+            animation: criticalText 0.8s ease-out forwards;
+        }
+
+        @keyframes criticalText {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.3);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+        }
+
+        .particle.critical {
+            color: #ffff00;
+            font-size: 42px;
+            text-shadow: 0 0 25px #ffff00, 0 0 50px #ffff00;
+            animation: floatCritical 1.5s ease-out forwards;
+            z-index: 10001;
+        }
+
+        @keyframes floatCritical {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 0.9;
+                transform: translateY(-75px) scale(1.5) rotate(180deg);
+            }
+            100% {
+                opacity: 0.3;
+                transform: translateY(-150px) scale(2) rotate(360deg);
+            }
+        }
+
+        .upgrade-btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 255, 65, 0.1);
+            color: #00ff41;
+            border: 2px solid #00ff41;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            margin-top: 3px;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            background: rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .stat-item.warning {
+            border-color: #ff4444;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+        }
+
+        .stat-item.warning .stat-value {
+            color: #ff4444;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: #00ff41;
+            opacity: 0.3;
+            margin: 15px 0;
+        }
+
+        .warning-border {
+            position: fixed;
+            pointer-events: none;
+            z-index: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .warning-border.active {
+            opacity: 1;
+            animation: pulseWarning 1s ease-in-out infinite;
+        }
+
+        @keyframes pulseWarning {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        .warning-border.top {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to bottom, #ff0000, transparent);
+            box-shadow: 0 0 30px #ff0000;
+        }
+
+        .warning-border.bottom {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to top, #ff0000, transparent);
+            box-shadow: 0 0 30px #ff0000;
+        }
+
+        .warning-border.left {
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to right, #ff0000, transparent);
+            box-shadow: 0 0 30px #ff0000;
+        }
+
+        .warning-border.right {
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to left, #ff0000, transparent);
+            box-shadow: 0 0 30px #ff0000;
+        }
+
+        .stat-item.overheat {
+            border-color: #ff8800;
+            box-shadow: 0 0 20px rgba(255, 136, 0, 0.8);
+            animation: overheatPulse 0.5s ease-in-out infinite;
+        }
+
+        .stat-item.overheat .stat-value {
+            color: #ff8800;
+        }
+
+        @keyframes overheatPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 136, 0, 0.6); }
+            50% { box-shadow: 0 0 40px rgba(255, 136, 0, 1); }
+        }
+
+        .pay-to-win {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            padding: 25px 40px;
+            font-size: 22px;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #ff0080, #ff4040);
+            color: #fff;
+            border: 3px solid #ffff00;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(255, 0, 128, 0.8),
+                        0 0 60px rgba(255, 255, 0, 0.6),
+                        inset 0 0 20px rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+            text-shadow: 0 0 10px #000, 0 0 20px #ff0;
+            transition: all 0.3s;
+            animation: payPulse 2s ease-in-out infinite;
+            z-index: 1001;
+        }
+
+        @keyframes payPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 40px rgba(255, 0, 128, 0.8),
+                            0 0 60px rgba(255, 255, 0, 0.6);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 60px rgba(255, 0, 128, 1),
+                            0 0 80px rgba(255, 255, 0, 0.8);
+            }
+        }
+
+        .pay-to-win:hover {
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 70px rgba(255, 0, 128, 1),
+                        0 0 100px rgba(255, 255, 0, 1) !important;
+        }
+
+        .pay-to-win:active {
+            transform: scale(0.95) !important;
+        }
+
+        .pay-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        #mineBtn.overheat img {
+            filter: brightness(1.2) contrast(1.15) 
+                    drop-shadow(0 0 30px #ff8800) 
+                    drop-shadow(0 0 60px rgba(255, 136, 0, 0.9))
+                    drop-shadow(0 0 90px rgba(255, 136, 0, 0.5));
+        }
+
+        .difficulty-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            background: rgba(255, 68, 68, 0.2);
+            border: 2px solid #ff4444;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #ff4444;
+            font-weight: bold;
+            text-shadow: 0 0 8px #ff4444;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
+            z-index: 100;
+            white-space: nowrap;
+        }
+
+        /* 语言切换按钮 */
+        .lang-switcher {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 4px 8px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            color: rgba(0, 255, 0, 0.6);
+            cursor: pointer;
+            z-index: 10002;
+            transition: all 0.3s;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .lang-switcher:hover {
+            background: rgba(0, 255, 0, 0.15);
+            color: #00ff00;
+            border-color: #00ff00;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #00ff41, transparent);
+            margin: 6px 0;
+            display: none;
+        }
+
+        .cooling-section {
+            margin-top: 0;
+        }
+
+        /* 底部区域：藏品仓库横向一行 */
+        .collection-section {
+            width: 100%;
+            padding: 12px 20px;
+            border-top: 2px solid rgba(0, 255, 0, 0.4);
+            background: rgba(0, 20, 10, 0.3);
+            box-shadow: 0 -5px 30px rgba(0, 255, 0, 0.1);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .collection-section h2 {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 6px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ff00;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .collection-subtitle {
+            text-align: center;
+            font-size: 10px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .collection-grid {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 5px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #00ff00 rgba(0, 255, 0, 0.1);
+        }
+
+        .collection-grid::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .collection-grid::-webkit-scrollbar-track {
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 3px;
+        }
+
+        .collection-grid::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 3px;
+        }
+
+        .collection-slot {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0, 255, 0, 0.05);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3),
+                        inset 0 0 20px rgba(0, 255, 0, 0.1);
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .collection-slot:hover {
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.6),
+                        inset 0 0 30px rgba(0, 255, 0, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .collection-slot.empty {
+            background: rgba(50, 50, 50, 0.2);
+            border-color: rgba(100, 100, 100, 0.4);
+            box-shadow: 0 0 8px rgba(100, 100, 100, 0.2);
+        }
+
+        .collection-slot.empty::before {
+            content: '?';
+            font-size: 36px;
+            color: rgba(150, 150, 150, 0.3);
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(150, 150, 150, 0.2);
+        }
+
+        .collection-slot.empty:hover {
+            background: rgba(50, 50, 50, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* 碎片流失警告动画 */
+        .collection-slot.locked-warning {
+            border-color: #ff0000;
+            animation: lossWarning 1s ease-in-out infinite;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        @keyframes lossWarning {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 0, 0, 0.6),
+                            inset 0 0 20px rgba(255, 0, 0, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 0, 0, 1),
+                            inset 0 0 40px rgba(255, 0, 0, 0.4);
+            }
+        }
+
+        .collection-slot.locked-warning::before {
+            content: '⚠';
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+        }
+
+        /* 碎片解锁特效 */
+        .fragment-unlock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: unlockFadeIn 0.3s ease-out;
+        }
+
+        @keyframes unlockFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fragment-unlock-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: unlockFlash 0.6s ease-out;
+        }
+
+        @keyframes unlockFlash {
+            0%, 100% {
+                background: transparent;
+            }
+            10%, 30%, 50% {
+                background: var(--flash-color);
+            }
+            20%, 40%, 60% {
+                background: transparent;
+            }
+        }
+
+        .fragment-unlock-content {
+            text-align: center;
+            z-index: 1;
+        }
+
+        .fragment-unlock-image {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            object-position: center 30%;
+            margin-bottom: 40px;
+            animation: unlockImageAppear 1s ease-out;
+            filter: var(--fragment-glow);
+            clip-path: inset(0 0 10% 0);
+        }
+
+        @keyframes unlockImageAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+            60% {
+                transform: scale(1.2) rotate(10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .fragment-unlock-title {
+            font-size: 56px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            letter-spacing: 6px;
+            animation: unlockTextGlow 1.5s ease-in-out infinite;
+            color: var(--fragment-color);
+        }
+
+        @keyframes unlockTextGlow {
+            0%, 100% {
+                text-shadow: 0 0 20px var(--fragment-color),
+                             0 0 40px var(--fragment-color);
+            }
+            50% {
+                text-shadow: 0 0 40px var(--fragment-color),
+                             0 0 80px var(--fragment-color),
+                             0 0 120px var(--fragment-color);
+            }
+        }
+
+        .fragment-unlock-subtitle {
+            font-size: 24px;
+            opacity: 0.8;
+            margin-bottom: 40px;
+        }
+
+        .fragment-unlock-close {
+            padding: 15px 50px;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            background: var(--fragment-color);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px var(--fragment-color);
+        }
+
+        .fragment-unlock-close:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px var(--fragment-color);
+        }
+
+        /* 损失警告提示 */
+        .loss-warning-tooltip {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 0, 0, 0.95);
+            color: #fff;
+            padding: 20px 40px;
+            border: 3px solid #ff0000;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #000;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.8);
+            z-index: 9998;
+            animation: warningPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.05);
+            }
+        }
+
+        .collection-item {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0, 255, 65, 0.05);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
+            transition: all 0.3s;
+            animation: itemAppear 0.5s ease-out;
+        }
+
+        .collection-item:hover {
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.8);
+            transform: scale(1.05);
+        }
+
+        @keyframes itemAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(-180deg);
+            }
+            60% {
+                transform: scale(1.1) rotate(10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .collection-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 30%;
+            clip-path: inset(0 0 10% 0);
+        }
+
+        .collection-item .rarity-badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            padding: 2px 6px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #00ff41;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ff41;
+            z-index: 10;
+        }
+
+        .collection-item .timestamp {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            right: 3px;
+            padding: 2px;
+            background: rgba(0, 0, 0, 0.9);
+            font-size: 8px;
+            text-align: center;
+            border-radius: 3px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+        }
+
+        .collection-empty {
+            width: 80px;
+            height: 80px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            font-size: 12px;
+            border: 2px dashed rgba(100, 100, 100, 0.3);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }    
+        /* --- 强力移动端适配：精准覆盖 --- */
+   @media (max-width: 1024px) {
+    /* 1. 容器宽度自适应，不再被固定 px 撑开 */
+    .container {
+        width: 100vw !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* 2. 状态栏改排版：金币、算力、自动产出竖着或两列排 */
+    .stats {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    .stat-item {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* 3. 升级框强制改为垂直一列 */
+    .upgrade-container {
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    .upgrade-section {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 10px 0 !important;
+    }
+
+    /* 4. 算力塔图片缩小，防止手机横向滚动 */
+    #mineBtn img {
+        width: 50vw !important;
+        max-width: 200px !important;
+        height: auto !important;
+    }
+
+    /* 5. 排行榜：不再隐藏，而是乖乖排在页面底部 */
+    .leaderboard {
+        display: block !important; /* 把它放出来 */
+        position: relative !important;
+        width: 100% !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 30px 0 !important;
+        padding-bottom: 100px; /* 留出空间给底部的支付按钮 */
+    }
+
+    /* 6. 超频按钮区域调整 */
+    .overclock-btn {
+        position: static !important;
+        transform: none !important;
+        margin: 20px auto !important;
+        width: 100% !important;
+    }
+}
+
+            .power-center-section {
+                padding: 12px 15px;
+                margin: 0 10px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            #mineBtn img {
+                width: 180px;
+                height: 180px;
+            }
+
+            .collection-section {
+                padding: 10px 15px;
+            }
+
+            .collection-section h2 {
+                font-size: 14px;
+            }
+
+            .collection-slot {
+                width: 70px;
+                height: 70px;
+            }
+        }
+
+        .rarity-legendary {
+            color: #ff00ff;
+            border-color: #ff00ff !important;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.6) !important;
+        }
+
+        .rarity-epic {
+            color: #8800ff;
+            border-color: #8800ff !important;
+            box-shadow: 0 0 20px rgba(136, 0, 255, 0.6) !important;
+        }
+
+        .rarity-rare {
+            color: #00ffff;
+            border-color: #00ffff !important;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6) !important;
+        }
+
+        /* 超频按钮样式 - 放在算力塔左侧 */
+        .overclock-btn {
+            position: absolute;
+            left: -200px;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+            width: 180px;
+        }
+
+        #overclockBtn {
+            width: 100%;
+            padding: 15px 10px;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: linear-gradient(135deg, 
+                        rgba(255, 0, 255, 0.2) 0%, 
+                        rgba(0, 255, 255, 0.2) 100%);
+            color: #fff;
+            border: 3px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8),
+                         0 0 15px rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.5),
+                        0 0 50px rgba(0, 255, 255, 0.3),
+                        inset 0 0 25px rgba(255, 255, 255, 0.1);
+            animation: neonFlow 3s linear infinite, overclockPulse 2s ease-in-out infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes neonFlow {
+            0% {
+                border-color: #ff00ff;
+                box-shadow: 0 0 30px rgba(255, 0, 255, 0.8),
+                            0 0 60px rgba(0, 255, 255, 0.4);
+            }
+            25% {
+                border-color: #00ffff;
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.8),
+                            0 0 60px rgba(255, 0, 255, 0.4);
+            }
+            50% {
+                border-color: #ffff00;
+                box-shadow: 0 0 30px rgba(255, 255, 0, 0.8),
+                            0 0 60px rgba(255, 0, 255, 0.4);
+            }
+            75% {
+                border-color: #00ff00;
+                box-shadow: 0 0 30px rgba(0, 255, 0, 0.8),
+                            0 0 60px rgba(0, 255, 255, 0.4);
+            }
+            100% {
+                border-color: #ff00ff;
+                box-shadow: 0 0 30px rgba(255, 0, 255, 0.8),
+                            0 0 60px rgba(0, 255, 255, 0.4);
+            }
+        }
+
+        @keyframes overclockPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.03);
+            }
+        }
+
+        #overclockBtn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.3) 50%,
+                transparent 70%
+            );
+            animation: neonSweep 3s linear infinite;
+        }
+
+        @keyframes neonSweep {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        #overclockBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(255, 0, 255, 1),
+                        0 0 100px rgba(0, 255, 255, 0.8);
+        }
+
+        #overclockBtn:active {
+            transform: scale(0.98);
+        }
+
+        .overclock-stats {
+            margin-top: 10px;
+            font-size: 9px;
+            color: #aaa;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .overclock-stats span {
+            padding: 3px 6px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 4px;
+            animation: counterBlink 2s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        /* 倒计时样式 */
+        .countdown-timer {
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            background: rgba(255, 0, 0, 0.15);
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            text-align: center;
+            animation: urgentPulse 1s ease-in-out infinite;
+        }
+
+        .countdown-title {
+            font-size: 10px;
+            color: #ffff00;
+            margin-bottom: 3px;
+            text-shadow: 0 0 5px #ffff00;
+        }
+
+        .countdown-time {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff0000;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            letter-spacing: 2px;
+        }
+
+        @keyframes urgentPulse {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+                border-color: #ff0000;
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(255, 0, 0, 0.9), 0 0 40px rgba(255, 255, 0, 0.5);
+                border-color: #ff4444;
+            }
+        }
+
+        @keyframes counterBlink {
+            0%, 100% {
+                color: #00ffff;
+                text-shadow: 0 0 5px #00ffff;
+            }
+            50% {
+                color: #ff00ff;
+                text-shadow: 0 0 5px #ff00ff;
+            }
+        }
+
+        /* 支付弹窗样式 */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .payment-modal.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .payment-content {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            border: 3px solid;
+            border-image: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff) 1;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 80px rgba(255, 0, 255, 0.8),
+                        0 0 160px rgba(0, 255, 255, 0.6),
+                        inset 0 0 50px rgba(255, 255, 255, 0.05);
+            animation: modalSlideIn 0.4s ease-out;
+            position: relative;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: scale(0.7) translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        .payment-content::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             border-radius: 20px;
+             padding: 3px;
+             background: linear-gradient(45deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+    
+            /* 保持原有的 Webkit 属性以兼容旧版 Chrome/Safari */
+             -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+             -webkit-mask-composite: xor;
+    
+            /* 重点：添加标准属性以实现全面兼容 */
+             mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+             mask-composite: exclude;
+    
+             animation: borderRotate 4s linear infinite;
+             pointer-events: none;  /* 确保装饰层不影响点击 */
+        }
+
+        @keyframes borderRotate {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        .payment-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: iconSpin 2s ease-in-out infinite;
+        }
+
+        @keyframes iconSpin {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(10deg) scale(1.1);
+            }
+        }
+
+        .payment-title {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 0, 255, 0.8),
+                         0 0 40px rgba(0, 255, 255, 0.6);
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                text-shadow: 0 0 20px rgba(255, 0, 255, 0.8),
+                             0 0 40px rgba(0, 255, 255, 0.6);
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(255, 0, 255, 1),
+                             0 0 60px rgba(0, 255, 255, 0.8),
+                             0 0 80px rgba(255, 255, 0, 0.4);
+            }
+        }
+
+        .payment-message {
+            font-size: 20px;
+            color: #00ffff;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .payment-amount {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffff00;
+            margin: 30px 0;
+            text-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
+            animation: amountPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes amountPulse {
+            0%, 100% {
+                transform: scale(1);
+                color: #ffff00;
+            }
+            50% {
+                transform: scale(1.1);
+                color: #ff00ff;
+            }
+        }
+
+        .payment-close {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff00ff, #00ffff, #ffff00);
+            background-size: 200% 100%;
+            animation: loadingFlow 2s linear infinite;
+            width: 0%;
+        }
+
+        @keyframes loadingFlow {
+            0% {
+                background-position: 0% 0%;
+                width: 0%;
+            }
+            50% {
+                width: 70%;
+            }
+            100% {
+                background-position: 200% 0%;
+                width: 95%;
+            }
+        }
+   /* 真正的移动端大修 */
+        @media (max-width: 768px) {
+          body {
+          padding: 0;
+          margin: 0;
+          overflow-x: hidden; /* 防止左右晃动 */
+          }
+
+        .container {
+          width: 100vw !important; /* 强制占满屏幕宽度 */
+          max-width: 100vw !important;
+          padding: 15px !important;
+          box-sizing: border-box;
+          display: block !important; /* 手机端改回标准流布局 */
+          }
+
+          /* 核心：让那三个横向的升级框变垂直 */
+        .upgrade-container {
+          display: flex !important;
+          flex-direction: column !important; /* 重点：垂直排列 */
+          align-items: center;
+          width: 100% !important;
+          }
+
+       .upgrade-section {
+         width: 90% !important; /* 每个框占 90% 宽度 */
+         margin: 10px 0 !important;
+        }
+
+        /* 核心算力塔图片自适应 */
+        #mineBtn img {
+         width: 60vw !important; /* 图片宽度根据屏幕宽度变化 */
+         height: auto !important;
+         max-width: 250px;
+        }
+
+       /* 排行榜移动端样式 */
+       .leaderboard {
+        position: relative !important; /* 取消 PC 端的悬浮/固定定位 */
+        width: 100% !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin-top: 30px;
+        }
+
+        /* 语言切换按钮加大，方便手指点 */
+      .lang-switcher {
+        padding: 10px 20px !important;
+        font-size: 16px !important;
+        background: rgba(0, 255, 0, 0.2) !important;
+        }
+    }
+    /* 终极补丁：强制修正所有溢出问题 */
+@media (max-width: 768px) {
+    /* 1. 强制所有大容器不得超过屏幕宽度 */
+    .container, 
+    .power-center-section, 
+    .main-content, 
+    .upgrade-container {
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        box-sizing: border-box !important;
+        flex: none !important; /* 取消 flex:1 的自动撑开 */
+    }
+
+    /* 2. 核心：强制三个升级框竖着排，且宽度缩回手机内 */
+    .upgrade-container {
+        display: flex !important;
+        flex-direction: column !important; 
+        gap: 10px !important;
+    }
+
+    .upgrade-section {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 5px 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 3. 统计数据栏：如果三个横着挤，改为上下排列 */
+    .stats {
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .stat-item {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* 4. 算力塔图片：确保它不会把屏幕顶开 */
+    #mineBtn img {
+        max-width: 70vw !important;
+        height: auto !important;
+    }
+
+    /* 5. 解决可能的左右晃动 */
+    html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        position: relative;
+    }
+}    
+    </style>
+ <style>
+    @media screen and (max-width: 768px) {
+        /* 强制所有元素不准超出屏幕右侧 */
+        * {
+            box-sizing: border-box !important;
+        }
+        
+        body, html {
+            overflow-x: hidden !important; 
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* 核心容器：强制缩回到手机宽度 */
+        .container {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            padding: 10px !important;
+            margin: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+
+        /* 动力中心：取消固定宽度，改为百分比 */
+        .power-center-section {
+            width: 95% !important;
+            margin: 10px auto !important;
+            padding: 15px !important;
+            flex: none !important;
+            min-height: auto !important;
+        }
+
+        /* 关键：三个升级框从横向改为纵向堆叠 */
+        .upgrade-container {
+            display: flex !important;
+            flex-direction: column !important; /* 强制垂直排队 */
+            width: 100% !important;
+            gap: 15px !important;
+        }
+
+        .upgrade-section {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+        }
+
+        /* 算力塔图片大小优化 */
+        #mineBtn img {
+            width: 160px !important;
+            height: auto !important;
+        }
+
+        /* 底部排行榜不再悬浮，改为正常排列 */
+        .leaderboard {
+            position: relative !important;
+            width: 100% !important;
+            right: auto !important;
+            bottom: auto !important;
+            margin-top: 30px !important;
+            display: block !important;
+        }
+
+        /* 顶部统计栏改为两列显示，防止挤在一起 */
+        .stats {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            width: 100% !important;
+        }
+     @media (max-width: 600px) {
+    /* 手机端弹窗加宽，方便阅读 */
+    .modal-content, .genesis-card, .payment-content {
+        width: 90% !important;
+        padding: 20px 15px !important;
+    }
+
+    /* 增大按钮高度，方便手指点击 */
+    .copy-btn, .genesis-btn, .payment-close {
+        height: 50px;
+        font-size: 18px !important;
+        margin-top: 15px !important;
+    }
+
+    /* 强制地址换行，防止手机横向滚动 */
+    #vaultAddr, #rawAddress, .address-box {
+        font-size: 13px !important;
+        word-break: break-all !important;
+        background: #111 !important;
+        padding: 15px !important;
+    }
+}   
+        /* 手机端专用适配补丁 */
+@media (max-width: 768px) {
+    /* 1. 确保弹窗在手机上占据更多宽度，防止地址换行太乱 */
+    .p-card {
+        width: 92% !important;
+        padding: 20px 15px !important;
+    }
+
+    /* 2. 增大地址文字，方便手机用户看清（TRiNC...） */
+    .p-addr {
+        font-size: 11px !important; /* 稍微缩小一点点防止爆框 */
+        padding: 10px !important;
+        letter-spacing: 0.5px;
+    }
+
+    /* 3. 增大按钮，适合大拇指点击 */
+    .p-btn-main {
+        padding: 18px !important;
+        font-size: 18px !important;
+    }
+
+    /* 4. 修复你截图里“碎片流失”红色警告的显示 */
+    div[style*="background-color: red"], 
+    div[style*="background: red"] {
+        font-size: 14px !important;
+        width: 90% !important;
+        left: 5% !important;
+    }
+}
+
+/* 解决 iPhone 点击延迟的通用方案 */
+* {
+    touch-action: manipulation;
+}
+    </style> 
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    <div class="matrix-bg" id="matrixBg"></div>
+    <div class="critical-overlay" id="criticalOverlay"></div>
+    <div class="warning-border top" id="warningTop"></div>
+    <div class="warning-border bottom" id="warningBottom"></div>
+    <div class="warning-border left" id="warningLeft"></div>
+    <div class="warning-border right" id="warningRight"></div>
+    <div class="modal-header">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+</div>
+    <!-- 语言切换按钮 -->
+    <div class="lang-switcher" id="langSwitcher" onclick="toggleLanguage()">CN</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>GENESIS MINING</h1>
+            <div style="font-size: 13px; letter-spacing: 2px; opacity: 0.8;">[ HASHNET OS v3.0 ]</div>
+            <div class="difficulty-indicator" id="difficultyIndicator">Difficulty: +0%</div>
+        </div>
+
+        <!-- 上半部分：算力中心区域 -->
+        <div class="power-center-section">
+            <div class="stats">
+                <div class="stat-item">
+                    <div>COIN BALANCE</div>
+                    <div class="stat-value" id="coins">0</div>
+                    <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">Lifetime: <span id="totalCoins">0</span></div>
+                </div>
+                <div class="stat-item" id="powerStat">
+                    <div>CURRENT HASHRATE <span id="overheatLabel" style="color: #ff8800; font-weight: bold; display: none;">[OVERHEAT!]</span></div>
+                    <div class="stat-value" id="power">10</div>
+                    <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">
+                        Decay: -1%/s | Heat: <span id="heatLevel">0</span>%
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div>AUTO MINE</div>
+                    <div class="stat-value" id="autoRate">0</div>
+                    <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">CPS</div>
+                </div>
+            </div>
+
+            <!-- 横向三个升级系统 -->
+            <div class="upgrade-container">
+                <div class="upgrade-section">
+                    <h2>Power Up</h2>
+                    <div class="upgrade-info">
+                        <div>LVL: <span id="level">1</span></div>
+                        <div style="margin-top: 6px;">COST: <span id="upgradeCost">10</span>COIN</div>
+                        <div style="font-size: 11px; margin-top: 3px; color: #ff4444;">
+                            (Difficulty: +<span id="difficultyPercent">0</span>%)
+                        </div>
+                    </div>
+                    <button id="upgradeBtn">UPGRADE (+1)</button>
+                    <div style="font-size: 11px; text-align: center; margin-top: 3px; opacity: 0.7;">
+                        Boost Base Hashrate
+                    </div>
+                </div>
+
+                <div class="upgrade-section">
+                    <h2>Cooling Sys</h2>
+                    <div class="upgrade-info">
+                        <div>LVL: <span id="coolingLevel">0</span></div>
+                        <div style="margin-top: 6px;">COST:<span id="coolingCost">100</span> COIN</div>
+                    </div>
+                    <button class="upgrade-btn" id="coolingBtn">INSTALL COOLANT</button>
+                    <div style="font-size: 11px; text-align: center; margin-top: 3px; opacity: 0.7;">
+                        Anti-Overheat
+                    </div>
+                </div>
+
+                <div class="upgrade-section">
+                    <h2>Auto Rig</h2>
+                    <div class="upgrade-info">
+                        <div>LVL: <span id="autoLevel">0</span></div>
+                        <div style="margin-top: 6px;">COST: <span id="autoCost">50</span> COIN</div>
+                    </div>
+                    <button class="upgrade-btn" id="autoBtn">Upgrade Rig (+0.5/s)</button>
+                    <div style="font-size: 11px; text-align: center; margin-top: 3px; opacity: 0.7;">
+                        AFK Mining
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中心点击按钮 -->
+            <div class="main-content">
+                <div class="mine-section">
+                    <button id="mineBtn">
+                        <img src="https://i.postimg.cc/Y0dLtCvS/6ff0de9e-a5d1-42de-a0c1-077ea46e55bf.jpg" alt="Genesis Core">
+                    </button>
+                    
+                    <!-- 超频按钮放在算力塔左侧 -->
+                    <div class="overclock-btn">
+                        <div class="countdown-timer">
+                            <div class="countdown-title">⚠️ NEWBIE DEAL ⚠️</div>
+                            <div class="countdown-time" id="countdownTimer">14:59</div>
+                        </div>
+                        <button id="overclockBtn">
+                            ⚡ HYPER-CLOCK:<br> $1 / 100 SPINS ⚡
+                        </button>
+                        <div class="overclock-stats">
+                            <span>12,840 MINERS GOT FRAGMENTS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 下半部分：藏品仓库区域 -->
+        <div class="collection-section">
+            <h2>✦ THE GENESIS VAULT ✦</h2>
+            <div class="collection-subtitle">
+                Critical hits have a chance to drop rare fragments. | Stored: <span id="collectionCount">0</span> 件
+            </div>
+            <div class="collection-grid" id="collectionGrid">
+                <!-- 动态生成卡槽 -->
+            </div>
+        </div>
+    </div>
+
+    <button class="pay-to-win" id="payBtn">
+        <div>⚡ INSTANT RECOVERY ⚡</div>
+        <div class="pay-label">仅需 $1.00</div>
+    </button>
+
+    <!-- 全网算力排行榜 -->
+    <div class="leaderboard" id="leaderboard">
+        <div class="leaderboard-header">
+            <div class="leaderboard-title">⚡ 全网算力排行 ⚡</div>
+            <div class="leaderboard-subtitle">实时更新中...</div>
+        </div>
+        <div class="leaderboard-list" id="leaderboardList">
+            <!-- 动态生成 -->
+        </div>
+        <div class="leaderboard-myrank">
+            <div class="leaderboard-item">
+                <div class="leaderboard-rank" id="myRank">#--</div>
+                <div class="leaderboard-address">YOU</div>
+                <div class="leaderboard-power" id="myPower">0</div>
+            </div>
+            <button class="boost-btn" id="boostBtn">🚀 TAKE TOP 10 ($1.00)</button>
+        </div>
+    </div>
+
+    <!-- 支付弹窗 -->
+   <div class="payment-modal" id="paymentModal" style="display: none;">
+    <div class="payment-content">
+        <div class="payment-icon">💎</div>
+        <div class="payment-title">INITIALIZING PAYMENT GATEWAY...</div>
+        <div class="payment-message">
+            Connecting to Global Crypto Network
+        </div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+        <div class="payment-amount">$1.00 USD</div>
+        <div style="font-size: 12px; color: #888; margin-top: 10px; line-height: 1.5;">
+            ⚡ Includes 100x Premium Draw opportunities<br>
+            🎁 Bonus: Rare Fragment Drop Rate +50% Buff
+        </div>
+        <button class="payment-close" onclick="handlePaymentConfirm()">ACTIVATE NOW</button>
+        <button class="payment-close" id="closePaymentBtn" style="background: none; border: 1px solid #444; margin-top: 8px;">RETURN TO GAME</button>
+    </div>
+</div>
+
+    <script>
+        // ================================================================
+        // Genesis Mining Zone - JavaScript Core Logic
+        // ================================================================
+        
+        // ========== Language System ==========
+        let currentLang = 'en'; // Default: English
+        
+        const translations = {
+            en: {
+                title: 'GENESIS MINING ZONE',
+                subtitle: '[ Hashrate Mining System v3.0 ]',
+                difficulty: 'Difficulty:',
+                coinBalance: 'Coin Balance',
+                totalOutput: 'Total Output',
+                currentHashrate: 'Current Hashrate',
+                overheat: '[OVERHEAT!]',
+                decay: 'Decay',
+                heat: 'Heat',
+                autoOutput: 'Auto Output',
+                perSecond: '/s',
+                
+                // Upgrade Section
+                hashrateUpgrade: 'Hashrate Upgrade',
+                level: 'Level',
+                cost: 'Cost',
+                coins: 'Coins',
+                difficultyBonus: 'Difficulty',
+                upgradeBtn: 'Upgrade (+1)',
+                boostBase: 'Boost Base Hashrate',
+                
+                coolingSystem: 'Cooling System',
+                upgradeCooling: 'Upgrade Cooling',
+                preventOverheat: 'Prevent Overheat Penalty',
+                
+                autoMiner: 'Auto Miner',
+                upgradeMiner: 'Upgrade Miner (+0.5/s)',
+                offlineMining: 'Offline Mining Enabled',
+                
+                // Countdown
+                newbieOffer: '⚠️ NEWBIE EXCLUSIVE ⚠️',
+                offerEnded: '⚠️ OFFER EXPIRED ⚠️',
+                
+                // Overclock Button
+                overclockBtn: 'Hyper-Clock:\n$1/100 Draws',
+                overclockStats: 'Already 12,840 hackers\ngot fragments via Hyper-Clock',
+                
+                // Leaderboard
+                leaderboardTitle: '⚡ GLOBAL HASHRATE RANKING ⚡',
+                realTimeUpdate: 'Real-time Updating...',
+                you: 'YOU',
+                boostRankBtn: '🚀 Claim Top 10 ($1.00)',
+                
+                // Collection
+                collectionTitle: '✦ GENESIS FRAGMENT VAULT ✦',
+                collectionSubtitle: 'Chance to get rare fragments when critical hit | Collected:',
+                items: 'items',
+                
+                // Payment Buttons
+                payToWin: '⚡ Instant Full Recovery ⚡',
+                payLabel: 'Only $1.00',
+                
+                // Payment Modal
+                paymentTitle: 'Initiating Hyper-Clock...',
+                paymentMessage: 'Cross-chain payment gateway connecting',
+                paymentAmount: '$1.00 USD',
+                paymentDetails: '⚡ This transaction: 100 premium draws\n🎁 Bonus: Rare fragment drop rate +50%',
+                paymentClose: 'Back to Game',
+                
+                // Fragments
+                alphaCore: 'Alpha Core',
+                betaMatrix: 'Beta Matrix',
+                gammaCrystal: 'Gamma Crystal',
+                deltaSource: 'Delta Source',
+                
+                // Critical Hit
+                criticalHit: 'FULL NETWORK BURST!!!',
+                
+                // Notifications
+                fragmentUnlock: 'Unlocked Genesis Fragment #',
+                storeFragment: 'Add to Vault',
+                powerLossWarning: '⚠️ Hashrate depleting, fragments at risk... ⚠️'
+            },
+            zh: {
+                title: 'GENESIS 矿区',
+                subtitle: '[ 算力挖矿系统 v3.0 ]',
+                difficulty: '难度:',
+                coinBalance: '金币余额',
+                totalOutput: '总产出',
+                currentHashrate: '当前算力',
+                overheat: '[过热!]',
+                decay: '衰减',
+                heat: '热度',
+                autoOutput: '自动产出',
+                perSecond: '/秒',
+                
+                hashrateUpgrade: '算力升级',
+                level: '等级',
+                cost: '费用',
+                coins: '币',
+                difficultyBonus: '难度',
+                upgradeBtn: '升级 (+1)',
+                boostBase: '提升基础算力',
+                
+                coolingSystem: '冷却系统',
+                upgradeCooling: '升级冷却',
+                preventOverheat: '防止过热减半',
+                
+                autoMiner: '自动矿机',
+                upgradeMiner: '升级矿机 (+0.5/秒)',
+                offlineMining: '离线自动挖矿',
+                
+                newbieOffer: '⚠️ 新人特惠 ⚠️',
+                offerEnded: '⚠️ 特惠已结束 ⚠️',
+                
+                overclockBtn: '⚡ 算力超频：$1/100抽 ⚡',
+                overclockStats: '已有12,840人\n通过超频获得碎片',
+                
+                leaderboardTitle: '⚡ 全网算力排行 ⚡',
+                realTimeUpdate: '实时更新中...',
+                you: '你',
+                boostRankBtn: '🚀 抢占前十 ($1.00)',
+                
+                collectionTitle: '✦ GENESIS 矿石仓库 ✦',
+                collectionSubtitle: '每次暴击爆块时有几率获得稀缺碎片 | 已收集:',
+                items: '件',
+                
+                payToWin: '⚡ 瞬间满血复活 ⚡',
+                payLabel: '仅需 $1.00',
+                
+                paymentTitle: '支付通道准备中...',
+                paymentMessage: '正在连接全球加密支付网关',
+                paymentAmount: '$1.00 USD',
+                paymentDetails: '⚡ 本次交易将获得 100 次高级抽奖机会\n🎁 额外赠送稀有碎片掉落率 +50% Buff',
+                paymentClose: '返回游戏',
+                
+                alphaCore: 'Alpha核心',
+                betaMatrix: 'Beta矩阵',
+                gammaCrystal: 'Gamma晶体',
+                deltaSource: 'Delta源码',
+                
+                criticalHit: '全网爆块!!!',
+                
+                fragmentUnlock: '解锁了 #',
+                storeFragment: '收入仓库',
+                powerLossWarning: '⚠️ 由于算力不足,碎片正在流失... ⚠️'
+            }
+        };
+        
+        function t(key) {
+            return translations[currentLang][key] || key;
+        }
+        
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            document.getElementById('langSwitcher').textContent = currentLang === 'en' ? 'CN' : 'EN';
+            document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+            updateAllText();
+            function handlePayment() {
+    // 不再弹出系统框，直接显示我们刚才做的 HTML 盒子
+    document.getElementById('paymentModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+}
+
+function copyAddress() {
+    const text = document.querySelector('#vaultAddr, #rawAddress, #genesisAddr').innerText;
+    
+    // 手机端优先使用这个 API
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert("COPIED: Address is ready for transfer.");
+        }).catch(() => {
+            manualCopy(text);
+        });
+    } else {
+        manualCopy(text);
+    }
+}
+
+function manualCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    textArea.setSelectionRange(0, 99999); // 对 iOS 的特殊处理
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert("SUCCESS: Address Copied!");
+}
+
+// 别忘了给你的 $1.00 按钮重新绑定一下这个新函数
+document.getElementById('payBtn').onclick = handlePayment;
+            function updateAllText() {
+    const lang = translations[currentLang];
+
+    // 1. 顶部标题与系统信息
+    document.querySelector('.header h1').textContent = lang.title;
+    document.querySelector('.header div').textContent = lang.subtitle;
+    document.getElementById('difficultyIndicator').childNodes[0].textContent = lang.difficulty + " ";
+
+    // 2. 数据面板 (使用 innerHTML 保持内部的 span 结构)
+    const statsItems = document.querySelectorAll('.stat-item');
+    statsItems[0].querySelector('div:first-child').textContent = lang.coinBalance;
+    statsItems[0].querySelector('div:last-child').childNodes[0].textContent = lang.totalOutput + ": ";
+    
+    statsItems[1].querySelector('div:first-child').childNodes[0].textContent = lang.currentHashrate + " ";
+    document.getElementById('overheatLabel').textContent = lang.overheat;
+    statsItems[1].querySelector('div:last-child').childNodes[0].textContent = 
+        `${lang.decay}: -1%/s | ${lang.heat}: `;
+
+    statsItems[2].querySelector('div:first-child').textContent = lang.autoOutput;
+    statsItems[2].querySelector('div:last-child').textContent = lang.perSecond.replace('/', '') + "PS";
+
+    // 3. 升级系统标题与按钮
+    const sections = document.querySelectorAll('.upgrade-section');
+    // Power Up
+    sections[0].querySelector('h2').textContent = lang.hashrateUpgrade;
+    sections[0].querySelector('.upgrade-info div:nth-child(1)').childNodes[0].textContent = lang.level + ": ";
+    sections[0].querySelector('.upgrade-info div:nth-child(2)').childNodes[0].textContent = lang.cost + ": ";
+    sections[0].querySelector('.upgrade-info div:nth-child(3)').childNodes[0].textContent = `(${lang.difficultyBonus}: +`;
+    document.getElementById('upgradeBtn').textContent = lang.upgradeBtn;
+    sections[0].querySelector('div:last-child').textContent = lang.boostBase;
+
+    // Cooling Sys
+    sections[1].querySelector('h2').textContent = lang.coolingSystem;
+    sections[1].querySelector('.upgrade-info div:nth-child(1)').childNodes[0].textContent = lang.level + ": ";
+    sections[1].querySelector('.upgrade-info div:nth-child(2)').childNodes[0].textContent = lang.cost + ": ";
+    document.getElementById('coolingBtn').textContent = lang.upgradeCooling;
+    sections[1].querySelector('div:last-child').textContent = lang.preventOverheat;
+
+    // Auto Rig
+    sections[2].querySelector('h2').textContent = lang.autoMiner;
+    sections[2].querySelector('.upgrade-info div:nth-child(1)').childNodes[0].textContent = lang.level + ": ";
+    sections[2].querySelector('.upgrade-info div:nth-child(2)').childNodes[0].textContent = lang.cost + ": ";
+    document.getElementById('autoBtn').textContent = lang.upgradeMiner;
+    sections[2].querySelector('div:last-child').textContent = lang.offlineMining;
+
+    // 4. 超频区域
+    document.querySelector('.countdown-title').textContent = lang.newbieOffer;
+    document.getElementById('overclockBtn').textContent = lang.overclockBtn;
+    document.querySelector('.overclock-stats span').textContent = lang.overclockStats;
+
+    // 5. 仓库与排行榜
+    document.querySelector('.collection-section h2').textContent = lang.collectionTitle;
+    document.querySelector('.collection-subtitle').childNodes[0].textContent = lang.collectionSubtitle + " ";
+    document.getElementById('collectionCount').nextSibling.textContent = " " + lang.items;
+
+    document.querySelector('.leaderboard-title').textContent = lang.leaderboardTitle;
+    document.querySelector('.leaderboard-subtitle').textContent = lang.realTimeUpdate;
+    document.querySelector('.leaderboard-address').textContent = lang.you;
+    document.getElementById('boostBtn').textContent = lang.boostRankBtn;
+
+    // 6. 支付弹窗
+    document.querySelector('.payment-title').textContent = lang.paymentTitle;
+    document.querySelector('.payment-message').textContent = lang.paymentMessage;
+    document.querySelector('.payment-content div:nth-of-type(4)').innerHTML = lang.paymentDetails.replace('\n', '<br>');
+    document.getElementById('closePaymentBtn').textContent = lang.paymentClose;
+    
+    // 7. 底部固定按钮
+    document.querySelector('#payBtn div:first-child').textContent = lang.payToWin;
+    document.querySelector('#payBtn .pay-label').textContent = lang.payLabel;
+    document.getElementById('payBtn').onclick = handlePayment;
+}
+        }
+        
+        function updateAllText() {
+            // Update static text elements
+            document.querySelector('.header h1').textContent = t('title');
+            document.querySelector('.header > div').textContent = t('subtitle');
+            
+            // Will be implemented after other systems are loaded
+            setTimeout(() => {
+                updateDisplay();
+                renderLeaderboard();
+            }, 100);
+        }
+        
+        // ========== Canvas Particle Effect System ==========
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        // 设置Canvas尺寸
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 粒子类
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 4 + 2; // 2-6px
+                this.speedX = (Math.random() - 0.5) * 8; // -4 到 4
+                this.speedY = (Math.random() - 0.5) * 8 - 2; // 向上偏移
+                this.life = 1; // 生命值 1-0
+                this.decay = Math.random() * 0.015 + 0.01; // 0.01-0.025 衰减速度
+                this.gravity = 0.15; // 重力
+                this.shape = Math.random() > 0.5 ? 'square' : 'circle'; // 随机形状
+                this.color = '#00ff00';
+                this.rotation = Math.random() * Math.PI * 2; // 初始旋转角度
+                this.rotationSpeed = (Math.random() - 0.5) * 0.2; // 旋转速度
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.speedY += this.gravity; // 重力影响
+                this.speedX *= 0.98; // 空气阻力
+                this.speedY *= 0.98;
+                this.life -= this.decay;
+                this.rotation += this.rotationSpeed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+
+                if (this.shape === 'square') {
+                    // 绘制旋转的正方形(区块)
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.rotation);
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                } else {
+                    // 绘制圆形(数据包)
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+
+        // 生成粒子爆炸
+        function createParticleBurst(x, y, count = 25) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        // 动画循环
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 更新和绘制粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.update();
+                particle.draw();
+
+                // 移除死亡粒子
+                if (particle.isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ========== 游戏逻辑 ==========
+        let coins = 0;
+        let totalCoinsEarned = 0;
+        let power = 10;
+        let level = 1;
+        let baseUpgradeCost = 10;
+        let upgradeCost = 10;
+        let autoLevel = 0;
+        let autoCost = 50;
+        let autoRate = 0;
+        let coolingLevel = 0;
+        let coolingCost = 100;
+        
+        let heatLevel = 0;
+        let isOverheated = false;
+        let lastClickTime = 0;
+        let clickHistory = [];
+        let collection = [];
+        let unlockedFragments = [false, false, false, false]; // 追踪4个碎片的解锁状态
+        let lastPowerCheckForWarning = 10; // 用于检测算力下降
+
+        // ========== 排行榜系统 ==========
+        let leaderboardData = [];
+        let myRankPosition = 500; // 初始排名
+
+        // ========== 倒计时系统 ==========
+        let countdownSeconds = 15 * 60; // 15分钟 = 900秒
+
+        function updateCountdown() {
+            if (countdownSeconds > 0) {
+                countdownSeconds--;
+                
+                const minutes = Math.floor(countdownSeconds / 60);
+                const seconds = countdownSeconds % 60;
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                document.getElementById('countdownTimer').textContent = timeString;
+                
+                // 最后1分钟加快闪烁
+                if (countdownSeconds <= 60) {
+                    document.querySelector('.countdown-timer').style.animation = 'urgentPulse 0.5s ease-in-out infinite';
+                }
+                
+                // 倒计时结束
+                if (countdownSeconds === 0) {
+                    document.getElementById('countdownTimer').textContent = '00:00';
+                    document.querySelector('.countdown-title').textContent = '⚠️ 特惠已结束 ⚠️';
+                }
+            }
+        }
+
+        // 每秒更新倒计时
+        setInterval(updateCountdown, 1000);
+
+        // 生成随机地址
+        function generateAddress() {
+            const chars = '0123456789abcdef';
+            let addr = '0x';
+            for (let i = 0; i < 4; i++) {
+                addr += chars[Math.floor(Math.random() * chars.length)];
+            }
+            addr += '...';
+            for (let i = 0; i < 3; i++) {
+                addr += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return addr;
+        }
+
+        // 初始化排行榜数据
+        function initLeaderboard() {
+            leaderboardData = [];
+            for (let i = 0; i < 10; i++) {
+                leaderboardData.push({
+                    rank: i + 1,
+                    address: generateAddress(),
+                    power: Math.floor(Math.random() * 500) + 200 // 200-700
+                });
+            }
+            // 按算力排序
+            leaderboardData.sort((a, b) => b.power - a.power);
+            updateLeaderboardRanks();
+            renderLeaderboard();
+        }
+
+        // 更新排名
+        function updateLeaderboardRanks() {
+            leaderboardData.forEach((item, index) => {
+                item.rank = index + 1;
+            });
+        }
+
+        // 渲染排行榜
+        function renderLeaderboard() {
+            const listEl = document.getElementById('leaderboardList');
+            let html = '';
+            
+            leaderboardData.forEach(item => {
+                const isTop3 = item.rank <= 3;
+                html += `
+                    <div class="leaderboard-item ${isTop3 ? 'top3' : ''}" data-rank="${item.rank}">
+                        <div class="leaderboard-rank">#${item.rank}</div>
+                        <div class="leaderboard-address">${item.address}</div>
+                        <div class="leaderboard-power">${item.power}</div>
+                    </div>
+                `;
+            });
+            
+            listEl.innerHTML = html;
+            
+            // 更新我的排名
+            document.getElementById('myRank').textContent = `#${myRankPosition}`;
+            document.getElementById('myPower').textContent = Math.floor(power);
+        }
+
+        // 随机更新算力数值(3-5秒)
+        function randomUpdatePowers() {
+            const updateCount = Math.floor(Math.random() * 3) + 2; // 2-4个
+            const indices = [];
+            
+            // 随机选择要更新的索引
+            while (indices.length < updateCount) {
+                const idx = Math.floor(Math.random() * leaderboardData.length);
+                if (!indices.includes(idx)) {
+                    indices.push(idx);
+                }
+            }
+            
+            indices.forEach(idx => {
+                const item = leaderboardData[idx];
+                const change = Math.floor(Math.random() * 30) - 10; // -10到+20
+                item.power = Math.max(100, item.power + change);
+                
+                // 添加更新动画
+                const itemEl = document.querySelector(`[data-rank="${item.rank}"]`);
+                if (itemEl) {
+                    itemEl.classList.add('updating');
+                    setTimeout(() => {
+                        itemEl.classList.remove('updating');
+                    }, 500);
+                }
+            });
+            
+            // 重新排序
+            leaderboardData.sort((a, b) => b.power - a.power);
+            updateLeaderboardRanks();
+            renderLeaderboard();
+        }
+
+        // 随机交换排名(10秒)
+        function randomSwapRanks() {
+            if (leaderboardData.length < 2) return;
+            
+            // 随机选择两个不同的位置
+            const idx1 = Math.floor(Math.random() * leaderboardData.length);
+            let idx2 = Math.floor(Math.random() * leaderboardData.length);
+            while (idx2 === idx1) {
+                idx2 = Math.floor(Math.random() * leaderboardData.length);
+            }
+            
+            // 微调算力使排名交换
+            const temp = leaderboardData[idx1].power;
+            leaderboardData[idx1].power = leaderboardData[idx2].power + Math.floor(Math.random() * 10) + 1;
+            leaderboardData[idx2].power = temp - Math.floor(Math.random() * 10) - 1;
+            
+            // 重新排序
+            leaderboardData.sort((a, b) => b.power - a.power);
+            updateLeaderboardRanks();
+            renderLeaderboard();
+        }
+
+        // 更新我的排名
+        function updateMyRank() {
+            const myPower = Math.floor(power);
+            document.getElementById('myPower').textContent = myPower;
+            
+            // 计算排名(简化算法)
+            const top10MinPower = leaderboardData[9]?.power || 200;
+            if (myPower >= top10MinPower) {
+                myRankPosition = Math.floor(Math.random() * 50) + 1; // 1-50
+            } else {
+                myRankPosition = Math.floor(500 - (myPower / top10MinPower) * 400);
+            }
+            
+            document.getElementById('myRank').textContent = `#${myRankPosition}`;
+        }
+
+        // 定义4张碎片图片及其属性
+        const FRAGMENT_DATA = [
+            {
+                id: 1,
+                image: 'https://i.postimg.cc/TwP83BXK/67.png',
+                unlockCoins: 1000,
+                color: '#00ff00', // 绿色
+                name: 'Alpha Core'
+            },
+            {
+                id: 2,
+                image: 'https://i.postimg.cc/TwP83BXL/66.png',
+                unlockCoins: 2000,
+                color: '#00ffff', // 青色
+                name: 'Beta Matrix'
+            },
+            {
+                id: 3,
+                image: 'https://i.postimg.cc/50tc2DMQ/68.png',
+                unlockCoins: 3000,
+                color: '#ff00ff', // 紫色
+                name: 'Gamma Crystal'
+            },
+            {
+                id: 4,
+                image: 'https://i.postimg.cc/509JF685/69.png',
+                unlockCoins: 4000,
+                color: '#ffff00', // 黄色
+                name: 'Delta Source code'
+            }
+        ];
+
+        const DECAY_RATE = 0.002; // 衰减速度降低5倍，给玩家喘息机会
+        const CRITICAL_CHANCE = 0.05;
+        const CRITICAL_MULTIPLIER = 10;
+        const MIN_POWER = 1;
         const OVERHEAT_THRESHOLD = 70;
         const HEAT_PER_CLICK = 15;
         const HEAT_DECAY_RATE = 5;
@@ -3357,7 +6859,7 @@ document.body.appendChild(p);
         width: 100%; background: #00ff41; color: #000; border: none;
         padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 16px;
     }
-</style>
+ </style>
 
 <div id="protocol-overlay">
     <div class="p-card">
