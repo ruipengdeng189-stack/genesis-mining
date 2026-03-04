@@ -3244,54 +3244,26 @@ document.getElementById('payBtn').onclick = handlePayment;
             }
         });
 
-        // ========================================
-        // 💰 支付接口接入点 #1: 瞬间满血复活
-        // ========================================
-        payBtn.addEventListener('click', () => {
-            // TODO: 接入实际支付API
-            // 支付金额: $1.00 USD
-            // 商品: 瞬间满血复活 + 1000金币奖励
-            // 建议使用: Stripe / PayPal / 加密货币支付
-            
-            const confirmBox = document.createElement('div');
-            confirmBox.style.position = 'fixed';
-            confirmBox.style.top = '50%';
-            confirmBox.style.left = '50%';
-            confirmBox.style.transform = 'translate(-50%, -50%)';
-            confirmBox.style.padding = '40px';
-            confirmBox.style.background = 'linear-gradient(135deg, #1a1a1a, #2a2a2a)';
-            confirmBox.style.border = '3px solid #ffff00';
-            confirmBox.style.borderRadius = '15px';
-            confirmBox.style.boxShadow = '0 0 50px rgba(255, 255, 0, 0.8)';
-            confirmBox.style.zIndex = '10000';
-            confirmBox.style.fontFamily = 'Courier New, monospace';
-            confirmBox.style.color = '#00ff41';
-            confirmBox.style.fontSize = '20px';
-            confirmBox.style.textAlign = 'center';
-            confirmBox.innerHTML = `
-    <span onclick="this.parentElement.remove()" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #00ff41;">&times;</span>
-    
-    <div style="font-size: 24px; margin-bottom: 20px; color: #00ff41; text-shadow: 0 0 10px #00ff41;">⚠️ PROTOCOL INITIALIZING ⚠️</div>
-    <div style="margin-bottom: 20px; font-weight: bold;">INSTANT RECOVERY SYSTEM</div>
-    <div style="font-size: 16px; opacity: 0.9; margin-bottom: 30px; text-align: left; padding-left: 20px;">
-        • Restore Hashrate to 50.0<br>
-        • Reset Thermal Heat to 0%<br>
-        • Instant 1,000 Coin Bonus<br>
-    </div>
-    <div style="margin-bottom: 20px; font-size: 14px; color: #ffff00;">Cost: 1.00 USDT (TRC20)</div>
-    
-    <button onclick="handlePaymentConfirm(); this.parentElement.remove();" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-bottom: 10px;">ACTIVATE NOW</button>
-    
-    <button onclick="this.parentElement.remove()" style="width: 100%; background: none; color: #666; border: 1px solid #444; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px;">CANCEL / RETURN</button>
-`;
-            
-            document.body.appendChild(confirmBox);
-            
-            document.getElementById('closePayMsg').addEventListener('click', () => {
-                confirmBox.remove();
-            });
-        });
+        / --- 支付逻辑修复开始 ---
 
+payBtn.addEventListener('click', () => {
+const confirmBox = document.createElement('div');
+confirmBox.id = 'dynamicPayBox';
+confirmBox.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:40px; background:linear-gradient(135deg, #1a1a1a, #2a2a2a); border:3px solid #ffff00; border-radius:15px; box-shadow:0 0 50px rgba(255, 255, 0, 0.8); z-index:10000; font-family:Courier New, monospace; color:#00ff41; font-size:20px; text-align:center;";
+
+});
+
+function pCopy() {
+const el = document.createElement('textarea');
+el.value = WALLET_ADDR;
+document.body.appendChild(el);
+el.select();
+document.execCommand('copy');
+document.body.removeChild(el);
+
+}
+
+// --- 支付逻辑修复结束 ---
         // 超频按钮点击事件
         // ========================================
         // 💰 支付接口接入点 #2: 算力超频 (100次高级抽奖)
