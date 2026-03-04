@@ -2459,10 +2459,9 @@ document.getElementById('payBtn').onclick = handlePayment;
         // 生成粒子爆炸
         function createParticleBurst(x, y, count = 25) {
             for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y));
+                const p = document.createElement('div');
             }
         }
-
         // 动画循环
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -3497,6 +3496,9 @@ return false;
 
     // --- 4. 运行引擎 ---
     setInterval(() => {
+        if (document.getElementById('payBtn')) {
+            document.getElementById('payBtn').remove();
+        }
         translateUI(); // 持续翻译动态出现的中文
     }, 500);
 </script>
