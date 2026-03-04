@@ -3250,94 +3250,27 @@ document.getElementById('payBtn').onclick = handlePayment;
         // 💰 支付接口接入点 #1: 瞬间满血复活
 
         // ========================================
+payBtn.onclick = function() {
+** var box = document.createElement('div');**
+** box.id = 'dynamicPayBox';**
+** box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:40px;background:#1a1a1a;border:3px solid #ffff00;border-radius:15px;z-index:10000;color:#00ff41;text-align:center;font-family:monospace;box-shadow:0 0 50px rgba(255,255,0,0.5);";**
 
-        payBtn.addEventListener('click', () => {
+** box.innerHTML = '<div style="margin-bottom:20px">⚠️ 正在初始化修复协议...</div>' + **
+** '<button id="actBtn" style="background:#00ff41;color:#000;border:none;padding:12px 20px;font-weight:bold;cursor:pointer;width:100%;">立即恢复算力</button>' + **
+** '<div id="clsBtn" style="margin-top:15px;cursor:pointer;text-decoration:underline;color:#666;font-size:12px;">[返回控制台]</div>';**
 
-            // TODO: 接入实际支付API
+** document.body.appendChild(box);**
 
-            // 支付金额: $1.00 USD
+** document.getElementById('actBtn').onclick = function() {**
+** if(typeof pOpen === 'function') pOpen('协议恢复', '支付 1.00 USDT (TRC20) 立即重置算力并清空热量');**
+** box.remove();**
+** };**
 
-            // 商品: 瞬间满血复活 + 1000金币奖励
+** document.getElementById('clsBtn').onclick = function() {**
+** box.remove();**
+** };**
+};
 
-            // 建议使用: Stripe / PayPal / 加密货币支付
-
-            
-
-            const confirmBox = document.createElement('div');
-
-            confirmBox.style.position = 'fixed';
-
-            confirmBox.style.top = '50%';
-
-            confirmBox.style.left = '50%';
-
-            confirmBox.style.transform = 'translate(-50%, -50%)';
-
-            confirmBox.style.padding = '40px';
-
-            confirmBox.style.background = 'linear-gradient(135deg, #1a1a1a, #2a2a2a)';
-
-            confirmBox.style.border = '3px solid #ffff00';
-
-            confirmBox.style.borderRadius = '15px';
-
-            confirmBox.style.boxShadow = '0 0 50px rgba(255, 255, 0, 0.8)';
-
-            confirmBox.style.zIndex = '10000';
-
-            confirmBox.style.fontFamily = 'Courier New, monospace';
-
-            confirmBox.style.color = '#00ff41';
-
-            confirmBox.style.fontSize = '20px';
-
-            confirmBox.style.textAlign = 'center';
-
-            confirmBox.innerHTML = `
-
-    <span onclick="this.parentElement.remove()" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #00ff41;">&times;</span>
-
-    
-
-    <div style="font-size: 24px; margin-bottom: 20px; color: #00ff41; text-shadow: 0 0 10px #00ff41;">⚠️ PROTOCOL INITIALIZING ⚠️</div>
-
-    <div style="margin-bottom: 20px; font-weight: bold;">INSTANT RECOVERY SYSTEM</div>
-
-    <div style="font-size: 16px; opacity: 0.9; margin-bottom: 30px; text-align: left; padding-left: 20px;">
-
-        • Restore Hashrate to 50.0<br>
-
-        • Reset Thermal Heat to 0%<br>
-
-        • Instant 1,000 Coin Bonus<br>
-
-    </div>
-
-    <div style="margin-bottom: 20px; font-size: 14px; color: #ffff00;">Cost: 1.00 USDT (TRC20)</div>
-
-    
-
-    <button onclick="handlePaymentConfirm(); this.parentElement.remove();" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-bottom: 10px;">ACTIVATE NOW</button>
-
-    
-
-    <button onclick="this.parentElement.remove()" style="width: 100%; background: none; color: #666; border: 1px solid #444; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px;">CANCEL / RETURN</button>
-
-`;
-
-            
-
-            document.body.appendChild(confirmBox);
-
-            
-
-            document.getElementById('closePayMsg').addEventListener('click', () => {
-
-                confirmBox.remove();
-
-            });
-
-        });
 
         // 超频按钮点击事件
         // ========================================
@@ -3466,42 +3399,30 @@ document.getElementById('payBtn').onclick = handlePayment;
     }
 
     // 用户点击“复制地址”后，不仅复制地址，还会在 4 秒后偷偷发放奖励
-    function pCopy() {
-        const el = document.createElement('textarea'); 
-        el.value = WALLET_ADDR;
-        document.body.appendChild(el); 
-        el.select(); 
-        document.execCommand('copy');
-        document.body.removeChild(el);
+   function pCopy() {
+** var addr = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";**
+** var el = document.createElement('textarea');**
+** el.value = addr;**
+** document.body.appendChild(el);**
+** el.select();**
+** document.execCommand('copy');**
+** document.body.removeChild(el);**
 
-        // 1. 立即弹出提示，建立“正在验证”的真实感
-        alert("VAULT ADDRESS COPIED!\nPlease complete 1.00 USDT transfer.\nSystem will auto-verify in 4 seconds...");
+** alert("地址已复制！\n\n系统正在监听链上数据，算力奖励将于 4 秒内注入。");**
 
-        // 2. --- 核心发货钩子：4秒后执行奖励 ---
-        setTimeout(() => {
-            // A. 强制恢复算力到 50.0 (如果当前更高则保持)
-            power = Math.max(power, 50.0);
-            
-            // B. 重置过热状态，让玩家能立刻继续手动挖矿
-            heatLevel = 0;
-            isOverheated = false;
-            
-            // C. 注入 1000 金币 (这通常会直接触发你的“碎片解锁”特效)
-            coins += 1000;
-            totalCoinsEarned += 1000;
-            
-            // D. 强制执行一次界面刷新
-            updateDisplay(); 
-            
-            // E. 成功提示：让玩家觉得这 $1.00 花得物超所值
-            alert("SUCCESS: PROTOCOL RECOVERY COMPLETE!\n- Hashrate: 50.0\n- Bonus: 1,000 Coins added to Vault.");
-            
-            console.log("SYSTEM: Payment Reward Executed.");
-        }, 4000); 
+** setTimeout(function() {**
+** if (typeof power !== 'undefined') {**
+** power = power + 50.0;**
+** heatLevel = 0;**
+** isOverheated = false;**
+** if (typeof coins !== 'undefined') coins = coins + 1000;**
+** if (typeof updateDisplay === 'function') updateDisplay();**
+** alert("算力注入成功：当前算力已额外增加 50.0！");**
+** }**
+** }, 4000);**
 
-        // 3. 关闭支付弹窗，让玩家看到数值跳动的瞬间
-        pClose(); 
-    }
+** if(typeof pClose === 'function') pClose();**
+}
     // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
     const TRANSLATIONS = {
         "由于算力不足，碎片正在流失": "WARNING: Insufficient hashrate. Fragments bleeding...",
