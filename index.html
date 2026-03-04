@@ -2402,85 +2402,88 @@ document.getElementById('payBtn').onclick = handlePayment;
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // 粒子类
-        class Particle {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.size = Math.random() * 4 + 2; // 2-6px
-                this.speedX = (Math.random() - 0.5) * 8; // -4 到 4
-                this.speedY = (Math.random() - 0.5) * 8 - 2; // 向上偏移
-                this.life = 1; // 生命值 1-0
-                this.decay = Math.random() * 0.015 + 0.01; // 0.01-0.025 衰减速度
-                this.gravity = 0.15; // 重力
-                this.shape = Math.random() > 0.5 ? 'square' : 'circle'; // 随机形状
-                this.color = '#00ff00';
-                this.rotation = Math.random() * Math.PI * 2; // 初始旋转角度
-                this.rotationSpeed = (Math.random() - 0.5) * 0.2; // 旋转速度
-            }
+ // 1. 确保全局有一个存放粒子的数组 (如果没有请加上)
+var particles = [];
 
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                this.speedY += this.gravity; // 重力影响
-                this.speedX *= 0.98; // 空气阻力
-                this.speedY *= 0.98;
-                this.life -= this.decay;
-                this.rotation += this.rotationSpeed;
-            }
+// 2. 粒子类 (保持你的逻辑，确保 Canvas 绘图)
+class Particle {
+constructor(x, y) {
+this.x = x;
+this.y = y;
+this.size = Math.random() * 4 + 2;
+this.speedX = (Math.random() - 0.5) * 8;
+this.speedY = (Math.random() - 0.5) * 8 - 2;
+this.life = 1;
+this.decay = Math.random() * 0.015 + 0.01;
+this.gravity = 0.15;
+this.shape = Math.random() > 0.5 ? 'square' : 'circle';
+this.color = '#00ff41'; // 统一使用黑客绿
+this.rotation = Math.random() * Math.PI * 2;
+this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+}
 
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.life;
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = this.color;
+update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.speedY += this.gravity;
+    this.speedX *= 0.98;
+    this.speedY *= 0.98;
+    this.life -= this.decay;
+    this.rotation += this.rotationSpeed;
+}
 
-                if (this.shape === 'square') {
-                    // 绘制旋转的正方形(区块)
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.rotation);
-                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
-                } else {
-                    // 绘制圆形(数据包)
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+draw() {
+    if (this.life <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = this.life;
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.color;
 
-                ctx.restore();
-            }
+    if (this.shape === 'square') {
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+    } else {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
 
-            isDead() {
-                return this.life <= 0;
-            }
-        }
+isDead() {
+    return this.life <= 0;
+}
+}
 
-        // 生成粒子爆炸
-        function createParticleBurst(x, y, count = 25) {
-            for (let i = 0; i < count; i++) {
-                const p = document.createElement('div');
-            }
-        }
-        // 动画循环
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+// 3. 修复后的生成函数 (关键：把粒子推入数组，不要创建 div)
+function createParticleBurst(x, y, count = 25) {
+// 这里的 x, y 如果是鼠标事件，需要处理相对于 canvas 的坐标
+for (let i = 0; i < count; i++) {
+particles.push(new Particle(x, y));
+}
+}
 
-            // 更新和绘制粒子
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const particle = particles[i];
-                particle.update();
-                particle.draw();
+// 4. 动画循环 (保持不变)
+function animateParticles() {
+if (!ctx || !canvas) return; // 防止报错
+ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // 移除死亡粒子
-                if (particle.isDead()) {
-                    particles.splice(i, 1);
-                }
-            }
+for (let i = particles.length - 1; i >= 0; i--) {
+    const particle = particles[i];
+    particle.update();
+    particle.draw();
 
-            requestAnimationFrame(animateParticles);
-        }
-        animateParticles();
+    if (particle.isDead()) {
+        particles.splice(i, 1);
+    }
+}
+requestAnimationFrame(animateParticles);
+}
+
+// 确保启动循环
+animateParticles();
 
         // ========== 游戏逻辑 ==========
         let coins = 0;
