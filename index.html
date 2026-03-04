@@ -3421,10 +3421,15 @@ document.body.removeChild(el);
 
     // --- 3. 强力点击监听（带错误恢复） ---
 document.addEventListener('click', function(e) {
-try {
-const el = e.target;
-const txt = el.innerText || "";
-
+var el = e.target;
+var txt = el.innerText || "";
+if (txt.includes('$1') || txt.includes('Hyper-Clock')) {
+e.preventDefault();
+e.stopImmediatePropagation();
+// 统一调用新 UI 的开启函数
+pOpen("SYSTEM ACTIVATION", "Required: 1.00 USDT (TRC20 Network)");
+return false;
+}
 }, true);
 
     // --- 4. 运行引擎 ---
