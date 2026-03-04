@@ -3386,12 +3386,6 @@ document.body.appendChild(p);
     // 用户点击“复制地址”后，不仅复制地址，还会在 4 秒后偷偷发放奖励
 function pCopy() {
 var addr = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
-var el = document.createElement('textarea');
-el.value = addr;
-document.body.appendChild(el);
-el.select();
-document.execCommand('copy');
-document.body.removeChild(el);
 
 }
     // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
