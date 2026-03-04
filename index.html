@@ -3321,13 +3321,13 @@ box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-5
         createMatrixBackground();
         renderCollection();
         updateDisplay();
-
 function handlePaymentConfirm() {
-var firstBox = document.getElementById('paymentModal');
-if (firstBox) {
-firstBox.remove();
+// 1. 关闭之前的旧提示框（如果有的话）
+var oldModal = document.getElementById('paymentModal');
+if (oldModal) { oldModal.remove(); }
+
 }
-}
+
      function createParticleBurst(x, y, count) {
 for (var i = 0; i < count; i++) {
 var p = document.createElement('div');
@@ -3385,7 +3385,7 @@ document.body.appendChild(p);
     }
 
     // 用户点击“复制地址”后，不仅复制地址，还会在 4 秒后偷偷发放奖励
-   function pCopy() {
+function pCopy() {
 var addr = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
 var el = document.createElement('textarea');
 el.value = addr;
@@ -3420,24 +3420,12 @@ document.body.removeChild(el);
     }
 
     // --- 3. 强力点击监听（带错误恢复） ---
-    document.addEventListener('click', function(e) {
-        try {
-            const el = e.target;
-            const txt = el.innerText || "";
+document.addEventListener('click', function(e) {
+try {
+const el = e.target;
+const txt = el.innerText || "";
 
-            // 拦截包含 $1.00 或 Hyper-Clock 的点击
-            if (txt.includes('$1') || txt.includes('Hyper-Clock')) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                if (txt.includes('Hyper')) {
-                    pOpen("HYPER-CLOCK ACTIVE", "Unlock 100x Spins & Rare Buff ($1.00):");
-                } else {
-                    pOpen("PROTOCOL ACTIVATION", "Deposit 1.00 USDT (TRC20) to confirm:");
-                }
-                return false;
-            }
-        } catch (err) { console.warn("Interception bypassed."); }
-    }, true);
+}, true);
 
     // --- 4. 运行引擎 ---
     setInterval(() => {
