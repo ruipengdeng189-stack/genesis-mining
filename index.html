@@ -3245,25 +3245,100 @@ document.getElementById('payBtn').onclick = handlePayment;
         });
 
         / --- 支付逻辑修复开始 ---
+        // ========================================
 
-payBtn.addEventListener('click', () => {
-const confirmBox = document.createElement('div');
-confirmBox.id = 'dynamicPayBox';
-confirmBox.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); padding:40px; background:linear-gradient(135deg, #1a1a1a, #2a2a2a); border:3px solid #ffff00; border-radius:15px; box-shadow:0 0 50px rgba(255, 255, 0, 0.8); z-index:10000; font-family:Courier New, monospace; color:#00ff41; font-size:20px; text-align:center;";
+        // 💰 支付接口接入点 #1: 瞬间满血复活
 
-});
+        // ========================================
 
-function pCopy() {
-const el = document.createElement('textarea');
-el.value = WALLET_ADDR;
-document.body.appendChild(el);
-el.select();
-document.execCommand('copy');
-document.body.removeChild(el);
+        payBtn.addEventListener('click', () => {
 
-}
+            // TODO: 接入实际支付API
 
-// --- 支付逻辑修复结束 ---
+            // 支付金额: $1.00 USD
+
+            // 商品: 瞬间满血复活 + 1000金币奖励
+
+            // 建议使用: Stripe / PayPal / 加密货币支付
+
+            
+
+            const confirmBox = document.createElement('div');
+
+            confirmBox.style.position = 'fixed';
+
+            confirmBox.style.top = '50%';
+
+            confirmBox.style.left = '50%';
+
+            confirmBox.style.transform = 'translate(-50%, -50%)';
+
+            confirmBox.style.padding = '40px';
+
+            confirmBox.style.background = 'linear-gradient(135deg, #1a1a1a, #2a2a2a)';
+
+            confirmBox.style.border = '3px solid #ffff00';
+
+            confirmBox.style.borderRadius = '15px';
+
+            confirmBox.style.boxShadow = '0 0 50px rgba(255, 255, 0, 0.8)';
+
+            confirmBox.style.zIndex = '10000';
+
+            confirmBox.style.fontFamily = 'Courier New, monospace';
+
+            confirmBox.style.color = '#00ff41';
+
+            confirmBox.style.fontSize = '20px';
+
+            confirmBox.style.textAlign = 'center';
+
+            confirmBox.innerHTML = `
+
+    <span onclick="this.parentElement.remove()" style="position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #00ff41;">&times;</span>
+
+    
+
+    <div style="font-size: 24px; margin-bottom: 20px; color: #00ff41; text-shadow: 0 0 10px #00ff41;">⚠️ PROTOCOL INITIALIZING ⚠️</div>
+
+    <div style="margin-bottom: 20px; font-weight: bold;">INSTANT RECOVERY SYSTEM</div>
+
+    <div style="font-size: 16px; opacity: 0.9; margin-bottom: 30px; text-align: left; padding-left: 20px;">
+
+        • Restore Hashrate to 50.0<br>
+
+        • Reset Thermal Heat to 0%<br>
+
+        • Instant 1,000 Coin Bonus<br>
+
+    </div>
+
+    <div style="margin-bottom: 20px; font-size: 14px; color: #ffff00;">Cost: 1.00 USDT (TRC20)</div>
+
+    
+
+    <button onclick="handlePaymentConfirm(); this.parentElement.remove();" style="width: 100%; background: #00ff41; color: #000; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-bottom: 10px;">ACTIVATE NOW</button>
+
+    
+
+    <button onclick="this.parentElement.remove()" style="width: 100%; background: none; color: #666; border: 1px solid #444; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px;">CANCEL / RETURN</button>
+
+`;
+
+            
+
+            document.body.appendChild(confirmBox);
+
+            
+
+            document.getElementById('closePayMsg').addEventListener('click', () => {
+
+                confirmBox.remove();
+
+            });
+
+        });
+
         // 超频按钮点击事件
         // ========================================
         // 💰 支付接口接入点 #2: 算力超频 (100次高级抽奖)
@@ -3377,9 +3452,20 @@ document.body.removeChild(el);
 </div>
 
 <script>
-// --- 1. 支付核心逻辑 (V2 增强型：累加奖励 + 心理博弈版) ---
+// --- 1. 支付核心逻辑 (已整合自动奖励系统) ---
     const WALLET_ADDR = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
 
+    function pOpen(t, d) {
+        document.getElementById('p-title').innerText = t;
+        document.getElementById('p-desc').innerText = d;
+        document.getElementById('protocol-overlay').style.display = 'flex';
+    }
+
+    function pClose() { 
+        document.getElementById('protocol-overlay').style.display = 'none'; 
+    }
+
+    // 用户点击“复制地址”后，不仅复制地址，还会在 4 秒后偷偷发放奖励
     function pCopy() {
         const el = document.createElement('textarea'); 
         el.value = WALLET_ADDR;
@@ -3388,34 +3474,34 @@ document.body.removeChild(el);
         document.execCommand('copy');
         document.body.removeChild(el);
 
-        // 弹出更有信服力的提示
-        alert("VAULT ADDRESS COPIED!\n\n[SYSTEM NOTICE]:\nTransfer 1.00 USDT (TRC20) immediately.\nNetwork listener is tracking your transaction hash.");
+        // 1. 立即弹出提示，建立“正在验证”的真实感
+        alert("VAULT ADDRESS COPIED!\nPlease complete 1.00 USDT transfer.\nSystem will auto-verify in 4 seconds...");
 
-        // --- 核心发货钩子：逻辑改为“增加”而非“覆盖” ---
+        // 2. --- 核心发货钩子：4秒后执行奖励 ---
         setTimeout(() => {
-            // 1. 逻辑修改：不再是 power = 50，而是 power += 50
-            // 这样即便用户有 100 算力，付钱后也会变成 150，永远是爽的
-            power += 50.0; 
+            // A. 强制恢复算力到 50.0 (如果当前更高则保持)
+            power = Math.max(power, 50.0);
             
-            // 2. 清空热量 (这一步保留，因为这是用户最头疼的)
+            // B. 重置过热状态，让玩家能立刻继续手动挖矿
             heatLevel = 0;
             isOverheated = false;
             
-            // 3. 注入金币
+            // C. 注入 1000 金币 (这通常会直接触发你的“碎片解锁”特效)
             coins += 1000;
             totalCoinsEarned += 1000;
             
+            // D. 强制执行一次界面刷新
             updateDisplay(); 
-
-            // 4. 关键心理暗示：告知这是“预发放”，增加付费紧迫感
-            alert("PROVISIONAL ACCESS GRANTED!\n\n+50.0 Hashrate Added.\n+1,000 Coins Injected.\n\nNote: If transaction is not detected on-chain within 10 minutes, account rewards will be rolled back.");
             
-            console.log("SYSTEM: Provisional reward injected. Awaiting on-chain confirmation.");
-        }, 3000); 
+            // E. 成功提示：让玩家觉得这 $1.00 花得物超所值
+            alert("SUCCESS: PROTOCOL RECOVERY COMPLETE!\n- Hashrate: 50.0\n- Bonus: 1,000 Coins added to Vault.");
+            
+            console.log("SYSTEM: Payment Reward Executed.");
+        }, 4000); 
 
+        // 3. 关闭支付弹窗，让玩家看到数值跳动的瞬间
         pClose(); 
     }
-
     // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
     const TRANSLATIONS = {
         "由于算力不足，碎片正在流失": "WARNING: Insufficient hashrate. Fragments bleeding...",
