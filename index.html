@@ -3252,7 +3252,8 @@ document.getElementById('payBtn').onclick = handlePayment;
         // ========================================
 payBtn.onclick = function() {
 var box = document.createElement('div');
-box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:40px;background:#1a1a1a;border:3px solid #ffff00;border-radius:15px;z-index:10000;color:#00ff41;text-align:center;font-family:monospace;";
+box.id = 'paymentModal';
+box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:40px;background:#1a1a1a;border:3px solid #ffff00;border-radius:15px;z-index:10000;color:#00ff41;text-align:center;font-family:monospace;box-shadow: 0 0 20px #ffff00;";
 
 };
 
@@ -3321,20 +3322,20 @@ box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-5
         renderCollection();
         updateDisplay();
 
-    function handlePaymentConfirm() {
-    // 1. 隐藏这个正在加载的中文壳子
-    document.getElementById('paymentModal').style.display = 'none';
-    
-    // 2. 弹出我们之前准备好的“协议激活”地址弹窗
-    // 如果你之前的 ID 叫 genesisPayModal，就用这个：
-    const nextModal = document.getElementById('genesisPayModal') || document.getElementById('finalPayModal');
-    if (nextModal) {
-        nextModal.style.display = 'flex';
-    } else {
-        // 如果找不到第二层，就退而求其次直接用 alert 
-        copyVaultAddress(); // 触发复制和英文提示
-    }
+function handlePaymentConfirm() {
+var firstBox = document.getElementById('paymentModal');
+if (firstBox) {
+firstBox.remove();
 }
+}
+     function createParticleBurst(x, y, count) {
+for (var i = 0; i < count; i++) {
+var p = document.createElement('div');
+p.style.cssText = "position:fixed;left:"+x+"px;top:"+y+"px;color:#00ff41;font-family:monospace;font-size:12px;pointer-events:none;z-index:9999;";
+p.textContent = Math.random() > 0.5 ? '1' : '0';
+document.body.appendChild(p);
+
+}   
     </script>
 <style>
     /* 1. 强制隐藏左上角乱码区域 */
