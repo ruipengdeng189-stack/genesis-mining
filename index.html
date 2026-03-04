@@ -2116,6 +2116,9 @@
         
         // ========== Language System ==========
         let currentLang = 'en'; // Default: English
+        let canvas = document.getElementById('particleCanvas'); // 确保你的HTML里有这个ID的canvas
+        let ctx = canvas.getContext('2d');
+        let particles = []; // 粒子存放池
         
         const translations = {
             en: {
@@ -5965,8 +5968,12 @@ document.getElementById('payBtn').onclick = handlePayment;
 
         // 生成粒子爆炸
         function createParticleBurst(x, y, count = 25) {
+        // 关键点：将新生成的粒子推入 particles 数组，由 Canvas 统一渲染
             for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y));
+                // 这里的 new Particle 必须对应你上面定义的 class Particle
+                if (typeof Particle !== 'undefined') {
+                    particles.push(new Particle(x, y));
+                }
             }
         }
 
