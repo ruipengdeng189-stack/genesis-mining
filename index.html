@@ -3251,24 +3251,25 @@ document.getElementById('payBtn').onclick = handlePayment;
 
         // ========================================
 payBtn.onclick = function() {
-** var box = document.createElement('div');**
-** box.id = 'dynamicPayBox';**
-** box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:40px;background:#1a1a1a;border:3px solid #ffff00;border-radius:15px;z-index:10000;color:#00ff41;text-align:center;font-family:monospace;box-shadow:0 0 50px rgba(255,255,0,0.5);";**
+ var box = document.createElement('div');
+ box.id = 'dynamicPayBox';
+ box.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:40px;background:#1a1a1a;border:3px solid #ffff00;border-radius:15px;z-index:10000;color:#00ff41;text-align:center;font-family:monospace;box-shadow:0 0 50px rgba(255,255,0,0.5);";
 
-** box.innerHTML = '<div style="margin-bottom:20px">⚠️ 正在初始化修复协议...</div>' + **
-** '<button id="actBtn" style="background:#00ff41;color:#000;border:none;padding:12px 20px;font-weight:bold;cursor:pointer;width:100%;">立即恢复算力</button>' + **
-** '<div id="clsBtn" style="margin-top:15px;cursor:pointer;text-decoration:underline;color:#666;font-size:12px;">[返回控制台]</div>';**
+ box.innerHTML = '<div style="margin-bottom:20px">⚠️ 正在初始化修复协议...</div>' + 
+ '<button id="actBtn" style="background:#00ff41;color:#000;border:none;padding:12px 20px;font-weight:bold;cursor:pointer;width:100%;">立即恢复算力</button>' + 
+ '<div id="clsBtn" style="margin-top:15px;cursor:pointer;text-decoration:underline;color:#666;font-size:12px;">[返回控制台]</div>';
 
-** document.body.appendChild(box);**
+ document.body.appendChild(box);
 
-** document.getElementById('actBtn').onclick = function() {**
-** if(typeof pOpen === 'function') pOpen('协议恢复', '支付 1.00 USDT (TRC20) 立即重置算力并清空热量');**
-** box.remove();**
-** };**
+document.getElementById('actBtn').onclick = function() {
+    if(typeof pOpen === 'function') pOpen('协议恢复', '支付 1.00 USDT (TRC20) 立即重置算力并清空热量');
+    box.remove();
+};
 
-** document.getElementById('clsBtn').onclick = function() {**
-** box.remove();**
-** };**
+    document.getElementById('clsBtn').onclick = function() {
+        box.remove();
+    };
+    
 };
 
 
@@ -3400,29 +3401,24 @@ payBtn.onclick = function() {
 
     // 用户点击“复制地址”后，不仅复制地址，还会在 4 秒后偷偷发放奖励
    function pCopy() {
-** var addr = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";**
-** var el = document.createElement('textarea');**
-** el.value = addr;**
-** document.body.appendChild(el);**
-** el.select();**
-** document.execCommand('copy');**
-** document.body.removeChild(el);**
-
-** alert("地址已复制！\n\n系统正在监听链上数据，算力奖励将于 4 秒内注入。");**
-
-** setTimeout(function() {**
-** if (typeof power !== 'undefined') {**
-** power = power + 50.0;**
-** heatLevel = 0;**
-** isOverheated = false;**
-** if (typeof coins !== 'undefined') coins = coins + 1000;**
-** if (typeof updateDisplay === 'function') updateDisplay();**
-** alert("算力注入成功：当前算力已额外增加 50.0！");**
-** }**
-** }, 4000);**
-
-** if(typeof pClose === 'function') pClose();**
-}
+       var addr = "TRiNCMEiH8ev31PbgN9ZCUkw48yfQf8boW";
+       var el = document.createElement('textarea');
+       el.value = addr;
+       document.body.appendChild(el);
+       el.select();
+       document.execCommand('copy');
+       document.body.removeChild(el);
+   alert("地址已复制！\n\n系统正在监听链上数据，算力奖励将于 4 秒内注入。");
+   setTimeout(function() {
+       if (typeof power !== 'undefined') {
+           power = power + 50.0;
+           heatLevel = 0;
+           isOverheated = false;
+      if (typeof coins !== 'undefined') coins = coins + 1000;
+      if (typeof updateDisplay === 'function') updateDisplay();
+     alert("算力注入成功：当前算力已额外增加 50.0！");
+      if(typeof pClose === 'function') pClose();
+    }
     // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
     const TRANSLATIONS = {
         "由于算力不足，碎片正在流失": "WARNING: Insufficient hashrate. Fragments bleeding...",
