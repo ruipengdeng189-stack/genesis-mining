@@ -906,13 +906,14 @@
 
         .collection-grid {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 15px;
             overflow-x: auto;
             overflow-y: hidden;
             padding: 5px 0;
             scrollbar-width: thin;
             scrollbar-color: #00ff00 rgba(0, 255, 0, 0.1);
+            scroll-snap-type: x proximity;
         }
 
         .collection-grid::-webkit-scrollbar {
@@ -934,6 +935,7 @@
             width: 80px;
             height: 80px;
             flex-shrink: 0;
+            scroll-snap-align: start;
             border: 2px solid #00ff00;
             border-radius: 8px;
             overflow: hidden;
@@ -1224,7 +1226,185 @@
             border: 2px dashed rgba(100, 100, 100, 0.3);
             border-radius: 8px;
             flex-shrink: 0;
-        }    
+        }
+
+        .gem-codex-btn {
+            position: fixed;
+            top: 110px;
+            left: 18px;
+            z-index: 1002;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 92px;
+            padding: 12px 10px;
+            background: rgba(0, 20, 10, 0.9);
+            color: #00ffff;
+            border: 2px solid rgba(0, 255, 255, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.18), inset 0 0 18px rgba(0, 255, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-weight: bold;
+            letter-spacing: 0.06em;
+            text-align: center;
+        }
+
+        .gem-codex-btn:hover {
+            transform: translateY(-2px);
+            color: #ffffff;
+            border-color: #00ffff;
+            box-shadow: 0 0 32px rgba(0, 255, 255, 0.35), inset 0 0 18px rgba(0, 255, 255, 0.14);
+        }
+
+        .gem-codex-icon {
+            font-size: 26px;
+            line-height: 1;
+            text-shadow: 0 0 16px rgba(0, 255, 255, 0.8);
+        }
+
+        .gem-codex-label {
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .gem-codex-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.88);
+            backdrop-filter: blur(8px);
+            z-index: 10030;
+        }
+
+        .gem-codex-content {
+            position: relative;
+            width: min(680px, calc(100vw - 32px));
+            max-height: min(84vh, 820px);
+            overflow: auto;
+            padding: 28px 24px 24px;
+            background: linear-gradient(180deg, rgba(2, 16, 9, 0.98) 0%, rgba(0, 0, 0, 0.98) 100%);
+            border: 2px solid rgba(0, 255, 255, 0.45);
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.18), inset 0 0 25px rgba(0, 255, 255, 0.08);
+        }
+
+        .gem-codex-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(0, 255, 255, 0.35);
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.08);
+            color: #00ffff;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .gem-codex-close:hover {
+            background: rgba(0, 255, 255, 0.14);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.2);
+        }
+
+        .gem-codex-title {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 0.14em;
+            color: #00ffff;
+            text-shadow: 0 0 16px rgba(0, 255, 255, 0.45);
+            margin-bottom: 10px;
+        }
+
+        .gem-codex-subtitle {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(210, 255, 255, 0.82);
+            margin-bottom: 18px;
+        }
+
+        .gem-codex-summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            margin-bottom: 18px;
+            border: 1px solid rgba(0, 255, 255, 0.28);
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.08);
+            color: #00ffff;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .gem-codex-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .gem-codex-entry {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            border: 1px solid rgba(0, 255, 255, 0.16);
+            border-radius: 14px;
+            background: rgba(0, 10, 8, 0.95);
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.08);
+        }
+
+        .gem-codex-preview {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.12);
+            flex-shrink: 0;
+        }
+
+        .gem-codex-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 30%;
+        }
+
+        .gem-codex-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .gem-codex-tier {
+            font-size: 11px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 4px;
+            letter-spacing: 0.08em;
+        }
+
+        .gem-codex-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .gem-codex-meta {
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(230, 255, 255, 0.82);
+        }
+
+        .collection-item .timestamp {
+            font-weight: bold;
+            letter-spacing: 0.04em;
+        }
         /* --- 强力移动端适配：精准覆盖 --- */
    @media (max-width: 1024px) {
     /* 1. 容器宽度自适应，不再被固定 px 撑开 */
@@ -1942,6 +2122,346 @@
     touch-action: manipulation;
 }
     </style> 
+    <style id="mobile-ux-override">
+        .mobile-dock {
+            display: none;
+        }
+
+        .mobile-dock-btn {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: rgba(180, 255, 200, 0.88);
+            font-family: 'Roboto Mono', 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 54px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .mobile-dock-btn .dock-icon {
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .mobile-dock-btn.active {
+            color: #00ff41;
+            background: rgba(0, 255, 65, 0.12);
+            box-shadow: inset 0 0 0 1px rgba(0, 255, 65, 0.25), 0 0 16px rgba(0, 255, 65, 0.18);
+        }
+
+        @media (max-width: 900px) {
+            html, body {
+                width: 100%;
+                height: 100%;
+                overflow: hidden !important;
+            }
+
+            body.mobile-optimized {
+                overflow: hidden !important;
+                padding: 0;
+            }
+
+            body.mobile-optimized .modal-header {
+                display: none !important;
+            }
+
+            body.mobile-optimized .lang-switcher {
+                top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+                right: 10px !important;
+                z-index: 10020 !important;
+                padding: 8px 12px !important;
+                font-size: 12px !important;
+                border-radius: 10px !important;
+                background: rgba(0, 255, 65, 0.12) !important;
+                border-color: rgba(0, 255, 65, 0.35) !important;
+            }
+
+            body.mobile-optimized .gem-codex-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+                left: 10px !important;
+                min-width: 76px !important;
+                padding: 9px 10px !important;
+                border-radius: 12px !important;
+                z-index: 10020 !important;
+            }
+
+            body.mobile-optimized .gem-codex-label {
+                font-size: 10px !important;
+                letter-spacing: 0.03em !important;
+            }
+
+            body.mobile-optimized .container {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100dvh !important;
+                padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px calc(env(safe-area-inset-bottom, 0px) + 152px) !important;
+                margin: 0 !important;
+                display: grid !important;
+                grid-template-rows: auto 1fr !important;
+                gap: 10px;
+                align-items: stretch !important;
+            }
+
+            body.mobile-optimized .header {
+                padding: 10px 56px 0 6px !important;
+                margin: 0 !important;
+            }
+
+            body.mobile-optimized .header h1 {
+                font-size: clamp(22px, 7vw, 28px) !important;
+                letter-spacing: 2px !important;
+                margin-bottom: 4px !important;
+            }
+
+            body.mobile-optimized #headerSubtitle {
+                font-size: 10px !important;
+                letter-spacing: 1px !important;
+                opacity: 0.72 !important;
+            }
+
+            body.mobile-optimized .difficulty-indicator {
+                position: static !important;
+                display: inline-flex !important;
+                margin-top: 8px !important;
+                padding: 5px 10px !important;
+                font-size: 11px !important;
+                border-radius: 999px !important;
+                box-shadow: 0 0 12px rgba(255, 68, 68, 0.25) !important;
+            }
+
+            body.mobile-optimized .power-center-section {
+                width: 100% !important;
+                min-height: 0 !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 12px 10px 12px !important;
+                border-radius: 22px !important;
+                gap: 10px !important;
+                justify-content: flex-start !important;
+                overflow: hidden !important;
+            }
+
+            body.mobile-optimized .stats {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                flex-wrap: nowrap !important;
+            }
+
+            body.mobile-optimized .stat-item {
+                min-width: 0 !important;
+                width: auto !important;
+                padding: 8px 8px 7px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .stat-item > div:first-child,
+            body.mobile-optimized .stat-item > div:last-child {
+                font-size: 10px !important;
+                line-height: 1.25 !important;
+            }
+
+            body.mobile-optimized .stat-value {
+                font-size: 18px !important;
+                line-height: 1.1 !important;
+            }
+
+            body.mobile-optimized .main-content {
+                flex: 1 1 auto !important;
+                width: 100% !important;
+                gap: 10px !important;
+                justify-content: center !important;
+            }
+
+            body.mobile-optimized .mine-section {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 12px !important;
+            }
+
+            body.mobile-optimized #mineBtn img {
+                width: min(46vw, 220px) !important;
+                height: auto !important;
+            }
+
+            body.mobile-optimized .overclock-btn {
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+                transform: none !important;
+                width: 100% !important;
+                max-width: 340px !important;
+                margin: 0 auto !important;
+            }
+
+            body.mobile-optimized #overclockBtn {
+                white-space: normal !important;
+                font-size: 14px !important;
+                line-height: 1.35 !important;
+                padding: 14px 12px !important;
+            }
+
+            body.mobile-optimized .countdown-time {
+                font-size: 20px !important;
+            }
+
+            body.mobile-optimized .upgrade-container,
+            body.mobile-optimized .collection-section,
+            body.mobile-optimized .leaderboard {
+                display: none !important;
+                position: fixed !important;
+                left: 10px !important;
+                right: 10px !important;
+                top: calc(env(safe-area-inset-top, 0px) + 94px) !important;
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 82px) !important;
+                margin: 0 !important;
+                padding: 14px !important;
+                overflow: auto !important;
+                border-radius: 20px !important;
+                border: 1px solid rgba(0, 255, 65, 0.24) !important;
+                background: rgba(3, 18, 10, 0.96) !important;
+                box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), 0 0 28px rgba(0, 255, 65, 0.12) !important;
+                z-index: 10015 !important;
+                backdrop-filter: blur(10px);
+            }
+
+            body.mobile-optimized .upgrade-container {
+                flex-direction: column !important;
+                gap: 12px !important;
+                align-items: stretch !important;
+                justify-content: flex-start !important;
+            }
+
+            body.mobile-optimized .upgrade-section {
+                min-width: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+                margin: 0 !important;
+            }
+
+            body.mobile-optimized[data-mobile-panel="upgrades"] .upgrade-container {
+                display: flex !important;
+            }
+
+            body.mobile-optimized[data-mobile-panel="vault"] .collection-section {
+                display: block !important;
+            }
+
+            body.mobile-optimized[data-mobile-panel="rank"] .leaderboard {
+                display: block !important;
+                width: auto !important;
+                max-height: none !important;
+                top: calc(env(safe-area-inset-top, 0px) + 94px) !important;
+                right: 10px !important;
+            }
+
+            body.mobile-optimized .collection-section h2,
+            body.mobile-optimized .leaderboard-title {
+                position: sticky;
+                top: -14px;
+                z-index: 2;
+                background: rgba(3, 18, 10, 0.96);
+                padding: 2px 0 10px;
+            }
+
+            body.mobile-optimized .collection-grid {
+                justify-content: flex-start !important;
+                gap: 12px !important;
+                padding-bottom: 6px !important;
+            }
+
+            body.mobile-optimized .leaderboard {
+                padding-bottom: 14px !important;
+            }
+
+            body.mobile-optimized .leaderboard-list {
+                max-height: none !important;
+            }
+
+            body.mobile-optimized .gem-codex-content {
+                width: calc(100vw - 20px) !important;
+                max-height: calc(100dvh - 20px) !important;
+                padding: 22px 16px 18px !important;
+                border-radius: 18px !important;
+            }
+
+            body.mobile-optimized .gem-codex-title {
+                font-size: 22px !important;
+                letter-spacing: 0.08em !important;
+                padding-right: 32px !important;
+            }
+
+            body.mobile-optimized .gem-codex-entry {
+                align-items: flex-start !important;
+            }
+
+            body.mobile-optimized .pay-to-win {
+                left: 50% !important;
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 78px) !important;
+                transform: translateX(-50%) !important;
+                width: calc(100vw - 20px) !important;
+                max-width: 360px !important;
+                padding: 14px 18px !important;
+                font-size: 18px !important;
+                border-radius: 16px !important;
+                z-index: 10018 !important;
+            }
+
+            body.mobile-optimized .pay-label {
+                font-size: 12px !important;
+            }
+
+            body.mobile-optimized:not([data-mobile-panel="main"]) .pay-to-win {
+                opacity: 0 !important;
+                pointer-events: none !important;
+                transform: translateX(-50%) translateY(12px) !important;
+            }
+
+            body.mobile-optimized .mobile-dock {
+                display: grid !important;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 8px;
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                padding: 10px 10px calc(env(safe-area-inset-bottom, 0px) + 10px);
+                background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(2, 12, 8, 0.92) 34%, rgba(2, 12, 8, 0.98) 100%);
+                backdrop-filter: blur(12px);
+                z-index: 10019;
+            }
+        }
+
+        @media (max-width: 420px) {
+            body.mobile-optimized .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            body.mobile-optimized .stats .stat-item:last-child {
+                grid-column: 1 / -1;
+            }
+
+            body.mobile-optimized #mineBtn img {
+                width: min(52vw, 200px) !important;
+            }
+
+            body.mobile-optimized .mobile-dock-btn {
+                font-size: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
     <canvas id="particleCanvas"></canvas>
@@ -1956,6 +2476,10 @@
 </div>
     <!-- 语言切换按钮 -->
     <div class="lang-switcher" id="langSwitcher" onclick="toggleLanguage()">CN</div>
+    <button class="gem-codex-btn" id="gemCodexBtn" type="button">
+        <span class="gem-codex-icon">💎</span>
+        <span class="gem-codex-label" id="gemCodexBtnLabel">GEM CODEX</span>
+    </button>
     
     <div class="container">
         <div class="header">
@@ -2054,9 +2578,11 @@
 
         <!-- 下半部分：藏品仓库区域 -->
         <div class="collection-section">
-            <h2>✦ THE GENESIS VAULT ✦</h2>
+            <h2>✦ THE GENESIS GEM VAULT ✦</h2>
             <div class="collection-subtitle">
-                Critical hits have a chance to drop rare fragments. | Stored: <span id="collectionCount">0</span> 件
+                <span id="collectionSubtitleText">Every click can drop a Genesis Gem</span>
+                · <span id="collectionSummaryLabel">Collected</span>: <span id="collectionCount">0</span> <span id="collectionItemsLabel">items</span>
+                · <span id="collectionBonusLabel">Bonus</span>: +<span id="collectionBonus">0</span>
             </div>
             <div class="collection-grid" id="collectionGrid">
                 <!-- 动态生成卡槽 -->
@@ -2089,7 +2615,7 @@
     </div>
 
     <!-- 支付弹窗 -->
-   <div class="payment-modal" id="paymentModal" style="display: none;">
+<div class="payment-modal" id="paymentModal" style="display: none;">
     <div class="payment-content">
         <div class="payment-icon">💎</div>
         <div class="payment-title">INITIALIZING PAYMENT GATEWAY...</div>
@@ -2108,6 +2634,37 @@
         <button class="payment-close" id="closePaymentBtn" style="background: none; border: 1px solid #444; margin-top: 8px;">RETURN TO GAME</button>
     </div>
 </div>
+
+    <div class="gem-codex-modal" id="gemCodexModal" style="display: none;">
+        <div class="gem-codex-content">
+            <button class="gem-codex-close" id="gemCodexClose" type="button">&times;</button>
+            <div class="gem-codex-title" id="gemCodexTitle">GENESIS GEM CODEX</div>
+            <div class="gem-codex-subtitle" id="gemCodexSubtitle">Permanent hashrate boosts and drop rates</div>
+            <div class="gem-codex-summary">
+                <span id="gemCodexSummaryLabel">Permanent Bonus</span>: +<span id="gemCodexTotalBonus">0</span>
+            </div>
+            <div class="gem-codex-list" id="gemCodexList"></div>
+        </div>
+    </div>
+
+    <nav class="mobile-dock" id="mobileDock" aria-label="Mobile game navigation">
+        <button class="mobile-dock-btn active" data-panel="main" type="button">
+            <span class="dock-icon">⛏</span>
+            <span class="dock-label" data-en="MINE" data-zh="挖矿">MINE</span>
+        </button>
+        <button class="mobile-dock-btn" data-panel="upgrades" type="button">
+            <span class="dock-icon">⬆</span>
+            <span class="dock-label" data-en="UPGR" data-zh="升级">UPGR</span>
+        </button>
+        <button class="mobile-dock-btn" data-panel="vault" type="button">
+            <span class="dock-icon">◈</span>
+            <span class="dock-label" data-en="VAULT" data-zh="仓库">VAULT</span>
+        </button>
+        <button class="mobile-dock-btn" data-panel="rank" type="button">
+            <span class="dock-icon">⚡</span>
+            <span class="dock-label" data-en="RANK" data-zh="排行">RANK</span>
+        </button>
+    </nav>
 
     <script>
         // ================================================================
@@ -2154,7 +2711,7 @@
                 
                 // Overclock Button
                 overclockBtn: 'Hyper-Clock:\n$1/100 Draws',
-                overclockStats: 'Already 12,840 hackers\ngot fragments via Hyper-Clock',
+                overclockStats: 'Already 12,840 hackers\ngot gems via Hyper-Clock',
                 
                 // Leaderboard
                 leaderboardTitle: '⚡ GLOBAL HASHRATE RANKING ⚡',
@@ -2163,9 +2720,18 @@
                 boostRankBtn: '🚀 Claim Top 10 ($1.00)',
                 
                 // Collection
-                collectionTitle: '✦ GENESIS FRAGMENT VAULT ✦',
-                collectionSubtitle: 'Chance to get rare fragments when critical hit | Collected:',
+                collectionTitle: '✦ GENESIS GEM VAULT ✦',
+                collectionSubtitle: 'Every click can drop a Genesis Gem',
+                collectedLabel: 'Collected',
                 items: 'items',
+                totalBonus: 'Bonus',
+                codexButton: 'GEM CODEX',
+                codexTitle: 'GENESIS GEM CODEX',
+                codexSubtitle: 'Permanent hashrate boosts and drop rates',
+                codexTotalBonus: 'Permanent Bonus',
+                codexHashrateLabel: 'Hashrate',
+                codexDropRateLabel: 'Drop Rate',
+                codexOwnedLabel: 'Owned',
                 
                 // Payment Buttons
                 payToWin: '⚡ Instant Full Recovery ⚡',
@@ -2175,14 +2741,14 @@
                 paymentTitle: 'Initiating Hyper-Clock...',
                 paymentMessage: 'Cross-chain payment gateway connecting',
                 paymentAmount: '$1.00 USD',
-                paymentDetails: '⚡ This transaction: 100 premium draws\n🎁 Bonus: Rare fragment drop rate +50%',
+                paymentDetails: '⚡ This transaction: 100 premium draws\n🎁 Bonus: Rare gem drop rate +50%',
                 paymentClose: 'Back to Game',
                 
-                // Fragments
-                alphaCore: 'Alpha Core',
-                betaMatrix: 'Beta Matrix',
-                gammaCrystal: 'Gamma Crystal',
-                deltaSource: 'Delta Source',
+                // Gems
+                gemTier1Name: 'Tier 1 Genesis Gem',
+                gemTier2Name: 'Tier 2 Genesis Gem',
+                gemTier3Name: 'Tier 3 Genesis Gem',
+                gemTier4Name: 'Tier 4 Genesis Gem',
                 
                 // Critical Hit
                 criticalHit: 'FULL NETWORK BURST!!!',
@@ -2225,16 +2791,25 @@
                 offerEnded: '⚠️ 特惠已结束 ⚠️',
                 
                 overclockBtn: '⚡ 算力超频：$1/100抽 ⚡',
-                overclockStats: '已有12,840人\n通过超频获得碎片',
+                overclockStats: '已有12,840人\n通过超频获得宝石',
                 
                 leaderboardTitle: '⚡ 全网算力排行 ⚡',
                 realTimeUpdate: '实时更新中...',
                 you: '你',
                 boostRankBtn: '🚀 抢占前十 ($1.00)',
                 
-                collectionTitle: '✦ GENESIS 矿石仓库 ✦',
-                collectionSubtitle: '每次暴击爆块时有几率获得稀缺碎片 | 已收集:',
+                collectionTitle: '✦ GENESIS 宝石仓库 ✦',
+                collectionSubtitle: '每次点击中心核心都有概率掉落 Genesis 宝石',
+                collectedLabel: '已收集',
                 items: '件',
+                totalBonus: '加成',
+                codexButton: '宝石图鉴',
+                codexTitle: 'GENESIS 宝石图鉴',
+                codexSubtitle: '永久算力加成与掉落概率',
+                codexTotalBonus: '永久加成',
+                codexHashrateLabel: '算力',
+                codexDropRateLabel: '掉落率',
+                codexOwnedLabel: '拥有',
                 
                 payToWin: '⚡ 瞬间满血复活 ⚡',
                 payLabel: '仅需 $1.00',
@@ -2242,13 +2817,13 @@
                 paymentTitle: '支付通道准备中...',
                 paymentMessage: '正在连接全球加密支付网关',
                 paymentAmount: '$1.00 USD',
-                paymentDetails: '⚡ 本次交易将获得 100 次高级抽奖机会\n🎁 额外赠送稀有碎片掉落率 +50% Buff',
+                paymentDetails: '⚡ 本次交易将获得 100 次高级抽奖机会\n🎁 额外赠送稀有宝石掉落率 +50% Buff',
                 paymentClose: '返回游戏',
                 
-                alphaCore: 'Alpha核心',
-                betaMatrix: 'Beta矩阵',
-                gammaCrystal: 'Gamma晶体',
-                deltaSource: 'Delta源码',
+                gemTier1Name: '1级 Genesis 宝石',
+                gemTier2Name: '2级 Genesis 宝石',
+                gemTier3Name: '3级 Genesis 宝石',
+                gemTier4Name: '4级 Genesis 宝石',
                 
                 criticalHit: '全网爆块!!!',
                 
@@ -2312,11 +2887,17 @@
             const lang = translations[currentLang];
             const statsItems = document.querySelectorAll('.stat-item');
             const sections = document.querySelectorAll('.upgrade-section');
-            const collectionSubtitle = document.querySelector('.collection-subtitle');
-            const collectionCountNode = document.getElementById('collectionCount');
             const myRankAddress = document.querySelector('.leaderboard-myrank .leaderboard-address');
             const paymentDetails = document.getElementById('paymentDetails');
             const paymentAmount = document.getElementById('paymentAmount');
+            const collectionSubtitleText = document.getElementById('collectionSubtitleText');
+            const collectionSummaryLabel = document.getElementById('collectionSummaryLabel');
+            const collectionItemsLabel = document.getElementById('collectionItemsLabel');
+            const collectionBonusLabel = document.getElementById('collectionBonusLabel');
+            const gemCodexBtnLabel = document.getElementById('gemCodexBtnLabel');
+            const gemCodexTitle = document.getElementById('gemCodexTitle');
+            const gemCodexSubtitle = document.getElementById('gemCodexSubtitle');
+            const gemCodexSummaryLabel = document.getElementById('gemCodexSummaryLabel');
 
             document.querySelector('.header h1').textContent = lang.title;
             document.getElementById('headerSubtitle').textContent = lang.subtitle;
@@ -2356,13 +2937,17 @@
             document.querySelector('.overclock-stats span').textContent = lang.overclockStats.replace('\n', ' ');
 
             document.querySelector('.collection-section h2').textContent = lang.collectionTitle;
-            if (collectionSubtitle) {
-                collectionSubtitle.childNodes[0].textContent = `${lang.collectionSubtitle} `;
-                const textNodes = Array.from(collectionSubtitle.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE);
-                const lastTextNode = textNodes.length ? textNodes[textNodes.length - 1] : null;
-                if (lastTextNode && collectionCountNode) {
-                    lastTextNode.textContent = ` ${lang.items}`;
-                }
+            if (collectionSubtitleText) {
+                collectionSubtitleText.textContent = lang.collectionSubtitle;
+            }
+            if (collectionSummaryLabel) {
+                collectionSummaryLabel.textContent = lang.collectedLabel;
+            }
+            if (collectionItemsLabel) {
+                collectionItemsLabel.textContent = lang.items;
+            }
+            if (collectionBonusLabel) {
+                collectionBonusLabel.textContent = lang.totalBonus;
             }
 
             document.querySelector('.leaderboard-title').textContent = lang.leaderboardTitle;
@@ -2384,10 +2969,33 @@
 
             document.querySelector('#payBtn div:first-child').textContent = lang.payToWin;
             document.querySelector('#payBtn .pay-label').textContent = lang.payLabel;
+            if (gemCodexBtnLabel) {
+                gemCodexBtnLabel.textContent = lang.codexButton;
+            }
+            if (gemCodexTitle) {
+                gemCodexTitle.textContent = lang.codexTitle;
+            }
+            if (gemCodexSubtitle) {
+                gemCodexSubtitle.textContent = lang.codexSubtitle;
+            }
+            if (gemCodexSummaryLabel) {
+                gemCodexSummaryLabel.textContent = lang.codexTotalBonus;
+            }
+            document.querySelectorAll('.mobile-dock-btn .dock-label').forEach((labelNode) => {
+                labelNode.textContent = currentLang === 'en'
+                    ? labelNode.getAttribute('data-en')
+                    : labelNode.getAttribute('data-zh');
+            });
 
             setTimeout(() => {
                 if (typeof updateDisplay === 'function') {
                     updateDisplay();
+                }
+                if (typeof renderCollection === 'function') {
+                    renderCollection();
+                }
+                if (typeof renderGemCodex === 'function') {
+                    renderGemCodex();
                 }
                 if (typeof renderLeaderboard === 'function') {
                     renderLeaderboard();
@@ -2535,7 +3143,7 @@
                 // 倒计时结束
                 if (countdownSeconds === 0) {
                     document.getElementById('countdownTimer').textContent = '00:00';
-                    document.querySelector('.countdown-title').textContent = '⚠️ 特惠已结束 ⚠️';
+                    document.querySelector('.countdown-title').textContent = t('offerEnded');
                 }
             }
         }
@@ -2763,12 +3371,43 @@
         const closePaymentBtn = document.getElementById('closePaymentBtn');
         const powerStat = document.getElementById('powerStat');
         const criticalOverlay = document.getElementById('criticalOverlay');
+        const mobileDockButtons = document.querySelectorAll('.mobile-dock-btn');
         const warningBorders = [
             document.getElementById('warningTop'),
             document.getElementById('warningBottom'),
             document.getElementById('warningLeft'),
             document.getElementById('warningRight')
         ];
+
+        function isMobileViewport() {
+            return window.innerWidth <= 900;
+        }
+
+        function setMobilePanel(panel) {
+            if (!document.body.classList.contains('mobile-optimized')) return;
+
+            const nextPanel = panel || 'main';
+            document.body.setAttribute('data-mobile-panel', nextPanel);
+
+            mobileDockButtons.forEach((button) => {
+                button.classList.toggle('active', button.dataset.panel === nextPanel);
+            });
+        }
+
+        function syncMobileLayout() {
+            const mobile = isMobileViewport();
+            document.body.classList.toggle('mobile-optimized', mobile);
+
+            if (mobile) {
+                if (!document.body.getAttribute('data-mobile-panel')) {
+                    document.body.setAttribute('data-mobile-panel', 'main');
+                }
+                setMobilePanel(document.body.getAttribute('data-mobile-panel'));
+            } else {
+                document.body.removeAttribute('data-mobile-panel');
+                mobileDockButtons.forEach((button) => button.classList.remove('active'));
+            }
+        }
 
         function createMatrixBackground() {
             const matrixBg = document.getElementById('matrixBg');
@@ -3287,6 +3926,14 @@
             }
         });
 
+        mobileDockButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                setMobilePanel(button.dataset.panel);
+            });
+        });
+
+        window.addEventListener('resize', syncMobileLayout);
+
         setInterval(applyDecay, 1000);
         setInterval(autoMine, 1000);
         setInterval(updateHeatAndWarnings, 100);
@@ -3324,7 +3971,9 @@
 
         createMatrixBackground();
         renderCollection();
+        syncMobileLayout();
         updateDisplay();
+        updateAllText();
 
         function handlePaymentConfirm() {
             closeModal();
