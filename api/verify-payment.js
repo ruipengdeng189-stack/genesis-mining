@@ -356,7 +356,7 @@ export async function GET(request) {
         minerId: updatedOrder.miner_id,
         offerId: updatedOrder.offer_id,
         offerName: updatedOrder.offer_name,
-        exactAmount: Number(updatedOrder.exact_amount).toFixed(6),
+        exactAmount: Number(updatedOrder.exact_amount).toFixed(4),
         status: updatedOrder.status,
         txid: updatedOrder.txid,
         paidAt: updatedOrder.paid_at,

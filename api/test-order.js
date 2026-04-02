@@ -13,8 +13,9 @@ function getEnv(name) {
 }
 
 function buildExactAmount(baseAmount) {
-  const tail = String(Date.now() % 1000).padStart(3, '0');
-  return Number((baseAmount + Number(`0.000${tail}`)).toFixed(6));
+  const safeBaseAmount = Number(baseAmount || 0).toFixed(2);
+  const tail = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+  return Number((Number(safeBaseAmount) + Number(`0.00${tail}`)).toFixed(4));
 }
 
 async function insertOrder(row) {
@@ -73,7 +74,7 @@ export async function GET() {
         offerId: saved.offer_id,
         offerName: saved.offer_name,
         baseAmount: saved.base_amount,
-        exactAmount: Number(saved.exact_amount).toFixed(6),
+        exactAmount: Number(saved.exact_amount).toFixed(4),
         payAddress: getEnv('TRON_RECEIVE_ADDRESS'),
         network: 'TRON (TRC20)',
         expiresAt: saved.expires_at,

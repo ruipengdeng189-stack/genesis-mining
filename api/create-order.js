@@ -6,6 +6,7 @@ const OFFERS = {
   nexus: { name: 'T4 Nexus Pack', baseAmount: 9.99 },
   throne: { name: 'Throne Protocol', baseAmount: 12.99 },
 };
+const ORDER_AMOUNT_DISPLAY_DECIMALS = 4;
 
 function getEnv(name) {
   const value = process.env[name];
@@ -16,8 +17,9 @@ function getEnv(name) {
 }
 
 function buildExactAmount(baseAmount) {
-  const tail = String(Date.now() % 1000).padStart(3, '0');
-  return Number((baseAmount + Number(`0.000${tail}`)).toFixed(6));
+  const safeBaseAmount = Number(baseAmount || 0).toFixed(2);
+  const tail = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+  return Number((Number(safeBaseAmount) + Number(`0.00${tail}`)).toFixed(ORDER_AMOUNT_DISPLAY_DECIMALS));
 }
 
 async function insertOrder(row) {
@@ -93,7 +95,7 @@ export async function POST(request) {
         offerId: saved.offer_id,
         offerName: saved.offer_name,
         baseAmount: saved.base_amount,
-        exactAmount: Number(saved.exact_amount).toFixed(6),
+        exactAmount: Number(saved.exact_amount).toFixed(ORDER_AMOUNT_DISPLAY_DECIMALS),
         payAddress: getEnv('TRON_RECEIVE_ADDRESS'),
         network: 'TRON (TRC20)',
         expiresAt: saved.expires_at,

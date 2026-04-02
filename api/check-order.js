@@ -95,7 +95,7 @@ export async function GET(request) {
         offerId: order.offer_id,
         offerName: order.offer_name,
         baseAmount: order.base_amount,
-        exactAmount: Number(order.exact_amount).toFixed(6),
+        exactAmount: Number(order.exact_amount).toFixed(4),
         status: order.status,
         txid: order.txid,
         rewardGranted: order.reward_granted,

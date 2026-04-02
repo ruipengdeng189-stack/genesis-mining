@@ -1814,6 +1814,7 @@
             box-shadow: 0 0 15px rgba(0, 255, 65, 0.4);
             transition: all 0.3s;
             animation: itemAppear 0.5s ease-out;
+            cursor: pointer;
         }
 
         .collection-item:hover {
@@ -3248,6 +3249,131 @@
             font-size: 12px;
             line-height: 1.5;
             color: rgba(230, 255, 255, 0.82);
+        }
+
+        .gem-tip-modal {
+            z-index: 10040;
+        }
+
+        .gem-tip-content {
+            width: min(560px, calc(100vw - 32px));
+        }
+
+        .gem-tip-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .gem-tip-preview {
+            width: 86px;
+            height: 86px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 2px solid rgba(0, 255, 255, 0.35);
+            background: rgba(0, 18, 14, 0.95);
+            box-shadow: 0 0 26px rgba(0, 255, 255, 0.16);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gem-tip-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 30%;
+        }
+
+        .gem-tip-heading {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .gem-tip-tier {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 255, 255, 0.32);
+            background: rgba(0, 255, 255, 0.08);
+            color: #00ffff;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .gem-tip-title {
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .gem-tip-subtitle {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(214, 255, 255, 0.78);
+        }
+
+        .gem-tip-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .gem-tip-stat {
+            padding: 12px 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 255, 255, 0.18);
+            background: rgba(0, 18, 14, 0.78);
+            box-shadow: inset 0 0 18px rgba(0, 255, 255, 0.06);
+        }
+
+        .gem-tip-stat-label {
+            font-size: 11px;
+            color: rgba(190, 255, 255, 0.64);
+            margin-bottom: 4px;
+            letter-spacing: 0.06em;
+        }
+
+        .gem-tip-stat-value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .gem-tip-body {
+            display: grid;
+            gap: 12px;
+        }
+
+        .gem-tip-card {
+            padding: 14px 15px;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            background: linear-gradient(180deg, rgba(0, 18, 14, 0.95) 0%, rgba(0, 8, 6, 0.96) 100%);
+            box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.05);
+        }
+
+        .gem-tip-card-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #00ffff;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .gem-tip-card-copy {
+            font-size: 13px;
+            line-height: 1.7;
+            color: rgba(230, 255, 255, 0.86);
         }
 
         .collection-item .timestamp {
@@ -5070,14 +5196,16 @@
                 max-height: none !important;
             }
 
-            body.mobile-optimized .gem-codex-content {
+            body.mobile-optimized .gem-codex-content,
+            body.mobile-optimized .gem-tip-content {
                 width: calc(100vw - 20px) !important;
                 max-height: calc(100dvh - 20px) !important;
                 padding: 22px 16px 18px !important;
                 border-radius: 18px !important;
             }
 
-            body.mobile-optimized .gem-codex-close {
+            body.mobile-optimized .gem-codex-close,
+            body.mobile-optimized .gem-tip-close {
                 position: sticky !important;
                 top: 0 !important;
                 right: auto !important;
@@ -5098,6 +5226,35 @@
 
             body.mobile-optimized .gem-codex-entry {
                 align-items: flex-start !important;
+            }
+
+            body.mobile-optimized .gem-tip-hero {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 12px !important;
+            }
+
+            body.mobile-optimized .gem-tip-preview {
+                width: 92px !important;
+                height: 92px !important;
+                margin: 0 auto !important;
+            }
+
+            body.mobile-optimized .gem-tip-title {
+                font-size: 21px !important;
+                text-align: center !important;
+            }
+
+            body.mobile-optimized .gem-tip-subtitle {
+                text-align: center !important;
+            }
+
+            body.mobile-optimized .gem-tip-tier {
+                margin: 0 auto 8px !important;
+            }
+
+            body.mobile-optimized .gem-tip-stat-grid {
+                grid-template-columns: 1fr !important;
             }
 
             body.mobile-optimized .fragment-unlock-overlay {
@@ -6338,6 +6495,22 @@
                 <span id="gemCodexSummaryLabel">Permanent Bonus</span>: +<span id="gemCodexTotalBonus">0</span>
             </div>
             <div class="gem-codex-list" id="gemCodexList"></div>
+        </div>
+    </div>
+
+    <div class="gem-codex-modal gem-tip-modal" id="gemTipModal" style="display: none;">
+        <div class="gem-codex-content gem-tip-content">
+            <button class="gem-codex-close gem-tip-close" id="gemTipClose" type="button">&times;</button>
+            <div class="gem-tip-hero">
+                <div class="gem-tip-preview" id="gemTipPreview"></div>
+                <div class="gem-tip-heading">
+                    <div class="gem-tip-tier" id="gemTipTier">LV1</div>
+                    <div class="gem-tip-title" id="gemTipTitle">Tier 1 Genesis Gem</div>
+                    <div class="gem-tip-subtitle" id="gemTipSubtitle">Fixed drop rate, permanent hashrate bonus, and forge route.</div>
+                </div>
+            </div>
+            <div class="gem-tip-stat-grid" id="gemTipStats"></div>
+            <div class="gem-tip-body" id="gemTipBody"></div>
         </div>
     </div>
 
@@ -12429,7 +12602,7 @@
             const value = Number(amount) || 0;
             const rawText = String(amount ?? '').trim();
             const useExact = exact || /\.\d{3,}/.test(rawText);
-            return `${value.toFixed(useExact ? 6 : 2)} USDT`;
+            return `${value.toFixed(useExact ? PAYMENT_ORDER_DISPLAY_DECIMALS : 2)} USDT`;
         }
 
         function generatePaymentMinerId() {
@@ -12960,7 +13133,7 @@
                 return;
             }
 
-            const exactAmountText = Number(order.exactAmount || 0).toFixed(6);
+            const exactAmountText = Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS);
             renderPaymentOrderUI();
             const copied = await copyTextToClipboard(exactAmountText);
 
@@ -13205,6 +13378,7 @@
             document.getElementById('closePaymentBtn').textContent = lang.paymentClose;
             refreshPaymentVerificationState();
             refreshPaymentOfferUI();
+            refreshOpenGemTip();
 
             if (gemCodexBtnLabel) {
                 gemCodexBtnLabel.textContent = lang.codexButton;
@@ -13540,6 +13714,8 @@
         let collection = [];
         let gemPowerBonus = 0;
         let gemRewardOverlayTimer = null;
+        let selectedGemTipId = null;
+        let selectedGemTipRecord = null;
         let rewardFeedbackOverlayTimer = null;
         let audioContext = null;
         let backgroundMusicStarted = false;
@@ -13621,6 +13797,7 @@
         const TIMED_MISSION_BASE_DURATION_MS = 165000;
         const TIMED_MISSION_TYPES = ['coins', 'clicks', 'criticals'];
         const PAYMENT_TIER4_PITY_THRESHOLD = 3;
+        const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
         const MINING_TIER4_PITY_BASE_THRESHOLD = 1200;
         const TRON_GRID_API_BASE = 'https://api.trongrid.io';
         const TRON_USDT_CONTRACT_BASE58 = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
@@ -15842,6 +16019,14 @@
         const gemCodexCloseBtn = document.getElementById('gemCodexClose');
         const gemCodexList = document.getElementById('gemCodexList');
         const gemCodexTotalBonusDisplay = document.getElementById('gemCodexTotalBonus');
+        const gemTipModal = document.getElementById('gemTipModal');
+        const gemTipCloseBtn = document.getElementById('gemTipClose');
+        const gemTipPreview = document.getElementById('gemTipPreview');
+        const gemTipTier = document.getElementById('gemTipTier');
+        const gemTipTitle = document.getElementById('gemTipTitle');
+        const gemTipSubtitle = document.getElementById('gemTipSubtitle');
+        const gemTipStats = document.getElementById('gemTipStats');
+        const gemTipBody = document.getElementById('gemTipBody');
         const chainCoresValue = document.getElementById('chainCoresValue');
         const mineBoostValue = document.getElementById('mineBoostValue');
         const prestigeProgressValue = document.getElementById('prestigeProgressValue');
@@ -16985,7 +17170,7 @@
 
             let html = collection.map((gem) => `
                 <div class="collection-slot">
-                    <div class="collection-item" style="border-color: ${gem.color}; box-shadow: 0 0 20px ${gem.color};" title="${getGemName(gem)} | ${formatGemTimestamp(gem.obtainedAt)} | +${gem.bonus}">
+                    <div class="collection-item" data-gem-id="${gem.id}" style="border-color: ${gem.color}; box-shadow: 0 0 20px ${gem.color};" title="${getGemName(gem)} | ${formatGemTimestamp(gem.obtainedAt)} | +${gem.bonus}">
                         <img src="${gem.image}" alt="${getGemName(gem)}" style="filter: drop-shadow(0 0 15px ${gem.color}) drop-shadow(0 0 30px ${gem.color});">
                         <div class="rarity-badge" style="border-color: ${gem.color}; color: ${gem.color};">
                             LV${gem.tier}
@@ -17000,6 +17185,150 @@
             }
 
             collectionGrid.innerHTML = html;
+            refreshOpenGemTip();
+        }
+
+        function findCollectedGemById(gemId) {
+            const normalizedId = String(gemId);
+            return collection.find((gem) => String(gem.id) === normalizedId) || null;
+        }
+
+        function getGemTipUsageText(gem) {
+            if (gem.tier === 4) {
+                return currentLang === 'en'
+                    ? `Stored immediately grants +${gem.bonus} permanent hashrate. This is an endgame gem that can also be converted into ${T4_STARDUST_PER_GEM} Stardust for awakening and T4 ladder growth.`
+                    : `收入仓库后立即提供 +${gem.bonus} 常驻算力。这是终局宝石，也可裂解为 ${T4_STARDUST_PER_GEM} 星尘，用于觉醒与 T4 排行成长。`;
+            }
+
+            const nextTierGem = GEM_TIERS.find((item) => item.tier === gem.tier + 1);
+            return currentLang === 'en'
+                ? `Stored immediately grants +${gem.bonus} permanent hashrate. Collect 3 copies to forge into ${nextTierGem ? getGemName(nextTierGem) : 'the next tier'} in Genesis Forge.`
+                : `收入仓库后立即提供 +${gem.bonus} 常驻算力。集齐 3 颗后可在 Genesis 熔炉中合成为${nextTierGem ? getGemName(nextTierGem) : '下一阶宝石'}。`;
+        }
+
+        function getGemTipDropText(gem) {
+            const chanceText = formatDropRate(getGemChance(gem));
+            return currentLang === 'en'
+                ? `Each click on the Genesis Core performs one fixed roll for this tier at ${chanceText}. The rate is fixed and does not scale with power, level, or heat.`
+                : `每次点击 Genesis Core 时，都会以固定 ${chanceText} 概率独立判定该宝石。该概率为固定值，不会随算力、等级或热量变化。`;
+        }
+
+        function getGemTipRouteText(gem) {
+            if (gem.tier === 4) {
+                return currentLang === 'en'
+                    ? 'Tier 4 route: keep it for permanent hashrate, spend it in the T4 Nexus, convert it into Stardust, or use it to push season score and awakening progress.'
+                    : '4级路线：既可保留为常驻算力，也可投入 T4 枢纽、裂解成星尘，或用于赛季排行与觉醒进度推进。';
+            }
+
+            const nextTierGem = GEM_TIERS.find((item) => item.tier === gem.tier + 1);
+            return currentLang === 'en'
+                ? `Next step: gather 3 copies of this tier, then forge them into ${nextTierGem ? getGemName(nextTierGem) : 'the next tier gem'} to keep climbing the gem chain.`
+                : `下一步：收集 3 颗同阶宝石，在熔炉中合成为${nextTierGem ? getGemName(nextTierGem) : '下一阶宝石'}，继续向上推进宝石链。`;
+        }
+
+        function renderGemTip(gemRecord = selectedGemTipRecord) {
+            if (!gemTipModal || !gemTipPreview || !gemTipTier || !gemTipTitle || !gemTipSubtitle || !gemTipStats || !gemTipBody || !gemRecord) {
+                return;
+            }
+
+            const ownedCount = getGemCountByTier(gemRecord.tier);
+            const obtainedText = gemRecord.obtainedAt
+                ? formatGemTimestamp(gemRecord.obtainedAt)
+                : (currentLang === 'en' ? 'Unknown' : '未知');
+
+            gemTipPreview.innerHTML = `
+                <img src="${gemRecord.image}" alt="${getGemName(gemRecord)}" style="border-color: ${gemRecord.color}; filter: drop-shadow(0 0 15px ${gemRecord.color}) drop-shadow(0 0 32px ${gemRecord.color});">
+            `;
+            gemTipPreview.style.borderColor = gemRecord.color;
+            gemTipPreview.style.boxShadow = `0 0 26px ${gemRecord.color}40`;
+            gemTipTier.textContent = `LV${gemRecord.tier}`;
+            gemTipTier.style.borderColor = `${gemRecord.color}88`;
+            gemTipTier.style.color = gemRecord.color;
+            gemTipTier.style.boxShadow = `0 0 14px ${gemRecord.color}30`;
+            gemTipTitle.textContent = getGemName(gemRecord);
+            gemTipTitle.style.color = gemRecord.color;
+            gemTipTitle.style.textShadow = `0 0 14px ${gemRecord.color}`;
+            gemTipSubtitle.textContent = currentLang === 'en'
+                ? 'Fixed per-click drop odds, permanent hashrate bonus, and forge / endgame route.'
+                : '展示固定掉率、常驻算力收益，以及熔炉 / 终局用途。';
+
+            gemTipStats.innerHTML = [
+                {
+                    label: currentLang === 'en' ? 'Permanent Bonus' : '常驻加成',
+                    value: `+${gemRecord.bonus}`
+                },
+                {
+                    label: currentLang === 'en' ? 'Fixed Drop Rate' : '固定掉率',
+                    value: formatDropRate(getGemChance(gemRecord))
+                },
+                {
+                    label: currentLang === 'en' ? 'Owned (Same Tier)' : '同阶持有',
+                    value: `x${ownedCount}`
+                },
+                {
+                    label: currentLang === 'en' ? 'Obtained At' : '获取时间',
+                    value: obtainedText
+                }
+            ].map((item) => `
+                <div class="gem-tip-stat">
+                    <div class="gem-tip-stat-label">${item.label}</div>
+                    <div class="gem-tip-stat-value">${item.value}</div>
+                </div>
+            `).join('');
+
+            gemTipBody.innerHTML = [
+                {
+                    title: currentLang === 'en' ? 'USE' : '用途',
+                    copy: getGemTipUsageText(gemRecord)
+                },
+                {
+                    title: currentLang === 'en' ? 'DROP RULE' : '掉落规则',
+                    copy: getGemTipDropText(gemRecord)
+                },
+                {
+                    title: currentLang === 'en' ? 'NEXT STEP' : '下一步',
+                    copy: getGemTipRouteText(gemRecord)
+                }
+            ].map((section) => `
+                <div class="gem-tip-card">
+                    <div class="gem-tip-card-title">${section.title}</div>
+                    <div class="gem-tip-card-copy">${section.copy}</div>
+                </div>
+            `).join('');
+        }
+
+        function refreshOpenGemTip() {
+            if (!gemTipModal || gemTipModal.style.display !== 'flex' || !selectedGemTipRecord) {
+                return;
+            }
+
+            const liveGem = selectedGemTipId ? findCollectedGemById(selectedGemTipId) : null;
+            if (liveGem) {
+                selectedGemTipRecord = { ...liveGem };
+            }
+            renderGemTip(selectedGemTipRecord);
+        }
+
+        function openGemTipById(gemId) {
+            const gemRecord = findCollectedGemById(gemId);
+            if (!gemRecord || !gemTipModal) {
+                return;
+            }
+
+            selectedGemTipId = String(gemRecord.id);
+            selectedGemTipRecord = { ...gemRecord };
+            renderGemTip(selectedGemTipRecord);
+            gemTipModal.style.display = 'flex';
+        }
+
+        function closeGemTip() {
+            if (!gemTipModal) {
+                return;
+            }
+
+            gemTipModal.style.display = 'none';
+            selectedGemTipId = null;
+            selectedGemTipRecord = null;
         }
 
         function renderGemCodex() {
@@ -17444,6 +17773,19 @@
         gemCodexCloseBtn.addEventListener('click', () => {
             closeGemCodex();
         });
+        if (gemTipCloseBtn) {
+            gemTipCloseBtn.addEventListener('click', () => {
+                closeGemTip();
+            });
+        }
+        if (collectionGrid) {
+            bindResponsiveTap(collectionGrid, (_event, target) => target ? target.closest('[data-gem-id]') : null, (target) => {
+                const gemId = target.getAttribute('data-gem-id');
+                if (gemId) {
+                    openGemTipById(gemId);
+                }
+            });
+        }
         missionsBtn.addEventListener('click', () => {
             openV2Modal(missionsModal);
         });
@@ -17629,6 +17971,13 @@
                 closeGemCodex();
             }
         });
+        if (gemTipModal) {
+            gemTipModal.addEventListener('click', (e) => {
+                if (e.target === gemTipModal) {
+                    closeGemTip();
+                }
+            });
+        }
         missionsModal.addEventListener('click', (e) => {
             if (e.target === missionsModal) {
                 closeV2Modal(missionsModal);
