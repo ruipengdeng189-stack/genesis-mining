@@ -1,7 +1,10 @@
 const OFFERS = {
-  starter: { name: 'Starter Pack', baseAmount: 1.0 },
-  boost: { name: 'Boost Pack', baseAmount: 3.0 },
-  summit: { name: 'Summit Pack', baseAmount: 6.0 },
+  starter: { name: 'Recovery Pack', baseAmount: 1.0 },
+  accelerator: { name: 'Hyper Pack', baseAmount: 2.99 },
+  rush: { name: 'Rank Surge Pack', baseAmount: 3.99 },
+  sovereign: { name: 'Dominance Pack', baseAmount: 5.99 },
+  nexus: { name: 'T4 Nexus Pack', baseAmount: 9.99 },
+  throne: { name: 'Throne Protocol', baseAmount: 12.99 },
 };
 
 function getEnv(name) {

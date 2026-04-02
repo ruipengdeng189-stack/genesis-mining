@@ -6542,10 +6542,13 @@
         let paymentLogIndex = 0;
         let selectedPaymentOfferId = 'starter';
         let paymentVerificationError = '';
+        let paymentVerificationNotice = '';
         let paymentWalletConfigError = '';
         let paymentOrderNonce = 0;
         let currentPaymentOrder = null;
         let verifiedPaymentTxIds = [];
+        let paymentOrderRequestPromise = null;
+        let paymentMinerId = '';
         let paymentWalletHex = '';
         let tronUsdtContractHex = '';
         const paymentButtonFeedbackTimers = new WeakMap();
@@ -11979,6 +11982,7 @@
 
             paymentVerificationState = 'copied';
             paymentVerificationError = '';
+            paymentVerificationNotice = '';
             appendPaymentLogLine(
                 copied
                     ? getPaymentText('addressCopiedLog')
@@ -12323,6 +12327,728 @@
                 grantPaymentRewards(verificationResult);
             } catch (error) {
                 paymentVerificationState = 'idle';
+                paymentVerificationError = error?.message || getPaymentText('txNetworkError');
+                appendPaymentLogLine(paymentVerificationError, 'error');
+                refreshPaymentVerificationState();
+            }
+        }
+
+        function getPaymentText(key) {
+            const isEn = currentLang === 'en';
+            const copy = {
+                copyAddress: isEn ? 'Copy Address' : '复制收款地址',
+                copyAmount: isEn ? 'Copy Exact Amount' : '复制精确金额',
+                verifyTxid: isEn ? 'Verify TXID' : '校验 TXID',
+                orderLabel: isEn ? 'Order ID' : '订单编号',
+                exactAmountLabel: isEn ? 'Exact Amount' : '精确金额',
+                expiryLabel: isEn ? 'Expires In' : '剩余有效期',
+                txidLabel: isEn ? 'Paste OKX Wallet txid' : '粘贴 OKX 钱包 txid',
+                txidPlaceholder: isEn ? 'Paste the on-chain txid from OKX Wallet' : '请输入 OKX 钱包里的链上 txid',
+                txidHint: isEn
+                    ? 'Only payments that match the current order amount, recipient address, and valid time window can pass verification.'
+                    : '只有金额、收款地址、订单时间窗口都与当前订单完全匹配的支付，才能通过校验。',
+                statusIdle: isEn
+                    ? 'Create an exact order, pay it in OKX Wallet, then paste the txid here for on-chain verification.'
+                    : '请先生成精确订单，在 OKX 钱包完成支付后，再把 txid 粘贴到这里进行链上校验。',
+                statusCreating: isEn
+                    ? 'Creating an exact payment order from the server...'
+                    : '正在向服务器生成精确支付订单...',
+                statusCopied: isEn
+                    ? 'Copied successfully. Complete the payment in OKX Wallet, then paste the txid.'
+                    : '已复制成功，请在 OKX 钱包完成支付后，再粘贴 txid。',
+                statusVerifying: isEn
+                    ? 'Verifying this txid on the server and TRON mainnet...'
+                    : '正在通过服务器与 TRON 主网校验这笔 txid...',
+                statusVerified: isEn
+                    ? 'Payment verified. Rewards are being granted.'
+                    : '支付校验通过，奖励发放中。',
+                statusAlreadyGranted: isEn
+                    ? 'This order was already granted earlier. No duplicate rewards were added.'
+                    : '这个订单之前已经发过奖励，本次不会重复发放。',
+                invalidTxid: isEn
+                    ? 'Enter a valid 64-character txid.'
+                    : '请输入有效的 64 位 txid。',
+                orderExpired: isEn
+                    ? 'This order has expired. Generate a new exact amount and pay again.'
+                    : '当前订单已过期，请重新生成新的精确金额后再支付。',
+                walletInvalid: isEn
+                    ? 'The configured receiving address is invalid.'
+                    : '当前配置的收款地址无效。',
+                duplicateTxid: isEn
+                    ? 'This txid already claimed rewards on this device.'
+                    : '这个 txid 已在当前设备领取过奖励。',
+                txNotFound: isEn
+                    ? 'No confirmed transaction was found for this txid yet.'
+                    : '暂未查到这笔已确认交易，请稍后再试。',
+                txPending: isEn
+                    ? 'The transaction exists, but it is not confirmed yet.'
+                    : '交易已存在，但还未确认完成。',
+                txFailed: isEn
+                    ? 'The transaction exists, but execution failed on chain.'
+                    : '这笔交易存在，但链上执行失败。',
+                txWrongContract: isEn
+                    ? 'The txid is not a TRC20-USDT transfer.'
+                    : '这笔 txid 不是 TRC20-USDT 转账。',
+                txWrongRecipient: isEn
+                    ? 'Recipient address does not match the payment address of this order.'
+                    : '收款地址与当前订单不匹配。',
+                txWrongAmount: isEn
+                    ? 'Transferred amount does not match the exact amount of this order.'
+                    : '转账金额与当前订单的精确金额不一致。',
+                txWrongWindow: isEn
+                    ? 'Transaction time is outside the valid time window of this order.'
+                    : '交易时间不在当前订单的有效时间窗口内。',
+                txWrongMethod: isEn
+                    ? 'Unsupported transfer type. Only direct TRC20-USDT transfers are accepted.'
+                    : '转账类型不支持，仅接受直接 TRC20-USDT 转账。',
+                txNetworkError: isEn
+                    ? 'Verification request failed. Check the network or backend configuration and try again.'
+                    : '校验请求失败，请检查网络或后端配置后重试。',
+                orderCreateError: isEn
+                    ? 'Unable to create an exact payment order right now.'
+                    : '暂时无法创建精确支付订单。',
+                verifyRequestLog: isEn ? 'Sending txid to the verification API...' : '正在把 txid 发送到校验接口...',
+                txQueryLog: isEn ? 'Querying the confirmed transaction on TRON mainnet...' : '正在查询 TRON 主网确认交易...',
+                txReceiptLog: isEn ? 'Reading server-side receipt and status data...' : '正在读取服务端回执与状态数据...',
+                txContractLog: isEn ? 'Checking USDT contract route and recipient...' : '正在校验 USDT 合约路由与收款地址...',
+                txRecipientLog: isEn ? 'Matching the order recipient address...' : '正在匹配订单收款地址...',
+                txAmountLog: isEn ? 'Matching the exact amount and order window...' : '正在校验精确金额与订单时间窗口...',
+                txWindowLog: isEn ? 'Preparing reward settlement data...' : '正在准备奖励结算数据...',
+                txRewardLog: isEn ? 'Verification passed. Reward settlement unlocked.' : '校验通过，奖励结算已解锁。',
+                amountCopiedLog: isEn ? 'Exact amount copied.' : '精确金额已复制。',
+                addressCopiedLog: isEn ? 'Receiving address copied.' : '收款地址已复制。',
+                claimSynced: isEn ? 'Reward claim synced to the backend.' : '奖励领取状态已同步到后端。',
+                claimSyncWarning: isEn
+                    ? 'Rewards were granted locally, but backend claim sync failed. Please retry verification if needed.'
+                    : '奖励已在本地发放，但后端领取状态同步失败；如有需要请稍后重试校验。'
+            };
+            return copy[key] || key;
+        }
+
+        function formatPaymentUsdt(amount, exact = false) {
+            const value = Number(amount) || 0;
+            const rawText = String(amount ?? '').trim();
+            const useExact = exact || /\.\d{3,}/.test(rawText);
+            return `${value.toFixed(useExact ? 6 : 2)} USDT`;
+        }
+
+        function generatePaymentMinerId() {
+            if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+                return `MINER_${crypto.randomUUID().replace(/-/g, '').slice(0, 16).toUpperCase()}`;
+            }
+
+            return `MINER_${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+        }
+
+        function getPaymentMinerId() {
+            if (paymentMinerId) {
+                return paymentMinerId;
+            }
+
+            try {
+                const stored = localStorage.getItem(PAYMENT_MINER_ID_STORAGE_KEY);
+                if (stored) {
+                    paymentMinerId = stored;
+                    return paymentMinerId;
+                }
+            } catch (error) {
+            }
+
+            paymentMinerId = generatePaymentMinerId();
+
+            try {
+                localStorage.setItem(PAYMENT_MINER_ID_STORAGE_KEY, paymentMinerId);
+            } catch (error) {
+            }
+
+            return paymentMinerId;
+        }
+
+        function mapPaymentApiError(errorMessage) {
+            const text = String(errorMessage || '').trim();
+            const lower = text.toLowerCase();
+
+            if (!text) {
+                return getPaymentText('txNetworkError');
+            }
+
+            if (lower.includes('txid not found')) {
+                return getPaymentText('txNotFound');
+            }
+            if (lower.includes('not confirmed yet')) {
+                return getPaymentText('txPending');
+            }
+            if (lower.includes('execution failed')) {
+                return getPaymentText('txFailed');
+            }
+            if (lower.includes('not a trc20 contract transfer')) {
+                return getPaymentText('txWrongMethod');
+            }
+            if (lower.includes('not trc20 usdt')) {
+                return getPaymentText('txWrongContract');
+            }
+            if (lower.includes('recipient address')) {
+                return getPaymentText('txWrongRecipient');
+            }
+            if (lower.includes('amount mismatch')) {
+                return getPaymentText('txWrongAmount');
+            }
+            if (lower.includes('before this order was created')) {
+                return getPaymentText('txWrongWindow');
+            }
+            if (lower.includes('after the order expired') || lower.includes('order expired')) {
+                return getPaymentText('orderExpired');
+            }
+            if (lower.includes('already been used by another order') || lower.includes('another txid')) {
+                return getPaymentText('duplicateTxid');
+            }
+            if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) {
+                return getPaymentText('orderCreateError');
+            }
+            if (
+                lower.includes('supabase') ||
+                lower.includes('tron api failed') ||
+                lower.includes('missing environment variable') ||
+                lower.includes('failed')
+            ) {
+                return getPaymentText('txNetworkError');
+            }
+
+            return text;
+        }
+
+        async function requestPaymentApi(path, init = {}) {
+            const response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok || payload?.ok === false) {
+                throw new Error(mapPaymentApiError(payload?.error || payload?.message || getPaymentText('txNetworkError')));
+            }
+
+            return payload;
+        }
+
+        function buildClientPaymentOrder(order) {
+            const exactAmount = Number(order?.exactAmount || order?.baseAmount || 0);
+            const createdAt = Date.parse(order?.createdAt || order?.created_at || '') || Date.now();
+            const expiresAtMs = Date.parse(order?.expiresAt || order?.expires_at || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS);
+
+            return {
+                id: String(order?.orderId || order?.order_id || '--'),
+                offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
+                offerName: String(order?.offerName || order?.offer_name || ''),
+                minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
+                createdAt,
+                expiresAt: expiresAtMs,
+                facePrice: Number(order?.baseAmount || order?.base_amount || 0),
+                exactAmount,
+                exactAmountUnits: Math.round(exactAmount * PAYMENT_TX_AMOUNT_SCALE),
+                payAddress: String(order?.payAddress || WALLET_ADDR),
+                network: String(order?.network || 'TRON (TRC20)'),
+                status: String(order?.status || 'pending')
+            };
+        }
+
+        async function createBackendPaymentOrder(offerId) {
+            const payload = await requestPaymentApi('/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    minerId: getPaymentMinerId(),
+                    offerId
+                })
+            });
+
+            return buildClientPaymentOrder(payload?.order);
+        }
+
+        async function verifyBackendPayment(orderId, txid) {
+            const query = new URLSearchParams({
+                orderId: String(orderId || ''),
+                txid: String(txid || '')
+            });
+
+            return requestPaymentApi(`/verify-payment?${query.toString()}`);
+        }
+
+        async function claimBackendPayment(orderId, txid) {
+            return requestPaymentApi('/claim-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    orderId,
+                    txid
+                })
+            });
+        }
+
+        function renderPaymentLogState(state) {
+            const paymentLog = document.getElementById('paymentLog');
+            if (!paymentLog) {
+                return;
+            }
+
+            paymentLog.innerHTML = '';
+            if (state === 'creating') {
+                appendPaymentLogLine(getPaymentText('statusCreating'), 'system');
+                return;
+            }
+            if (state === 'copied') {
+                appendPaymentLogLine(getPaymentText('statusCopied'), 'accent');
+                return;
+            }
+
+            appendPaymentLogLine(getPaymentText('statusIdle'), 'system');
+        }
+
+        function startPaymentVerificationLogs() {
+            const entries = [
+                getPaymentText('verifyRequestLog'),
+                getPaymentText('txQueryLog'),
+                getPaymentText('txReceiptLog'),
+                getPaymentText('txContractLog'),
+                getPaymentText('txRecipientLog'),
+                getPaymentText('txAmountLog'),
+                getPaymentText('txWindowLog')
+            ];
+            const paymentLog = document.getElementById('paymentLog');
+            if (!paymentLog) {
+                return;
+            }
+
+            stopPaymentVerificationLogs();
+            paymentLogIndex = 0;
+            paymentLog.innerHTML = '';
+            appendPaymentLogLine(getPaymentText('statusVerifying'), 'system');
+
+            const pushNextLog = () => {
+                if (!entries.length) {
+                    return;
+                }
+
+                const entry = entries[paymentLogIndex % entries.length];
+                const logType = paymentLogIndex >= entries.length - 2
+                    ? 'success'
+                    : (paymentLogIndex % 3 === 1 ? 'accent' : 'normal');
+                appendPaymentLogLine(entry, logType);
+                paymentLogIndex += 1;
+            };
+
+            pushNextLog();
+            paymentLogTimer = setInterval(pushNextLog, 420);
+        }
+
+        function renderPaymentOrderUI() {
+            const offer = getSelectedPaymentOffer();
+            const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id
+                ? currentPaymentOrder
+                : null;
+            const paymentWalletNode = document.getElementById('paymentWallet');
+            const amountText = order
+                ? formatPaymentUsdt(order.exactAmount, true)
+                : formatPaymentUsdt(offer.price);
+
+            if (paymentOrderLabel) {
+                paymentOrderLabel.textContent = getPaymentText('orderLabel');
+            }
+            if (paymentOrderId) {
+                paymentOrderId.textContent = order ? order.id : '--';
+            }
+            if (paymentOrderAmountLabel) {
+                paymentOrderAmountLabel.textContent = getPaymentText('exactAmountLabel');
+            }
+            if (paymentExactAmount) {
+                paymentExactAmount.textContent = amountText;
+            }
+            if (paymentOrderExpiryLabel) {
+                paymentOrderExpiryLabel.textContent = getPaymentText('expiryLabel');
+            }
+            if (paymentOrderExpiry) {
+                paymentOrderExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
+            }
+            if (paymentWalletNode) {
+                paymentWalletNode.textContent = order?.payAddress || WALLET_ADDR;
+            }
+            if (copyPaymentAmountBtn) {
+                copyPaymentAmountBtn.textContent = getPaymentText('copyAmount');
+                copyPaymentAmountBtn.dataset.baseLabel = copyPaymentAmountBtn.textContent;
+            }
+            if (paymentTxidLabel) {
+                paymentTxidLabel.textContent = getPaymentText('txidLabel');
+            }
+            if (paymentTxidInput) {
+                paymentTxidInput.placeholder = getPaymentText('txidPlaceholder');
+            }
+            if (paymentTxidHint) {
+                paymentTxidHint.textContent = getPaymentText('txidHint');
+            }
+            if (paymentAmount) {
+                paymentAmount.textContent = amountText;
+            }
+            if (paymentDetails) {
+                paymentDetails.textContent = currentLang === 'en'
+                    ? `OKX Wallet · ${order?.network || 'TRON (TRC20)'} · ${order ? `Server Order ${order.id}` : getPaymentOfferLabel(offer)}`
+                    : `OKX 钱包 · ${order?.network || 'TRON (TRC20)'} · ${order ? `服务订单 ${order.id}` : getPaymentOfferLabel(offer)}`;
+            }
+            if (copyPaymentBtn) {
+                copyPaymentBtn.textContent = getPaymentText('copyAddress');
+                copyPaymentBtn.dataset.baseLabel = copyPaymentBtn.textContent;
+            }
+        }
+
+        function refreshPaymentVerificationState() {
+            const paymentStatus = document.getElementById('paymentStatus');
+            const paymentLoadingBar = document.getElementById('paymentLoadingBar');
+            const paymentCopyBtn = document.getElementById('copyPaymentBtn');
+            const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
+            const txidValue = getNormalizedPaymentTxid();
+            const txidValid = PAYMENT_TXID_REGEX.test(txidValue);
+            const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
+
+            if (!paymentStatus || !paymentLoadingBar || !paymentCopyBtn || !paymentConfirmBtn) {
+                return;
+            }
+
+            paymentStatus.classList.remove('error', 'success');
+
+            if (paymentWalletConfigError) {
+                paymentStatus.textContent = paymentWalletConfigError;
+                paymentStatus.classList.add('error');
+                paymentLoadingBar.style.display = 'none';
+                paymentCopyBtn.disabled = false;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = false;
+                }
+                paymentConfirmBtn.disabled = true;
+                stopPaymentVerificationLogs();
+                return;
+            }
+
+            if (paymentVerificationState === 'creating') {
+                paymentStatus.textContent = getPaymentText('statusCreating');
+                paymentLoadingBar.style.display = 'block';
+                paymentCopyBtn.disabled = true;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = true;
+                }
+                paymentConfirmBtn.disabled = true;
+                stopPaymentVerificationLogs();
+                renderPaymentLogState('creating');
+                return;
+            }
+
+            if (paymentVerificationState === 'verifying') {
+                paymentStatus.textContent = getPaymentText('statusVerifying');
+                paymentLoadingBar.style.display = 'block';
+                paymentCopyBtn.disabled = true;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = true;
+                }
+                paymentConfirmBtn.disabled = true;
+                startPaymentVerificationLogs();
+                return;
+            }
+
+            if (paymentVerificationState === 'verified') {
+                paymentStatus.textContent = paymentVerificationNotice || getPaymentText('statusVerified');
+                paymentStatus.classList.add('success');
+                paymentLoadingBar.style.display = 'none';
+                paymentCopyBtn.disabled = false;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = false;
+                }
+                paymentConfirmBtn.disabled = true;
+                stopPaymentVerificationLogs();
+                return;
+            }
+
+            if (orderExpired) {
+                paymentStatus.textContent = getPaymentText('orderExpired');
+                paymentStatus.classList.add('error');
+                paymentLoadingBar.style.display = 'none';
+                paymentCopyBtn.disabled = false;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = false;
+                }
+                paymentConfirmBtn.disabled = true;
+                stopPaymentVerificationLogs();
+                return;
+            }
+
+            if (paymentVerificationError) {
+                paymentStatus.textContent = paymentVerificationError;
+                paymentStatus.classList.add('error');
+                paymentLoadingBar.style.display = 'none';
+                paymentCopyBtn.disabled = false;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = false;
+                }
+                paymentConfirmBtn.disabled = !txidValid || !currentPaymentOrder || orderExpired;
+                stopPaymentVerificationLogs();
+                return;
+            }
+
+            if (txidValue && !txidValid) {
+                paymentStatus.textContent = getPaymentText('invalidTxid');
+                paymentStatus.classList.add('error');
+                paymentLoadingBar.style.display = 'none';
+                paymentCopyBtn.disabled = false;
+                if (copyPaymentAmountBtn) {
+                    copyPaymentAmountBtn.disabled = false;
+                }
+                paymentConfirmBtn.disabled = true;
+                stopPaymentVerificationLogs();
+                return;
+            }
+
+            paymentStatus.textContent = paymentVerificationState === 'copied'
+                ? getPaymentText('statusCopied')
+                : getPaymentText('statusIdle');
+            paymentLoadingBar.style.display = 'none';
+            paymentCopyBtn.disabled = false;
+            if (copyPaymentAmountBtn) {
+                copyPaymentAmountBtn.disabled = false;
+            }
+            paymentConfirmBtn.disabled = !txidValid || !currentPaymentOrder || orderExpired;
+            stopPaymentVerificationLogs();
+            renderPaymentLogState(paymentVerificationState === 'copied' ? 'copied' : 'idle');
+        }
+
+        function resetPaymentVerificationState(clearInput = false) {
+            if (paymentVerificationTimer) {
+                clearTimeout(paymentVerificationTimer);
+                paymentVerificationTimer = null;
+            }
+
+            paymentVerificationState = 'idle';
+            paymentVerificationError = '';
+            paymentVerificationNotice = '';
+            if (clearInput && paymentTxidInput) {
+                paymentTxidInput.value = '';
+            }
+            refreshPaymentVerificationState();
+        }
+
+        async function syncPaymentOrderForSelectedOffer(force = false, clearInput = false) {
+            const offer = getSelectedPaymentOffer();
+            const existingOrder = currentPaymentOrder;
+            if (!force && existingOrder && existingOrder.offerId === offer.id && !isPaymentOrderExpired(existingOrder)) {
+                renderPaymentOrderUI();
+                refreshPaymentVerificationState();
+                return existingOrder;
+            }
+
+            const requestId = ++paymentOrderNonce;
+            paymentVerificationState = 'creating';
+            paymentVerificationError = '';
+            paymentVerificationNotice = '';
+            paymentWalletConfigError = '';
+            if (clearInput && paymentTxidInput) {
+                paymentTxidInput.value = '';
+            }
+
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+
+            const requestPromise = createBackendPaymentOrder(offer.id)
+                .then((order) => {
+                    if (requestId !== paymentOrderNonce) {
+                        return currentPaymentOrder || order;
+                    }
+
+                    currentPaymentOrder = order;
+                    paymentVerificationState = 'idle';
+                    paymentVerificationError = '';
+                    paymentVerificationNotice = '';
+                    renderPaymentOrderUI();
+                    refreshPaymentVerificationState();
+                    return order;
+                })
+                .catch((error) => {
+                    if (requestId === paymentOrderNonce) {
+                        currentPaymentOrder = null;
+                        paymentVerificationState = 'idle';
+                        paymentVerificationNotice = '';
+                        paymentVerificationError = error?.message || getPaymentText('orderCreateError');
+                        renderPaymentOrderUI();
+                        refreshPaymentVerificationState();
+                        appendPaymentLogLine(paymentVerificationError, 'error');
+                    }
+                    throw error;
+                })
+                .finally(() => {
+                    if (paymentOrderRequestPromise === requestPromise) {
+                        paymentOrderRequestPromise = null;
+                    }
+                });
+
+            paymentOrderRequestPromise = requestPromise;
+            return requestPromise;
+        }
+
+        async function preparePaymentOrderForSelectedOffer(force = false) {
+            return syncPaymentOrderForSelectedOffer(force, false);
+        }
+
+        function selectPaymentOffer(offerId) {
+            const offer = PAYMENT_OFFERS.find((item) => item.id === offerId);
+            if (!offer || (offer.crownExclusive && !hasLeaderboardCrownAccess())) {
+                return;
+            }
+
+            const changed = selectedPaymentOfferId !== offerId;
+            selectedPaymentOfferId = offerId;
+            refreshPaymentOfferUI();
+
+            if (changed && paymentModal && paymentModal.classList.contains('show')) {
+                resetPaymentVerificationState(true);
+                syncPaymentOrderForSelectedOffer(true, true).catch(() => {
+                });
+            }
+        }
+
+        async function handlePayment(offerId = null) {
+            const modal = document.getElementById('paymentModal');
+            if (!modal) {
+                return;
+            }
+
+            if (offerId) {
+                selectPaymentOffer(offerId);
+            } else {
+                refreshPaymentOfferUI();
+            }
+
+            resetPaymentVerificationState(true);
+            renderPaymentOrderUI();
+            document.body.appendChild(modal);
+            modal.style.zIndex = '10060';
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+
+            try {
+                await syncPaymentOrderForSelectedOffer(
+                    !currentPaymentOrder ||
+                    currentPaymentOrder.offerId !== selectedPaymentOfferId ||
+                    isPaymentOrderExpired(currentPaymentOrder),
+                    true
+                );
+            } catch (error) {
+            }
+
+            refreshPaymentVerificationState();
+        }
+
+        async function copyPaymentAmount() {
+            let order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder)
+                ? currentPaymentOrder
+                : null;
+
+            if (!order) {
+                try {
+                    order = await syncPaymentOrderForSelectedOffer(true, false);
+                } catch (error) {
+                    return;
+                }
+            }
+
+            if (!order) {
+                return;
+            }
+
+            const exactAmountText = Number(order.exactAmount || 0).toFixed(6);
+            renderPaymentOrderUI();
+            const copied = await copyTextToClipboard(exactAmountText);
+
+            paymentVerificationState = 'copied';
+            paymentVerificationError = '';
+            paymentVerificationNotice = '';
+            appendPaymentLogLine(
+                copied
+                    ? getPaymentText('amountCopiedLog')
+                    : (currentLang === 'en'
+                        ? 'Exact amount dialog opened for manual copy.'
+                        : '自动复制不可用，已弹出手动复制窗口。'),
+                copied ? 'accent' : 'system'
+            );
+            if (copied) {
+                flashPaymentActionButton(
+                    copyPaymentAmountBtn,
+                    currentLang === 'en' ? 'Amount Copied' : '金额已复制'
+                );
+            }
+            refreshPaymentVerificationState();
+        }
+
+        async function handlePaymentConfirm() {
+            if (paymentVerificationState === 'verifying' || paymentVerificationState === 'creating') {
+                return;
+            }
+
+            const txid = getNormalizedPaymentTxid();
+            if (!PAYMENT_TXID_REGEX.test(txid)) {
+                paymentVerificationError = getPaymentText('invalidTxid');
+                paymentVerificationNotice = '';
+                refreshPaymentVerificationState();
+                return;
+            }
+
+            if (verifiedPaymentTxIds.includes(txid)) {
+                paymentVerificationError = getPaymentText('duplicateTxid');
+                paymentVerificationNotice = '';
+                refreshPaymentVerificationState();
+                return;
+            }
+
+            if (!currentPaymentOrder || isPaymentOrderExpired(currentPaymentOrder)) {
+                paymentVerificationError = getPaymentText('orderExpired');
+                paymentVerificationNotice = '';
+                refreshPaymentVerificationState();
+                return;
+            }
+
+            const orderId = currentPaymentOrder.id;
+
+            paymentVerificationState = 'verifying';
+            paymentVerificationError = '';
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+
+            try {
+                const verificationResult = await verifyBackendPayment(orderId, txid);
+                const orderPayload = verificationResult?.order || {};
+                verifiedPaymentTxIds = [txid, ...verifiedPaymentTxIds.filter((item) => item !== txid)].slice(0, 100);
+
+                if (orderPayload?.rewardGranted) {
+                    paymentVerificationState = 'verified';
+                    paymentVerificationNotice = getPaymentText('statusAlreadyGranted');
+                    appendPaymentLogLine(paymentVerificationNotice, 'success');
+                    refreshPaymentVerificationState();
+                    saveGameData(false);
+                    return;
+                }
+
+                paymentVerificationState = 'verified';
+                paymentVerificationNotice = getPaymentText('statusVerified');
+                appendPaymentLogLine(getPaymentText('txRewardLog'), 'success');
+                refreshPaymentVerificationState();
+
+                grantPaymentRewards({
+                    txid,
+                    orderId,
+                    exactAmount: Number(orderPayload?.exactAmount || currentPaymentOrder?.exactAmount || 0)
+                });
+
+                claimBackendPayment(orderId, txid).catch(() => {
+                    showSystemToast(getPaymentText('claimSyncWarning'), '#ff9b3d');
+                });
+            } catch (error) {
+                paymentVerificationState = 'idle';
+                paymentVerificationNotice = '';
                 paymentVerificationError = error?.message || getPaymentText('txNetworkError');
                 appendPaymentLogLine(paymentVerificationError, 'error');
                 refreshPaymentVerificationState();
@@ -12903,6 +13629,8 @@
         const PAYMENT_TX_AMOUNT_SCALE = 1000000;
         const PAYMENT_TXID_REGEX = /^[0-9a-f]{64}$/i;
         const TRON_TRANSFER_METHOD_ID = 'a9059cbb';
+        const PAYMENT_API_BASE = '/api';
+        const PAYMENT_MINER_ID_STORAGE_KEY = 'gmz_payment_miner_id';
         const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
         const T4_STARDUST_PER_GEM = 100;
         const T4_AWAKEN_CORES_COST = 30;
