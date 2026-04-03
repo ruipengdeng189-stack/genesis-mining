@@ -6716,14 +6716,11 @@
         let selectedPaymentOfferId = 'starter';
         let paymentVerificationError = '';
         let paymentVerificationNotice = '';
-        let paymentWalletConfigError = '';
         let paymentOrderNonce = 0;
         let currentPaymentOrder = null;
         let verifiedPaymentTxIds = [];
         let paymentOrderRequestPromise = null;
         let paymentMinerId = '';
-        let paymentWalletHex = '';
-        let tronUsdtContractHex = '';
         const paymentButtonFeedbackTimers = new WeakMap();
         const PAYMENT_TAP_DEDUP_MS = 320;
         
@@ -7649,86 +7646,6 @@
             return currentLang === 'en' ? `${value} min` : `${value}分钟`;
         }
 
-        function getPaymentText(key) {
-            const isEn = currentLang === 'en';
-            const copy = {
-                copyAddress: isEn ? 'Copy Address' : '复制收款地址',
-                copyAmount: isEn ? 'Copy Exact Amount' : '复制精确金额',
-                verifyTxid: isEn ? 'Verify TXID' : '校验 TXID',
-                orderLabel: isEn ? 'Order ID' : '订单编号',
-                exactAmountLabel: isEn ? 'Exact Amount' : '精确金额',
-                expiryLabel: isEn ? 'Expires In' : '剩余有效期',
-                txidLabel: isEn ? 'Paste OKX Wallet txid' : '粘贴 OKX 钱包 txid',
-                txidPlaceholder: isEn ? 'Paste the on-chain txid from OKX Wallet' : '请输入 OKX 钱包里的链上 txid',
-                txidHint: isEn
-                    ? 'Only TRC20-USDT transfers with the exact amount, correct recipient, and valid order time window will pass.'
-                    : '只接受本次订单窗口内、金额完全一致、收款地址正确的 TRC20-USDT 交易。',
-                statusIdle: isEn
-                    ? 'Copy the receiving address and exact amount, pay in OKX Wallet, then paste the txid for chain verification.'
-                    : '请先复制收款地址与精确金额，在 OKX 钱包完成 TRC20-USDT 支付后，再粘贴 txid 进行查链校验。',
-                statusCopied: isEn
-                    ? 'Address/amount copied. Complete the payment in OKX Wallet, then paste the txid.'
-                    : '地址或金额已复制，请在 OKX 钱包完成支付后粘贴 txid。',
-                statusVerifying: isEn
-                    ? 'Querying the TRON network... please wait for the on-chain receipt.'
-                    : '正在查询 TRON 链上交易，请等待回执确认...',
-                statusVerified: isEn
-                    ? 'Chain verification passed. Rewards are being settled.'
-                    : '链上校验通过，奖励正在结算中。',
-                invalidTxid: isEn
-                    ? 'Enter a valid 64-character txid.'
-                    : '请输入有效的 64 位 txid。',
-                orderExpired: isEn
-                    ? 'This order expired. Close and reopen the payment window to generate a new exact amount.'
-                    : '本次订单已过期，请关闭并重新打开支付弹窗以生成新的精确金额。',
-                walletInvalid: isEn
-                    ? 'The configured receiving address is not a valid TRON address. Replace WALLET_ADDR first.'
-                    : '当前配置的收款地址不是有效的 TRON 地址，请先替换 `WALLET_ADDR`。',
-                duplicateTxid: isEn
-                    ? 'This txid already claimed rewards on this device.'
-                    : '这个 txid 已在当前设备领取过奖励。',
-                txNotFound: isEn
-                    ? 'No confirmed transaction found for this txid yet.'
-                    : '暂未查到这笔已确认的交易，请稍后再试。',
-                txFailed: isEn
-                    ? 'The transaction exists but was not executed successfully.'
-                    : '链上存在该交易，但执行结果不是成功状态。',
-                txWrongContract: isEn
-                    ? 'The txid is not a TRC20-USDT transfer.'
-                    : '这笔 txid 不是 TRC20-USDT 转账。',
-                txWrongRecipient: isEn
-                    ? 'Recipient address does not match the current receiving address.'
-                    : '收款地址与当前订单地址不一致。',
-                txWrongAmount: isEn
-                    ? 'Transferred amount does not match the exact amount of this order.'
-                    : '转账金额与本次订单的精确金额不一致。',
-                txWrongWindow: isEn
-                    ? 'The transaction time is outside the valid window of this order.'
-                    : '交易时间不在本次订单的有效时间窗口内。',
-                txWrongMethod: isEn
-                    ? 'Unsupported contract method. Only direct USDT transfer txids are accepted.'
-                    : '不支持的合约调用方式，仅接受直接 USDT 转账交易。',
-                txNetworkError: isEn
-                    ? 'TRON query failed. Check your network and try again.'
-                    : 'TRON 查询失败，请检查网络后重试。',
-                txQueryLog: isEn ? 'Querying TRON Solidity node...' : '正在查询 TRON Solidity 节点...',
-                txReceiptLog: isEn ? 'Confirmed receipt located.' : '已定位到确认后的交易回执。',
-                txContractLog: isEn ? 'USDT contract verified.' : 'USDT 合约校验通过。',
-                txRecipientLog: isEn ? 'Recipient address matched.' : '收款地址校验通过。',
-                txAmountLog: isEn ? 'Exact payment amount matched.' : '精确金额校验通过。',
-                txWindowLog: isEn ? 'Order time window matched.' : '订单时间窗口校验通过。',
-                txRewardLog: isEn ? 'Reward route unlocked by txid.' : 'txid 校验完成，奖励路线已解锁。',
-                amountCopiedLog: isEn ? 'Exact USDT amount copied.' : '精确 USDT 金额已复制。',
-                addressCopiedLog: isEn ? 'Receiving address copied.' : '收款地址已复制。'
-            };
-            return copy[key] || key;
-        }
-
-        function formatPaymentUsdt(amount) {
-            const value = Number(amount) || 0;
-            return `${value.toFixed(3)} USDT`;
-        }
-
         function getPaymentOrderCountdown(order = currentPaymentOrder) {
             if (!order || !order.expiresAt) {
                 return '--:--';
@@ -7830,265 +7747,6 @@
                     paymentPromoTimer.textContent = formatClockSeconds(countdownSeconds);
                 }
             }
-        }
-
-        function base58DecodeToBytes(value) {
-            const input = String(value || '').trim();
-            if (!input) {
-                throw new Error('empty');
-            }
-
-            const bytes = [0];
-            for (const char of input) {
-                const index = BASE58_ALPHABET.indexOf(char);
-                if (index === -1) {
-                    throw new Error('invalid-char');
-                }
-
-                let carry = index;
-                for (let byteIndex = 0; byteIndex < bytes.length; byteIndex += 1) {
-                    carry += bytes[byteIndex] * 58;
-                    bytes[byteIndex] = carry & 0xff;
-                    carry >>= 8;
-                }
-
-                while (carry > 0) {
-                    bytes.push(carry & 0xff);
-                    carry >>= 8;
-                }
-            }
-
-            for (let prefixIndex = 0; prefixIndex < input.length && input[prefixIndex] === '1'; prefixIndex += 1) {
-                bytes.push(0);
-            }
-
-            return new Uint8Array(bytes.reverse());
-        }
-
-        async function sha256Bytes(bytes) {
-            const safeBytes = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-            const hashBuffer = await crypto.subtle.digest(
-                'SHA-256',
-                safeBytes.buffer.slice(safeBytes.byteOffset, safeBytes.byteOffset + safeBytes.byteLength)
-            );
-            return new Uint8Array(hashBuffer);
-        }
-
-        async function tronBase58ToHex(address) {
-            const decoded = base58DecodeToBytes(address);
-            if (decoded.length !== 25) {
-                throw new Error(getPaymentText('walletInvalid'));
-            }
-
-            const payload = decoded.slice(0, 21);
-            const checksum = decoded.slice(21);
-            const firstHash = await sha256Bytes(payload);
-            const secondHash = await sha256Bytes(firstHash);
-            const expectedChecksum = secondHash.slice(0, 4);
-
-            for (let index = 0; index < 4; index += 1) {
-                if (checksum[index] !== expectedChecksum[index]) {
-                    throw new Error(getPaymentText('walletInvalid'));
-                }
-            }
-
-            if (payload[0] !== 0x41) {
-                throw new Error(getPaymentText('walletInvalid'));
-            }
-
-            return Array.from(payload)
-                .map((byte) => byte.toString(16).padStart(2, '0'))
-                .join('')
-                .toUpperCase();
-        }
-
-        async function ensurePaymentChainConfig() {
-            if (!paymentWalletHex) {
-                paymentWalletHex = await tronBase58ToHex(WALLET_ADDR);
-            }
-
-            if (!tronUsdtContractHex) {
-                tronUsdtContractHex = await tronBase58ToHex(TRON_USDT_CONTRACT_BASE58);
-            }
-
-            paymentWalletConfigError = '';
-            return {
-                paymentWalletHex,
-                tronUsdtContractHex
-            };
-        }
-
-        function isPaymentOrderExpired(order = currentPaymentOrder) {
-            return !order || Number(order.expiresAt) <= Date.now();
-        }
-
-        function preparePaymentOrderForSelectedOffer(force = false) {
-            const offer = getSelectedPaymentOffer();
-            const now = Date.now();
-
-            if (
-                !force &&
-                currentPaymentOrder &&
-                currentPaymentOrder.offerId === offer.id &&
-                currentPaymentOrder.expiresAt > now
-            ) {
-                return currentPaymentOrder;
-            }
-
-            paymentOrderNonce += 1;
-            const offsetMillis = ((Math.floor(now / 1000) + paymentOrderNonce) % 19) + 1;
-            const exactAmount = Number((offer.price + (offsetMillis / 1000)).toFixed(3));
-
-            currentPaymentOrder = {
-                id: `GMZ-${offer.id.toUpperCase()}-${String(now).slice(-8)}-${String(offsetMillis).padStart(2, '0')}`,
-                offerId: offer.id,
-                createdAt: now,
-                expiresAt: now + PAYMENT_ORDER_WINDOW_MS,
-                facePrice: offer.price,
-                exactAmount,
-                exactAmountUnits: Math.round(exactAmount * PAYMENT_TX_AMOUNT_SCALE)
-            };
-
-            paymentVerificationError = '';
-            paymentVerificationState = 'idle';
-            if (paymentTxidInput) {
-                paymentTxidInput.value = '';
-            }
-
-            return currentPaymentOrder;
-        }
-
-        function renderPaymentOrderUI() {
-            const offer = getSelectedPaymentOffer();
-            const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id
-                ? currentPaymentOrder
-                : null;
-            const amountText = order
-                ? formatPaymentUsdt(order.exactAmount)
-                : formatPaymentUsdt(offer.price);
-
-            if (paymentOrderLabel) {
-                paymentOrderLabel.textContent = getPaymentText('orderLabel');
-            }
-            if (paymentOrderId) {
-                paymentOrderId.textContent = order ? order.id : '--';
-            }
-            if (paymentOrderAmountLabel) {
-                paymentOrderAmountLabel.textContent = getPaymentText('exactAmountLabel');
-            }
-            if (paymentExactAmount) {
-                paymentExactAmount.textContent = amountText;
-            }
-            if (paymentOrderExpiryLabel) {
-                paymentOrderExpiryLabel.textContent = getPaymentText('expiryLabel');
-            }
-            if (paymentOrderExpiry) {
-                paymentOrderExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
-            }
-            if (copyPaymentAmountBtn) {
-                copyPaymentAmountBtn.textContent = getPaymentText('copyAmount');
-                copyPaymentAmountBtn.dataset.baseLabel = copyPaymentAmountBtn.textContent;
-            }
-            if (paymentTxidLabel) {
-                paymentTxidLabel.textContent = getPaymentText('txidLabel');
-            }
-            if (paymentTxidInput) {
-                paymentTxidInput.placeholder = getPaymentText('txidPlaceholder');
-            }
-            if (paymentTxidHint) {
-                paymentTxidHint.textContent = getPaymentText('txidHint');
-            }
-            if (paymentAmount) {
-                paymentAmount.textContent = amountText;
-            }
-            if (paymentDetails) {
-                paymentDetails.textContent = currentLang === 'en'
-                    ? `OKX Wallet · TRC20-USDT · ${order ? order.id : 'awaiting order generation'}`
-                    : `OKX 钱包 · TRC20-USDT · ${order ? order.id : '等待生成订单'}`;
-            }
-            if (copyPaymentBtn) {
-                copyPaymentBtn.dataset.baseLabel = copyPaymentBtn.textContent;
-            }
-        }
-
-        async function fetchTronTransaction(path, txid) {
-            const response = await fetch(`${TRON_GRID_API_BASE}${path}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ value: txid })
-            });
-
-            if (!response.ok) {
-                throw new Error(getPaymentText('txNetworkError'));
-            }
-
-            return response.json();
-        }
-
-        async function verifyPaymentTxidOnChain(txid, order) {
-            const { paymentWalletHex: expectedWalletHex, tronUsdtContractHex: expectedContractHex } = await ensurePaymentChainConfig();
-            appendPaymentLogLine(getPaymentText('txQueryLog'), 'accent');
-
-            const [transaction, transactionInfo] = await Promise.all([
-                fetchTronTransaction('/walletsolidity/gettransactionbyid', txid),
-                fetchTronTransaction('/walletsolidity/gettransactioninfobyid', txid)
-            ]);
-
-            const hasTransaction = transaction && Object.keys(transaction).length > 0;
-            const hasTransactionInfo = transactionInfo && Object.keys(transactionInfo).length > 0;
-            if (!hasTransaction || !hasTransactionInfo) {
-                throw new Error(getPaymentText('txNotFound'));
-            }
-
-            appendPaymentLogLine(getPaymentText('txReceiptLog'), 'success');
-            const receiptResult = transactionInfo?.receipt?.result || transaction?.ret?.[0]?.contractRet || '';
-            if (receiptResult !== 'SUCCESS') {
-                throw new Error(getPaymentText('txFailed'));
-            }
-
-            const triggerValue = transaction?.raw_data?.contract?.[0]?.parameter?.value;
-            const methodData = normalizeHex(triggerValue?.data);
-            const contractHex = normalizeHex(triggerValue?.contract_address);
-            if (!triggerValue || methodData.length < 136 || !methodData.startsWith(TRON_TRANSFER_METHOD_ID)) {
-                throw new Error(getPaymentText('txWrongMethod'));
-            }
-
-            if (contractHex !== normalizeHex(expectedContractHex)) {
-                throw new Error(getPaymentText('txWrongContract'));
-            }
-
-            appendPaymentLogLine(getPaymentText('txContractLog'), 'success');
-            const recipientHex = `41${methodData.slice(8, 72).slice(-40)}`.toUpperCase();
-            if (normalizeHex(recipientHex) !== normalizeHex(expectedWalletHex)) {
-                throw new Error(getPaymentText('txWrongRecipient'));
-            }
-
-            appendPaymentLogLine(getPaymentText('txRecipientLog'), 'success');
-            const amountHex = methodData.slice(72, 136);
-            const amountUnits = Number(BigInt(`0x${amountHex}`));
-            if (amountUnits !== order.exactAmountUnits) {
-                throw new Error(getPaymentText('txWrongAmount'));
-            }
-
-            appendPaymentLogLine(getPaymentText('txAmountLog'), 'success');
-            const transactionTimestamp = Number(transactionInfo.blockTimeStamp || transaction?.raw_data?.timestamp || 0);
-            if (
-                !transactionTimestamp ||
-                transactionTimestamp < order.createdAt ||
-                transactionTimestamp > (order.expiresAt + PAYMENT_ORDER_GRACE_MS)
-            ) {
-                throw new Error(getPaymentText('txWrongWindow'));
-            }
-
-            appendPaymentLogLine(getPaymentText('txWindowLog'), 'success');
-            return {
-                txid,
-                amountUnits,
-                exactAmount: order.exactAmount,
-                transactionTimestamp
-            };
         }
 
         function getPaidMiningBoostMultiplier() {
@@ -8909,21 +8567,6 @@
             refreshPaymentEntryButtons();
             refreshPaymentPromoUI();
             renderPaymentOrderUI();
-        }
-
-        function selectPaymentOffer(offerId) {
-            const offer = PAYMENT_OFFERS.find((item) => item.id === offerId);
-            if (!offer || (offer.crownExclusive && !hasLeaderboardCrownAccess())) {
-                return;
-            }
-
-            const changed = selectedPaymentOfferId !== offerId;
-            selectedPaymentOfferId = offerId;
-            if (changed && paymentModal && paymentModal.classList.contains('show')) {
-                preparePaymentOrderForSelectedOffer(true);
-                resetPaymentVerificationState(true);
-            }
-            refreshPaymentOfferUI();
         }
 
         function getPrestigeThreshold() {
@@ -11808,218 +11451,6 @@
             paymentLog.scrollTop = paymentLog.scrollHeight;
         }
 
-        function renderPaymentLogState(state) {
-            const paymentLog = document.getElementById('paymentLog');
-            if (!paymentLog) {
-                return;
-            }
-
-            paymentLog.innerHTML = '';
-            if (state === 'copied') {
-                appendPaymentLogLine(getPaymentText('statusCopied'), 'accent');
-                return;
-            }
-
-            appendPaymentLogLine(getPaymentText('statusIdle'), 'system');
-        }
-
-        function startPaymentVerificationLogs() {
-            const entries = currentLang === 'en'
-                ? [
-                    'Preparing TRON receipt query...',
-                    'Comparing txid against the exact amount order...',
-                    'Checking USDT contract route and recipient...',
-                    'Waiting for solidity node settlement data...',
-                    'Finalizing reward unlock if all checks pass...'
-                ]
-                : [
-                    '准备读取 TRON 链上回执...',
-                    '正在比对 txid 与本次精确金额订单...',
-                    '校验 USDT 合约路由与收款地址...',
-                    '等待 solidity 节点返回结算数据...',
-                    '若全部通过，将释放奖励通道...'
-                ];
-            const paymentLog = document.getElementById('paymentLog');
-            if (!paymentLog) {
-                return;
-            }
-
-            stopPaymentVerificationLogs();
-            paymentLogIndex = 0;
-            paymentLog.innerHTML = '';
-            appendPaymentLogLine(getPaymentText('statusVerifying'), 'system');
-
-            const pushNextLog = () => {
-                if (!entries.length) {
-                    return;
-                }
-
-                const entry = entries[paymentLogIndex % entries.length];
-                const logType = paymentLogIndex >= entries.length - 2
-                    ? 'success'
-                    : (paymentLogIndex % 3 === 1 ? 'accent' : 'normal');
-                appendPaymentLogLine(entry, logType);
-                paymentLogIndex += 1;
-            };
-
-            pushNextLog();
-            paymentLogTimer = setInterval(pushNextLog, 320);
-        }
-
-        function refreshPaymentVerificationState() {
-            const paymentStatus = document.getElementById('paymentStatus');
-            const paymentLoadingBar = document.getElementById('paymentLoadingBar');
-            const paymentCopyBtn = document.getElementById('copyPaymentBtn');
-            const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
-            const txidValue = getNormalizedPaymentTxid();
-            const txidValid = PAYMENT_TXID_REGEX.test(txidValue);
-            const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
-
-            if (!paymentStatus || !paymentLoadingBar || !paymentCopyBtn || !paymentConfirmBtn) {
-                return;
-            }
-
-            paymentStatus.classList.remove('error', 'success');
-
-            if (paymentWalletConfigError) {
-                paymentStatus.textContent = paymentWalletConfigError;
-                paymentStatus.classList.add('error');
-                paymentLoadingBar.style.display = 'none';
-                paymentCopyBtn.disabled = false;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = false;
-                }
-                paymentConfirmBtn.disabled = true;
-                stopPaymentVerificationLogs();
-                return;
-            }
-
-            if (paymentVerificationState === 'verifying') {
-                paymentStatus.textContent = getPaymentText('statusVerifying');
-                paymentLoadingBar.style.display = 'block';
-                paymentCopyBtn.disabled = true;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = true;
-                }
-                paymentConfirmBtn.disabled = true;
-                startPaymentVerificationLogs();
-                return;
-            }
-
-            if (paymentVerificationState === 'verified') {
-                paymentStatus.textContent = getPaymentText('statusVerified');
-                paymentStatus.classList.add('success');
-                paymentLoadingBar.style.display = 'none';
-                paymentCopyBtn.disabled = false;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = false;
-                }
-                paymentConfirmBtn.disabled = true;
-                stopPaymentVerificationLogs();
-                return;
-            }
-
-            if (orderExpired) {
-                paymentStatus.textContent = getPaymentText('orderExpired');
-                paymentStatus.classList.add('error');
-                paymentLoadingBar.style.display = 'none';
-                paymentCopyBtn.disabled = false;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = false;
-                }
-                paymentConfirmBtn.disabled = true;
-                stopPaymentVerificationLogs();
-                return;
-            }
-
-            if (paymentVerificationError) {
-                paymentStatus.textContent = paymentVerificationError;
-                paymentStatus.classList.add('error');
-                paymentLoadingBar.style.display = 'none';
-                paymentCopyBtn.disabled = false;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = false;
-                }
-                paymentConfirmBtn.disabled = !txidValid;
-                stopPaymentVerificationLogs();
-                return;
-            }
-
-            if (txidValue && !txidValid) {
-                paymentStatus.textContent = getPaymentText('invalidTxid');
-                paymentStatus.classList.add('error');
-                paymentLoadingBar.style.display = 'none';
-                paymentCopyBtn.disabled = false;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = false;
-                }
-                paymentConfirmBtn.disabled = true;
-                stopPaymentVerificationLogs();
-                return;
-            }
-
-            paymentStatus.textContent = paymentVerificationState === 'copied'
-                ? getPaymentText('statusCopied')
-                : getPaymentText('statusIdle');
-            paymentLoadingBar.style.display = 'none';
-            paymentCopyBtn.disabled = false;
-            if (copyPaymentAmountBtn) {
-                copyPaymentAmountBtn.disabled = false;
-            }
-            paymentConfirmBtn.disabled = !txidValid || !currentPaymentOrder;
-            stopPaymentVerificationLogs();
-            renderPaymentLogState(paymentVerificationState === 'copied' || txidValid ? 'copied' : 'idle');
-        }
-
-        function resetPaymentVerificationState(clearInput = false) {
-            if (paymentVerificationTimer) {
-                clearTimeout(paymentVerificationTimer);
-                paymentVerificationTimer = null;
-            }
-
-            paymentVerificationState = 'idle';
-            paymentVerificationError = '';
-            if (clearInput && paymentTxidInput) {
-                paymentTxidInput.value = '';
-            }
-            refreshPaymentVerificationState();
-        }
-
-        async function handlePayment(offerId = null) {
-            const modal = document.getElementById('paymentModal');
-            const paymentWallet = document.getElementById('paymentWallet');
-            if (!modal) return;
-            if (offerId) {
-                selectPaymentOffer(offerId);
-            } else {
-                refreshPaymentOfferUI();
-            }
-            preparePaymentOrderForSelectedOffer(
-                !currentPaymentOrder ||
-                currentPaymentOrder.offerId !== selectedPaymentOfferId ||
-                isPaymentOrderExpired(currentPaymentOrder)
-            );
-            if (paymentWallet) {
-                paymentWallet.textContent = WALLET_ADDR;
-            }
-            renderPaymentOrderUI();
-            resetPaymentVerificationState(true);
-            document.body.appendChild(modal);
-            modal.style.zIndex = '10060';
-            modal.style.display = 'flex';
-            modal.classList.add('show');
-
-            try {
-                await ensurePaymentChainConfig();
-                paymentWalletConfigError = '';
-            } catch (error) {
-                paymentWalletConfigError = error?.message || getPaymentText('walletInvalid');
-                appendPaymentLogLine(paymentWalletConfigError, 'error');
-            }
-
-            refreshPaymentVerificationState();
-        }
-
         function closeModal() {
             const modal = document.getElementById('paymentModal');
             if (!modal) return;
@@ -12168,37 +11599,6 @@
                 flashPaymentActionButton(
                     copyPaymentBtn,
                     currentLang === 'en' ? 'Address Copied' : '地址已复制'
-                );
-            }
-            refreshPaymentVerificationState();
-        }
-
-        async function copyPaymentAmount() {
-            const order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder)
-                ? currentPaymentOrder
-                : preparePaymentOrderForSelectedOffer(true);
-            if (!order) {
-                return;
-            }
-
-            const text = formatPaymentUsdt(order.exactAmount);
-            renderPaymentOrderUI();
-            const copied = await copyTextToClipboard(text);
-
-            paymentVerificationState = 'copied';
-            paymentVerificationError = '';
-            appendPaymentLogLine(
-                copied
-                    ? getPaymentText('amountCopiedLog')
-                    : (currentLang === 'en'
-                        ? 'Exact amount dialog opened for manual copy.'
-                        : '精确金额自动复制不可用，已弹出手动复制窗口。'),
-                copied ? 'accent' : 'system'
-            );
-            if (copied) {
-                flashPaymentActionButton(
-                    copyPaymentAmountBtn,
-                    currentLang === 'en' ? 'Amount Copied' : '金额已复制'
                 );
             }
             refreshPaymentVerificationState();
@@ -12461,49 +11861,6 @@
             refreshPaymentOfferUI();
             updateDisplay();
             saveGameData(false);
-        }
-
-        async function handlePaymentConfirm() {
-            if (paymentVerificationState === 'verifying') {
-                return;
-            }
-
-            const txid = getNormalizedPaymentTxid();
-            if (!PAYMENT_TXID_REGEX.test(txid)) {
-                paymentVerificationError = getPaymentText('invalidTxid');
-                refreshPaymentVerificationState();
-                return;
-            }
-
-            if (verifiedPaymentTxIds.includes(txid)) {
-                paymentVerificationError = getPaymentText('duplicateTxid');
-                refreshPaymentVerificationState();
-                return;
-            }
-
-            if (!currentPaymentOrder || isPaymentOrderExpired(currentPaymentOrder)) {
-                paymentVerificationError = getPaymentText('orderExpired');
-                refreshPaymentVerificationState();
-                return;
-            }
-
-            paymentVerificationState = 'verifying';
-            paymentVerificationError = '';
-            refreshPaymentVerificationState();
-
-            try {
-                const verificationResult = await verifyPaymentTxidOnChain(txid, currentPaymentOrder);
-                verifiedPaymentTxIds = [txid, ...verifiedPaymentTxIds.filter((item) => item !== txid)].slice(0, 100);
-                paymentVerificationState = 'verified';
-                appendPaymentLogLine(getPaymentText('txRewardLog'), 'success');
-                refreshPaymentVerificationState();
-                grantPaymentRewards(verificationResult);
-            } catch (error) {
-                paymentVerificationState = 'idle';
-                paymentVerificationError = error?.message || getPaymentText('txNetworkError');
-                appendPaymentLogLine(paymentVerificationError, 'error');
-                refreshPaymentVerificationState();
-            }
         }
 
         function getPaymentText(key) {
@@ -12888,19 +12245,6 @@
 
             paymentStatus.classList.remove('error', 'success');
 
-            if (paymentWalletConfigError) {
-                paymentStatus.textContent = paymentWalletConfigError;
-                paymentStatus.classList.add('error');
-                paymentLoadingBar.style.display = 'none';
-                paymentCopyBtn.disabled = false;
-                if (copyPaymentAmountBtn) {
-                    copyPaymentAmountBtn.disabled = false;
-                }
-                paymentConfirmBtn.disabled = true;
-                stopPaymentVerificationLogs();
-                return;
-            }
-
             if (paymentVerificationState === 'creating') {
                 paymentStatus.textContent = getPaymentText('statusCreating');
                 paymentLoadingBar.style.display = 'block';
@@ -13019,7 +12363,6 @@
             paymentVerificationState = 'creating';
             paymentVerificationError = '';
             paymentVerificationNotice = '';
-            paymentWalletConfigError = '';
             if (clearInput && paymentTxidInput) {
                 paymentTxidInput.value = '';
             }
@@ -13799,16 +13142,11 @@
         const PAYMENT_TIER4_PITY_THRESHOLD = 3;
         const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
         const MINING_TIER4_PITY_BASE_THRESHOLD = 1200;
-        const TRON_GRID_API_BASE = 'https://api.trongrid.io';
-        const TRON_USDT_CONTRACT_BASE58 = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
         const PAYMENT_ORDER_WINDOW_MS = 20 * 60 * 1000;
-        const PAYMENT_ORDER_GRACE_MS = 5 * 60 * 1000;
         const PAYMENT_TX_AMOUNT_SCALE = 1000000;
         const PAYMENT_TXID_REGEX = /^[0-9a-f]{64}$/i;
-        const TRON_TRANSFER_METHOD_ID = 'a9059cbb';
         const PAYMENT_API_BASE = '/api';
         const PAYMENT_MINER_ID_STORAGE_KEY = 'gmz_payment_miner_id';
-        const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
         const T4_STARDUST_PER_GEM = 100;
         const T4_AWAKEN_CORES_COST = 30;
         const T4_AWAKEN_COINS_COST = 180000;
