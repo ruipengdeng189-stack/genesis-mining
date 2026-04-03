@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>&#x6E38;&#x620F;&#x5373;&#x5C06;&#x5F00;&#x653E;</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared/hub.css">
+</head>
+<body>
+    <div class="hub-bg"></div>
+    <main class="coming-layout">
+        <a class="back-link" href="/">&lt;- &#x8FD4;&#x56DE;&#x5927;&#x5385;</a>
+
+        <section class="coming-card">
+            <div class="coming-hero">
+                <div class="featured-icon" id="comingIcon">PL</div>
+                <div>
+                    <div class="eyebrow">&#x5373;&#x5C06;&#x5F00;&#x653E;</div>
+                    <h1 class="coming-title" id="comingTitle">&#x9884;&#x7559;&#x6E38;&#x620F;&#x4F4D;</h1>
+                    <p class="coming-copy" id="comingCopy">
+                        &#x8FD9;&#x4E2A;&#x8DEF;&#x7531;&#x5DF2;&#x7ECF;&#x9884;&#x7559;&#x597D;&#x4E86;&#x3002;&#x7B49;&#x4F60;&#x51C6;&#x5907;&#x597D;&#x65B0;&#x6E38;&#x620F;&#x7684;&#x65F6;&#x5019;&#xFF0C;&#x6211;&#x4EEC;&#x53EF;&#x4EE5;&#x76F4;&#x63A5;&#x628A;&#x8FD9;&#x4E2A;&#x9875;&#x9762;&#x66FF;&#x6362;&#x6210;&#x6B63;&#x5F0F;&#x7248;&#x672C;&#x3002;
+                    </p>
+                    <div class="coming-actions">
+                        <a class="primary-btn" href="/">&#x8FD4;&#x56DE;&#x5927;&#x5385;</a>
+                        <a class="ghost-btn" href="/games/mining/">&#x5148;&#x53BB;&#x73A9;&#x6316;&#x77FF;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="coming-card">
+            <div class="eyebrow">&#x5EFA;&#x8BBE;&#x6E05;&#x5355;</div>
+            <h2>&#x8FD9;&#x4E2A;&#x672A;&#x6765;&#x6E38;&#x620F;&#x8FD8;&#x9700;&#x8981;&#x4EC0;&#x4E48;</h2>
+            <div class="coming-checklist">
+                <div id="comingGenre">&#x73A9;&#x6CD5;&#x7C7B;&#x578B;&#xFF1A;&#x5F85;&#x5B9A;</div>
+                <div>&#x9875;&#x9762;&#x6587;&#x4EF6;&#xFF1A;&#x5EFA;&#x8BAE;&#x540E;&#x7EED;&#x653E;&#x5230; <code>games/&lt;slug&gt;/index.html</code></div>
+                <div>&#x6570;&#x503C;&#x914D;&#x7F6E;&#xFF1A;&#x5EFA;&#x8BAE;&#x62C6;&#x6210;&#x72EC;&#x7ACB; JS &#x6216; JSON&#xFF0C;&#x4E0D;&#x8981;&#x518D;&#x505A;&#x6210;&#x4E00;&#x4E2A;&#x8D85;&#x5927;&#x5355;&#x6587;&#x4EF6;</div>
+                <div>&#x7F8E;&#x672F;&#x5305;&#xFF1A;&#x5C01;&#x9762;&#x56FE;&#x3001;&#x6E38;&#x620F; icon&#x3001;&#x6309;&#x94AE;&#x98CE;&#x683C;&#x3001;&#x5956;&#x52B1;&#x56FE;&#x6807;</div>
+                <div>&#x97F3;&#x6548;&#x5305;&#xFF1A;&#x8FDB;&#x5165;&#x97F3;&#x6548;&#x3001;&#x70B9;&#x51FB;&#x97F3;&#x6548;&#x3001;&#x9886;&#x5956;&#x97F3;&#x6548;&#x3001;&#x7ED3;&#x7B97;&#x97F3;&#x6548;</div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/shared/game-catalog.js"></script>
+    <script>
+        (function () {
+            const catalog = Array.isArray(window.GENESIS_GAME_CATALOG) ? window.GENESIS_GAME_CATALOG : [];
+            const params = new URLSearchParams(window.location.search);
+            const gameId = params.get('id');
+            const game = catalog.find((item) => item.id === gameId) || {
+                title: '\u672A\u77E5\u6E38\u620F',
+                subtitle: '\u5F85\u8865\u5145',
+                genre: '\u672A\u77E5',
+                icon: 'PL',
+                accent: '#68ffe0',
+                description: '\u8FD9\u4E2A\u5165\u53E3\u5DF2\u7ECF\u9884\u7559\uFF0C\u4F46\u6682\u65F6\u8FD8\u6CA1\u6709\u586B\u5165\u6B63\u5F0F\u7684\u5C0F\u6E38\u620F\u5185\u5BB9\u3002'
+            };
+
+            document.title = `${game.title} - \u5373\u5C06\u5F00\u653E`;
+            document.getElementById('comingTitle').textContent = game.title;
+            document.getElementById('comingCopy').textContent = game.description;
+            document.getElementById('comingGenre').textContent = `\u73A9\u6CD5\u7C7B\u578B\uFF1A${game.genre} | ${game.subtitle}`;
+
+            const iconNode = document.getElementById('comingIcon');
+            iconNode.textContent = game.icon || 'PL';
+            iconNode.style.color = game.accent || '#68ffe0';
+            iconNode.style.boxShadow = `inset 0 0 0 1px ${(game.accent || '#68ffe0')}33`;
+        }());
+    </script>
+</body>
+</html>
