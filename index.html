@@ -16255,6 +16255,18 @@
                 return gem.basisPoints / GEM_DROP_SCALE;
             }
 
+            if (typeof gem.tier === 'number') {
+                const baseTierGem = GEM_TIERS.find((item) => item.tier === gem.tier);
+                if (baseTierGem) {
+                    if (typeof baseTierGem.basisPoints === 'number') {
+                        return baseTierGem.basisPoints / GEM_DROP_SCALE;
+                    }
+                    if (typeof baseTierGem.chance === 'number') {
+                        return baseTierGem.chance;
+                    }
+                }
+            }
+
             return typeof gem.chance === 'number' ? gem.chance : 0;
         }
 
@@ -17083,6 +17095,8 @@
             const gemRecord = {
                 id: Date.now() + Math.random(),
                 tier: gem.tier,
+                chance: gem.chance,
+                basisPoints: gem.basisPoints,
                 bonus: gem.bonus,
                 image: gem.image,
                 color: gem.color,
