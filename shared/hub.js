@@ -96,8 +96,8 @@
         }
 
         const progressChips = miningSummary
-            ? [`\u91D1\u5E01 ${formatCompact(miningSummary.coins)}`, `\u7B97\u529B ${formatCompact(miningSummary.power)}`, `T4 ${miningSummary.t4Count}`, `Lv.${miningSummary.level}`]
-            : ['\u65B0\u73A9\u5BB6\u5165\u53E3', '\u53EF\u4EE5\u76F4\u63A5\u5F00\u73A9'];
+            ? [`\u91D1\u5E01 / Coins ${formatCompact(miningSummary.coins)}`, `\u7B97\u529B / Power ${formatCompact(miningSummary.power)}`, `T4 \u5B9D\u77F3 / T4 Gems ${miningSummary.t4Count}`, `\u7B49\u7EA7 / Lv.${miningSummary.level}`]
+            : ['\u65B0\u73A9\u5BB6\u5165\u53E3 / New Player Entry', '\u53EF\u4EE5\u76F4\u63A5\u5F00\u73A9 / Ready To Play'];
 
         node.innerHTML = `
             <div class="featured-visual">
@@ -116,8 +116,8 @@
                 <div class="featured-meta">${progressChips.map(buildMetaChip).join('')}</div>
                 <div class="game-tags">${mining.tags.map(buildMetaChip).join('')}</div>
                 <div class="hero-actions">
-                    <a class="primary-btn" href="${mining.href}" data-game-link="${mining.id}">\u8FDB\u5165\u4E3B\u6E38\u620F</a>
-                    <a class="ghost-btn" href="/games/coming-soon/?id=gem-forge" data-game-link="gem-forge">\u67E5\u770B\u4E0B\u4E00\u4E2A\u5019\u9009\u6E38\u620F</a>
+                    <a class="primary-btn" href="${mining.href}" data-game-link="${mining.id}">\u8FDB\u5165\u4E3B\u6E38\u620F / Enter Main Game</a>
+                    <a class="ghost-btn" href="/games/coming-soon/?id=gem-forge" data-game-link="gem-forge">\u67E5\u770B\u4E0B\u4E00\u4E2A\u6E38\u620F / Next Game</a>
                 </div>
             </div>
         `;
@@ -132,7 +132,7 @@
         node.innerHTML = GAME_CATALOG.map((game) => {
             const openCount = Math.max(0, Number(profile?.gameOpens?.[game.id]) || 0);
             const badgeClass = game.status === 'live' ? 'live' : 'soon';
-            const ctaLabel = game.status === 'live' ? '\u7ACB\u5373\u8FDB\u5165' : '\u67E5\u770B\u5360\u4F4D\u9875';
+            const ctaLabel = game.status === 'live' ? '\u7ACB\u5373\u8FDB\u5165 / Play Now' : '\u67E5\u770B\u5360\u4F4D\u9875 / View Placeholder';
 
             return `
                 <a class="game-card ${game.status}" href="${game.href}" data-game-link="${game.id}" style="--card-accent:${game.accent};">
@@ -145,7 +145,7 @@
                         <h4 class="game-title">${game.title}</h4>
                         <div class="game-subtitle">${game.subtitle}</div>
                     </div>
-                    <div class="game-meta">${game.genre} | \u5DF2\u6253\u5F00 ${openCount} \u6B21</div>
+                    <div class="game-meta">${game.genre} | \u5DF2\u6253\u5F00 / Opened ${openCount} \u6B21</div>
                     <div class="game-desc">${game.description}</div>
                     <div class="game-tags">${game.tags.map(buildMetaChip).join('')}</div>
                     <span class="game-cta">${ctaLabel}</span>
@@ -188,6 +188,11 @@
                 }
             });
         }
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
     }
 
     function initHubPage() {
@@ -198,14 +203,15 @@
 
         setText('hubVisits', profile.visits.toLocaleString('zh-CN'));
         setText('liveGameCount', `${liveCount} / ${GAME_CATALOG.length}`);
-        setText('miningCoins', miningSummary ? formatCompact(miningSummary.coins) : '\u672A\u5F00\u59CB');
-        setText('miningPower', miningSummary ? formatCompact(miningSummary.power) : '\u672A\u5F00\u59CB');
+        setText('miningCoins', miningSummary ? formatCompact(miningSummary.coins) : '\u672A\u5F00\u59CB / Not Started');
+        setText('miningPower', miningSummary ? formatCompact(miningSummary.power) : '\u672A\u5F00\u59CB / Not Started');
         setText('miningTier4', miningSummary ? `${miningSummary.t4Count}` : '0');
-        setText('lastPlayedGame', lastPlayed ? lastPlayed.title : '\u521B\u4E16\u6316\u77FF\u533A');
+        setText('lastPlayedGame', lastPlayed ? lastPlayed.title : '\u521B\u4E16\u6316\u77FF\u533A / Genesis Mining Zone');
 
         renderFeaturedGame(miningSummary);
         renderGameGrid(profile);
         bindGlobalActions(profile);
+        closeModal();
     }
 
     if (document.getElementById('gameGrid')) {
