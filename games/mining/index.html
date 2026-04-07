@@ -6141,7 +6141,7 @@
             }
         }
     </style>
-    <a class="hub-return-btn" href="/" aria-label="返回游戏大厅">← Arcade</a>
+    <a class="hub-return-btn" href="/" aria-label="Return to Arcade">← Arcade</a>
     <canvas id="particleCanvas"></canvas>
     <div class="matrix-bg" id="matrixBg"></div>
     <div class="critical-overlay" id="criticalOverlay"></div>
@@ -6204,7 +6204,7 @@
                 </button>
             </div>
             <button class="v2-actions-toggle" id="mobileSystemsToggleBtn" type="button" aria-expanded="false">
-                <span class="v2-actions-toggle-text" id="mobileSystemsToggleText">展开更多</span>
+                <span class="v2-actions-toggle-text" id="mobileSystemsToggleText">More Systems</span>
                 <span class="v2-actions-toggle-icon" id="mobileSystemsToggleIcon">▾</span>
             </button>
         </div>
@@ -6321,7 +6321,7 @@
 
     <button class="pay-to-win" id="payBtn">
         <div>⚡ INSTANT RECOVERY ⚡</div>
-        <div class="pay-label">仅需 $1.00</div>
+        <div class="pay-label">Only $1.00</div>
         <span class="pay-entry-dot" id="payBtnDot"></span>
         <span class="pay-entry-badge" id="payBtnBadge"></span>
     </button>
@@ -6329,8 +6329,8 @@
     
     <div class="leaderboard" id="leaderboard">
         <div class="leaderboard-header">
-            <div class="leaderboard-title">⚡ 全网算力排行 ⚡</div>
-            <div class="leaderboard-subtitle">实时更新中...</div>
+            <div class="leaderboard-title">⚡ GLOBAL HASHRATE LADDER ⚡</div>
+            <div class="leaderboard-subtitle">Live updates in progress...</div>
             <div class="leaderboard-crown-banner" id="leaderboardCrownBanner"></div>
         </div>
         <div class="leaderboard-list" id="leaderboardList">
@@ -6356,18 +6356,18 @@
             </div>
             <div class="leaderboard-chase-strip" id="leaderboardChaseStrip">
                 <div class="leaderboard-chase-line">
-                    <span id="leaderboardTargetLabel">下一目标</span>
+                    <span id="leaderboardTargetLabel">Next Target</span>
                     <strong id="leaderboardTargetValue">#10 · +0</strong>
                 </div>
                 <div class="leaderboard-chase-line">
-                    <span id="leaderboardGateLabel">前十门槛</span>
+                    <span id="leaderboardGateLabel">Top 10 Gate</span>
                     <strong id="leaderboardGateValue">+0</strong>
                 </div>
                 <div class="leaderboard-chase-line">
-                    <span id="leaderboardRearLabel">后方追兵</span>
-                    <strong id="leaderboardRearValue">安全</strong>
+                    <span id="leaderboardRearLabel">Rear Pressure</span>
+                    <strong id="leaderboardRearValue">Stable</strong>
                 </div>
-                <div class="leaderboard-chase-status" id="leaderboardChaseStatus">对手正在同步算力波动，留意下一次超车窗口。</div>
+                <div class="leaderboard-chase-status" id="leaderboardChaseStatus">Rivals are syncing upward. Watch for the next overtake window.</div>
             </div>
             <div class="leaderboard-event-hub" id="leaderboardEventHub"></div>
             <button class="boost-btn" id="boostBtn">🎯 RANK SURGE PACK</button>
@@ -6380,9 +6380,9 @@
     <div class="payment-content">
         <button class="payment-top-close" id="paymentTopCloseBtn" type="button" aria-label="Close payment modal">&times;</button>
         <div class="payment-icon">💎</div>
-        <div class="payment-title">支付校验</div>
+        <div class="payment-title">Payment Verification</div>
         <div class="payment-message" id="paymentMessage">
-            支付成功后可获得10000金币+有概率获得珍贵的稀有4级宝石！
+            Verify your exact TRC20-USDT payment to unlock coins, permanent growth, and high-tier gem rewards.
         </div>
         <div class="payment-promo-banner" id="paymentPromoBanner">
             <div class="payment-promo-copy">
@@ -6395,53 +6395,53 @@
         <div class="payment-offer-grid" id="paymentOfferGrid"></div>
         <div class="payment-progress-card">
             <div class="payment-progress-line">
-                <span id="paymentProgressTitle">充值进度</span>
+                <span id="paymentProgressTitle">Recharge Ladder</span>
                 <strong id="paymentProgressValue">0 / 3</strong>
             </div>
             <div class="payment-progress-bar">
                 <div class="payment-progress-fill" id="paymentProgressFill"></div>
             </div>
-            <div class="payment-progress-meta" id="paymentProgressMeta">累充达到阶段后可获得额外保底和常驻加成。</div>
+            <div class="payment-progress-meta" id="paymentProgressMeta">Hit recharge milestones to unlock stronger pity rules and permanent bonuses.</div>
         </div>
         <div class="payment-benefits" id="paymentBenefits"></div>
         <div class="payment-amount" id="paymentAmount">$1.00 USD</div>
         <div id="paymentDetails" style="font-size: 12px; color: #888; margin-top: 10px; line-height: 1.5;">
-            TRC20 Payment Link
+            TRC20 Receiving Address
         </div>
         <div class="payment-wallet" id="paymentWallet">TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW</div>
-        <button class="payment-copy-btn" id="copyPaymentBtn" type="button">复制收款地址</button>
+        <button class="payment-copy-btn" id="copyPaymentBtn" type="button">Copy Address</button>
         <div class="payment-order-card">
             <div class="payment-order-line">
-                <span id="paymentOrderLabel">订单编号</span>
+                <span id="paymentOrderLabel">Order ID</span>
                 <strong id="paymentOrderId">--</strong>
             </div>
             <div class="payment-order-grid">
                 <div class="payment-order-item">
-                    <div class="payment-order-item-label" id="paymentOrderAmountLabel">精确金额</div>
+                    <div class="payment-order-item-label" id="paymentOrderAmountLabel">Exact Amount</div>
                     <div class="payment-order-item-value" id="paymentExactAmount">--</div>
                 </div>
                 <div class="payment-order-item">
-                    <div class="payment-order-item-label" id="paymentOrderExpiryLabel">剩余有效期</div>
+                    <div class="payment-order-item-label" id="paymentOrderExpiryLabel">Expires In</div>
                     <div class="payment-order-item-value" id="paymentOrderExpiry">--:--</div>
                 </div>
             </div>
-            <button class="payment-copy-btn payment-copy-btn-secondary" id="copyPaymentAmountBtn" type="button">复制精确金额</button>
+            <button class="payment-copy-btn payment-copy-btn-secondary" id="copyPaymentAmountBtn" type="button">Copy Exact Amount</button>
         </div>
         <div class="payment-txid-field">
-            <div class="payment-txid-label" id="paymentTxidLabel">粘贴 OKX 钱包 txid</div>
-            <input class="payment-txid-input" id="paymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="请输入 OKX 钱包里的链上 txid">
-            <div class="payment-txid-hint" id="paymentTxidHint">只接受本次订单窗口内、金额完全一致、转到当前 TRC20 地址的 USDT 交易。</div>
+            <div class="payment-txid-label" id="paymentTxidLabel">Paste OKX Wallet txid</div>
+            <input class="payment-txid-input" id="paymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="Paste the on-chain txid from OKX Wallet">
+            <div class="payment-txid-hint" id="paymentTxidHint">Only payments that match the current order amount, recipient address, and valid time window can pass verification.</div>
         </div>
         <div class="payment-status" id="paymentStatus">
-            请先复制收款地址与精确金额，在 OKX 钱包完成 TRC20-USDT 支付后，再粘贴 txid 进行查链校验。
+            Create an exact order, pay it in OKX Wallet, then paste the txid here for on-chain verification.
         </div>
         <div class="payment-log" id="paymentLog" aria-live="polite"></div>
         <div class="loading-bar" id="paymentLoadingBar" style="display: none;">
             <div class="loading-progress"></div>
         </div>
         <div class="payment-actions">
-            <button class="payment-close payment-confirm-btn" id="paymentConfirmBtn" type="button">校验 TXID</button>
-            <button class="payment-close" id="closePaymentBtn" style="background: none; border: 1px solid #444; margin-top: 8px;">关闭支付</button>
+            <button class="payment-close payment-confirm-btn" id="paymentConfirmBtn" type="button">Verify TXID</button>
+            <button class="payment-close" id="closePaymentBtn" style="background: none; border: 1px solid #444; margin-top: 8px;">Close Payment</button>
         </div>
     </div>
 </div>
@@ -6822,26 +6822,26 @@
                 paymentTitle: 'Payment Verification',
                 paymentMessage: 'Unlock coins, Chain Cores, timed boosts, and high-tier gems after payment verification.',
                 paymentAmount: '$1.00 USD',
-                paymentDetails: 'TRC20 Payment Link',
+                paymentDetails: 'TRC20 Receiving Address',
                 paymentClose: 'Close Payment',
-                paymentConfirm: 'I Paid',
-                paymentCopy: 'Copy Payment Link',
-                paymentStatus: 'Copy the payment link, complete the transfer, then tap "I Paid" for verification.',
-                paymentCopied: 'Payment link copied. Waiting for your payment completion...',
-                paymentVerifying: 'Verifying payment record... Rewards will arrive in 4 seconds.',
-                paymentLogIdle: 'Verifier idle. Copy the payment link to arm the route.',
-                paymentLogCopied: 'Route locked. Finish the transfer, then tap "I Paid".',
-                paymentLogHeader: 'Consensus engine online. Starting pseudo-chain verification...',
+                paymentConfirm: 'Verify TXID',
+                paymentCopy: 'Copy Address',
+                paymentStatus: 'Create an exact order, pay it in OKX Wallet, then paste the txid for on-chain verification.',
+                paymentCopied: 'Receiving address copied. Complete the payment in OKX Wallet, then paste the txid.',
+                paymentVerifying: 'Verifying the txid and payment order on chain...',
+                paymentLogIdle: 'Verifier idle. Generate an exact order to continue.',
+                paymentLogCopied: 'Address copied. Complete the payment, then verify the txid.',
+                paymentLogHeader: 'On-chain verification started.',
                 paymentLogEntries: [
-                    'Scanning TRC20 edge nodes for mirrored transfer signals...',
-                    'Wallet fingerprint matched to secure reward route.',
-                    'Mempool echo detected. Checking relay continuity...',
-                    'Pseudo block payload checksum is stabilizing...',
-                    'Validator quorum reached. Syncing settlement window...',
-                    'Treasury release signature compiling in cold vault...',
-                    'Reward packet queued. Awaiting final consensus pulse...',
-                    'Confirmation lane opened. Preparing reward unlock...',
-                    'Verification trace completed. Dispatching payout signal...'
+                    'Sending the txid to the verification API...',
+                    'Querying the confirmed transfer on TRON mainnet...',
+                    'Reading order data and backend receipt status...',
+                    'Checking the TRC20-USDT contract route...',
+                    'Matching the receiving address for this order...',
+                    'Matching the exact amount and time window...',
+                    'Building reward settlement data...',
+                    'Verification passed. Unlocking the reward package...',
+                    'Payment flow finished. Refreshing the mining dashboard...'
                 ],
                 
                 gemTier1Name: 'Tier 1 Genesis Gem',
@@ -6996,26 +6996,26 @@
                 paymentTitle: '支付校验',
                 paymentMessage: '支付校验成功后可获得金币、链核、限时增幅与高阶宝石回馈！',
                 paymentAmount: '$1.00 USD',
-                paymentDetails: 'TRC20 支付链接',
+                paymentDetails: 'TRC20 收款地址',
                 paymentClose: '关闭支付',
-                paymentConfirm: '已支付',
-                paymentCopy: '复制支付链接',
-                paymentStatus: '复制支付链接后，请完成支付，再点击“已支付”进行校验。',
-                paymentCopied: '支付链接已复制，请完成支付后点击“已支付”。',
-                paymentVerifying: '正在校验支付记录，4秒后发放奖励...',
-                paymentLogIdle: '校验器待命中，请先复制支付链接以锁定校验路由。',
-                paymentLogCopied: '支付路由已锁定，请完成支付后点击“已支付”。',
-                paymentLogHeader: '共识引擎已上线，正在启动伪区块链校验流程...',
+                paymentConfirm: '校验 TXID',
+                paymentCopy: '复制收款地址',
+                paymentStatus: '请先生成精确订单，在 OKX 钱包完成支付后，再粘贴 txid 进行链上校验。',
+                paymentCopied: '收款地址已复制，请在 OKX 钱包完成支付后再粘贴 txid。',
+                paymentVerifying: '正在校验 txid 与订单信息，请稍候...',
+                paymentLogIdle: '校验器待命中，请先生成精确订单。',
+                paymentLogCopied: '收款地址已复制，请完成支付后再校验 txid。',
+                paymentLogHeader: '链上校验已启动。',
                 paymentLogEntries: [
-                    '扫描 TRC20 边缘节点，搜寻镜像支付信号...',
-                    '钱包指纹已匹配至安全奖励路由。',
-                    '检测到内存池回响，正在校对中继连续性...',
-                    '伪区块载荷校验中，哈希漂移逐渐收敛...',
-                    '验证节点已形成共识，正在同步结算窗口...',
-                    '奖励金库签名生成中，冷钱包通道稳定。',
-                    '奖励封包已排队，等待最终共识脉冲...',
-                    '确认通道已开启，准备释放奖励...',
-                    '校验轨迹完成，奖励发放信号已下发...'
+                    '正在把 txid 发送到校验接口...',
+                    '正在查询 TRON 主网确认交易...',
+                    '正在读取订单数据与后端回执状态...',
+                    '正在校验 TRC20-USDT 合约路由...',
+                    '正在匹配当前订单的收款地址...',
+                    '正在校验精确金额与有效时间窗口...',
+                    '正在生成奖励结算数据...',
+                    '校验通过，正在解锁奖励包...',
+                    '支付流程已完成，正在刷新挖矿面板...'
                 ],
                 
                 gemTier1Name: '1级 Genesis 宝石',
@@ -16994,12 +16994,11 @@
             }
         });
 
-        payBtn.addEventListener('click', () => {
+        bindResponsiveTap(payBtn, () => payBtn, () => {
             handlePayment(getPrimaryPaymentOfferId());
         });
 
-        overclockBtn.addEventListener('click', () => {
-            
+        bindResponsiveTap(overclockBtn, () => overclockBtn, () => {
             handlePayment('accelerator');
         });
 
@@ -17316,8 +17315,7 @@
             saveGameData(false);
         }, AUTO_SAVE_INTERVAL);
 
-        boostBtn.addEventListener('click', () => {
-            
+        bindResponsiveTap(boostBtn, () => boostBtn, () => {
             handlePayment(myRankPosition === 1 && hasLeaderboardCrownAccess() ? 'throne' : 'rush');
         });
 
