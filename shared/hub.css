@@ -71,6 +71,11 @@ button { font: inherit; }
     display: flex;
     align-items: center;
     gap: 16px;
+    min-width: 0;
+}
+
+.brand-lockup > div:last-child {
+    min-width: 0;
 }
 
 .brand-logo {
@@ -1088,5 +1093,349 @@ button { font: inherit; }
         width: calc(100% + 24px);
         margin: -12px -12px 2px;
         min-height: 88px;
+    }
+}
+
+@media (max-width: 720px) {
+    .hub-shell {
+        padding-bottom: 16px;
+    }
+
+    .topbar {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .brand-lockup {
+        gap: 8px;
+    }
+
+    .brand-logo {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        border-radius: 14px;
+    }
+
+    .eyebrow {
+        font-size: 9px;
+        margin-bottom: 4px;
+    }
+
+    .topbar h1 {
+        font-size: clamp(22px, 7.2vw, 29px);
+        line-height: 1;
+    }
+
+    .topbar .subcopy {
+        font-size: 11px;
+        line-height: 1.38;
+        -webkit-line-clamp: 1;
+    }
+
+    .topbar-actions {
+        grid-template-columns: minmax(0, 1fr) 92px;
+        gap: 7px;
+    }
+
+    .topbar-actions .ghost-btn,
+    .topbar-actions .primary-btn {
+        min-height: 38px;
+        padding: 0 10px;
+        font-size: 12px;
+        border-radius: 12px;
+    }
+
+    .lang-toggle {
+        padding: 3px;
+        border-radius: 14px;
+    }
+
+    .lang-btn {
+        min-height: 36px;
+        padding: 0 10px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+
+    .hero-card,
+    .section-block,
+    .coming-card {
+        padding: 10px;
+        border-radius: 15px;
+    }
+
+    .hero-card {
+        gap: 8px;
+    }
+
+    .status-pill {
+        min-height: 28px;
+        padding: 0 10px;
+        font-size: 10px;
+    }
+
+    .hero-copy h2,
+    .coming-title {
+        font-size: clamp(20px, 6.6vw, 26px);
+        line-height: 1.05;
+    }
+
+    .hero-copy p {
+        margin: 6px 0 8px;
+        font-size: 11px;
+        line-height: 1.45;
+        -webkit-line-clamp: 2;
+    }
+
+    .hero-actions {
+        gap: 8px;
+    }
+
+    .hero-actions .primary-btn,
+    .hero-actions .ghost-btn {
+        min-height: 40px;
+        font-size: 13px;
+        border-radius: 12px;
+    }
+
+    .hero-pulse {
+        margin-bottom: 8px;
+        padding: 9px;
+        border-radius: 14px;
+    }
+
+    .hero-pulse-head {
+        margin-bottom: 8px;
+    }
+
+    .hero-pulse-title {
+        font-size: 14px;
+    }
+
+    .pulse-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .pulse-card,
+    .pulse-card:last-child {
+        grid-column: auto;
+    }
+
+    .pulse-card {
+        padding: 8px 8px 9px;
+        border-radius: 12px;
+    }
+
+    .pulse-card span {
+        margin-bottom: 3px;
+        font-size: 9px;
+    }
+
+    .pulse-card strong {
+        font-size: 11px;
+        line-height: 1.28;
+    }
+
+    .summary-panel {
+        gap: 7px;
+        padding: 9px;
+        border-radius: 14px;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .summary-item {
+        padding: 8px 7px;
+        border-radius: 12px;
+    }
+
+    .summary-label {
+        margin-bottom: 3px;
+        font-size: 9px;
+    }
+
+    .summary-item strong {
+        font-size: 13px;
+    }
+
+    .summary-note {
+        font-size: 11px;
+        line-height: 1.4;
+        -webkit-line-clamp: 1;
+    }
+
+    .section-head {
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .section-head h3 {
+        font-size: 20px;
+    }
+
+    .section-head p {
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .featured-game-card {
+        grid-template-columns: 96px minmax(0, 1fr);
+        gap: 8px;
+        padding: 10px;
+        border-radius: 16px;
+    }
+
+    .featured-visual {
+        min-height: 118px;
+        border-radius: 14px;
+    }
+
+    .featured-icon {
+        width: 50px;
+        height: 50px;
+        min-height: 50px;
+        left: 10px;
+        bottom: 10px;
+        border-radius: 14px;
+        font-size: 21px;
+    }
+
+    .featured-content {
+        gap: 6px;
+    }
+
+    .featured-title {
+        font-size: 19px;
+        line-height: 1.05;
+    }
+
+    .featured-desc {
+        font-size: 12px;
+        line-height: 1.45;
+        -webkit-line-clamp: 2;
+    }
+
+    .meta-chip {
+        min-height: 24px;
+        padding: 0 8px;
+        font-size: 10px;
+    }
+
+    .game-grid {
+        gap: 10px;
+    }
+
+    .game-card {
+        min-height: 188px;
+        padding: 10px;
+        gap: 8px;
+        border-radius: 16px;
+    }
+
+    .game-cover {
+        width: calc(100% + 20px);
+        margin: -10px -10px 2px;
+        min-height: 76px;
+    }
+
+    .game-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+        font-size: 18px;
+    }
+
+    .game-title {
+        font-size: 15px;
+        margin-bottom: 3px;
+    }
+
+    .game-subtitle,
+    .game-meta,
+    .game-desc {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    .game-desc {
+        min-height: 30px;
+    }
+
+    .game-cta {
+        min-height: 36px;
+        padding: 0 8px;
+        font-size: 12px;
+        border-radius: 12px;
+    }
+}
+
+@media (max-width: 420px) {
+    .topbar-actions {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        grid-template-columns: 1fr;
+    }
+
+    .topbar-actions .ghost-btn,
+    .topbar-actions .primary-btn {
+        min-height: 34px;
+        padding: 0 8px;
+        font-size: 11px;
+    }
+
+    .lang-toggle {
+        min-width: 0;
+        width: 100%;
+    }
+
+    #topContinueBtn {
+        display: none;
+    }
+
+    .lang-btn {
+        min-width: 0;
+        min-height: 32px;
+        font-size: 11px;
+    }
+
+    .topbar .subcopy {
+        font-size: 10px;
+    }
+
+    .hero-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pulse-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .featured-game-card {
+        grid-template-columns: 82px minmax(0, 1fr);
+    }
+
+    .featured-visual {
+        min-height: 108px;
+    }
+
+    .game-card {
+        min-height: 180px;
+        padding: 9px;
+    }
+
+    .game-cover {
+        width: calc(100% + 18px);
+        margin: -9px -9px 2px;
+        min-height: 72px;
     }
 }

@@ -300,6 +300,7 @@
     function applyStaticCopy() {
         const copy = getCopy();
         const meta = document.getElementById('hubMetaDescription');
+        const topContinueBtn = document.getElementById('topContinueBtn');
 
         document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
         document.title = getLocalizedText(copy.docTitle);
@@ -307,6 +308,12 @@
 
         STATIC_TEXT_KEYS.forEach((key) => setText(key, getLocalizedText(copy[key])));
         STATIC_HTML_KEYS.forEach((key) => setHtml(key, getLocalizedRaw(copy[key])));
+
+        if (topContinueBtn) {
+            topContinueBtn.textContent = window.innerWidth <= 420
+                ? (currentLang === 'zh' ? '继续' : 'Go')
+                : getLocalizedText(copy.topContinueBtn);
+        }
 
     }
 
@@ -442,6 +449,7 @@
         activeProfile = loadHubProfile();
         activeMiningSummary = getMiningSummary();
         bindStaticActions();
+        window.addEventListener('resize', renderHub);
         renderHub();
     }
 

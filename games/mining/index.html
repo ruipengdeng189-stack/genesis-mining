@@ -479,6 +479,11 @@
             color: rgba(190, 255, 255, 0.92);
         }
 
+        .leaderboard-item.mine .leaderboard-address::before,
+        .leaderboard-item.mine .leaderboard-power::before {
+            color: rgba(176, 255, 255, 0.66);
+        }
+
         .leaderboard-item.crown-holder {
             background: linear-gradient(135deg, rgba(255, 214, 102, 0.14), rgba(255, 120, 0, 0.08));
             border: 1px solid rgba(255, 214, 102, 0.34);
@@ -493,6 +498,11 @@
 
         .leaderboard-item.crown-holder .leaderboard-address {
             color: rgba(255, 244, 214, 0.95);
+        }
+
+        .leaderboard-item.crown-holder .leaderboard-address::before,
+        .leaderboard-item.crown-holder .leaderboard-power::before {
+            color: rgba(255, 232, 168, 0.68);
         }
 
         .leaderboard-rank-crown {
@@ -517,6 +527,10 @@
 
         .leaderboard-address {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
             font-size: 11px;
             font-family: 'Courier New', monospace;
             color: rgba(0, 255, 0, 0.8);
@@ -525,11 +539,37 @@
             white-space: nowrap;
         }
 
+        .leaderboard-address::before {
+            content: attr(data-card-label);
+            font-size: 8px;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            color: rgba(179, 255, 216, 0.54);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
         .leaderboard-power {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 2px;
+            min-width: 76px;
             font-size: 13px;
             font-weight: bold;
             color: #00ff00;
             text-shadow: 0 0 5px #00ff00;
+        }
+
+        .leaderboard-power::before {
+            content: attr(data-card-label);
+            font-size: 8px;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            color: rgba(179, 255, 216, 0.5);
+            text-transform: uppercase;
+            text-shadow: none;
         }
 
         .leaderboard-item.updating .leaderboard-power {
@@ -1102,26 +1142,90 @@
 
         .pay-to-win {
             position: fixed;
-            bottom: 30px;
-            left: 30px;
-            padding: 25px 40px;
-            font-size: 22px;
+            bottom: 26px;
+            left: 26px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 10px 14px;
+            width: min(420px, calc(100vw - 52px));
+            min-height: 78px;
+            padding: 16px 20px;
+            font-size: 18px;
             font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #ff0080, #ff4040);
-            color: #fff;
-            border: 3px solid #ffff00;
-            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(6, 20, 34, 0.96), rgba(9, 42, 54, 0.94) 50%, rgba(15, 102, 78, 0.92) 100%);
+            color: #f6feff;
+            border: 1px solid rgba(120, 255, 226, 0.34);
+            border-radius: 22px;
             cursor: pointer;
-            box-shadow: 0 0 40px rgba(255, 0, 128, 0.8),
-                        0 0 60px rgba(255, 255, 0, 0.6),
-                        inset 0 0 20px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 44px rgba(0, 0, 0, 0.44),
+                        0 0 28px rgba(0, 255, 200, 0.12),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.12);
             font-weight: bold;
-            text-shadow: 0 0 10px #000, 0 0 20px #ff0;
-            transition: all 0.3s;
-            animation: payPulse 2s ease-in-out infinite;
+            text-shadow: none;
+            transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, filter 0.22s ease;
+            animation: payPulse 3.2s ease-in-out infinite;
             z-index: 1001;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+            isolation: isolate;
+            backdrop-filter: blur(16px) saturate(1.08);
+        }
+
+        .pay-to-win::before {
+            content: '';
+            position: absolute;
+            inset: 1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(11, 29, 44, 0.94), rgba(7, 35, 48, 0.9) 42%, rgba(4, 67, 56, 0.88) 100%);
+            z-index: 0;
+        }
+
+        .pay-to-win::after {
+            content: '';
+            position: absolute;
+            top: -18px;
+            left: -34%;
+            width: 34%;
+            height: calc(100% + 36px);
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            transform: skewX(-18deg);
+            animation: paySweep 4.8s ease-in-out infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .pay-to-win > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .pay-to-win > div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            color: #f6feff;
+        }
+
+        .pay-to-win > div:first-child::before {
+            content: '⚡';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255, 222, 111, 0.96), rgba(255, 140, 78, 0.94));
+            color: #0f2026;
+            font-size: 14px;
+            font-weight: 900;
+            box-shadow: 0 0 16px rgba(255, 195, 92, 0.3);
+            flex: 0 0 auto;
         }
 
         .pay-entry-dot {
@@ -1175,31 +1279,56 @@
 
         @keyframes payPulse {
             0%, 100% {
-                transform: scale(1);
-                box-shadow: 0 0 40px rgba(255, 0, 128, 0.8),
-                            0 0 60px rgba(255, 255, 0, 0.6);
+                transform: translateY(0);
+                box-shadow: 0 20px 44px rgba(0, 0, 0, 0.44),
+                            0 0 28px rgba(0, 255, 200, 0.12),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.12);
             }
             50% {
-                transform: scale(1.05);
-                box-shadow: 0 0 60px rgba(255, 0, 128, 1),
-                            0 0 80px rgba(255, 255, 0, 0.8);
+                transform: translateY(-1px);
+                box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5),
+                            0 0 34px rgba(0, 255, 200, 0.18),
+                            inset 0 1px 0 rgba(255, 255, 255, 0.16);
             }
+        }
+
+        @keyframes paySweep {
+            0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+            18% { opacity: 0.14; }
+            42% { opacity: 0.28; }
+            100% { transform: translateX(240%) skewX(-18deg); opacity: 0; }
         }
 
         .pay-to-win:hover {
-            transform: scale(1.1) !important;
-            box-shadow: 0 0 70px rgba(255, 0, 128, 1),
-                        0 0 100px rgba(255, 255, 0, 1) !important;
+            transform: translateY(-2px) scale(1.01) !important;
+            border-color: rgba(152, 255, 233, 0.46) !important;
+            box-shadow: 0 26px 56px rgba(0, 0, 0, 0.56),
+                        0 0 36px rgba(0, 255, 200, 0.18),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+            filter: brightness(1.04);
         }
 
         .pay-to-win:active {
-            transform: scale(0.95) !important;
+            transform: translateY(0) scale(0.985) !important;
         }
 
         .pay-label {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-top: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(255, 97, 127, 0.18), rgba(255, 187, 76, 0.24));
+            border: 1px solid rgba(255, 213, 111, 0.2);
+            color: #fff3ba;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            opacity: 1;
+            margin-top: 0;
+            white-space: nowrap;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.04);
         }
 
         #mineBtn.overheat img {
@@ -6492,6 +6621,357 @@
                 gap: 8px !important;
             }
         }
+
+        @media (max-width: 900px) {
+            @keyframes mobileCtaSweep {
+                0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+                18% { opacity: 0.18; }
+                45% { opacity: 0.34; }
+                100% { transform: translateX(180%) skewX(-18deg); opacity: 0; }
+            }
+
+            body.mobile-optimized .pay-to-win {
+                min-height: 58px !important;
+                padding: 10px 12px !important;
+                border-radius: 18px !important;
+                border: 1px solid rgba(120, 255, 226, 0.38) !important;
+                background:
+                    linear-gradient(135deg, rgba(5, 18, 30, 0.94), rgba(10, 60, 68, 0.92) 48%, rgba(15, 115, 86, 0.9) 100%) !important;
+                box-shadow:
+                    0 20px 36px rgba(0, 0, 0, 0.5),
+                    0 0 24px rgba(0, 255, 200, 0.16),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+                text-shadow: none !important;
+                overflow: hidden !important;
+                isolation: isolate !important;
+                animation: none !important;
+                backdrop-filter: blur(14px) saturate(1.08) !important;
+            }
+
+            body.mobile-optimized .pay-to-win::before {
+                content: '';
+                position: absolute;
+                inset: 1px;
+                border-radius: inherit;
+                background:
+                    linear-gradient(135deg, rgba(13, 30, 48, 0.92), rgba(7, 33, 47, 0.88) 42%, rgba(6, 68, 58, 0.88) 100%);
+                z-index: 0;
+            }
+
+            body.mobile-optimized .pay-to-win::after {
+                content: '';
+                position: absolute;
+                top: -16px;
+                left: -40%;
+                width: 42%;
+                height: calc(100% + 32px);
+                background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+                transform: skewX(-18deg);
+                animation: mobileCtaSweep 3.8s ease-in-out infinite;
+                z-index: 1;
+                pointer-events: none;
+            }
+
+            body.mobile-optimized .pay-to-win > * {
+                position: relative;
+                z-index: 2;
+            }
+
+            body.mobile-optimized .pay-to-win > div:first-child {
+                display: flex !important;
+                align-items: center !important;
+                gap: 7px !important;
+                font-size: 13px !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.02em !important;
+                color: #f4feff !important;
+                text-shadow: 0 0 14px rgba(114, 255, 227, 0.2) !important;
+            }
+
+            body.mobile-optimized .pay-to-win > div:first-child::before {
+                content: '⚡';
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 22px;
+                height: 22px;
+                border-radius: 999px;
+                background: linear-gradient(135deg, rgba(255, 221, 111, 0.96), rgba(255, 138, 76, 0.92));
+                color: #102126;
+                font-size: 12px;
+                font-weight: 900;
+                box-shadow: 0 0 14px rgba(255, 200, 95, 0.3);
+                flex: 0 0 auto;
+            }
+
+            body.mobile-optimized .pay-label {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-height: 26px !important;
+                max-width: 46vw !important;
+                padding: 0 10px !important;
+                border-radius: 999px !important;
+                background: linear-gradient(135deg, rgba(255, 97, 127, 0.2), rgba(255, 187, 76, 0.26)) !important;
+                border: 1px solid rgba(255, 213, 111, 0.24) !important;
+                color: #fff6c5 !important;
+                font-size: 10px !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.05em !important;
+                box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.04) !important;
+                text-align: center !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+
+            body.mobile-optimized .pay-entry-badge {
+                top: -8px !important;
+                right: 10px !important;
+                background: linear-gradient(135deg, #0fe0cb, #77ffbf) !important;
+                color: #032b24 !important;
+                box-shadow: 0 0 16px rgba(15, 224, 203, 0.22) !important;
+            }
+
+            body.mobile-optimized .pay-entry-dot {
+                top: 10px !important;
+                right: 10px !important;
+                background: #86ffcb !important;
+                box-shadow: 0 0 10px rgba(134, 255, 203, 0.92), 0 0 18px rgba(15, 224, 203, 0.42) !important;
+            }
+
+            body.mobile-optimized .leaderboard {
+                padding: 12px !important;
+                border-radius: 20px !important;
+                background:
+                    linear-gradient(180deg, rgba(5, 16, 12, 0.98), rgba(3, 12, 10, 0.96)) !important;
+            }
+
+            body.mobile-optimized .leaderboard-header {
+                position: sticky;
+                top: -12px;
+                z-index: 5;
+                margin: -12px -12px 10px !important;
+                padding: 12px 12px 10px !important;
+                background: linear-gradient(180deg, rgba(4, 18, 13, 0.98), rgba(4, 18, 13, 0.92));
+                border-bottom: 1px solid rgba(0, 255, 170, 0.12);
+                backdrop-filter: blur(10px);
+            }
+
+            body.mobile-optimized .leaderboard-list {
+                display: grid !important;
+                gap: 8px !important;
+                margin-bottom: 10px !important;
+            }
+
+            body.mobile-optimized .leaderboard-item {
+                display: grid !important;
+                grid-template-columns: 38px minmax(0, 1fr) auto;
+                align-items: center !important;
+                gap: 8px !important;
+                padding: 10px 10px 9px !important;
+                margin-bottom: 0 !important;
+                border-radius: 14px !important;
+                background: linear-gradient(180deg, rgba(12, 24, 20, 0.94), rgba(4, 12, 10, 0.94)) !important;
+                border: 1px solid rgba(110, 255, 184, 0.12) !important;
+                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.015) !important;
+            }
+
+            body.mobile-optimized .leaderboard-item.top3 {
+                background: linear-gradient(180deg, rgba(60, 46, 10, 0.96), rgba(21, 16, 4, 0.96)) !important;
+                border-color: rgba(255, 214, 102, 0.34) !important;
+                box-shadow: 0 0 18px rgba(255, 214, 102, 0.08), inset 0 0 12px rgba(255, 214, 102, 0.03) !important;
+            }
+
+            body.mobile-optimized .leaderboard-item.mine {
+                background: linear-gradient(180deg, rgba(7, 32, 42, 0.96), rgba(3, 12, 18, 0.96)) !important;
+                border-color: rgba(0, 255, 255, 0.3) !important;
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.1), inset 0 0 14px rgba(0, 255, 255, 0.03) !important;
+            }
+
+            body.mobile-optimized .leaderboard-item.crown-holder {
+                background: linear-gradient(180deg, rgba(57, 36, 6, 0.98), rgba(19, 12, 2, 0.98)) !important;
+                border-color: rgba(255, 214, 102, 0.42) !important;
+            }
+
+            body.mobile-optimized .leaderboard-rank {
+                width: auto !important;
+                min-width: 34px !important;
+                font-size: 13px !important;
+                padding: 6px 4px !important;
+                border-radius: 10px !important;
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+            body.mobile-optimized .leaderboard-address {
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                letter-spacing: 0.03em !important;
+                color: rgba(232, 255, 242, 0.92) !important;
+            }
+
+            body.mobile-optimized .leaderboard-power {
+                font-size: 13px !important;
+                font-weight: 800 !important;
+                color: #9effd6 !important;
+                text-shadow: 0 0 10px rgba(110, 255, 190, 0.22) !important;
+            }
+
+            body.mobile-optimized .leaderboard-myrank {
+                margin-top: 10px !important;
+                padding: 12px !important;
+                border-radius: 16px !important;
+                background: linear-gradient(180deg, rgba(5, 25, 27, 0.96), rgba(3, 10, 14, 0.96)) !important;
+                border-color: rgba(0, 255, 255, 0.28) !important;
+                box-shadow: 0 0 22px rgba(0, 255, 255, 0.08) !important;
+            }
+
+            body.mobile-optimized .leaderboard-honor,
+            body.mobile-optimized .leaderboard-chase-strip,
+            body.mobile-optimized .leaderboard-event-card {
+                border-radius: 14px !important;
+                padding: 10px 11px !important;
+            }
+
+            body.mobile-optimized .leaderboard-honor {
+                margin-top: 10px !important;
+                background: linear-gradient(180deg, rgba(12, 23, 34, 0.94), rgba(2, 8, 14, 0.96)) !important;
+            }
+
+            body.mobile-optimized .leaderboard-honor-top {
+                gap: 8px !important;
+            }
+
+            body.mobile-optimized .leaderboard-honor-badge,
+            body.mobile-optimized .leaderboard-honor-crowns {
+                min-height: 22px !important;
+                padding: 3px 7px !important;
+                font-size: 9px !important;
+            }
+
+            body.mobile-optimized .leaderboard-honor-title {
+                margin-top: 7px !important;
+                font-size: 12px !important;
+                line-height: 1.25 !important;
+            }
+
+            body.mobile-optimized .leaderboard-honor-season,
+            body.mobile-optimized .leaderboard-honor-meta,
+            body.mobile-optimized .leaderboard-honor-legacy {
+                font-size: 9px !important;
+                line-height: 1.45 !important;
+            }
+
+            body.mobile-optimized .leaderboard-medal-wall {
+                gap: 5px !important;
+            }
+
+            body.mobile-optimized .leaderboard-medal {
+                padding: 4px 7px !important;
+                font-size: 9px !important;
+            }
+
+            body.mobile-optimized .leaderboard-chase-strip {
+                margin-top: 10px !important;
+                background: linear-gradient(180deg, rgba(5, 18, 25, 0.96), rgba(2, 7, 12, 0.96)) !important;
+                border-color: rgba(0, 255, 255, 0.14) !important;
+            }
+
+            body.mobile-optimized .leaderboard-chase-line {
+                font-size: 10px !important;
+                margin-bottom: 5px !important;
+            }
+
+            body.mobile-optimized .leaderboard-chase-line strong {
+                font-size: 11px !important;
+            }
+
+            body.mobile-optimized .leaderboard-chase-status {
+                margin-top: 7px !important;
+                padding-top: 7px !important;
+                font-size: 10px !important;
+                line-height: 1.42 !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-hub {
+                gap: 8px !important;
+                margin-top: 10px !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-card {
+                background: linear-gradient(180deg, rgba(12, 22, 30, 0.96), rgba(0, 0, 0, 0.92)) !important;
+                border-color: rgba(255, 255, 255, 0.08) !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-top {
+                margin-bottom: 6px !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-title {
+                font-size: 10px !important;
+                letter-spacing: 0.06em !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-badge {
+                font-size: 9px !important;
+                padding: 3px 6px !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-desc,
+            body.mobile-optimized .leaderboard-event-meta {
+                font-size: 10px !important;
+                line-height: 1.45 !important;
+            }
+
+            body.mobile-optimized .leaderboard-event-action {
+                min-height: 36px !important;
+                margin-top: 8px !important;
+                padding: 0 10px !important;
+                border-radius: 11px !important;
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .boost-btn {
+                min-height: 42px !important;
+                margin-top: 10px !important;
+                padding: 0 12px !important;
+                border-radius: 12px !important;
+                font-size: 11px !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            body.mobile-optimized .pay-to-win {
+                min-height: 54px !important;
+                padding: 9px 10px !important;
+            }
+
+            body.mobile-optimized .pay-to-win > div:first-child {
+                font-size: 12px !important;
+                gap: 6px !important;
+            }
+
+            body.mobile-optimized .pay-to-win > div:first-child::before {
+                width: 20px;
+                height: 20px;
+                font-size: 11px;
+            }
+
+            body.mobile-optimized .leaderboard-item {
+                grid-template-columns: 34px minmax(0, 1fr) auto;
+                gap: 7px !important;
+                padding: 9px 9px 8px !important;
+            }
+
+            body.mobile-optimized .leaderboard-rank {
+                font-size: 12px !important;
+            }
+
+            body.mobile-optimized .leaderboard-address,
+            body.mobile-optimized .leaderboard-power {
+                font-size: 10px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -6734,9 +7214,9 @@
         <div class="leaderboard-myrank" id="leaderboardMyRankCard">
             <div class="leaderboard-item">
                 <div class="leaderboard-rank" id="myRank">#--</div>
-                <div class="leaderboard-address">YOU</div>
+                <div class="leaderboard-address" data-card-label="YOU">YOU</div>
                 <div class="leaderboard-rank-crown" id="leaderboardRankCrown">👑</div>
-                <div class="leaderboard-power" id="myPower">0</div>
+                <div class="leaderboard-power" id="myPower" data-card-label="HASHRATE">0</div>
             </div>
             <div class="leaderboard-honor" id="leaderboardHonor">
                 <div class="leaderboard-honor-top">
@@ -8786,11 +9266,12 @@
             const throneProfile = getOfferRewardProfile(throneOffer);
             const payBtnTitle = payBtn ? payBtn.querySelector('div:first-child') : null;
             const payBtnLabel = payBtn ? payBtn.querySelector('.pay-label') : null;
+            const isCompactPaymentCta = window.innerWidth <= 900 || document.body.classList.contains('mobile-optimized');
 
             if (payBtnTitle) {
                 payBtnTitle.textContent = currentLang === 'en'
-                    ? `${primaryOffer.icon} ${primaryOffer.labelEn}`
-                    : `${primaryOffer.icon} ${primaryOffer.labelZh}`;
+                    ? `${primaryOffer.labelEn}`
+                    : `${primaryOffer.labelZh}`;
             }
 
             if (payBtnLabel) {
@@ -8802,11 +9283,25 @@
                         ? `${starterBaseText} · +${primaryProfile.bonusStardust} Stardust · T4 x${primaryProfile.extraTier4}`
                         : `${starterBaseText} · +${primaryProfile.bonusStardust} 星尘 · T4 ×${primaryProfile.extraTier4}`)
                     : starterBaseText;
+                const compactBaseText = currentLang === 'en'
+                    ? `${formatPaymentPrice(primaryOffer.price)} · +${formatCompact(primaryProfile.coins)}`
+                    : `${formatPaymentPrice(primaryOffer.price)} · +${formatCompact(primaryProfile.coins)}`;
+                const compactMetaText = primaryOffer.t4Bundle
+                    ? `${compactBaseText} · T4 x${primaryProfile.extraTier4}`
+                    : compactBaseText;
+                const compactLabelText = isLimitedPaymentOfferActive()
+                    ? (currentLang === 'en'
+                        ? `${compactMetaText} · BONUS`
+                        : `${compactMetaText} · 加成`)
+                    : compactMetaText;
                 payBtnLabel.textContent = isLimitedPaymentOfferActive()
                     ? (currentLang === 'en'
                         ? `${primaryMetaText} · flash bonus live`
                         : `${primaryMetaText} · 限时加码中`)
                     : primaryMetaText;
+                if (isCompactPaymentCta) {
+                    payBtnLabel.textContent = compactLabelText;
+                }
             }
 
             if (overclockBtn) {
@@ -13058,7 +13553,9 @@
             document.querySelector('.leaderboard-subtitle').textContent = lang.realTimeUpdate;
             if (myRankAddress) {
                 myRankAddress.textContent = lang.you;
+                myRankAddress.dataset.cardLabel = currentLang === 'en' ? 'YOU' : '你';
             }
+            document.getElementById('myPower').dataset.cardLabel = currentLang === 'en' ? 'Hashrate' : '算力';
             document.getElementById('boostBtn').textContent = lang.boostRankBtn;
 
             document.querySelector('.payment-title').textContent = lang.paymentTitle;
@@ -15457,12 +15954,18 @@
                 const isTop3 = item.rank <= 3;
                 const isMine = item.isPlayer;
                 const isCrownHolder = isMine && item.rank === 1;
+                const addressLabel = isMine
+                    ? (currentLang === 'en' ? 'YOU' : '你')
+                    : (isTop3
+                        ? (currentLang === 'en' ? 'TOP NODE' : '前排节点')
+                        : (currentLang === 'en' ? 'RIVAL NODE' : '竞争节点'));
+                const powerLabel = currentLang === 'en' ? 'Hashrate' : '算力';
                 html += `
                     <div class="leaderboard-item ${isTop3 ? 'top3' : ''} ${isMine ? 'mine' : ''} ${isCrownHolder ? 'crown-holder' : ''}" data-rank="${item.rank}" data-address="${item.address}">
                         <div class="leaderboard-rank">#${item.rank}</div>
-                        <div class="leaderboard-address">${item.address}</div>
+                        <div class="leaderboard-address" data-card-label="${addressLabel}">${item.address}</div>
                         ${isCrownHolder ? '<div class="leaderboard-rank-crown">👑</div>' : ''}
-                        <div class="leaderboard-power">${item.power}</div>
+                        <div class="leaderboard-power" data-card-label="${powerLabel}">${item.power}</div>
                     </div>
                 `;
             });
@@ -15472,6 +15975,7 @@
             syncLeaderboardHonorTracking(myRankPosition, myRankPosition, false);
             document.getElementById('myRank').textContent = `#${myRankPosition}`;
             document.getElementById('myPower').textContent = Math.floor(getEffectiveHashrate());
+            document.getElementById('myPower').dataset.cardLabel = currentLang === 'en' ? 'Hashrate' : '算力';
             leaderboardPlayerSignature = `${myRankPosition}:${Math.floor(getEffectiveHashrate())}`;
             updateLeaderboardChaseState();
             renderLeaderboardHonorPanel();
@@ -15554,6 +16058,7 @@
             const myPower = Math.floor(getEffectiveHashrate());
             document.getElementById('myRank').textContent = `#${myRankPosition}`;
             document.getElementById('myPower').textContent = myPower;
+            document.getElementById('myPower').dataset.cardLabel = currentLang === 'en' ? 'Hashrate' : '算力';
             handleLeaderboardRankShift(previousRank, myRankPosition);
             renderLeaderboardHonorPanel();
 
