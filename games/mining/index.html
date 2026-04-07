@@ -16353,6 +16353,146 @@
             renderMobileSystemsToggle();
         }
 
+        let mobileLayoutSyncFrameId = 0;
+        let mobileLayoutSyncTimers = [];
+
+        function scheduleMobileLayoutSync() {
+            syncMobileLayout();
+
+            if (mobileLayoutSyncFrameId) {
+                cancelAnimationFrame(mobileLayoutSyncFrameId);
+            }
+            mobileLayoutSyncFrameId = requestAnimationFrame(() => {
+                syncMobileLayout();
+            });
+
+            mobileLayoutSyncTimers.forEach((timerId) => clearTimeout(timerId));
+            mobileLayoutSyncTimers = [80, 260, 700].map((delay) => setTimeout(() => {
+                syncMobileLayout();
+            }, delay));
+        }
+
+        function renderMobileSystemsToggle() {
+            if (!mobileSystemsToggleBtn || !mobileSystemsToggleText) {
+                return;
+            }
+
+            const mobile = document.body.classList.contains('mobile-optimized');
+            const expanded = mobile && isMobileSystemsExpanded();
+
+            mobileSystemsToggleBtn.hidden = !mobile;
+            mobileSystemsToggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            mobileSystemsToggleText.textContent = currentLang === 'en'
+                ? (expanded ? 'Collapse Systems' : 'More Systems')
+                : (expanded ? '收起功能' : '展开更多');
+        }
+
+        function applyLanguageFixups() {
+            const isEn = currentLang === 'en';
+            const statItems = document.querySelectorAll('.stat-item');
+            const myRankAddressEl = document.querySelector('.leaderboard-myrank .leaderboard-address');
+            const myPowerEl = document.getElementById('myPower');
+            const paymentMessageEl = document.getElementById('paymentMessage');
+            const paymentAmountEl = document.getElementById('paymentAmount');
+            const paymentDetailsEl = document.getElementById('paymentDetails');
+            const t4NexusBtnLabelEl = document.getElementById('t4NexusBtnLabel');
+            const t4NexusTitleEl = document.getElementById('t4NexusTitle');
+            const t4NexusSubtitleEl = document.getElementById('t4NexusSubtitle');
+            const t4SeasonTitleEl = document.getElementById('t4SeasonTitle');
+            const t4BountyTitleEl = document.getElementById('t4BountyTitle');
+            const t4ActionsTitleEl = document.getElementById('t4ActionsTitle');
+            const t4AwakeningsTitleEl = document.getElementById('t4AwakeningsTitle');
+            const t4HistoryTitleEl = document.getElementById('t4HistoryTitle');
+            const t4RankingTitleEl = document.getElementById('t4RankingTitle');
+            const t4TabSeasonLabelEl = document.getElementById('t4TabSeasonLabel');
+            const t4TabBountyLabelEl = document.getElementById('t4TabBountyLabel');
+            const t4TabActionsLabelEl = document.getElementById('t4TabActionsLabel');
+            const t4TabAwakeningsLabelEl = document.getElementById('t4TabAwakeningsLabel');
+            const t4TabHistoryLabelEl = document.getElementById('t4TabHistoryLabel');
+            const t4TabRankingLabelEl = document.getElementById('t4TabRankingLabel');
+
+            if (statItems[2]) {
+                const autoRateSuffix = statItems[2].querySelector('div:last-child');
+                if (autoRateSuffix) {
+                    autoRateSuffix.textContent = isEn ? 'CPS' : '每秒';
+                }
+            }
+
+            if (myRankAddressEl) {
+                myRankAddressEl.dataset.cardLabel = isEn ? 'YOU' : '你';
+            }
+            if (myPowerEl) {
+                myPowerEl.dataset.cardLabel = isEn ? 'Hashrate' : '算力';
+            }
+
+            if (paymentMessageEl) {
+                paymentMessageEl.textContent = isEn
+                    ? 'Pay the exact TRC20-USDT amount in OKX Wallet, then paste the txid for on-chain verification.'
+                    : '请在 OKX 钱包支付精确的 TRC20-USDT 金额，随后粘贴 txid 完成链上校验。';
+            }
+            if (paymentAmountEl && !currentPaymentOrder) {
+                paymentAmountEl.textContent = isEn ? 'Awaiting exact amount' : '等待生成精确金额';
+            }
+            if (paymentDetailsEl && !currentPaymentOrder) {
+                paymentDetailsEl.textContent = isEn
+                    ? 'OKX Wallet · TRC20-USDT verification route'
+                    : 'OKX 钱包 · TRC20-USDT 校验路线';
+            }
+
+            if (t4NexusBtnLabelEl) t4NexusBtnLabelEl.textContent = isEn ? 'T4 NEXUS' : 'T4 枢纽';
+            if (t4NexusTitleEl) t4NexusTitleEl.textContent = isEn ? 'T4 NEXUS' : 'T4 枢纽';
+            if (t4NexusSubtitleEl) {
+                t4NexusSubtitleEl.textContent = isEn
+                    ? 'Tier-IV gems can now be disassembled into Stardust, awakened into permanent sigils, and converted into battle score for the late-game ladder.'
+                    : '4级宝石现在可裂解为星尘、觉醒为永久纹章，并转化为后期 T4 榜单战力分。';
+            }
+            if (t4SeasonTitleEl) t4SeasonTitleEl.textContent = isEn ? 'SEASON PAYOUT' : '赛季结算';
+            if (t4BountyTitleEl) t4BountyTitleEl.textContent = isEn ? 'LIMITED BOUNTY' : '限时悬赏';
+            if (t4ActionsTitleEl) t4ActionsTitleEl.textContent = isEn ? 'CONSUMPTION ROUTES' : '消耗路线';
+            if (t4AwakeningsTitleEl) t4AwakeningsTitleEl.textContent = isEn ? 'AWAKENED SIGILS' : '觉醒纹章';
+            if (t4HistoryTitleEl) t4HistoryTitleEl.textContent = isEn ? 'NEXUS HISTORY' : '枢纽回馈记录';
+            if (t4RankingTitleEl) t4RankingTitleEl.textContent = isEn ? 'TIER-IV LADDER' : 'T4 排行榜';
+            if (t4TabSeasonLabelEl) t4TabSeasonLabelEl.textContent = isEn ? 'SEASON' : '赛季';
+            if (t4TabBountyLabelEl) t4TabBountyLabelEl.textContent = isEn ? 'BOUNTY' : '悬赏';
+            if (t4TabActionsLabelEl) t4TabActionsLabelEl.textContent = isEn ? 'ROUTES' : '路线';
+            if (t4TabAwakeningsLabelEl) t4TabAwakeningsLabelEl.textContent = isEn ? 'SIGILS' : '觉醒';
+            if (t4TabHistoryLabelEl) t4TabHistoryLabelEl.textContent = isEn ? 'HISTORY' : '记录';
+            if (t4TabRankingLabelEl) t4TabRankingLabelEl.textContent = isEn ? 'LADDER' : '排行';
+
+            renderMobileSystemsToggle();
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            document.getElementById('langSwitcher').textContent = currentLang === 'en' ? 'CN' : 'EN';
+            document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+            updateAllText();
+            applyLanguageFixups();
+            updateDisplay();
+            renderCollection();
+            renderGemCodex();
+            renderOpenGemTip();
+            renderMissionBoard();
+            renderForgeLab();
+            renderT4Nexus();
+            renderResearchLab();
+            renderInsightPanel();
+            renderPrestigePanel();
+            renderDataVault();
+            renderLeaderboard();
+            renderPaymentProgress();
+            refreshPaymentPromoUI();
+            refreshPaymentEntryButtons();
+
+            if (paymentModal && paymentModal.classList.contains('show')) {
+                renderPaymentOrderUI();
+                refreshPaymentVerificationState();
+            }
+
+            applyLanguageFixups();
+            scheduleMobileLayoutSync();
+        }
+
         function updateMobileDockNotifications() {
             if (upgradesBadge) {
                 const hasUpgradeReady = coins >= upgradeCost || coins >= autoCost || coins >= coolingCost;
@@ -18218,7 +18358,14 @@
         }
 
         document.addEventListener('pointerdown', unlockAudioSystem, { once: true });
-        window.addEventListener('resize', syncMobileLayout);
+        window.addEventListener('resize', scheduleMobileLayoutSync);
+        window.addEventListener('load', scheduleMobileLayoutSync);
+        window.addEventListener('pageshow', scheduleMobileLayoutSync);
+        window.addEventListener('orientationchange', scheduleMobileLayoutSync);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', scheduleMobileLayoutSync);
+            window.visualViewport.addEventListener('scroll', scheduleMobileLayoutSync);
+        }
         window.addEventListener('beforeunload', () => {
             saveGameData(false);
         });
@@ -18273,9 +18420,10 @@
         renderInsightPanel();
         renderPrestigePanel();
         renderDataVault();
-        syncMobileLayout();
+        scheduleMobileLayoutSync();
         updateDisplay();
         updateAllText();
+        applyLanguageFixups();
 
         function createBinaryBurst(x, y, count) {
             for (let i = 0; i < count; i++) {
