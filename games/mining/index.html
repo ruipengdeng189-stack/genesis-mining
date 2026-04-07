@@ -4771,6 +4771,20 @@
                 z-index: 10020 !important;
             }
 
+            body.mobile-optimized .hub-return-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 56px) !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                min-height: 36px !important;
+                min-width: 102px !important;
+                max-width: 128px !important;
+                padding: 0 12px !important;
+                font-size: 11px !important;
+                border-radius: 12px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
             body.mobile-optimized .gem-codex-label {
                 font-size: 10px !important;
                 letter-spacing: 0.03em !important;
@@ -4782,7 +4796,7 @@
                 left: auto !important;
                 right: auto !important;
                 width: min(560px, calc(100vw - 20px)) !important;
-                margin: calc(env(safe-area-inset-top, 0px) + 62px) auto 10px !important;
+                margin: calc(env(safe-area-inset-top, 0px) + 106px) auto 10px !important;
                 z-index: 4 !important;
             }
 
@@ -5619,6 +5633,17 @@
                 border-radius: 14px !important;
             }
 
+            body.mobile-optimized .hub-return-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 54px) !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                min-height: 34px !important;
+                min-width: 100px !important;
+                max-width: 122px !important;
+                padding: 0 10px !important;
+                font-size: 11px !important;
+            }
+
             body.mobile-optimized .gem-codex-icon {
                 font-size: 18px !important;
             }
@@ -5636,7 +5661,7 @@
             body.mobile-optimized .v2-sidebar {
                 width: var(--mobile-shell-width) !important;
                 max-width: var(--mobile-shell-width) !important;
-                margin: calc(env(safe-area-inset-top, 0px) + 54px) auto 8px !important;
+                margin: calc(env(safe-area-inset-top, 0px) + 100px) auto 8px !important;
             }
 
             body.mobile-optimized .v2-card {
@@ -6264,7 +6289,7 @@
             body.mobile-optimized .v2-sidebar {
                 width: var(--mobile-shell-width) !important;
                 max-width: var(--mobile-shell-width) !important;
-                margin: calc(env(safe-area-inset-top, 0px) + 44px) auto 6px !important;
+                margin: calc(env(safe-area-inset-top, 0px) + 94px) auto 6px !important;
             }
 
             body.mobile-optimized .v2-card {
@@ -6941,6 +6966,16 @@
         }
 
         @media (max-width: 420px) {
+            body.mobile-optimized .hub-return-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 52px) !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                min-width: 96px !important;
+                max-width: 116px !important;
+                padding: 0 9px !important;
+                font-size: 10px !important;
+            }
+
             body.mobile-optimized .pay-to-win {
                 min-height: 54px !important;
                 padding: 9px 10px !important;
@@ -6995,6 +7030,7 @@
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 0.04em;
+            white-space: nowrap;
             box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
             backdrop-filter: blur(10px);
             transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
