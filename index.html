@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Genesis Arcade Hub</title>
-    <meta id="hubMetaDescription" name="description" content="Genesis Arcade Hub - A multi-game lobby built with static pages, localStorage, and Vercel.">
+    <title>Genesis Arcade</title>
+    <meta id="hubMetaDescription" name="description" content="Genesis Arcade - Jump into mining, track your progress, and explore more games.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -18,13 +18,13 @@
                 <div class="brand-logo" aria-hidden="true"></div>
                 <div>
                     <div class="eyebrow">GENESIS ARCADE</div>
-                    <h1 id="pageTitle">Arcade Hub V1</h1>
-                    <p class="subcopy" id="pageSubcopy">This version runs on static pages, browser localStorage, and your current Vercel deployment.</p>
+                    <h1 id="pageTitle">Genesis Arcade</h1>
+                    <p class="subcopy" id="pageSubcopy">Jump into featured games, track your progress, and explore the Genesis arcade universe.</p>
                 </div>
             </div>
             <div class="topbar-actions">
-                <div class="lang-toggle" role="group" aria-label="Language / 语言">
-                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">中</button>
+                <div class="lang-toggle" role="group" aria-label="Language / &#20013;&#25991;">
+                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">&#20013;</button>
                     <button class="lang-btn" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
                 </div>
                 <a class="ghost-btn" href="/games/mining/" id="topContinueBtn" data-game-link="mining">Continue Mining</a>
@@ -34,26 +34,26 @@
         <main class="hub-layout">
             <section class="hero-card">
                 <div class="hero-copy">
-                    <span class="status-pill live" id="heroStatus">Hub Live</span>
-                    <h2 id="heroTitle">Build One Hub + Multiple Game Entrances</h2>
+                    <span class="status-pill live" id="heroStatus">Featured Now</span>
+                    <h2 id="heroTitle">Choose a Game and Start Your Run</h2>
                     <p id="heroDescription">
-                        Keep the root page as the lobby, move mining into its own route, and reserve the rest as future game slots.
+                        Dive into mining, chase leaderboards, collect rare gems, and explore more games as they go live.
                     </p>
                     <div class="hero-actions">
                         <a class="primary-btn" href="/games/mining/" id="continueMiningBtn" data-game-link="mining">Enter Mining</a>
-                        <button class="ghost-btn" type="button" id="howItWorksBtn">View Plan</button>
+                        <a class="ghost-btn" href="#gameCatalogSection" id="browseGamesBtn">Browse Games</a>
                     </div>
                 </div>
 
                 <aside class="summary-panel">
                     <div class="summary-grid">
                         <div class="summary-item">
-                            <span class="summary-label" id="labelHubVisits">Hub Visits</span>
+                            <span class="summary-label" id="labelHubVisits">Visits</span>
                             <strong id="hubVisits">0</strong>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label" id="labelLiveGames">Live Games</span>
-                            <strong id="liveGameCount">1 / 10</strong>
+                            <strong id="liveGameCount">1</strong>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label" id="labelMiningCoins">Mining Coins</span>
@@ -73,7 +73,7 @@
                         </div>
                     </div>
                     <div class="summary-note" id="saveModeNote">
-                        Hub and mining progress are currently stored in this browser. V1 does not depend on a paid database.
+                        Your recent progress and hot entries are shown here so you can jump back in anytime.
                     </div>
                 </aside>
             </section>
@@ -82,105 +82,23 @@
                 <div class="section-head">
                     <div>
                         <div class="eyebrow" id="featuredEyebrow">Featured Game</div>
-                        <h3 id="featuredHeading">Current Main Entry</h3>
+                        <h3 id="featuredHeading">Hot Pick</h3>
                     </div>
                 </div>
                 <article class="featured-game-card" id="featuredGameCard"></article>
             </section>
 
-            <section class="section-block">
+            <section class="section-block" id="gameCatalogSection">
                 <div class="section-head">
                     <div>
-                        <div class="eyebrow" id="catalogEyebrow">Game Catalog</div>
-                        <h3 id="catalogHeading">10 Game Entrances</h3>
+                        <div class="eyebrow" id="catalogEyebrow">Game Center</div>
+                        <h3 id="catalogHeading">Choose Your Game</h3>
                     </div>
-                    <p id="catalogNote">Released games can be entered directly. Upcoming games go to placeholder pages first, then get replaced one by one with real playable builds.</p>
+                    <p id="catalogNote">Available games can be played now. More entries will open over time.</p>
                 </div>
                 <div class="game-grid" id="gameGrid"></div>
             </section>
-
-            <section class="section-split">
-                <section class="section-block">
-                    <div class="section-head">
-                        <div>
-                            <div class="eyebrow" id="buildPlanEyebrow">Build Plan</div>
-                            <h3 id="buildPlanHeading">Why It Works Without Paid Backend</h3>
-                        </div>
-                    </div>
-                    <div class="bullet-list">
-                        <div class="bullet-card">
-                            <strong id="buildCard1Title">Hub First</strong>
-                            <span id="buildCard1Body">The root page only handles navigation. Each game lives under <code>games/</code>.</span>
-                        </div>
-                        <div class="bullet-card">
-                            <strong id="buildCard2Title">Local Save</strong>
-                            <span id="buildCard2Body">Each game saves with <code>localStorage</code>, and the hub reads those values on the same domain.</span>
-                        </div>
-                        <div class="bullet-card">
-                            <strong id="buildCard3Title">Free Deployment</strong>
-                            <span id="buildCard3Body">You still deploy through the same <code>GitHub -&gt; Vercel</code> auto-publish flow.</span>
-                        </div>
-                        <div class="bullet-card">
-                            <strong id="buildCard4Title">Expand Later</strong>
-                            <span id="buildCard4Body">Add a lightweight data layer later only when you truly need cross-device sync.</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="section-block">
-                    <div class="section-head">
-                        <div>
-                            <div class="eyebrow" id="assetsEyebrow">UI Assets</div>
-                            <h3 id="assetsHeading">Assets To Prepare Next</h3>
-                        </div>
-                    </div>
-                    <div class="resource-grid">
-                        <div class="resource-card">
-                            <strong id="assetCard1Title">Hub Logo</strong>
-                            <span id="assetCard1Body">Suggested size: <code>512x512</code>, transparent PNG or SVG.</span>
-                        </div>
-                        <div class="resource-card">
-                            <strong id="assetCard2Title">10 Game Covers</strong>
-                            <span id="assetCard2Body">Suggested size: <code>800x1000</code>, with a unified visual style.</span>
-                        </div>
-                        <div class="resource-card">
-                            <strong id="assetCard3Title">Hub Background</strong>
-                            <span id="assetCard3Body">Suggested themes: cyber, reactor core, tech chamber, or neon arcade.</span>
-                        </div>
-                        <div class="resource-card">
-                            <strong id="assetCard4Title">Icon Pack</strong>
-                            <span id="assetCard4Body">Home entry, ranking, missions, shop, pass, and events should share one icon system.</span>
-                        </div>
-                        <div class="resource-card">
-                            <strong id="assetCard5Title">Audio Pack</strong>
-                            <span id="assetCard5Body">Tap, reward, fusion, confirm, menu, and BGM should follow one sci-fi electronic style.</span>
-                        </div>
-                        <div class="resource-card">
-                            <strong id="assetCard6Title">FX Assets</strong>
-                            <span id="assetCard6Body">Later you can add badge frames, glow textures, trophies, and particle overlays.</span>
-                        </div>
-                    </div>
-                </section>
-            </section>
         </main>
-    </div>
-
-    <div class="modal-shell" id="hubModal" hidden>
-        <div class="modal-card">
-            <button class="modal-close" type="button" id="closeHubModal" aria-label="Close" onclick="document.getElementById('hubModal').hidden = true;">&times;</button>
-            <div class="eyebrow" id="modalEyebrow">Plan Notes</div>
-            <h3 id="modalTitle">Static-first Architecture</h3>
-            <p id="modalBody">
-                This hub does not depend on a paid database for now. It handles navigation, reads local saves, and lets you build out 10 game entrances first.
-            </p>
-            <div class="modal-list">
-                <div id="modalLine1">1. <code>index.html</code> hub homepage</div>
-                <div id="modalLine2">2. <code>games/mining/</code> mining game route</div>
-                <div id="modalLine3">3. Placeholders first for upcoming games</div>
-                <div id="modalLine4">4. Shared local progress with <code>localStorage</code></div>
-                <div id="modalLine5">Click the top-right button or outside area to close</div>
-            </div>
-        </div>
     </div>
 
     <script src="shared/game-catalog.js"></script>
