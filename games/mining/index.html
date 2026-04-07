@@ -3,46 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Genesis Mining Zone - Hashrate Mining System</title>
+    <title>Genesis Mining Zone</title>
 
-    <!-- 
-    ================================================================
-    Genesis Mining Zone - Complete MVP
-    ================================================================
     
-    📦 File Structure:
-    - Single HTML file with all resources (CSS + JavaScript)
-    - All images use absolute network paths (PostImage CDN)
-    - Canvas particle system fully encapsulated
-    - Dynamic leaderboard simulation fully implemented
-    
-    🎮 Core Features:
-    1. Click Mining System (Hashrate Tower Button)
-    2. Three Upgrade Systems (Hashrate/Cooling/Auto-Miner)
-    3. 4 Rare Fragments Unlock (1000/2000/3000/4000 coins)
-    4. Canvas Hash-Burst Particle Effects
-    5. Global Real-time Hashrate Leaderboard (Top 10 dynamic updates)
-    6. 15-minute Countdown (Newbie Exclusive)
-    
-    💰 Payment Integration Points:
-    - Integration Point #1: Instant Full Recovery ($1.00)
-    - Integration Point #2: Hyper-Clock/100 Draws ($1.00)
-    - Integration Point #3: Claim Top 10 ($1.00)
-    
-    🚀 Deployment Instructions:
-    - Upload this HTML file directly to run
-    - No additional dependencies or backend services required
-    - Supports all modern browsers
-    - Recommended deployment: Vercel / Netlify / GitHub Pages
-    
-    📝 Next Steps:
-    - Integrate real payment API (Stripe/PayPal/Crypto)
-    - Add backend database for user data storage
-    - Implement real leaderboard system
-    - Add user registration/login system
-    
-    ================================================================
-    -->
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
@@ -98,7 +61,6 @@
             50% { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41, 0 0 40px #00ff41; }
         }
 
-        /* 中心区域：算力中心 */
         .power-center-section {
             flex: 1;
             display: flex;
@@ -369,7 +331,6 @@
             background: linear-gradient(180deg, transparent, rgba(0, 255, 65, 0.28), transparent);
         }
 
-        /* 粒子特效Canvas */
         #particleCanvas {
             position: fixed;
             top: 0;
@@ -380,7 +341,6 @@
             z-index: 1;
         }
 
-        /* 全网算力排行榜 */
         .leaderboard {
             position: fixed;
             top: 80px;
@@ -1262,7 +1222,6 @@
             white-space: nowrap;
         }
 
-        /* 语言切换按钮 */
         .lang-switcher {
             position: fixed;
             top: 15px;
@@ -1296,7 +1255,6 @@
             margin-top: 0;
         }
 
-        /* 底部区域：藏品仓库横向一行 */
         .collection-section {
             width: 100%;
             padding: 12px 20px;
@@ -1392,7 +1350,6 @@
             transform: translateY(-2px);
         }
 
-        /* 碎片流失警告动画 */
         .collection-slot.locked-warning {
             border-color: #ff0000;
             animation: lossWarning 1s ease-in-out infinite;
@@ -1416,7 +1373,6 @@
             text-shadow: 0 0 10px #ff0000;
         }
 
-        /* 碎片解锁特效 */
         .fragment-unlock-overlay {
             position: fixed;
             top: 0;
@@ -1775,7 +1731,6 @@
             box-shadow: 0 0 50px var(--fragment-color);
         }
 
-        /* 损失警告提示 */
         .loss-warning-tooltip {
             position: fixed;
             bottom: 120px;
@@ -3380,9 +3335,7 @@
             font-weight: bold;
             letter-spacing: 0.04em;
         }
-        /* --- 强力移动端适配：精准覆盖 --- */
    @media (max-width: 1024px) {
-    /* 1. 容器宽度自适应，不再被固定 px 撑开 */
     .container {
         width: 100vw !important;
         max-width: 100% !important;
@@ -3392,7 +3345,6 @@
         overflow-x: hidden;
     }
 
-    /* 2. 状态栏改排版：金币、算力、自动产出竖着或两列排 */
     .stats {
         flex-direction: column !important;
         gap: 15px !important;
@@ -3402,7 +3354,6 @@
         min-width: 0 !important;
     }
 
-    /* 3. 升级框强制改为垂直一列 */
     .upgrade-container {
         flex-direction: column !important;
         align-items: center !important;
@@ -3414,14 +3365,12 @@
         margin: 10px 0 !important;
     }
 
-    /* 4. 算力塔图片缩小，防止手机横向滚动 */
     #mineBtn img {
         width: 50vw !important;
         max-width: 200px !important;
         height: auto !important;
     }
 
-    /* 5. 排行榜：不再隐藏，而是乖乖排在页面底部 */
     .leaderboard {
         display: block !important; /* 把它放出来 */
         position: relative !important;
@@ -3432,7 +3381,6 @@
         padding-bottom: 100px; /* 留出空间给底部的支付按钮 */
     }
 
-    /* 6. 超频按钮区域调整 */
     .overclock-btn {
         position: static !important;
         transform: none !important;
@@ -3488,7 +3436,6 @@
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.6) !important;
         }
 
-        /* 超频按钮样式 - 放在算力塔左侧 */
         .overclock-btn {
             position: absolute;
             left: -200px;
@@ -3612,7 +3559,6 @@
             display: inline-block;
         }
 
-        /* 倒计时样式 */
         .countdown-timer {
             margin-bottom: 8px;
             padding: 6px 10px;
@@ -3661,7 +3607,6 @@
             }
         }
 
-        /* 支付弹窗样式 */
         .payment-modal {
             display: none;
             position: fixed;
@@ -4348,7 +4293,6 @@
                 width: 95%;
             }
         }
-   /* 真正的移动端大修 */
         @media (max-width: 768px) {
           body {
           padding: 0;
@@ -4364,7 +4308,6 @@
           display: block !important; /* 手机端改回标准流布局 */
           }
 
-          /* 核心：让那三个横向的升级框变垂直 */
         .upgrade-container {
           display: flex !important;
           flex-direction: column !important; /* 重点：垂直排列 */
@@ -4377,14 +4320,12 @@
          margin: 10px 0 !important;
         }
 
-        /* 核心算力塔图片自适应 */
         #mineBtn img {
          width: 60vw !important; /* 图片宽度根据屏幕宽度变化 */
          height: auto !important;
          max-width: 250px;
         }
 
-       /* 排行榜移动端样式 */
        .leaderboard {
         position: relative !important; /* 取消 PC 端的悬浮/固定定位 */
         width: 100% !important;
@@ -4393,16 +4334,13 @@
         margin-top: 30px;
         }
 
-        /* 语言切换按钮加大，方便手指点 */
       .lang-switcher {
         padding: 10px 20px !important;
         font-size: 16px !important;
         background: rgba(0, 255, 0, 0.2) !important;
         }
     }
-    /* 终极补丁：强制修正所有溢出问题 */
 @media (max-width: 768px) {
-    /* 1. 强制所有大容器不得超过屏幕宽度 */
     .container, 
     .power-center-section, 
     .main-content, 
@@ -4417,7 +4355,6 @@
         flex: none !important; /* 取消 flex:1 的自动撑开 */
     }
 
-    /* 2. 核心：强制三个升级框竖着排，且宽度缩回手机内 */
     .upgrade-container {
         display: flex !important;
         flex-direction: column !important; 
@@ -4431,7 +4368,6 @@
         box-sizing: border-box !important;
     }
 
-    /* 3. 统计数据栏：如果三个横着挤，改为上下排列 */
     .stats {
         flex-direction: column !important;
         width: 100% !important;
@@ -4442,13 +4378,11 @@
         margin-bottom: 8px !important;
     }
 
-    /* 4. 算力塔图片：确保它不会把屏幕顶开 */
     #mineBtn img {
         max-width: 70vw !important;
         height: auto !important;
     }
 
-    /* 5. 解决可能的左右晃动 */
     html, body {
         overflow-x: hidden !important;
         width: 100% !important;
@@ -4458,7 +4392,6 @@
     </style>
  <style>
     @media screen and (max-width: 768px) {
-        /* 强制所有元素不准超出屏幕右侧 */
         * {
             box-sizing: border-box !important;
         }
@@ -4470,7 +4403,6 @@
             padding: 0 !important;
         }
 
-        /* 核心容器：强制缩回到手机宽度 */
         .container {
             width: 100vw !important;
             max-width: 100vw !important;
@@ -4481,7 +4413,6 @@
             align-items: center !important;
         }
 
-        /* 动力中心：取消固定宽度，改为百分比 */
         .power-center-section {
             width: 95% !important;
             margin: 10px auto !important;
@@ -4490,7 +4421,6 @@
             min-height: auto !important;
         }
 
-        /* 关键：三个升级框从横向改为纵向堆叠 */
         .upgrade-container {
             display: flex !important;
             flex-direction: column !important; /* 强制垂直排队 */
@@ -4504,13 +4434,11 @@
             margin: 0 !important;
         }
 
-        /* 算力塔图片大小优化 */
         #mineBtn img {
             width: 160px !important;
             height: auto !important;
         }
 
-        /* 底部排行榜不再悬浮，改为正常排列 */
         .leaderboard {
             position: relative !important;
             width: 100% !important;
@@ -4520,7 +4448,6 @@
             display: block !important;
         }
 
-        /* 顶部统计栏改为两列显示，防止挤在一起 */
         .stats {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -4528,20 +4455,17 @@
             width: 100% !important;
         }
      @media (max-width: 600px) {
-    /* 手机端弹窗加宽，方便阅读 */
     .modal-content, .genesis-card, .payment-content {
         width: 90% !important;
         padding: 20px 15px !important;
     }
 
-    /* 增大按钮高度，方便手指点击 */
     .copy-btn, .genesis-btn, .payment-close {
         height: 50px;
         font-size: 18px !important;
         margin-top: 15px !important;
     }
 
-    /* 强制地址换行，防止手机横向滚动 */
     #vaultAddr, #rawAddress, .address-box {
         font-size: 13px !important;
         word-break: break-all !important;
@@ -4549,28 +4473,23 @@
         padding: 15px !important;
     }
 }   
-        /* 手机端专用适配补丁 */
 @media (max-width: 768px) {
-    /* 1. 确保弹窗在手机上占据更多宽度，防止地址换行太乱 */
     .p-card {
         width: 92% !important;
         padding: 20px 15px !important;
     }
 
-    /* 2. 增大地址文字，方便手机用户看清（TRiNC...） */
     .p-addr {
         font-size: 11px !important; /* 稍微缩小一点点防止爆框 */
         padding: 10px !important;
         letter-spacing: 0.5px;
     }
 
-    /* 3. 增大按钮，适合大拇指点击 */
     .p-btn-main {
         padding: 18px !important;
         font-size: 18px !important;
     }
 
-    /* 4. 修复你截图里“碎片流失”红色警告的显示 */
     div[style*="background-color: red"], 
     div[style*="background: red"] {
         font-size: 14px !important;
@@ -4579,7 +4498,6 @@
     }
 }
 
-/* 解决 iPhone 点击延迟的通用方案 */
 * {
     touch-action: manipulation;
 }
@@ -6234,7 +6152,7 @@
     <div class="modal-header">
     <span class="close-btn" onclick="closeModal()">&times;</span>
 </div>
-    <!-- 语言切换按钮 -->
+    
     <div class="lang-switcher" id="langSwitcher" onclick="toggleLanguage()">CN</div>
     <button class="gem-codex-btn" id="gemCodexBtn" type="button">
         <span class="gem-codex-icon">💎</span>
@@ -6299,7 +6217,7 @@
             <div class="difficulty-indicator" id="difficultyIndicator">Difficulty: +0%</div>
         </div>
 
-        <!-- 上半部分：算力中心区域 -->
+        
         <div class="power-center-section">
             <div class="stats">
                 <div class="stat-item">
@@ -6321,7 +6239,7 @@
                 </div>
             </div>
 
-            <!-- 横向三个升级系统 -->
+            
             <div class="upgrade-container">
                 <div class="upgrade-section">
                     <h2>Power Up</h2>
@@ -6363,14 +6281,14 @@
                 </div>
             </div>
 
-            <!-- 中心点击按钮 -->
+            
             <div class="main-content">
                 <div class="mine-section">
                     <button id="mineBtn">
                         <img src="https://i.postimg.cc/Y0dLtCvS/6ff0de9e-a5d1-42de-a0c1-077ea46e55bf.jpg" alt="Genesis Core">
                     </button>
                     
-                    <!-- 超频按钮放在算力塔左侧 -->
+                    
                     <div class="overclock-btn">
                         <div class="countdown-timer">
                             <div class="countdown-title">⚠️ NEWBIE DEAL ⚠️</div>
@@ -6387,7 +6305,7 @@
             </div>
         </div>
 
-        <!-- 下半部分：藏品仓库区域 -->
+        
         <div class="collection-section">
             <h2>✦ THE GENESIS GEM VAULT ✦</h2>
             <div class="collection-subtitle">
@@ -6396,7 +6314,7 @@
                 · <span id="collectionBonusLabel">Bonus</span>: +<span id="collectionBonus">0</span>
             </div>
             <div class="collection-grid" id="collectionGrid">
-                <!-- 动态生成卡槽 -->
+                
             </div>
         </div>
     </div>
@@ -6408,7 +6326,7 @@
         <span class="pay-entry-badge" id="payBtnBadge"></span>
     </button>
 
-    <!-- 全网算力排行榜 -->
+    
     <div class="leaderboard" id="leaderboard">
         <div class="leaderboard-header">
             <div class="leaderboard-title">⚡ 全网算力排行 ⚡</div>
@@ -6416,7 +6334,7 @@
             <div class="leaderboard-crown-banner" id="leaderboardCrownBanner"></div>
         </div>
         <div class="leaderboard-list" id="leaderboardList">
-            <!-- 动态生成 -->
+            
         </div>
         <div class="leaderboard-myrank" id="leaderboardMyRankCard">
             <div class="leaderboard-item">
@@ -6457,7 +6375,7 @@
         </div>
     </div>
 
-    <!-- 支付弹窗 -->
+    
 <div class="payment-modal" id="paymentModal" style="display: none;">
     <div class="payment-content">
         <button class="payment-top-close" id="paymentTopCloseBtn" type="button" aria-label="Close payment modal">&times;</button>
@@ -6745,11 +6663,7 @@
     </nav>
 
     <script>
-        // ================================================================
-        // Genesis Mining Zone - JavaScript Core Logic
-        // ================================================================
         
-        // ========== Language System ==========
         let currentLang = 'en'; // Default: English
         let paymentVerificationState = 'idle';
         let paymentVerificationTimer = null;
@@ -6780,7 +6694,6 @@
                 autoOutput: 'Auto Output',
                 perSecond: '/s',
                 
-                // Upgrade Section
                 hashrateUpgrade: 'Hashrate Upgrade',
                 level: 'Level',
                 cost: 'Cost',
@@ -6797,21 +6710,17 @@
                 upgradeMiner: 'Upgrade Miner (+0.5/s)',
                 offlineMining: 'Offline Mining Enabled',
                 
-                // Countdown
                 newbieOffer: '⚠️ NEWBIE EXCLUSIVE ⚠️',
                 offerEnded: '⚠️ OFFER EXPIRED ⚠️',
                 
-                // Overclock Button
                 overclockBtn: 'Hyper-Clock:\n$1/100 Draws',
                 overclockStats: 'Already 12,840 hackers\ngot gems via Hyper-Clock',
                 
-                // Leaderboard
                 leaderboardTitle: '⚡ GLOBAL HASHRATE RANKING ⚡',
                 realTimeUpdate: 'Real-time Updating...',
                 you: 'YOU',
                 boostRankBtn: '🎯 Rank Surge Pack',
                 
-                // Collection
                 collectionTitle: '✦ GENESIS GEM VAULT ✦',
                 collectionSubtitle: 'One fixed roll per click, max 1 gem: T1 2% / T2 0.5% / T3 0.1% / T4 0.1%',
                 collectedLabel: 'Collected',
@@ -6907,11 +6816,9 @@
                 loadSuccess: 'Backup loaded',
                 importError: 'Backup data invalid',
                 
-                // Payment Buttons
                 payToWin: '⚡ Instant Full Recovery ⚡',
                 payLabel: 'Only $1.00',
                 
-                // Payment Modal
                 paymentTitle: 'Payment Verification',
                 paymentMessage: 'Unlock coins, Chain Cores, timed boosts, and high-tier gems after payment verification.',
                 paymentAmount: '$1.00 USD',
@@ -6937,16 +6844,13 @@
                     'Verification trace completed. Dispatching payout signal...'
                 ],
                 
-                // Gems
                 gemTier1Name: 'Tier 1 Genesis Gem',
                 gemTier2Name: 'Tier 2 Genesis Gem',
                 gemTier3Name: 'Tier 3 Genesis Gem',
                 gemTier4Name: 'Tier 4 Genesis Gem',
                 
-                // Critical Hit
                 criticalHit: 'FULL NETWORK BURST!!!',
                 
-                // Notifications
                 fragmentUnlock: 'Unlocked Genesis Fragment #',
                 storeFragment: 'Add to Vault',
                 powerLossWarning: '⚠️ Hashrate depleting, fragments at risk... ⚠️'
@@ -12984,12 +12888,10 @@
             }, 100);
         }
         
-        // ========== Canvas Particle Effect System ==========
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
 
-        // 设置Canvas尺寸
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -12997,7 +12899,6 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // 粒子类
         class Particle {
             constructor(x, y) {
                 this.x = x;
@@ -13032,12 +12933,10 @@
                 ctx.shadowColor = this.color;
 
                 if (this.shape === 'square') {
-                    // 绘制旋转的正方形(区块)
                     ctx.translate(this.x, this.y);
                     ctx.rotate(this.rotation);
                     ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
                 } else {
-                    // 绘制圆形(数据包)
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
                     ctx.fill();
@@ -13051,24 +12950,20 @@
             }
         }
 
-        // 生成粒子爆炸
         function createParticleBurst(x, y, count = 25) {
             for (let i = 0; i < count; i++) {
                 particles.push(new Particle(x, y));
             }
         }
 
-        // 动画循环
         function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 更新和绘制粒子
             for (let i = particles.length - 1; i >= 0; i--) {
                 const particle = particles[i];
                 particle.update();
                 particle.draw();
 
-                // 移除死亡粒子
                 if (particle.isDead()) {
                     particles.splice(i, 1);
                 }
@@ -13078,7 +12973,6 @@
         }
         animateParticles();
 
-        // ========== 游戏逻辑 ==========
         let coins = 0;
         let totalCoinsEarned = 0;
         let progressCoinsEarned = 0;
@@ -13188,6 +13082,7 @@
         const PAYMENT_TX_AMOUNT_SCALE = 1000000;
         const PAYMENT_TXID_REGEX = /^[0-9a-f]{64}$/i;
         const PAYMENT_API_BASE = '/api';
+        const WALLET_ADDR = 'TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW';
         const PAYMENT_MINER_ID_STORAGE_KEY = 'gmz_payment_miner_id';
         const T4_STARDUST_PER_GEM = 100;
         const T4_AWAKEN_CORES_COST = 30;
@@ -13647,7 +13542,6 @@
             }
         ];
 
-        // ========== 排行榜系统 ==========
         let leaderboardData = [];
         let myRankPosition = 500; // 初始排名
         let leaderboardPlayerSignature = '';
@@ -13660,7 +13554,6 @@
         };
         let leaderboardEventHubInteractionUntil = 0;
 
-        // ========== 倒计时系统 ==========
         let countdownSeconds = 15 * 60; // 15分钟 = 900秒
 
         function syncCountdownDisplay() {
@@ -13684,12 +13577,10 @@
                 document.getElementById('countdownTimer').textContent = timeString;
                 refreshPaymentPromoUI();
                 
-                // 最后1分钟加快闪烁
                 if (countdownSeconds <= 60) {
                     document.querySelector('.countdown-timer').style.animation = 'urgentPulse 0.5s ease-in-out infinite';
                 }
                 
-                // 倒计时结束
                 if (countdownSeconds === 0) {
                     document.getElementById('countdownTimer').textContent = '00:00';
                     document.querySelector('.countdown-title').textContent = t('offerEnded');
@@ -13698,10 +13589,8 @@
             }
         }
 
-        // 每秒更新倒计时
         setInterval(updateCountdown, 1000);
 
-        // 生成随机地址
         function generateAddress() {
             const chars = '0123456789abcdef';
             let addr = '0x';
@@ -15309,7 +15198,6 @@
         const CRITICAL_CHANCE = 0.05;
         const CRITICAL_MULTIPLIER = 10;
         const MIN_POWER = 1;
-        // 领取奖励后提高算力下限，避免“补到60又掉回50”
         let rewardedMinPower = MIN_POWER;
         const OVERHEAT_THRESHOLD = 74;
         const HEAT_PER_CLICK = 13;
@@ -16963,7 +16851,6 @@
             lastComboTimestamp = now;
             bestComboStreak = Math.max(bestComboStreak, comboStreak);
 
-            // 获取点击位置并生成哈希爆破粒子
             const rect = mineBtn.getBoundingClientRect();
             const clickX = e.clientX || (rect.left + rect.width / 2);
             const clickY = e.clientY || (rect.top + rect.height / 2);
@@ -17107,23 +16994,11 @@
             }
         });
 
-        // ========================================
-        // 💰 支付接口接入点 #1: 瞬间满血复活
-        // ========================================
         payBtn.addEventListener('click', () => {
             handlePayment(getPrimaryPaymentOfferId());
         });
 
-
-        // 超频按钮点击事件
-        // ========================================
-        // 💰 支付接口接入点 #2: 算力超频 (100次高级抽奖)
-        // ========================================
         overclockBtn.addEventListener('click', () => {
-            // TODO: 接入实际支付API
-            // 支付金额: $1.00 USD
-            // 商品: 100次高级抽奖 + 稀有碎片掉落率+50%
-            // 建议使用: Stripe / PayPal / 加密货币支付
             
             handlePayment('accelerator');
         });
@@ -17152,7 +17027,6 @@
             handlePaymentConfirm();
         });
 
-        // 关闭支付弹窗
         bindResponsiveTap(closePaymentBtn, () => closePaymentBtn, () => {
             closeModal();
         });
@@ -17353,7 +17227,6 @@
             importSaveData();
         });
 
-        // 点击弹窗背景关闭
         paymentModal.addEventListener('click', (e) => {
             if (e.target === paymentModal) {
                 closeModal();
@@ -17443,38 +17316,25 @@
             saveGameData(false);
         }, AUTO_SAVE_INTERVAL);
 
-        // ========================================
-        // 💰 支付接口接入点 #3: 抢占前十 (排行榜提升)
-        // ========================================
-        // 抢占前十按钮
         boostBtn.addEventListener('click', () => {
-            // TODO: 接入实际支付API
-            // 支付金额: $1.00 USD
-            // 商品: 算力提升至前10名水平
-            // 建议使用: Stripe / PayPal / 加密货币支付
             
             handlePayment(myRankPosition === 1 && hasLeaderboardCrownAccess() ? 'throne' : 'rush');
         });
 
-        // 初始化并启动排行榜
         initLeaderboard();
 
-        // 每秒让其他玩家持续增长
         setInterval(() => {
             tickLeaderboardGrowth();
         }, 1000);
         
-        // 每3.5秒触发一波贴身追赶
         setInterval(() => {
             randomUpdatePowers();
         }, 3500);
         
-        // 每6.5秒压缩一次局部名次差距
         setInterval(() => {
             randomSwapRanks();
         }, 6500);
         
-        // 每秒更新我的排名
         setInterval(() => {
             updateMyRank();
         }, 1000);
@@ -17516,117 +17376,5 @@
             }
         }
     </script>
-<style>
-    /* 1. 强制隐藏左上角乱码区域 */
-    #protocol-overlay {
-        display: none; position: fixed; z-index: 1000000; 
-        left: 0; top: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.95); align-items: center; justify-content: center;
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    }
-    .p-card {
-        background: #000; border: 2px solid #00ff41; padding: 25px; 
-        width: 88%; max-width: 360px; border-radius: 12px; color: #00ff41; 
-        font-family: 'Courier New', monospace; box-shadow: 0 0 30px rgba(0,255,65,0.4);
-    }
-    .p-addr {
-        background: rgba(0,255,65,0.1); border: 1px dashed #00ff41;
-        padding: 12px; margin: 15px 0; font-size: 13px; word-break: break-all; color: #fff;
-    }
-    .p-btn-main {
-        width: 100%; background: #00ff41; color: #000; border: none;
-        padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 16px;
-    }
-
-    .p-btn-main.copied {
-        background: #00ffff !important;
-        color: #000 !important;
-        box-shadow: 0 0 25px rgba(0, 255, 255, 0.8) !important;
-    }
- </style>
-
-<div id="protocol-overlay">
-    <div class="p-card">
-        <h3 id="p-title">SYSTEM ACTIVATION</h3>
-        <p id="p-desc" style="font-size:12px;color:#ccc;">Required: 1.00 USDT (TRC20 Network)</p>
-        <div class="p-addr" id="p-wallet">TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW</div>
-        <button class="p-btn-main" onclick="pCopy()">COPY VAULT ADDRESS</button>
-        <button class="p-btn-main" style="background:none;border:1px solid #333;color:#666;margin-top:10px;" onclick="pClose()">CLOSE</button>
-    </div>
-</div>
-
-<script>
- // --- 1. 支付核心逻辑 (已整合自动奖励系统) ---
-    const WALLET_ADDR = "TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW";
-
-    function pOpen(t, d, offerId = 'starter') {
-        if (typeof handlePayment === 'function') {
-            handlePayment(offerId);
-        }
-    }
-
-    function pClose() { 
-        if (typeof closeModal === 'function') {
-            closeModal();
-        }
-    }
-
-    // 兼容旧入口：复制支付链接，但不直接发放奖励
-    function pCopy() {
-        if (typeof copyAddress === 'function') {
-            copyAddress();
-        }
-    }
-    // --- 2. 自动翻译引擎：捕获你截图里的中文 ---
-    const TRANSLATIONS = {
-        "由于算力不足，碎片正在流失": "WARNING: Insufficient hashrate. Fragments bleeding...",
-        "解锁了": "UNLOCKED:",
-        "号 Genesis 碎片": "Genesis Fragment",
-        "收入仓库": "CLAIM TO VAULT",
-        "全网爆块": "NETWORK BLOCK DETECTED",
-        "支付接口对接中": "GATEWAY INITIALIZING",
-        "瞬间满血复活": "INSTANT RECOVERY READY"
-    };
-
-    function translateUI() {
-        if (typeof currentLang !== 'undefined' && currentLang !== 'en') {
-            return;
-        }
-        // 扫描页面所有文字并替换
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        while(node = walker.nextNode()) {
-            for (let cn in TRANSLATIONS) {
-                if (node.nodeValue.includes(cn)) {
-                    node.nodeValue = node.nodeValue.replace(cn, TRANSLATIONS[cn]);
-                }
-            }
-        }
-    }
-
-    // --- 3. 强力点击监听（带错误恢复） ---
-document.addEventListener('click', function(e) {
-var trigger = e.target.closest ? e.target.closest('#payBtn, #overclockBtn, #boostBtn') : null;
-if (trigger) {
-e.preventDefault();
-e.stopImmediatePropagation();
-// 统一调用新 UI 的开启函数
-if (typeof handlePayment === 'function') {
-var offerMap = {
-payBtn: (typeof getPrimaryPaymentOfferId === 'function' ? getPrimaryPaymentOfferId() : 'starter'),
-overclockBtn: 'accelerator',
-boostBtn: 'rush'
-};
-handlePayment(offerMap[trigger.id] || 'starter');
-}
-return false;
-}
-}, true);
-
-    // --- 4. 运行引擎 ---
-    setInterval(() => {
-        translateUI(); // 持续翻译动态出现的中文
-    }, 500);
-</script>
 </body>
 </html>
