@@ -12,6 +12,14 @@
                "assetCard2Body":  "\u5efa\u8bae\u89c4\u683c\uff1a\u003ccode\u003e800x1000\u003c/code\u003e\uff0c\u6700\u597d\u4fdd\u6301\u7edf\u4e00\u98ce\u683c\u3002",
                "topContinueBtn":  "\u7ee7\u7eed\u6316\u77ff",
                "browseGamesBtn":  "\u67e5\u770b\u6e38\u620f",
+               "pulseEyebrow":  "\u5927\u5385\u52a8\u6001",
+               "pulseTitle":  "\u4eca\u65e5\u70ed\u95e8\u8def\u7ebf",
+               "pulseCard1Label":  "\u6316\u77ff\u51b2\u699c",
+               "pulseCard1Value":  "\u70b9\u51fb / \u5347\u7ea7 / \u51b2\u699c",
+               "pulseCard2Label":  "\u5b9d\u77f3\u731c\u53d6",
+               "pulseCard2Value":  "T4 \u7a00\u6709\u6389\u843d\u8ffd\u8e2a",
+               "pulseCard3Label":  "\u540e\u7eed\u5f00\u653e",
+               "upcomingCountTemplate":  "\u8fd8\u6709 {count} \u4e2a\u5165\u53e3\u5f85\u5f00\u653e",
                "assetCard1Body":  "\u5efa\u8bae\u89c4\u683c\uff1a\u003ccode\u003e512x512\u003c/code\u003e \u900f\u660e PNG \u6216 SVG\u3002",
                "modalEyebrow":  "\u65b9\u6848\u8bf4\u660e",
                "catalogEyebrow":  "\u6e38\u620f\u76ee\u5f55",
@@ -19,6 +27,8 @@
                "labelT4Gems":  "T4 \u5b9d\u77f3",
                "modalLine5":  "\u70b9\u51fb\u53f3\u4e0a\u89d2\u6216\u7a7a\u767d\u533a\u57df\u53ef\u5173\u95ed",
                "playNow":  "\u7acb\u5373\u8fdb\u5165",
+               "liveCardHint":  "\u5f53\u524d\u53ef\u76f4\u63a5\u8fdb\u5165",
+               "soonCardHint":  "\u9884\u544a\u5165\u53e3\uff0c\u5373\u5c06\u5f00\u653e",
                "buildCard2Body":  "\u6bcf\u4e2a\u6e38\u620f\u5148\u7528 \u003ccode\u003elocalStorage\u003c/code\u003e \u5b58\u6863\u3002\u5927\u5385\u5728\u540c\u57df\u540d\u4e0b\u53ef\u4ee5\u8bfb\u53d6\u8fd9\u4e9b\u6570\u636e\u3002",
                "assetCard4Body":  "\u4e3b\u9875\u5165\u53e3\u3001\u6392\u884c\u3001\u4efb\u52a1\u3001\u5546\u5e97\u3001\u901a\u884c\u8bc1\u3001\u6d3b\u52a8\u90fd\u9700\u8981\u7edf\u4e00\u56fe\u6807\u4f53\u7cfb\u3002",
                "catalogHeading":  "\u9009\u62e9\u4f60\u7684\u6e38\u620f",
@@ -26,6 +36,7 @@
                "assetCard1Title":  "\u5927\u5385 Logo",
                "buildCard3Body":  "\u4f60\u4ecd\u7136\u4f7f\u7528 \u003ccode\u003eGitHub -\u0026gt; Vercel\u003c/code\u003e \u81ea\u52a8\u53d1\u5e03\u6d41\u7a0b\u3002",
                "heroDescription":  "\u8fdb\u5165\u6316\u77ff\u4e3b\u7ebf\uff0c\u8ffd\u9010\u6392\u884c\u699c\uff0c\u6536\u96c6\u7a00\u6709\u5b9d\u77f3\uff0c\u5e76\u63a2\u7d22\u66f4\u591a\u5373\u5c06\u5f00\u653e\u7684\u73a9\u6cd5\u3002",
+               "featuredBody":  "\u70b9\u51fb\u7b97\u529b\u6838\u5fc3\uff0c\u63d0\u5347\u4f60\u7684\u6316\u77ff\u6548\u7387\uff0c\u6536\u96c6\u5b9d\u77f3\uff0c\u5e76\u5411\u6392\u884c\u699c\u9876\u70b9\u53d1\u8d77\u51b2\u523a\u3002",
                "assetCard6Title":  "\u7279\u6548\u7d20\u6750",
                "modalBody":  "\u8fd9\u4e2a\u5927\u5385\u6682\u65f6\u4e0d\u4f9d\u8d56\u4ed8\u8d39\u6570\u636e\u5e93\u3002\u5b83\u8d1f\u8d23\u5bfc\u822a\u3001\u8bfb\u53d6\u5404\u4e2a\u6e38\u620f\u7684\u672c\u5730\u5b58\u6863\uff0c\u8ba9\u4f60\u53ef\u4ee5\u5148\u628a 10 \u4e2a\u6e38\u620f\u5165\u53e3\u642d\u8d77\u6765\uff0c\u518d\u4e00\u4e2a\u4e00\u4e2a\u586b\u5145\u771f\u6b63\u7684\u6e38\u620f\u5185\u5bb9\u3002",
                "featuredEyebrow":  "\u70ed\u95e8\u63a8\u8350",
@@ -81,6 +92,14 @@
                "assetCard2Body":  "Suggested size: \u003ccode\u003e800x1000\u003c/code\u003e, with a unified visual style.",
                "topContinueBtn":  "Continue Mining",
                "browseGamesBtn":  "Browse Games",
+               "pulseEyebrow":  "Arcade Pulse",
+               "pulseTitle":  "Today's Hot Routes",
+               "pulseCard1Label":  "Mining Sprint",
+               "pulseCard1Value":  "Tap / Upgrade / Climb",
+               "pulseCard2Label":  "Gem Hunt",
+               "pulseCard2Value":  "Rare T4 Chase",
+               "pulseCard3Label":  "Next Unlocks",
+               "upcomingCountTemplate":  "{count} more entries on the way",
                "assetCard1Body":  "Suggested size: \u003ccode\u003e512x512\u003c/code\u003e, transparent PNG or SVG.",
                "modalEyebrow":  "Plan Notes",
                "catalogEyebrow":  "Game Catalog",
@@ -88,6 +107,8 @@
                "labelT4Gems":  "T4 Gems",
                "modalLine5":  "Click the top-right button or outside area to close",
                "playNow":  "Play Now",
+               "liveCardHint":  "Open now and ready to enter",
+               "soonCardHint":  "Preview entry, unlocking soon",
                "buildCard2Body":  "Each game saves with \u003ccode\u003elocalStorage\u003c/code\u003e, and the hub reads those values on the same domain.",
                "assetCard4Body":  "Home entry, ranking, missions, shop, pass, and events should share one icon system.",
                "catalogHeading":  "Choose Your Game",
@@ -95,6 +116,7 @@
                "assetCard1Title":  "Hub Logo",
                "buildCard3Body":  "You still deploy through the same \u003ccode\u003eGitHub -\u0026gt; Vercel\u003c/code\u003e auto-publish flow.",
                "heroDescription":  "Dive into mining, chase leaderboards, collect rare gems, and explore more games as they go live.",
+               "featuredBody":  "Tap the core, boost your mining output, collect gems, and make your push toward the top of the leaderboard.",
                "assetCard6Title":  "FX Assets",
                "modalBody":  "This hub does not depend on a paid database for now. It handles navigation, reads local saves, and lets you build out 10 game entrances first.",
                "featuredEyebrow":  "Featured Game",
@@ -147,7 +169,8 @@
     const STATIC_TEXT_KEYS = [
         'pageTitle', 'topContinueBtn', 'browseGamesBtn', 'heroStatus', 'heroTitle', 'continueMiningBtn',
         'labelHubVisits', 'labelLiveGames', 'labelMiningCoins', 'labelMiningPower', 'labelT4Gems', 'labelLastPlayed',
-        'featuredEyebrow', 'featuredHeading', 'catalogEyebrow', 'catalogHeading'
+        'featuredEyebrow', 'featuredHeading', 'catalogEyebrow', 'catalogHeading',
+        'pulseEyebrow', 'pulseTitle', 'pulseCard1Label', 'pulseCard1Value', 'pulseCard2Label', 'pulseCard2Value', 'pulseCard3Label'
     ];
 
     const STATIC_HTML_KEYS = [
@@ -277,7 +300,6 @@
     function applyStaticCopy() {
         const copy = getCopy();
         const meta = document.getElementById('hubMetaDescription');
-        const closeButton = document.getElementById('closeHubModal');
 
         document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
         document.title = getLocalizedText(copy.docTitle);
@@ -286,11 +308,6 @@
         STATIC_TEXT_KEYS.forEach((key) => setText(key, getLocalizedText(copy[key])));
         STATIC_HTML_KEYS.forEach((key) => setHtml(key, getLocalizedRaw(copy[key])));
 
-        if (closeButton) {
-            closeButton.setAttribute('aria-label', getLocalizedText(copy.modalCloseLabel));
-            closeButton.setAttribute('title', getLocalizedText(copy.modalCloseLabel));
-            closeButton.innerHTML = '&times;';
-        }
     }
 
     function renderFeaturedGame(miningSummary) {
@@ -321,6 +338,7 @@
                     <h4 class="featured-title">${getLocalizedText(mining.title)}</h4>
                     <div class="game-subtitle">${getLocalizedText(mining.subtitle)} | ${getLocalizedText(mining.genre)}</div>
                 </div>
+                <div class="featured-desc">${getLocalizedText(copy.featuredBody)}</div>
                 <div class="featured-meta">${progressChips.map(buildMetaChip).join('')}</div>
                 <div class="hero-actions">
                     <a class="primary-btn" href="${mining.href}" data-game-link="${mining.id}">${getLocalizedText(copy.enterMainGame)}</a>
@@ -338,6 +356,7 @@
         node.innerHTML = GAME_CATALOG.map((game) => {
             const badgeClass = game.status === 'live' ? 'live' : 'soon';
             const ctaLabel = game.status === 'live' ? getLocalizedText(copy.playNow) : getLocalizedText(copy.viewPlaceholder);
+            const statusHint = game.status === 'live' ? getLocalizedText(copy.liveCardHint) : getLocalizedText(copy.soonCardHint);
 
             return `
                 <a class="game-card ${game.status}" href="${game.href}" data-game-link="${game.id}" style="--card-accent:${game.accent};">
@@ -351,20 +370,11 @@
                         <div class="game-subtitle">${getLocalizedText(game.subtitle)}</div>
                     </div>
                     <div class="game-meta">${getLocalizedText(game.genre)}</div>
+                    <div class="game-desc">${statusHint}</div>
                     <span class="game-cta">${ctaLabel}</span>
                 </a>
             `;
         }).join('');
-    }
-
-    function openModal() {
-        const node = document.getElementById('hubModal');
-        if (node) node.hidden = false;
-    }
-
-    function closeModal() {
-        const node = document.getElementById('hubModal');
-        if (node) node.hidden = true;
     }
 
     function updateLangButtons() {
@@ -377,6 +387,7 @@
 
     function renderSummary(profile, miningSummary) {
         const liveCount = GAME_CATALOG.filter((game) => game.status === 'live').length;
+        const upcomingCount = GAME_CATALOG.filter((game) => game.status !== 'live').length;
         const locale = getLocaleName();
         const copy = getCopy();
         const lastPlayed = GAME_CATALOG.find((game) => game.id === profile.lastGameId) || GAME_CATALOG[0];
@@ -387,6 +398,7 @@
         setText('miningPower', miningSummary ? formatCompact(miningSummary.power) : getLocalizedText(copy.notStarted));
         setText('miningTier4', miningSummary ? `${miningSummary.t4Count}` : '0');
         setText('lastPlayedGame', lastPlayed ? getLocalizedText(lastPlayed.title) : getLocalizedText(copy.lastPlayedFallback));
+        setText('upcomingGameCount', getLocalizedText(copy.upcomingCountTemplate).replace('{count}', upcomingCount));
     }
 
     function bindDynamicActions(profile) {
@@ -418,20 +430,6 @@
     }
 
     function bindStaticActions() {
-        const helpBtn = document.getElementById('howItWorksBtn');
-        const closeBtn = document.getElementById('closeHubModal');
-        const modal = document.getElementById('hubModal');
-
-        if (helpBtn) helpBtn.addEventListener('click', openModal);
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (modal) {
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) closeModal();
-            });
-        }
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closeModal();
-        });
         document.querySelectorAll('[data-lang-switch]').forEach((button) => {
             button.addEventListener('click', () => {
                 const nextLang = button.getAttribute('data-lang-switch') || 'zh';
@@ -445,7 +443,6 @@
         activeMiningSummary = getMiningSummary();
         bindStaticActions();
         renderHub();
-        closeModal();
     }
 
     if (document.getElementById('gameGrid')) {
