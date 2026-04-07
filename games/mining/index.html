@@ -6303,6 +6303,7 @@
             }
 
             body.mobile-optimized .v2-summary {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
                 gap: 5px !important;
                 margin-bottom: 6px !important;
             }
@@ -7005,6 +7006,45 @@
             body.mobile-optimized .leaderboard-address,
             body.mobile-optimized .leaderboard-power {
                 font-size: 10px !important;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body.mobile-optimized {
+                --mobile-shell-width: min(calc(100vw - 18px), 350px) !important;
+            }
+
+            body.mobile-optimized .v2-sidebar {
+                width: var(--mobile-shell-width) !important;
+                max-width: var(--mobile-shell-width) !important;
+                margin: calc(env(safe-area-inset-top, 0px) + 92px) auto 6px !important;
+            }
+
+            body.mobile-optimized .v2-summary {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 6px !important;
+            }
+
+            body.mobile-optimized .v2-summary-row:last-child {
+                grid-column: 1 / -1 !important;
+            }
+
+            body.mobile-optimized .v2-actions {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                max-height: 100px !important;
+            }
+
+            body.mobile-optimized .v2-sidebar.expanded .v2-actions {
+                max-height: 232px !important;
+            }
+
+            body.mobile-optimized .v2-action-btn {
+                min-height: 44px !important;
+                padding: 8px 7px !important;
+            }
+
+            body.mobile-optimized .v2-action-label {
+                font-size: 9px !important;
             }
         }
     </style>
