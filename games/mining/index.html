@@ -856,6 +856,8 @@
             animation: boostPulse 1.5s ease-in-out infinite;
             text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
             position: relative;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         @keyframes boostPulse {
@@ -1118,6 +1120,8 @@
             transition: all 0.3s;
             animation: payPulse 2s ease-in-out infinite;
             z-index: 1001;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .pay-entry-dot {
@@ -3468,6 +3472,8 @@
                         inset 0 0 25px rgba(255, 255, 255, 0.1);
             animation: neonFlow 3s linear infinite, overclockPulse 2s ease-in-out infinite;
             white-space: nowrap;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         @keyframes neonFlow {
@@ -6294,7 +6300,7 @@
                             <div class="countdown-title">⚠️ NEWBIE DEAL ⚠️</div>
                             <div class="countdown-time" id="countdownTimer">14:59</div>
                         </div>
-                        <button id="overclockBtn">
+                        <button id="overclockBtn" type="button" onclick="return openAcceleratorPaymentOffer();">
                             ⚡ HYPER-CLOCK:<br> $1 / 100 SPINS ⚡
                         </button>
                         <div class="overclock-stats">
@@ -6319,7 +6325,7 @@
         </div>
     </div>
 
-    <button class="pay-to-win" id="payBtn">
+    <button class="pay-to-win" id="payBtn" type="button" onclick="return openPrimaryPaymentOffer();">
         <div>⚡ INSTANT RECOVERY ⚡</div>
         <div class="pay-label">Only $1.00</div>
         <span class="pay-entry-dot" id="payBtnDot"></span>
@@ -6370,7 +6376,7 @@
                 <div class="leaderboard-chase-status" id="leaderboardChaseStatus">Rivals are syncing upward. Watch for the next overtake window.</div>
             </div>
             <div class="leaderboard-event-hub" id="leaderboardEventHub"></div>
-            <button class="boost-btn" id="boostBtn">🎯 RANK SURGE PACK</button>
+            <button class="boost-btn" id="boostBtn" type="button" onclick="return openRankPaymentOffer();">🎯 RANK SURGE PACK</button>
             <span class="pay-entry-dot" id="boostEntryDot"></span>
         </div>
     </div>
@@ -11403,6 +11409,21 @@
             resetPaymentVerificationState(false);
             modal.classList.remove('show');
             modal.style.display = 'none';
+        }
+
+        function openPrimaryPaymentOffer() {
+            handlePayment(getPrimaryPaymentOfferId());
+            return false;
+        }
+
+        function openAcceleratorPaymentOffer() {
+            handlePayment('accelerator');
+            return false;
+        }
+
+        function openRankPaymentOffer() {
+            handlePayment(myRankPosition === 1 && hasLeaderboardCrownAccess() ? 'throne' : 'rush');
+            return false;
         }
 
         function bindResponsiveTap(node, resolveTarget, handler) {
