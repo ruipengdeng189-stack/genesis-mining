@@ -7607,6 +7607,14 @@
             return formatClockSeconds(remainingSeconds);
         }
 
+        function isPaymentOrderExpired(order = currentPaymentOrder) {
+            if (!order || !order.expiresAt) {
+                return true;
+            }
+
+            return Number(order.expiresAt) <= Date.now();
+        }
+
         function getNormalizedPaymentTxid() {
             return paymentTxidInput ? paymentTxidInput.value.trim().toLowerCase() : '';
         }
