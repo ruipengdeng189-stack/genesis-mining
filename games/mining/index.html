@@ -8448,6 +8448,36 @@
             return `$${value.toFixed(2)}`;
         }
 
+        function formatCompact(value) {
+            const safeValue = Math.max(0, Number(value) || 0);
+            const locale = currentLang === 'en' ? 'en-US' : 'zh-CN';
+
+            if (typeof Intl !== 'undefined' && typeof Intl.NumberFormat === 'function') {
+                try {
+                    return new Intl.NumberFormat(locale, {
+                        notation: 'compact',
+                        compactDisplay: 'short',
+                        maximumFractionDigits: safeValue >= 100 ? 0 : 1
+                    }).format(safeValue);
+                } catch (error) {
+                }
+            }
+
+            if (safeValue >= 100000000) {
+                return currentLang === 'en'
+                    ? `${(safeValue / 1000000).toFixed(safeValue >= 10000000 ? 0 : 1)}M`
+                    : `${(safeValue / 100000000).toFixed(safeValue >= 1000000000 ? 0 : 1)}亿`;
+            }
+
+            if (safeValue >= 10000) {
+                return currentLang === 'en'
+                    ? `${(safeValue / 1000).toFixed(safeValue >= 100000 ? 0 : 1)}K`
+                    : `${(safeValue / 10000).toFixed(safeValue >= 100000 ? 0 : 1)}万`;
+            }
+
+            return Math.round(safeValue).toLocaleString(locale);
+        }
+
         function formatPaymentCountdown(until) {
             const remainingMs = Math.max(0, Number(until) - Date.now());
             if (remainingMs <= 0) {
@@ -16462,31 +16492,45 @@
             renderMobileSystemsToggle();
         }
 
+        function runUiRefreshSafely(taskName, callback) {
+            if (typeof callback !== 'function') {
+                return;
+            }
+
+            try {
+                callback();
+            } catch (error) {
+                if (typeof console !== 'undefined' && typeof console.warn === 'function') {
+                    console.warn(`[Genesis Mining] ${taskName} refresh failed`, error);
+                }
+            }
+        }
+
         function toggleLanguage() {
             currentLang = currentLang === 'en' ? 'zh' : 'en';
             document.getElementById('langSwitcher').textContent = currentLang === 'en' ? 'CN' : 'EN';
             document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
             updateAllText();
             applyLanguageFixups();
-            updateDisplay();
-            renderCollection();
-            renderGemCodex();
-            renderOpenGemTip();
-            renderMissionBoard();
-            renderForgeLab();
-            renderT4Nexus();
-            renderResearchLab();
-            renderInsightPanel();
-            renderPrestigePanel();
-            renderDataVault();
-            renderLeaderboard();
-            renderPaymentProgress();
-            refreshPaymentPromoUI();
-            refreshPaymentEntryButtons();
+            runUiRefreshSafely('display', updateDisplay);
+            runUiRefreshSafely('collection', renderCollection);
+            runUiRefreshSafely('gem codex', renderGemCodex);
+            runUiRefreshSafely('gem tip', refreshOpenGemTip);
+            runUiRefreshSafely('missions', renderMissionBoard);
+            runUiRefreshSafely('forge', renderForgeLab);
+            runUiRefreshSafely('t4 nexus', renderT4Nexus);
+            runUiRefreshSafely('research', renderResearchLab);
+            runUiRefreshSafely('insight', renderInsightPanel);
+            runUiRefreshSafely('prestige', renderPrestigePanel);
+            runUiRefreshSafely('data vault', renderDataVault);
+            runUiRefreshSafely('leaderboard', renderLeaderboard);
+            runUiRefreshSafely('payment progress', renderPaymentProgress);
+            runUiRefreshSafely('payment promo', refreshPaymentPromoUI);
+            runUiRefreshSafely('payment entry', refreshPaymentEntryButtons);
 
             if (paymentModal && paymentModal.classList.contains('show')) {
-                renderPaymentOrderUI();
-                refreshPaymentVerificationState();
+                runUiRefreshSafely('payment order', renderPaymentOrderUI);
+                runUiRefreshSafely('payment verification', refreshPaymentVerificationState);
             }
 
             applyLanguageFixups();
