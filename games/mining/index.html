@@ -6103,6 +6103,395 @@
                 font-size: 17px !important;
             }
         }
+
+        @media (max-width: 900px) {
+            body.mobile-optimized {
+                --mobile-shell-width: min(calc(100vw - 14px), 410px);
+            }
+
+            body.mobile-optimized .lang-switcher {
+                top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+                right: 8px !important;
+                padding: 7px 10px !important;
+                font-size: 10px !important;
+                border-radius: 10px !important;
+            }
+
+            body.mobile-optimized .gem-codex-btn {
+                width: 66px !important;
+                min-width: 66px !important;
+                padding: 7px 6px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .gem-codex-icon {
+                font-size: 16px !important;
+            }
+
+            body.mobile-optimized .gem-codex-label {
+                font-size: 8px !important;
+            }
+
+            body.mobile-optimized .v2-sidebar {
+                width: var(--mobile-shell-width) !important;
+                max-width: var(--mobile-shell-width) !important;
+                margin: calc(env(safe-area-inset-top, 0px) + 44px) auto 6px !important;
+            }
+
+            body.mobile-optimized .v2-card {
+                padding: 8px 8px 9px !important;
+                border-radius: 16px !important;
+            }
+
+            body.mobile-optimized .v2-card-title {
+                margin-bottom: 6px !important;
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .v2-summary {
+                gap: 5px !important;
+                margin-bottom: 6px !important;
+            }
+
+            body.mobile-optimized .v2-summary-row {
+                min-height: 46px !important;
+                padding: 6px 6px 5px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .v2-summary-row span {
+                font-size: 8px !important;
+                line-height: 1.15 !important;
+            }
+
+            body.mobile-optimized .v2-summary-row strong {
+                font-size: 12px !important;
+            }
+
+            body.mobile-optimized .v2-actions {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: 6px !important;
+                max-height: 44px !important;
+            }
+
+            body.mobile-optimized .v2-sidebar.expanded .v2-actions {
+                max-height: 108px !important;
+            }
+
+            body.mobile-optimized .v2-action-btn {
+                min-height: 38px !important;
+                padding: 6px 5px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .v2-action-label {
+                font-size: 8.5px !important;
+                line-height: 1.12 !important;
+            }
+
+            body.mobile-optimized .container {
+                gap: 6px !important;
+                padding: 0 8px calc(env(safe-area-inset-bottom, 0px) + 108px) !important;
+            }
+
+            body.mobile-optimized .header {
+                width: var(--mobile-shell-width) !important;
+                max-width: var(--mobile-shell-width) !important;
+                padding: 2px 58px 0 58px !important;
+            }
+
+            body.mobile-optimized .header h1 {
+                font-size: clamp(18px, 6vw, 24px) !important;
+                letter-spacing: 1px !important;
+                margin-bottom: 2px !important;
+            }
+
+            body.mobile-optimized #headerSubtitle {
+                font-size: 8px !important;
+                letter-spacing: 0.06em !important;
+            }
+
+            body.mobile-optimized .difficulty-indicator {
+                margin-top: 4px !important;
+                padding: 4px 8px !important;
+                font-size: 9px !important;
+            }
+
+            body.mobile-optimized .power-center-section {
+                width: var(--mobile-shell-width) !important;
+                max-width: var(--mobile-shell-width) !important;
+                padding: 9px 8px 12px !important;
+                border-radius: 18px !important;
+                gap: 8px !important;
+            }
+
+            body.mobile-optimized .stats {
+                gap: 6px !important;
+            }
+
+            body.mobile-optimized .stat-item {
+                min-height: 72px !important;
+                padding: 6px 6px 5px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .stat-item > div:first-child,
+            body.mobile-optimized .stat-item > div:last-child {
+                font-size: 8px !important;
+                line-height: 1.2 !important;
+            }
+
+            body.mobile-optimized .stat-value {
+                font-size: 15px !important;
+            }
+
+            body.mobile-optimized .main-content {
+                gap: 8px !important;
+            }
+
+            body.mobile-optimized .mine-section {
+                gap: 8px !important;
+            }
+
+            body.mobile-optimized #mineBtn img {
+                width: min(43vw, 170px) !important;
+                max-width: 170px !important;
+            }
+
+            body.mobile-optimized .overclock-btn {
+                max-width: 280px !important;
+            }
+
+            body.mobile-optimized .countdown-timer {
+                padding: 8px 10px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .countdown-title {
+                font-size: 10px !important;
+                letter-spacing: 0.08em !important;
+            }
+
+            body.mobile-optimized .countdown-time {
+                font-size: 17px !important;
+            }
+
+            body.mobile-optimized #overclockBtn {
+                font-size: 12.5px !important;
+                line-height: 1.25 !important;
+                padding: 10px 10px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .overclock-stats span {
+                font-size: 10px !important;
+                line-height: 1.35 !important;
+            }
+
+            body.mobile-optimized .upgrade-container,
+            body.mobile-optimized .collection-section,
+            body.mobile-optimized .leaderboard {
+                left: 8px !important;
+                right: 8px !important;
+                top: calc(env(safe-area-inset-top, 0px) + 78px) !important;
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 68px) !important;
+                padding: 12px !important;
+                border-radius: 18px !important;
+            }
+
+            body.mobile-optimized .upgrade-container {
+                gap: 10px !important;
+            }
+
+            body.mobile-optimized .upgrade-section {
+                padding: 12px !important;
+                gap: 8px !important;
+                border-radius: 14px !important;
+            }
+
+            body.mobile-optimized .upgrade-section h2 {
+                font-size: 14px !important;
+            }
+
+            body.mobile-optimized .upgrade-info {
+                font-size: 11px !important;
+            }
+
+            body.mobile-optimized #upgradeBtn,
+            body.mobile-optimized .upgrade-btn {
+                min-height: 40px !important;
+                font-size: 12.5px !important;
+            }
+
+            body.mobile-optimized .collection-section h2,
+            body.mobile-optimized .leaderboard-title {
+                top: -12px !important;
+                padding: 0 0 8px !important;
+                font-size: 15px !important;
+            }
+
+            body.mobile-optimized .collection-subtitle {
+                font-size: 10px !important;
+                line-height: 1.45 !important;
+                gap: 4px !important;
+            }
+
+            body.mobile-optimized .collection-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            body.mobile-optimized .collection-slot {
+                min-height: 72px !important;
+                border-radius: 12px !important;
+            }
+
+            body.mobile-optimized .leaderboard-header {
+                margin-bottom: 8px !important;
+                padding-bottom: 8px !important;
+            }
+
+            body.mobile-optimized .leaderboard-subtitle {
+                font-size: 9px !important;
+            }
+
+            body.mobile-optimized .leaderboard-list {
+                margin-bottom: 8px !important;
+            }
+
+            body.mobile-optimized .leaderboard-item {
+                padding: 6px 4px !important;
+                margin-bottom: 4px !important;
+            }
+
+            body.mobile-optimized .leaderboard-rank,
+            body.mobile-optimized .leaderboard-power {
+                font-size: 12px !important;
+            }
+
+            body.mobile-optimized .leaderboard-address {
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .pay-to-win {
+                left: 50% !important;
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 60px) !important;
+                transform: translateX(-50%) !important;
+                width: var(--mobile-shell-width) !important;
+                max-width: var(--mobile-shell-width) !important;
+                min-height: 54px !important;
+                padding: 10px 12px !important;
+                border-radius: 16px !important;
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) auto !important;
+                gap: 4px 10px !important;
+                align-items: center !important;
+                text-align: left !important;
+            }
+
+            body.mobile-optimized .pay-to-win > div:first-child {
+                min-width: 0 !important;
+                font-size: 14px !important;
+                line-height: 1.15 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            body.mobile-optimized .pay-label {
+                font-size: 11px !important;
+                line-height: 1.15 !important;
+                text-align: right !important;
+                white-space: nowrap !important;
+            }
+
+            body.mobile-optimized .pay-entry-badge {
+                max-width: 126px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            body.mobile-optimized .mobile-dock {
+                padding: 6px 8px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+            }
+
+            body.mobile-optimized .mobile-dock-btn {
+                min-height: 48px !important;
+                padding: 6px 4px !important;
+            }
+
+            body.mobile-optimized .payment-offer-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+                margin: 12px 0 !important;
+            }
+
+            body.mobile-optimized .payment-offer-card {
+                padding: 12px 10px !important;
+                border-radius: 14px !important;
+            }
+
+            body.mobile-optimized .payment-offer-name {
+                font-size: 12px !important;
+                margin-bottom: 6px !important;
+            }
+
+            body.mobile-optimized .payment-offer-price {
+                font-size: 18px !important;
+                margin-bottom: 6px !important;
+            }
+
+            body.mobile-optimized .payment-offer-meta,
+            body.mobile-optimized .payment-progress-meta {
+                font-size: 10px !important;
+                line-height: 1.45 !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            body.mobile-optimized {
+                --mobile-shell-width: calc(100vw - 12px);
+            }
+
+            body.mobile-optimized .topbar,
+            body.mobile-optimized .header {
+                padding-left: 54px !important;
+                padding-right: 54px !important;
+            }
+
+            body.mobile-optimized .v2-actions {
+                gap: 5px !important;
+            }
+
+            body.mobile-optimized .v2-action-label {
+                font-size: 8px !important;
+            }
+
+            body.mobile-optimized .stat-item {
+                min-height: 68px !important;
+            }
+
+            body.mobile-optimized .stat-value {
+                font-size: 14px !important;
+            }
+
+            body.mobile-optimized #mineBtn img {
+                width: min(40vw, 156px) !important;
+                max-width: 156px !important;
+            }
+
+            body.mobile-optimized .pay-to-win > div:first-child {
+                font-size: 13px !important;
+            }
+
+            body.mobile-optimized .pay-label {
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .collection-grid {
+                gap: 8px !important;
+            }
+        }
     </style>
 </head>
 <body>
