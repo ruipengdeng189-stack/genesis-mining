@@ -1,135 +1,415 @@
-(function () {
+﻿(function () {
     window.GENESIS_GAME_CATALOG = [
-        {
-            id: 'mining',
-            title: '\u521B\u4E16\u6316\u77FF\u533A / Genesis Mining Zone',
-            subtitle: '\u70B9\u51FB\u6316\u77FF + \u653E\u7F6E\u6210\u957F / Tap Mining + Idle Growth',
-            genre: '\u653E\u7F6E / \u70B9\u51FB / Idle / Tap',
-            status: 'live',
-            badge: '\u5DF2\u5F00\u653E / Live',
-            href: '/games/mining/',
-            accent: '#00ff88',
-            icon: 'M1',
-            cover: '/assets/hub/covers/cover-mining.png',
-            description: '\u5F53\u524D\u552F\u4E00\u6B63\u5F0F\u5F00\u653E\u7684\u4E3B\u7EBF\u6E38\u620F\u3002\u5DF2\u7ECF\u5305\u542B\u70B9\u51FB\u6316\u77FF\u3001\u5347\u7EA7\u3001\u5B9D\u77F3\u3001T4 \u540E\u671F\u6210\u957F\u3001\u51B2\u699C\u538B\u529B\u4E0E\u5145\u503C\u8282\u70B9\u3002 / The current main live game with tap mining, upgrades, gems, T4 late-game growth, rank pressure, and payment hooks.',
-            tags: ['\u4E3B\u6210\u957F / Core Progress', '\u957F\u7EBF\u517B\u6210 / Long-term Growth', '\u5B9D\u77F3\u5FAA\u73AF / Gem Loop']
-        },
-        {
-            id: 'matrix-runner',
-            title: '\u77E9\u9635\u8DD1\u9177 / Matrix Runner',
-            subtitle: '\u8D5B\u535A\u8DD1\u9053\u51B2\u5206 / Cyber Track Rush',
-            genre: '\u8DD1\u9177 / Runner',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=matrix-runner',
-            accent: '#00e1ff',
-            icon: 'MR',
-            description: '\u9002\u5408\u505A 1~3 \u5206\u949F\u4E00\u5C40\u7684\u77ED\u5C40\u73A9\u6CD5\uFF0C\u80FD\u627F\u63A5\u6D3B\u8DC3\u4EFB\u52A1\u3001\u51B2\u699C\u3001\u9650\u65F6\u6D3B\u52A8\u548C\u590D\u6D3B\u7C7B\u4ED8\u8D39\u70B9\u3002 / A 1~3 minute runner suited for activity missions, rank chasing, timed events, and revive monetization.',
-            tags: ['\u77ED\u5C40 / Short Session', '\u9AD8\u9891\u6D3B\u8DC3 / High Activity', '\u590D\u6D3B\u4ED8\u8D39 / Revive Monetization']
-        },
-        {
-            id: 'gem-forge',
-            title: '\u5B9D\u77F3\u7194\u7089 / Gem Forge',
-            subtitle: '\u5408\u6210\u3001\u7194\u70BC\u3001\u5347\u9636 / Fuse, Smelt, Ascend',
-            genre: '\u5408\u6210 / Merge',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=gem-forge',
-            accent: '#a867ff',
-            icon: 'GF',
-            description: '\u56F4\u7ED5\u4F4E\u7EA7\u5B9D\u77F3\u5408\u6210\u3001\u7A00\u6709\u6750\u6599\u6389\u843D\u3001\u7194\u7089\u4FDD\u5E95\u548C\u9AD8\u7EA7\u5916\u89C2\uFF0C\u53EF\u4EE5\u505A\u51FA\u5F88\u5F3A\u7684\u4ED8\u8D39\u52A8\u673A\u3002 / Built around low-tier gem fusion, rare drops, forge pity, and premium visuals.',
-            tags: ['\u5408\u6210 / Fusion', '\u7194\u7089 / Forge', '\u7A00\u6709\u6389\u843D / Rare Drops']
-        },
-        {
-            id: 'cipher-match',
-            title: '\u5BC6\u7801\u6D88\u9664 / Cipher Match',
-            subtitle: '\u89E3\u7801\u62FC\u56FE\u95EF\u5173 / Decode Puzzle Runs',
-            genre: '\u76CA\u667A / Puzzle',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=cipher-match',
-            accent: '#ffe14d',
-            icon: 'CM',
-            description: '\u8FD9\u662F\u4E00\u4E2A\u504F\u4F11\u95F2\u7684\u76CA\u667A\u65B9\u5411\uFF0C\u9002\u5408\u627F\u63A5\u6BCF\u65E5\u4EFB\u52A1\u3001\u901A\u884C\u8BC1\u7ECF\u9A8C\u548C\u8F7B\u91CF\u957F\u7EBF\u7559\u5B58\u3002 / A casual puzzle game for daily missions, pass EXP, and soft long-term retention.',
-            tags: ['\u8F7B\u5EA6 / Casual', '\u65E5\u5E38\u4EFB\u52A1 / Daily Missions', '\u7559\u5B58 / Retention']
-        },
-        {
-            id: 'void-defense',
-            title: '\u865A\u7A7A\u9632\u7EBF / Void Defense',
-            subtitle: '\u6838\u5FC3\u5854\u9632\u751F\u5B58 / Core Tower Survival',
-            genre: '\u5854\u9632 / Tower Defense',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=void-defense',
-            accent: '#ff7a59',
-            icon: 'VD',
-            description: '\u9002\u5408\u627F\u8F7D\u5927\u91CF\u6570\u503C\u6D88\u8017\uFF0C\u53EF\u4EE5\u7ED1\u5B9A\u7814\u7A76\u5BA4\u3001\u5E38\u9A7B\u52A0\u6210\u3001\u6CE2\u6B21\u5956\u52B1\u4E0E\u540E\u671F\u5361\u70B9\u3002 / Great for heavy sinks, lab linkage, permanent boosts, wave rewards, and late-game walls.',
-            tags: ['\u5854\u9632 / Defense', '\u6570\u503C\u6D88\u8017 / Heavy Sink', '\u540E\u671F\u5361\u70B9 / Late Wall']
-        },
-        {
-            id: 'reactor-tap',
-            title: '\u53CD\u5E94\u5806\u8FDE\u51FB / Reactor Tap',
-            subtitle: '\u624B\u901F\u4E0E\u8282\u594F\u6311\u6218 / Rhythm Speed Challenge',
-            genre: '\u8857\u673A / Arcade',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=reactor-tap',
-            accent: '#ff4fd8',
-            icon: 'RT',
-            description: '\u77ED\u65F6\u95F4\u3001\u9AD8\u5F3A\u5EA6\u7684\u73A9\u6CD5\u5F88\u9002\u5408\u505A\u8FDE\u51FB\u4EFB\u52A1\u3001\u9650\u65F6\u6311\u6218\u548C\u201C\u518D\u6765\u4E00\u6B21\u201D\u7684\u5FC3\u7406\u9A71\u52A8\u3002 / A short, high-intensity game perfect for combo quests, timed challenges, and one-more-run motivation.',
-            tags: ['\u8FDE\u51FB / Combo', '\u624B\u611F / Feel', '\u77ED\u65F6\u523A\u6FC0 / Fast Excitement']
-        },
-        {
-            id: 'vault-sweep',
-            title: '\u5BC6\u5E93\u63A2\u5B9D / Vault Sweep',
-            subtitle: '\u7FFB\u724C\u3001\u62BD\u53D6\u3001\u4FDD\u5E95 / Flip, Draw, Pity',
-            genre: '\u6536\u96C6 / Collection',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=vault-sweep',
-            accent: '#64ffb2',
-            icon: 'VS',
-            description: '\u8FD9\u4E2A\u65B9\u5411\u975E\u5E38\u9002\u5408\u505A\u6D3B\u52A8\u94A5\u5319\u3001\u8282\u65E5\u5361\u6C60\u3001\u7A00\u6709\u5956\u52B1\u4E0E\u6E10\u8FDB\u5F0F\u4FDD\u5E95\u5FAA\u73AF\u3002 / Excellent for event keys, holiday pools, rare rewards, and progressive pity loops.',
-            tags: ['\u62BD\u53D6 / Draw', '\u4FDD\u5E95 / Pity', '\u6D3B\u52A8\u6C60 / Event Pool']
-        },
-        {
-            id: 'drone-squad',
-            title: '\u65E0\u4EBA\u673A\u7F16\u961F / Drone Squad',
-            subtitle: '\u95EF\u5173\u5C04\u51FB + \u90E8\u4EF6\u7EC4\u88C5 / Shooter + Parts Build',
-            genre: '\u5C04\u51FB / Shooter',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=drone-squad',
-            accent: '#68b7ff',
-            icon: 'DS',
-            description: '\u53EF\u4EE5\u627F\u63A5\u88C5\u5907\u69FD\u3001\u8282\u70B9\u8BCD\u6761\u3001\u90E8\u4EF6\u5347\u7EA7\u3001\u7A00\u6709\u6389\u843D\u548C\u7EC4\u88C5\u7C7B\u4ED8\u8D39\u5185\u5BB9\u3002 / Great for loadouts, affixes, part upgrades, rare drops, and assembly-driven monetization.',
-            tags: ['\u88C5\u5907 / Gear', '\u90E8\u4EF6 / Parts', '\u517B\u6210\u6DF1\u5EA6 / Build Depth']
-        },
-        {
-            id: 'neon-cards',
-            title: '\u9713\u8679\u5361\u724C / Neon Cards',
-            subtitle: '\u8F7B\u7B56\u7565\u5BF9\u6297 / Light Strategy Battle',
-            genre: '\u5361\u724C / Card Battle',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=neon-cards',
-            accent: '#9bff66',
-            icon: 'NC',
-            description: '\u975E\u5E38\u9002\u5408\u505A\u8D5B\u5B63\u3001\u901A\u884C\u8BC1\u3001\u6218\u4EE4\u3001\u5361\u5305\u548C\u9650\u5B9A\u5956\u52B1\u7EBF\u3002 / Perfect for seasons, passes, battle orders, packs, and limited reward tracks.',
-            tags: ['\u8D5B\u5B63 / Season', '\u901A\u884C\u8BC1 / Pass', '\u957F\u76EE\u6807 / Long Goals']
-        },
-        {
-            id: 'orbital-fall',
-            title: '\u8F68\u9053\u5760\u843D / Orbital Fall',
-            subtitle: '\u751F\u5B58\u8089\u9E3D\u95EF\u5173 / Survival Roguelike Runs',
-            genre: '\u751F\u5B58 / Survival',
-            status: 'soon',
-            badge: '\u5373\u5C06\u5F00\u653E / Coming Soon',
-            href: '/games/coming-soon/?id=orbital-fall',
-            accent: '#ffa84d',
-            icon: 'OF',
-            description: '\u9002\u5408\u505A\u53EF\u91CD\u590D\u6E38\u73A9\u7684\u8089\u9E3D\u5411\u73A9\u6CD5\uFF0C\u4EE5\u201C\u518D\u6253\u4E00\u5C40\u201D\u63D0\u5347\u65E5\u5E38\u6D3B\u8DC3\u3002 / A replayable roguelike survival game that boosts daily activity through one-more-run loops.',
-            tags: ['\u8089\u9E3D / Roguelike', '\u91CD\u590D\u53EF\u73A9 / Replayable', '\u65E5\u5E38\u6D3B\u8DC3 / Daily Activity']
-        }
-    ];
+    {
+        "accent":  "#00ff88",
+        "genre":  {
+                      "zh":  "\u653e\u7f6e / \u70b9\u51fb",
+                      "en":  "Idle / Tap"
+                  },
+        "id":  "mining",
+        "tags":  [
+                     {
+                         "zh":  "\u4e3b\u6210\u957f",
+                         "en":  "Core Progress"
+                     },
+                     {
+                         "zh":  "\u957f\u7ebf\u517b\u6210",
+                         "en":  "Long-term Growth"
+                     },
+                     {
+                         "zh":  "\u5b9d\u77f3\u5faa\u73af",
+                         "en":  "Gem Loop"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u70b9\u51fb\u6316\u77ff + \u653e\u7f6e\u6210\u957f",
+                         "en":  "Tap Mining + Idle Growth"
+                     },
+        "description":  {
+                            "zh":  "\u5f53\u524d\u552f\u4e00\u6b63\u5f0f\u5f00\u653e\u7684\u4e3b\u7ebf\u6e38\u620f\uff0c\u5df2\u5305\u542b\u70b9\u51fb\u6316\u77ff\u3001\u5347\u7ea7\u3001\u5b9d\u77f3\u3001T4 \u540e\u671f\u6210\u957f\u3001\u51b2\u699c\u538b\u529b\u4e0e\u5145\u503c\u8282\u70b9\u3002",
+                            "en":  "The main live game with tap mining, upgrades, gems, T4 late-game growth, leaderboard pressure, and payment hooks."
+                        },
+        "icon":  "M1",
+        "href":  "/games/mining/",
+        "cover":  "/assets/hub/covers/cover-mining.png",
+        "badge":  {
+                      "zh":  "\u5df2\u5f00\u653e",
+                      "en":  "Live"
+                  },
+        "status":  "live",
+        "title":  {
+                      "zh":  "\u521b\u4e16\u6316\u77ff\u533a",
+                      "en":  "Genesis Mining Zone"
+                  }
+    },
+    {
+        "accent":  "#00e1ff",
+        "genre":  {
+                      "zh":  "\u8dd1\u9177",
+                      "en":  "Runner"
+                  },
+        "id":  "matrix-runner",
+        "tags":  [
+                     {
+                         "zh":  "\u77ed\u5c40",
+                         "en":  "Short Session"
+                     },
+                     {
+                         "zh":  "\u9ad8\u9891\u6d3b\u8dc3",
+                         "en":  "High Activity"
+                     },
+                     {
+                         "zh":  "\u590d\u6d3b\u4ed8\u8d39",
+                         "en":  "Revive Monetization"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u8d5b\u535a\u8dd1\u9053\u51b2\u5206",
+                         "en":  "Cyber Track Rush"
+                     },
+        "description":  {
+                            "zh":  "\u9002\u5408\u505a 1~3 \u5206\u949f\u4e00\u5c40\u7684\u77ed\u5c40\u73a9\u6cd5\uff0c\u80fd\u627f\u63a5\u6d3b\u8dc3\u4efb\u52a1\u3001\u51b2\u699c\u3001\u9650\u65f6\u6d3b\u52a8\u548c\u590d\u6d3b\u7c7b\u4ed8\u8d39\u70b9\u3002",
+                            "en":  "A 1~3 minute runner suited for activity missions, rank chasing, timed events, and revive monetization."
+                        },
+        "icon":  "MR",
+        "href":  "/games/coming-soon/?id=matrix-runner",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u77e9\u9635\u8dd1\u9177",
+                      "en":  "Matrix Runner"
+                  }
+    },
+    {
+        "accent":  "#a867ff",
+        "genre":  {
+                      "zh":  "\u5408\u6210",
+                      "en":  "Merge"
+                  },
+        "id":  "gem-forge",
+        "tags":  [
+                     {
+                         "zh":  "\u5408\u6210",
+                         "en":  "Fusion"
+                     },
+                     {
+                         "zh":  "\u7194\u7089",
+                         "en":  "Forge"
+                     },
+                     {
+                         "zh":  "\u7a00\u6709\u6389\u843d",
+                         "en":  "Rare Drops"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u5408\u6210\u3001\u7194\u70bc\u3001\u5347\u9636",
+                         "en":  "Fuse, Smelt, Ascend"
+                     },
+        "description":  {
+                            "zh":  "\u56f4\u7ed5\u4f4e\u7ea7\u5b9d\u77f3\u5408\u6210\u3001\u7a00\u6709\u6750\u6599\u6389\u843d\u3001\u7194\u7089\u4fdd\u5e95\u548c\u9ad8\u7ea7\u5916\u89c2\u6765\u505a\u51fa\u5f88\u5f3a\u7684\u4ed8\u8d39\u52a8\u673a\u3002",
+                            "en":  "Built around low-tier gem fusion, rare drops, forge pity, and premium visuals."
+                        },
+        "icon":  "GF",
+        "href":  "/games/coming-soon/?id=gem-forge",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u5b9d\u77f3\u7194\u7089",
+                      "en":  "Gem Forge"
+                  }
+    },
+    {
+        "accent":  "#ffe14d",
+        "genre":  {
+                      "zh":  "\u76ca\u667a",
+                      "en":  "Puzzle"
+                  },
+        "id":  "cipher-match",
+        "tags":  [
+                     {
+                         "zh":  "\u8f7b\u5ea6",
+                         "en":  "Casual"
+                     },
+                     {
+                         "zh":  "\u65e5\u5e38\u4efb\u52a1",
+                         "en":  "Daily Missions"
+                     },
+                     {
+                         "zh":  "\u7559\u5b58",
+                         "en":  "Retention"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u89e3\u7801\u62fc\u56fe\u95ef\u5173",
+                         "en":  "Decode Puzzle Runs"
+                     },
+        "description":  {
+                            "zh":  "\u8fd9\u4e2a\u65b9\u5411\u504f\u4f11\u95f2\uff0c\u9002\u5408\u627f\u63a5\u6bcf\u65e5\u4efb\u52a1\u3001\u901a\u884c\u8bc1\u7ecf\u9a8c\u548c\u8f7b\u91cf\u957f\u7ebf\u7559\u5b58\u3002",
+                            "en":  "A casual puzzle game for daily missions, pass EXP, and soft long-term retention."
+                        },
+        "icon":  "CM",
+        "href":  "/games/coming-soon/?id=cipher-match",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u5bc6\u7801\u6d88\u9664",
+                      "en":  "Cipher Match"
+                  }
+    },
+    {
+        "accent":  "#ff7a59",
+        "genre":  {
+                      "zh":  "\u5854\u9632",
+                      "en":  "Tower Defense"
+                  },
+        "id":  "void-defense",
+        "tags":  [
+                     {
+                         "zh":  "\u5854\u9632",
+                         "en":  "Defense"
+                     },
+                     {
+                         "zh":  "\u6570\u503c\u6d88\u8017",
+                         "en":  "Heavy Sink"
+                     },
+                     {
+                         "zh":  "\u540e\u671f\u5361\u70b9",
+                         "en":  "Late Wall"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u6838\u5fc3\u5854\u9632\u751f\u5b58",
+                         "en":  "Core Tower Survival"
+                     },
+        "description":  {
+                            "zh":  "\u9002\u5408\u627f\u8f7d\u5927\u91cf\u6570\u503c\u6d88\u8017\uff0c\u53ef\u7ed1\u5b9a\u7814\u7a76\u5ba4\u3001\u5e38\u9a7b\u52a0\u6210\u3001\u6ce2\u6b21\u5956\u52b1\u4e0e\u540e\u671f\u5361\u70b9\u3002",
+                            "en":  "Great for heavy sinks, lab linkage, permanent boosts, wave rewards, and late-game walls."
+                        },
+        "icon":  "VD",
+        "href":  "/games/coming-soon/?id=void-defense",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u865a\u7a7a\u9632\u7ebf",
+                      "en":  "Void Defense"
+                  }
+    },
+    {
+        "accent":  "#ff4fd8",
+        "genre":  {
+                      "zh":  "\u8857\u673a",
+                      "en":  "Arcade"
+                  },
+        "id":  "reactor-tap",
+        "tags":  [
+                     {
+                         "zh":  "\u8fde\u51fb",
+                         "en":  "Combo"
+                     },
+                     {
+                         "zh":  "\u624b\u611f",
+                         "en":  "Feel"
+                     },
+                     {
+                         "zh":  "\u77ed\u65f6\u523a\u6fc0",
+                         "en":  "Fast Excitement"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u624b\u901f\u4e0e\u8282\u594f\u6311\u6218",
+                         "en":  "Rhythm Speed Challenge"
+                     },
+        "description":  {
+                            "zh":  "\u77ed\u65f6\u95f4\u3001\u9ad8\u5f3a\u5ea6\u7684\u73a9\u6cd5\u5f88\u9002\u5408\u505a\u8fde\u51fb\u4efb\u52a1\u3001\u9650\u65f6\u6311\u6218\u548c\u201c\u518d\u6765\u4e00\u6b21\u201d\u7684\u5fc3\u7406\u9a71\u52a8\u3002",
+                            "en":  "A short, high-intensity game perfect for combo quests, timed challenges, and one-more-run motivation."
+                        },
+        "icon":  "RT",
+        "href":  "/games/coming-soon/?id=reactor-tap",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u53cd\u5e94\u5806\u8fde\u51fb",
+                      "en":  "Reactor Tap"
+                  }
+    },
+    {
+        "accent":  "#64ffb2",
+        "genre":  {
+                      "zh":  "\u6536\u96c6",
+                      "en":  "Collection"
+                  },
+        "id":  "vault-sweep",
+        "tags":  [
+                     {
+                         "zh":  "\u62bd\u53d6",
+                         "en":  "Draw"
+                     },
+                     {
+                         "zh":  "\u4fdd\u5e95",
+                         "en":  "Pity"
+                     },
+                     {
+                         "zh":  "\u6d3b\u52a8\u6c60",
+                         "en":  "Event Pool"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u7ffb\u724c\u3001\u62bd\u53d6\u3001\u4fdd\u5e95",
+                         "en":  "Flip, Draw, Pity"
+                     },
+        "description":  {
+                            "zh":  "\u8fd9\u4e2a\u65b9\u5411\u975e\u5e38\u9002\u5408\u505a\u6d3b\u52a8\u94a5\u5319\u3001\u8282\u65e5\u5361\u6c60\u3001\u7a00\u6709\u5956\u52b1\u4e0e\u6e10\u8fdb\u5f0f\u4fdd\u5e95\u5faa\u73af\u3002",
+                            "en":  "Excellent for event keys, holiday pools, rare rewards, and progressive pity loops."
+                        },
+        "icon":  "VS",
+        "href":  "/games/coming-soon/?id=vault-sweep",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u5bc6\u5e93\u63a2\u5b9d",
+                      "en":  "Vault Sweep"
+                  }
+    },
+    {
+        "accent":  "#68b7ff",
+        "genre":  {
+                      "zh":  "\u5c04\u51fb",
+                      "en":  "Shooter"
+                  },
+        "id":  "drone-squad",
+        "tags":  [
+                     {
+                         "zh":  "\u88c5\u5907",
+                         "en":  "Gear"
+                     },
+                     {
+                         "zh":  "\u90e8\u4ef6",
+                         "en":  "Parts"
+                     },
+                     {
+                         "zh":  "\u517b\u6210\u6df1\u5ea6",
+                         "en":  "Build Depth"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u95ef\u5173\u5c04\u51fb + \u90e8\u4ef6\u7ec4\u88c5",
+                         "en":  "Shooter + Parts Build"
+                     },
+        "description":  {
+                            "zh":  "\u53ef\u627f\u63a5\u88c5\u5907\u69fd\u3001\u8282\u70b9\u8bcd\u6761\u3001\u90e8\u4ef6\u5347\u7ea7\u3001\u7a00\u6709\u6389\u843d\u548c\u7ec4\u88c5\u7c7b\u4ed8\u8d39\u5185\u5bb9\u3002",
+                            "en":  "Great for loadouts, affixes, part upgrades, rare drops, and assembly-driven monetization."
+                        },
+        "icon":  "DS",
+        "href":  "/games/coming-soon/?id=drone-squad",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u65e0\u4eba\u673a\u7f16\u961f",
+                      "en":  "Drone Squad"
+                  }
+    },
+    {
+        "accent":  "#9bff66",
+        "genre":  {
+                      "zh":  "\u5361\u724c",
+                      "en":  "Card Battle"
+                  },
+        "id":  "neon-cards",
+        "tags":  [
+                     {
+                         "zh":  "\u8d5b\u5b63",
+                         "en":  "Season"
+                     },
+                     {
+                         "zh":  "\u901a\u884c\u8bc1",
+                         "en":  "Pass"
+                     },
+                     {
+                         "zh":  "\u957f\u76ee\u6807",
+                         "en":  "Long Goals"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u8f7b\u7b56\u7565\u5bf9\u6297",
+                         "en":  "Light Strategy Battle"
+                     },
+        "description":  {
+                            "zh":  "\u975e\u5e38\u9002\u5408\u505a\u8d5b\u5b63\u3001\u901a\u884c\u8bc1\u3001\u6218\u4ee4\u3001\u5361\u5305\u548c\u9650\u5b9a\u5956\u52b1\u7ebf\u3002",
+                            "en":  "Perfect for seasons, passes, battle orders, packs, and limited reward tracks."
+                        },
+        "icon":  "NC",
+        "href":  "/games/coming-soon/?id=neon-cards",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u9713\u8679\u5361\u724c",
+                      "en":  "Neon Cards"
+                  }
+    },
+    {
+        "accent":  "#ffa84d",
+        "genre":  {
+                      "zh":  "\u751f\u5b58",
+                      "en":  "Survival"
+                  },
+        "id":  "orbital-fall",
+        "tags":  [
+                     {
+                         "zh":  "\u8089\u9e3d",
+                         "en":  "Roguelike"
+                     },
+                     {
+                         "zh":  "\u91cd\u590d\u53ef\u73a9",
+                         "en":  "Replayable"
+                     },
+                     {
+                         "zh":  "\u65e5\u5e38\u6d3b\u8dc3",
+                         "en":  "Daily Activity"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u751f\u5b58\u8089\u9e3d\u95ef\u5173",
+                         "en":  "Survival Roguelike Runs"
+                     },
+        "description":  {
+                            "zh":  "\u9002\u5408\u505a\u53ef\u91cd\u590d\u6e38\u73a9\u7684\u8089\u9e3d\u5411\u73a9\u6cd5\uff0c\u4ee5\u201c\u518d\u6253\u4e00\u5c40\u201d\u63d0\u5347\u65e5\u5e38\u6d3b\u8dc3\u3002",
+                            "en":  "A replayable roguelike survival game that boosts daily activity through one-more-run loops."
+                        },
+        "icon":  "OF",
+        "href":  "/games/coming-soon/?id=orbital-fall",
+        "badge":  {
+                      "zh":  "\u5373\u5c06\u5f00\u653e",
+                      "en":  "Coming Soon"
+                  },
+        "status":  "soon",
+        "title":  {
+                      "zh":  "\u8f68\u9053\u5760\u843d",
+                      "en":  "Orbital Fall"
+                  }
+    }
+];
 }());

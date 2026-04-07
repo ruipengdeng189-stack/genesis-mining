@@ -49,21 +49,44 @@
     <script>
         (function () {
             const catalog = Array.isArray(window.GENESIS_GAME_CATALOG) ? window.GENESIS_GAME_CATALOG : [];
+            const langKey = 'genesis_arcade_hub_lang_v1';
             const params = new URLSearchParams(window.location.search);
             const gameId = params.get('id');
+            const currentLang = localStorage.getItem(langKey) === 'en' ? 'en' : 'zh';
+
+            function localize(value) {
+                if (!value) return '';
+                if (typeof value === 'string') return value;
+                if (typeof value === 'object') return value[currentLang] || value.zh || value.en || '';
+                return String(value);
+            }
+
             const game = catalog.find((item) => item.id === gameId) || {
-                title: '\u672A\u77E5\u6E38\u620F / Unknown Game',
-                subtitle: '\u5F85\u8865\u5145 / To Be Added',
-                genre: '\u672A\u77E5 / Unknown',
+                title: { zh: '\u672A\u77E5\u6E38\u620F', en: 'Unknown Game' },
+                subtitle: { zh: '\u5F85\u8865\u5145', en: 'To Be Added' },
+                genre: { zh: '\u672A\u77E5', en: 'Unknown' },
                 icon: 'PL',
                 accent: '#68ffe0',
-                description: '\u8FD9\u4E2A\u5165\u53E3\u5DF2\u7ECF\u9884\u7559\uFF0C\u4F46\u6682\u65F6\u8FD8\u6CA1\u6709\u586B\u5165\u6B63\u5F0F\u7684\u5C0F\u6E38\u620F\u5185\u5BB9\u3002 / This entrance is reserved, but the real game content has not been added yet.'
+                description: {
+                    zh: '\u8FD9\u4E2A\u5165\u53E3\u5DF2\u7ECF\u9884\u7559\uFF0C\u4F46\u6682\u65F6\u8FD8\u6CA1\u6709\u586B\u5165\u6B63\u5F0F\u7684\u5C0F\u6E38\u620F\u5185\u5BB9\u3002',
+                    en: 'This entrance is reserved, but the real game content has not been added yet.'
+                }
             };
 
-            document.title = `${game.title} - \u5373\u5C06\u5F00\u653E / Coming Soon`;
-            document.getElementById('comingTitle').textContent = game.title;
-            document.getElementById('comingCopy').textContent = game.description;
-            document.getElementById('comingGenre').textContent = `\u73A9\u6CD5\u7C7B\u578B / Genre: ${game.genre} | ${game.subtitle}`;
+            const localizedTitle = localize(game.title);
+            const localizedSubtitle = localize(game.subtitle);
+            const localizedGenre = localize(game.genre);
+            const localizedDescription = localize(game.description);
+
+            document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+            document.title = currentLang === 'en'
+                ? `${localizedTitle} - Coming Soon`
+                : `${localizedTitle} - \u5373\u5C06\u5F00\u653E`;
+            document.getElementById('comingTitle').textContent = localizedTitle;
+            document.getElementById('comingCopy').textContent = localizedDescription;
+            document.getElementById('comingGenre').textContent = currentLang === 'en'
+                ? `Genre: ${localizedGenre} | ${localizedSubtitle}`
+                : `\u73A9\u6CD5\u7C7B\u578B\uFF1A${localizedGenre} | ${localizedSubtitle}`;
 
             const iconNode = document.getElementById('comingIcon');
             iconNode.textContent = game.icon || 'PL';
