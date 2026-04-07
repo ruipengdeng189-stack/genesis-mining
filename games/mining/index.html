@@ -7104,6 +7104,47 @@
                 max-width: min(168px, calc((100% - 7px) / 2)) !important;
             }
         }
+
+        @keyframes mobileMinePulse {
+            0% {
+                transform: scale(1);
+                filter: brightness(1.08) contrast(1.05) drop-shadow(0 0 12px rgba(0, 255, 0, 0.56));
+            }
+            40% {
+                transform: scale(1.04);
+                filter: brightness(1.18) contrast(1.12) drop-shadow(0 0 18px rgba(0, 255, 0, 0.76));
+            }
+            100% {
+                transform: scale(1);
+                filter: brightness(1.08) contrast(1.05) drop-shadow(0 0 12px rgba(0, 255, 0, 0.56));
+            }
+        }
+
+        @media (max-width: 900px) {
+            body.mobile-optimized #mineBtn {
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+
+            body.mobile-optimized #mineBtn img {
+                filter: brightness(1.08) contrast(1.05) drop-shadow(0 0 12px rgba(0, 255, 0, 0.56)) !important;
+                transition: transform 0.08s ease-out, filter 0.08s ease-out !important;
+                will-change: transform !important;
+            }
+
+            body.mobile-optimized #mineBtn:active img {
+                transform: scale(0.97) !important;
+                filter: brightness(1.16) contrast(1.08) drop-shadow(0 0 18px rgba(0, 255, 0, 0.74)) !important;
+            }
+
+            body.mobile-optimized .explosion img {
+                animation: mobileMinePulse 0.26s ease-out !important;
+            }
+
+            body.mobile-optimized .explosion-particle {
+                box-shadow: 0 0 6px #00ff41 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -12481,10 +12522,12 @@
             return false;
         }
 
-        function bindResponsiveTap(node, resolveTarget, handler) {
+        function bindResponsiveTap(node, resolveTarget, handler, options = {}) {
             if (!node || typeof handler !== 'function') {
                 return;
             }
+
+            const dedupMs = Math.max(0, Number(options.dedupMs ?? PAYMENT_TAP_DEDUP_MS) || PAYMENT_TAP_DEDUP_MS);
 
             const getTargetElement = (event) => {
                 const rawTarget = event ? event.target : null;
@@ -12511,7 +12554,7 @@
 
                 const now = Date.now();
                 const lastHandledAt = Number(target.dataset.tapHandledAt) || 0;
-                if (now - lastHandledAt < PAYMENT_TAP_DEDUP_MS) {
+                if (now - lastHandledAt < dedupMs) {
                     return;
                 }
 
@@ -14004,10 +14047,11 @@
             }
 
             draw() {
+                const reducedEffects = isMobilePerformanceMode();
                 ctx.save();
                 ctx.globalAlpha = this.life;
                 ctx.fillStyle = this.color;
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = reducedEffects ? 4 : 10;
                 ctx.shadowColor = this.color;
 
                 if (this.shape === 'square') {
@@ -14029,7 +14073,10 @@
         }
 
         function createParticleBurst(x, y, count = 25) {
-            for (let i = 0; i < count; i++) {
+            const finalCount = isMobilePerformanceMode()
+                ? Math.max(6, Math.min(count, 10))
+                : count;
+            for (let i = 0; i < finalCount; i++) {
                 particles.push(new Particle(x, y));
             }
         }
@@ -16368,6 +16415,46 @@
         const paymentTopCloseBtn = document.getElementById('paymentTopCloseBtn');
         const powerStat = document.getElementById('powerStat');
         const criticalOverlay = document.getElementById('criticalOverlay');
+        let queuedDisplayUpdateFrameId = 0;
+
+        function isMobilePerformanceMode() {
+            return document.body.classList.contains('mobile-optimized')
+                || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+        }
+
+        function queueDisplayUpdate() {
+            if (queuedDisplayUpdateFrameId) {
+                return;
+            }
+
+            queuedDisplayUpdateFrameId = requestAnimationFrame(() => {
+                queuedDisplayUpdateFrameId = 0;
+                updateDisplay();
+            });
+        }
+
+        function refreshMiningHeatHud() {
+            if (heatLevelDisplay) {
+                heatLevelDisplay.textContent = Math.floor(heatLevel);
+            }
+
+            const effectiveHashrate = getEffectiveHashrate();
+            if (effectiveHashrate <= MIN_POWER * 2) {
+                powerStat.classList.add('warning');
+            } else {
+                powerStat.classList.remove('warning');
+            }
+
+            updateWarningBorders();
+        }
+
+        function resolveMineTapPosition(event, rect) {
+            const touchPoint = event?.changedTouches?.[0] || event?.touches?.[0] || null;
+            return {
+                x: touchPoint?.clientX || event?.clientX || (rect.left + rect.width / 2),
+                y: touchPoint?.clientY || event?.clientY || (rect.top + rect.height / 2)
+            };
+        }
         const gemCodexBtn = document.getElementById('gemCodexBtn');
         const gemCodexModal = document.getElementById('gemCodexModal');
         const gemCodexCloseBtn = document.getElementById('gemCodexClose');
@@ -16891,21 +16978,26 @@
 
         function scheduleBackgroundMusicBar(barDelay = 0) {
             const intensity = getAudioIntensityProfile();
-            const bassPattern = intensity >= 0.72
-                ? [92.5, 110, 123.47, 82.4]
-                : intensity >= 0.46
-                    ? [92.5, 92.5, 110, 82.4]
-                    : [82.4, 92.5, 98, 73.42];
-            const leadPattern = intensity >= 0.72
-                ? [659.25, 739.99, 880, 739.99, 659.25, 783.99, 987.77, 880]
-                : intensity >= 0.46
-                    ? [369.99, 554.37, 659.25, 554.37, 493.88, 554.37, 739.99, 659.25]
-                    : [329.63, 440, 493.88, 440, 392, 440, 523.25, 493.88];
+            const reducedEffects = isMobilePerformanceMode();
+            const bassPattern = reducedEffects
+                ? (intensity >= 0.56 ? [92.5, 110] : [82.4, 92.5])
+                : intensity >= 0.72
+                    ? [92.5, 110, 123.47, 82.4]
+                    : intensity >= 0.46
+                        ? [92.5, 92.5, 110, 82.4]
+                        : [82.4, 92.5, 98, 73.42];
+            const leadPattern = reducedEffects
+                ? (intensity >= 0.56 ? [659.25, 880, 987.77, 880] : [329.63, 440, 523.25, 493.88])
+                : intensity >= 0.72
+                    ? [659.25, 739.99, 880, 739.99, 659.25, 783.99, 987.77, 880]
+                    : intensity >= 0.46
+                        ? [369.99, 554.37, 659.25, 554.37, 493.88, 554.37, 739.99, 659.25]
+                        : [329.63, 440, 493.88, 440, 392, 440, 523.25, 493.88];
 
-            const kickVolume = 0.018 + (intensity * 0.016);
-            const bassVolume = 0.022 + (intensity * 0.018);
-            const leadVolume = 0.012 + (intensity * 0.012);
-            const hatVolume = 0.003 + (intensity * 0.004);
+            const kickVolume = (reducedEffects ? 0.012 : 0.018) + (intensity * (reducedEffects ? 0.01 : 0.016));
+            const bassVolume = (reducedEffects ? 0.016 : 0.022) + (intensity * (reducedEffects ? 0.012 : 0.018));
+            const leadVolume = (reducedEffects ? 0.009 : 0.012) + (intensity * (reducedEffects ? 0.008 : 0.012));
+            const hatVolume = reducedEffects ? 0 : 0.003 + (intensity * 0.004);
 
             bassPattern.forEach((frequency, index) => {
                 playTone({
@@ -16913,7 +17005,7 @@
                     type: 'triangle',
                     duration: 0.42,
                     volume: bassVolume,
-                    delay: barDelay + index * 0.4,
+                    delay: barDelay + index * (reducedEffects ? 0.8 : 0.4),
                     attack: 0.01,
                     release: 0.22
                 });
@@ -16924,7 +17016,7 @@
                     type: 'sine',
                     duration: 0.12,
                     volume: kickVolume,
-                    delay: barDelay + index * 0.4
+                    delay: barDelay + index * (reducedEffects ? 0.8 : 0.4)
                 });
             });
 
@@ -16932,14 +17024,14 @@
                 playTone({
                     frequency: frequency * (intensity >= 0.72 && index % 2 === 0 ? 1.12 : 1),
                     type: intensity >= 0.72 ? 'sawtooth' : 'triangle',
-                    duration: intensity >= 0.72 ? 0.2 : 0.18,
+                    duration: reducedEffects ? 0.16 : (intensity >= 0.72 ? 0.2 : 0.18),
                     volume: leadVolume,
-                    delay: barDelay + 0.1 + index * 0.2,
+                    delay: barDelay + 0.1 + index * (reducedEffects ? 0.4 : 0.2),
                     attack: 0.01,
                     release: 0.14
                 });
 
-                if (intensity >= 0.52 && index % 2 === 1) {
+                if (!reducedEffects && intensity >= 0.52 && index % 2 === 1) {
                     playTone({
                         frequency: frequency * 0.5,
                         type: 'sine',
@@ -16961,7 +17053,7 @@
                 delay: barDelay + 0.02
             });
 
-            if (intensity >= 0.38) {
+            if (!reducedEffects && intensity >= 0.38) {
                 for (let index = 0; index < 8; index += 1) {
                     playTone({
                         frequency: 2800 + (Math.random() * 400),
@@ -16987,7 +17079,7 @@
             }
 
             backgroundMusicStarted = true;
-            const barDurationMs = 1600;
+            const barDurationMs = isMobilePerformanceMode() ? 2200 : 1600;
             scheduleBackgroundMusicBar(0);
 
             backgroundMusicTimer = window.setInterval(() => {
@@ -17128,36 +17220,40 @@
         }
 
         function playMineSound() {
+            const reducedEffects = isMobilePerformanceMode();
             playTone({
-                frequency: 680 + Math.random() * 80,
+                frequency: 660 + Math.random() * 60,
                 type: 'square',
-                duration: 0.028,
-                volume: 0.044,
+                duration: reducedEffects ? 0.022 : 0.028,
+                volume: reducedEffects ? 0.028 : 0.044,
                 attack: 0.002,
-                release: 0.035
+                release: reducedEffects ? 0.024 : 0.035
             });
-            playTone({
-                frequency: 320 + Math.random() * 32,
-                type: 'sine',
-                duration: 0.06,
-                volume: 0.024,
-                delay: 0.004,
-                attack: 0.002,
-                release: 0.06
-            });
-            playSweep({
-                startFrequency: 1040,
-                endFrequency: 420,
-                type: 'triangle',
-                duration: 0.035,
-                volume: 0.014,
-                delay: 0.002
-            });
+            if (!reducedEffects) {
+                playTone({
+                    frequency: 320 + Math.random() * 32,
+                    type: 'sine',
+                    duration: 0.06,
+                    volume: 0.024,
+                    delay: 0.004,
+                    attack: 0.002,
+                    release: 0.06
+                });
+                playSweep({
+                    startFrequency: 1040,
+                    endFrequency: 420,
+                    type: 'triangle',
+                    duration: 0.035,
+                    volume: 0.014,
+                    delay: 0.002
+                });
+            }
         }
 
         function triggerMineSound(force = false) {
             const now = performance.now();
-            if (!force && now - lastMineSoundAt < 70) {
+            const minGap = isMobilePerformanceMode() ? 110 : 70;
+            if (!force && now - lastMineSoundAt < minGap) {
                 return;
             }
 
@@ -17899,7 +17995,7 @@
         }
 
         function createExplosionParticles(x, y) {
-            const particleCount = 30;
+            const particleCount = isMobilePerformanceMode() ? 12 : 30;
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'explosion-particle';
@@ -17933,7 +18029,7 @@
 
             setTimeout(() => {
                 particle.remove();
-            }, isCritical ? 1500 : 1000);
+            }, isMobilePerformanceMode() ? (isCritical ? 900 : 650) : (isCritical ? 1500 : 1000));
         }
 
         function triggerCritical() {
@@ -18049,10 +18145,10 @@
             }
             if (power > floor) {
                 power = Math.max(floor, power * (1 - DECAY_RATE));
-                updateDisplay();
+                queueDisplayUpdate();
             } else if (power < floor) {
                 power = floor;
-                updateDisplay();
+                queueDisplayUpdate();
             }
         }
 
@@ -18062,22 +18158,20 @@
                 coins += passiveIncome;
                 totalCoinsEarned += passiveIncome;
                 progressCoinsEarned += passiveIncome;
-                updateDisplay();
+                queueDisplayUpdate();
             }
         }
 
         function updateHeatAndWarnings() {
             updateHeat();
-            updateDisplay();
+            refreshMiningHeatHud();
         }
 
         mineBtn.addEventListener('pointerdown', () => {
-            unlockAudioSystem(() => {
-                triggerMineSound(true);
-            });
+            unlockAudioSystem();
         });
 
-        mineBtn.addEventListener('click', (e) => {
+        function handleMineAction(e) {
             unlockAudioSystem();
             const now = Date.now();
             clickHistory.push(now);
@@ -18092,11 +18186,14 @@
             bestComboStreak = Math.max(bestComboStreak, comboStreak);
 
             const rect = mineBtn.getBoundingClientRect();
-            const clickX = e.clientX || (rect.left + rect.width / 2);
-            const clickY = e.clientY || (rect.top + rect.height / 2);
+            const tapPoint = resolveMineTapPosition(e, rect);
+            const clickX = tapPoint.x;
+            const clickY = tapPoint.y;
             
             const isCritical = Math.random() < CRITICAL_CHANCE;
-            const particleCount = isCritical ? 40 : 25; // 暴击更多粒子
+            const particleCount = isMobilePerformanceMode()
+                ? (isCritical ? 14 : 8)
+                : (isCritical ? 40 : 25);
             createParticleBurst(clickX, clickY, particleCount);
 
             const effectiveHashrate = getEffectiveHashrate();
@@ -18118,7 +18215,7 @@
             miningTier4PityClicks += 1;
             const gemRollResult = maybeApplyMiningTier4Pity(rollGemDrops());
             const droppedGems = gemRollResult.gems;
-            triggerMineSound();
+            triggerMineSound(true);
 
             if (isCritical) {
                 runCriticalHits += 1;
@@ -18127,7 +18224,7 @@
                 mineBtn.classList.add('shake');
                 setTimeout(() => {
                     mineBtn.classList.remove('shake');
-                }, 500);
+                }, isMobilePerformanceMode() ? 180 : 500);
             }
 
             if (droppedGems.length) {
@@ -18146,8 +18243,12 @@
                 });
             }
             
-            updateDisplay();
-        });
+            queueDisplayUpdate();
+        }
+
+        bindResponsiveTap(mineBtn, () => mineBtn, (_target, event) => {
+            handleMineAction(event);
+        }, { dedupMs: 55 });
 
         upgradeBtn.addEventListener('click', () => {
             if (coins >= upgradeCost) {
