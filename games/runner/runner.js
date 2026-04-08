@@ -414,6 +414,7 @@
     let activeTab = getTabFromHash();
     let toastTimer = 0;
     let seasonCountdownTimer = 0;
+    let missionCountdownTimer = 0;
     let audioCtx = null;
     let lastResult = null;
     let activeInfoModal = '';
@@ -431,6 +432,12 @@
         seasonXp: 120,
         seasonLevel: 2,
         seasonClaims: {},
+        rankClaims: {},
+        missionBoard: {
+            chapter: 1,
+            dailyKey: '',
+            seeded: false
+        },
         boosts: {
             starterOverclockRuns: 0,
             settlementBoostRuns: 0,
@@ -451,6 +458,16 @@
             passives: ['magnet']
         },
         missionsClaimed: {},
+        dailyStats: {
+            key: '',
+            runs: 0,
+            distance: 0,
+            bestDistance: 0,
+            bestCombo: 0,
+            bestScore: 0,
+            cleanDistance: 0,
+            overclocks: 0
+        },
         stats: {
             longestCombo: 0,
             perfectRuns: 0,
@@ -529,6 +546,8 @@
                     passives: Array.from(new Set([...(baseState.unlocked.passives || []), ...((parsed.unlocked && parsed.unlocked.passives) || [])]))
                 },
                 seasonClaims: { ...(parsed.seasonClaims || {}) },
+                rankClaims: { ...(parsed.rankClaims || {}) },
+                missionBoard: { ...deepClone(baseState.missionBoard), ...(parsed.missionBoard || {}) },
                 boosts: { ...deepClone(baseState.boosts), ...(parsed.boosts || {}) },
                 shop: {
                     ...deepClone(baseState.shop),
@@ -536,6 +555,7 @@
                     stock: { ...deepClone(baseState.shop.stock), ...((parsed.shop && parsed.shop.stock) || {}) }
                 },
                 missionsClaimed: { ...(parsed.missionsClaimed || {}) },
+                dailyStats: { ...deepClone(baseState.dailyStats), ...(parsed.dailyStats || {}) },
                 stats: { ...deepClone(baseState.stats), ...(parsed.stats || {}) }
             };
         } catch (error) {
@@ -598,76 +618,332 @@
         return tierMap[playerProfile.lang][tier] || tier;
     }
 
-    function missionDefinitions() {
-        return [
+    function getEmptyDailyStats(dayKey = getLocalDayKey()) {
+        return {
+            key: dayKey,
+            runs: 0,
+            distance: 0,
+            bestDistance: 0,
+            bestCombo: 0,
+            bestScore: 0,
+            cleanDistance: 0,
+            overclocks: 0
+        };
+    }
+
+    function hashString(value) {
+        return Array.from(String(value || '')).reduce((hash, char) => ((hash * 31) + char.charCodeAt(0)) >>> 0, 7);
+    }
+
+    function estimateMissionChapter() {
+        const bestDistanceScore = Math.floor(playerProfile.bestDistance / 850);
+        const totalRunsScore = Math.floor(playerProfile.totalRuns / 8);
+        const totalDistanceScore = Math.floor(playerProfile.totalDistance / 7000);
+        const seasonScore = Math.floor(calcSeasonLevel(playerProfile.seasonXp) / 3);
+        const ladderScore = Math.floor(getRunnerRankScore() / 1400);
+        return Math.max(1, Math.min(12, 1 + bestDistanceScore + totalRunsScore + totalDistanceScore + seasonScore + ladderScore));
+    }
+
+    function ensureMissionBoardState() {
+        let changed = false;
+        if (!playerProfile.missionBoard || typeof playerProfile.missionBoard !== 'object') {
+            playerProfile.missionBoard = deepClone(baseState.missionBoard);
+            changed = true;
+        }
+
+        const estimatedChapter = estimateMissionChapter();
+        const currentChapter = Number(playerProfile.missionBoard.chapter);
+        const normalizedChapter = Number.isFinite(currentChapter) && currentChapter >= 1
+            ? Math.floor(currentChapter)
+            : estimatedChapter;
+
+        if (playerProfile.missionBoard.chapter !== normalizedChapter) {
+            playerProfile.missionBoard.chapter = normalizedChapter;
+            changed = true;
+        }
+
+        if (!playerProfile.missionBoard.seeded) {
+            const seededChapter = Math.max(playerProfile.missionBoard.chapter, estimatedChapter);
+            if (playerProfile.missionBoard.chapter !== seededChapter) {
+                playerProfile.missionBoard.chapter = seededChapter;
+            }
+            playerProfile.missionBoard.seeded = true;
+            changed = true;
+        }
+
+        const dayKey = getLocalDayKey();
+        if (playerProfile.missionBoard.dailyKey !== dayKey) {
+            playerProfile.missionBoard.dailyKey = dayKey;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    function ensureDailyProgressState() {
+        let changed = false;
+        if (!playerProfile.dailyStats || typeof playerProfile.dailyStats !== 'object') {
+            playerProfile.dailyStats = getEmptyDailyStats();
+            changed = true;
+        }
+
+        const dayKey = getLocalDayKey();
+        if (playerProfile.dailyStats.key !== dayKey) {
+            playerProfile.dailyStats = getEmptyDailyStats(dayKey);
+            changed = true;
+        }
+
+        ['runs', 'distance', 'bestDistance', 'bestCombo', 'bestScore', 'cleanDistance', 'overclocks'].forEach((key) => {
+            const raw = Number(playerProfile.dailyStats[key]);
+            const normalized = Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0;
+            if (playerProfile.dailyStats[key] !== normalized) {
+                playerProfile.dailyStats[key] = normalized;
+                changed = true;
+            }
+        });
+
+        if (!playerProfile.missionBoard || playerProfile.missionBoard.dailyKey !== dayKey) {
+            playerProfile.missionBoard = {
+                ...deepClone(baseState.missionBoard),
+                ...(playerProfile.missionBoard || {}),
+                dailyKey: dayKey
+            };
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    function getMissionChapter() {
+        ensureMissionBoardState();
+        const raw = Number(playerProfile.missionBoard.chapter);
+        return Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 1;
+    }
+
+    function buildMissionReward(baseReward, chapter, multiplier = 1) {
+        const scale = Math.max(0, chapter - 1);
+        return {
+            gold: Math.max(120, Math.round((baseReward.gold + scale * 180) * multiplier)),
+            core: Math.max(4, Math.round((baseReward.core + scale * 2.2) * Math.max(1, multiplier * 0.92))),
+            xp: Math.max(12, Math.round((baseReward.xp + scale * 9) * multiplier))
+        };
+    }
+
+    function getMissionPulseVariant(dayKey, chapter = getMissionChapter()) {
+        ensureDailyProgressState();
+        const pulseScale = Math.max(0, Math.floor((chapter - 1) / 2));
+        const variants = [
             {
-                id: 'distance_600',
-                tier: 'basic',
-                title: { zh: '基础热身', en: 'Warm-Up Sprint' },
-                desc: { zh: '单局跑到 600m。', en: 'Reach 600m in a single run.' },
-                current: () => Math.min(Math.floor(Math.max(game.distance, playerProfile.bestDistance)), 600),
-                target: 600,
-                reward: { gold: 450, core: 8, xp: 35 }
-            },
-            {
-                id: 'combo_20',
-                tier: 'combo',
-                title: { zh: '连击节奏', en: 'Combo Rhythm' },
-                desc: { zh: '达成 20 连击。', en: 'Reach combo 20.' },
-                current: () => Math.min(Math.max(game.maxCombo, playerProfile.stats.longestCombo), 20),
-                target: 20,
-                reward: { gold: 600, core: 10, xp: 40 }
-            },
-            {
-                id: 'runs_4',
-                tier: 'basic',
-                title: { zh: '持续热机', en: 'Heat Loop' },
-                desc: { zh: '累计进行 4 局跑酷。', en: 'Finish 4 total runs.' },
-                current: () => Math.min(playerProfile.totalRuns, 4),
-                target: 4,
-                reward: { gold: 700, core: 12, xp: 50 }
-            },
-            {
-                id: 'distance_4000',
-                tier: 'elite',
-                title: { zh: '长线冲刺', en: 'Longline Rush' },
-                desc: { zh: '累计总里程达到 4,000m。', en: 'Reach 4,000m total distance.' },
-                current: () => Math.min(playerProfile.totalDistance, 4000),
-                target: 4000,
-                reward: { gold: 1200, core: 24, xp: 80 }
-            },
-            {
-                id: 'clean_1200',
-                tier: 'elite',
-                title: { zh: '零损疾行', en: 'Clean Velocity' },
-                desc: { zh: '无碰撞跑到 1,200m。', en: 'Reach 1,200m with a clean no-hit run.' },
-                current: () => Math.min(playerProfile.stats.bestCleanDistance || 0, 1200),
-                target: 1200,
-                reward: { gold: 1800, core: 36, xp: 110 }
-            },
-            {
-                id: 'time_500_35',
+                key: 'runs',
                 tier: 'timed',
-                title: { zh: '限时热区', en: 'Timed Heat' },
-                desc: { zh: '35 秒内冲到 500m。', en: 'Reach 500m within 35 seconds.' },
-                current: () => {
-                    if (playerProfile.stats.fastest500TimeMs && playerProfile.stats.fastest500TimeMs <= 35000) return 500;
-                    if (game.running && game.elapsed <= 35) return Math.min(Math.floor(game.distance), 500);
-                    return 0;
+                title: { zh: '日常脉冲：热机局数', en: 'Daily Pulse: Startup Runs' },
+                desc: {
+                    zh: `今日完成 ${formatNumber(3 + pulseScale)} 局跑酷。`,
+                    en: `Finish ${formatNumber(3 + pulseScale)} runs today.`
                 },
-                target: 500,
-                reward: { gold: 1350, core: 22, xp: 90 }
+                current: () => Math.min(playerProfile.dailyStats.runs || 0, 3 + pulseScale),
+                target: 3 + pulseScale,
+                reward: buildMissionReward({ gold: 720, core: 12, xp: 52 }, chapter, 1 + pulseScale * 0.08)
             },
             {
-                id: 'overclock_6',
+                key: 'distance',
+                tier: 'timed',
+                title: { zh: '日常脉冲：里程拉满', en: 'Daily Pulse: Distance Feed' },
+                desc: {
+                    zh: `今日累计跑到 ${formatNumber(1800 + pulseScale * 420)}m。`,
+                    en: `Reach ${formatNumber(1800 + pulseScale * 420)}m total distance today.`
+                },
+                current: () => Math.min(playerProfile.dailyStats.distance || 0, 1800 + pulseScale * 420),
+                target: 1800 + pulseScale * 420,
+                reward: buildMissionReward({ gold: 760, core: 12, xp: 56 }, chapter, 1 + pulseScale * 0.08)
+            },
+            {
+                key: 'combo',
                 tier: 'combo',
-                title: { zh: '超频上瘾', en: 'Overclock Fever' },
-                desc: { zh: '累计触发 6 次超频冲刺。', en: 'Trigger overclock 6 times in total.' },
-                current: () => Math.min(playerProfile.stats.overclockUses || 0, 6),
-                target: 6,
-                reward: { gold: 1500, core: 28, xp: 100 }
+                title: { zh: '日常脉冲：连击手感', en: 'Daily Pulse: Combo Feel' },
+                desc: {
+                    zh: `今日达成 ${formatNumber(18 + pulseScale * 4)} 连击。`,
+                    en: `Reach combo ${formatNumber(18 + pulseScale * 4)} today.`
+                },
+                current: () => Math.min(playerProfile.dailyStats.bestCombo || 0, 18 + pulseScale * 4),
+                target: 18 + pulseScale * 4,
+                reward: buildMissionReward({ gold: 820, core: 14, xp: 58 }, chapter, 1 + pulseScale * 0.09)
+            },
+            {
+                key: 'score',
+                tier: 'basic',
+                title: { zh: '日常脉冲：高分校准', en: 'Daily Pulse: Score Calibration' },
+                desc: {
+                    zh: `今日单局积分达到 ${formatNumber(1500 + pulseScale * 320)}。`,
+                    en: `Hit ${formatNumber(1500 + pulseScale * 320)} score in a run today.`
+                },
+                current: () => Math.min(playerProfile.dailyStats.bestScore || 0, 1500 + pulseScale * 320),
+                target: 1500 + pulseScale * 320,
+                reward: buildMissionReward({ gold: 860, core: 14, xp: 60 }, chapter, 1 + pulseScale * 0.1)
+            },
+            {
+                key: 'clean',
+                tier: 'elite',
+                title: { zh: '日常脉冲：无伤推进', en: 'Daily Pulse: Clean Routing' },
+                desc: {
+                    zh: `今日无碰撞跑到 ${formatNumber(900 + pulseScale * 180)}m。`,
+                    en: `Reach ${formatNumber(900 + pulseScale * 180)}m in a clean run today.`
+                },
+                current: () => Math.min(playerProfile.dailyStats.cleanDistance || 0, 900 + pulseScale * 180),
+                target: 900 + pulseScale * 180,
+                reward: buildMissionReward({ gold: 920, core: 16, xp: 66 }, chapter, 1 + pulseScale * 0.11)
+            },
+            {
+                key: 'overclock',
+                tier: 'combo',
+                title: { zh: '日常脉冲：超频回路', en: 'Daily Pulse: Overclock Loop' },
+                desc: {
+                    zh: `今日触发 ${formatNumber(2 + Math.floor(pulseScale / 2))} 次超频。`,
+                    en: `Trigger overclock ${formatNumber(2 + Math.floor(pulseScale / 2))} times today.`
+                },
+                current: () => Math.min(playerProfile.dailyStats.overclocks || 0, 2 + Math.floor(pulseScale / 2)),
+                target: 2 + Math.floor(pulseScale / 2),
+                reward: buildMissionReward({ gold: 880, core: 15, xp: 62 }, chapter, 1 + pulseScale * 0.1)
             }
         ];
+        const selected = variants[hashString(dayKey) % variants.length];
+        return {
+            ...selected,
+            id: `pulse_${dayKey}_${selected.key}`,
+            section: 'pulse'
+        };
+    }
+
+    function buildMissionBoard(chapter, dayKey) {
+        const stage = Math.max(0, chapter - 1);
+        const coreMissions = [
+            {
+                id: `chapter_${chapter}_distance`,
+                section: 'core',
+                tier: 'basic',
+                title: { zh: '章节主线：距离推进', en: 'Chapter Contract: Distance Push' },
+                desc: {
+                    zh: `单局跑到 ${formatNumber(600 + stage * 250)}m。`,
+                    en: `Reach ${formatNumber(600 + stage * 250)}m in a single run.`
+                },
+                current: () => Math.min(Math.max(Math.floor(game.distance), playerProfile.bestDistance), 600 + stage * 250),
+                target: 600 + stage * 250,
+                reward: buildMissionReward({ gold: 460, core: 8, xp: 34 }, chapter)
+            },
+            {
+                id: `chapter_${chapter}_runs`,
+                section: 'core',
+                tier: 'basic',
+                title: { zh: '章节主线：持续热机', en: 'Chapter Contract: Heat Loop' },
+                desc: {
+                    zh: `累计完成 ${formatNumber(4 + stage * 2)} 局跑酷。`,
+                    en: `Finish ${formatNumber(4 + stage * 2)} total runs.`
+                },
+                current: () => Math.min(playerProfile.totalRuns, 4 + stage * 2),
+                target: 4 + stage * 2,
+                reward: buildMissionReward({ gold: 560, core: 10, xp: 38 }, chapter)
+            },
+            {
+                id: `chapter_${chapter}_combo`,
+                section: 'core',
+                tier: 'combo',
+                title: { zh: '章节主线：连击节奏', en: 'Chapter Contract: Combo Rhythm' },
+                desc: {
+                    zh: `达成 ${formatNumber(18 + stage * 4)} 连击。`,
+                    en: `Reach combo ${formatNumber(18 + stage * 4)}.`
+                },
+                current: () => Math.min(Math.max(game.maxCombo, playerProfile.stats.longestCombo), 18 + stage * 4),
+                target: 18 + stage * 4,
+                reward: buildMissionReward({ gold: 620, core: 11, xp: 44 }, chapter, 1.04)
+            },
+            {
+                id: `chapter_${chapter}_score`,
+                section: 'core',
+                tier: 'basic',
+                title: { zh: '章节主线：高分稳定', en: 'Chapter Contract: Score Stability' },
+                desc: {
+                    zh: `单局积分达到 ${formatNumber(1000 + stage * 320)}。`,
+                    en: `Hit ${formatNumber(1000 + stage * 320)} score in a run.`
+                },
+                current: () => Math.min(Math.max(Math.floor(game.score), playerProfile.bestScore), 1000 + stage * 320),
+                target: 1000 + stage * 320,
+                reward: buildMissionReward({ gold: 700, core: 12, xp: 46 }, chapter, 1.08)
+            }
+        ];
+
+        const eliteMissions = [];
+        if (chapter >= 2) {
+            eliteMissions.push(
+                {
+                    id: `chapter_${chapter}_total_distance`,
+                    section: 'elite',
+                    tier: 'elite',
+                    title: { zh: '精英合约：总里程积压', en: 'Elite Contract: Distance Stack' },
+                    desc: {
+                        zh: `累计总里程达到 ${formatNumber(3200 + (chapter - 2) * 1800)}m。`,
+                        en: `Reach ${formatNumber(3200 + (chapter - 2) * 1800)}m total distance.`
+                    },
+                    current: () => Math.min(playerProfile.totalDistance, 3200 + (chapter - 2) * 1800),
+                    target: 3200 + (chapter - 2) * 1800,
+                    reward: buildMissionReward({ gold: 1100, core: 20, xp: 72 }, chapter, 1.16)
+                },
+                {
+                    id: `chapter_${chapter}_clean_distance`,
+                    section: 'elite',
+                    tier: 'elite',
+                    title: { zh: '精英合约：无伤推进', en: 'Elite Contract: Clean Velocity' },
+                    desc: {
+                        zh: `无碰撞跑到 ${formatNumber(950 + (chapter - 2) * 220)}m。`,
+                        en: `Reach ${formatNumber(950 + (chapter - 2) * 220)}m with a clean run.`
+                    },
+                    current: () => Math.min(playerProfile.stats.bestCleanDistance || 0, 950 + (chapter - 2) * 220),
+                    target: 950 + (chapter - 2) * 220,
+                    reward: buildMissionReward({ gold: 1320, core: 24, xp: 84 }, chapter, 1.22)
+                }
+            );
+        }
+
+        if (chapter >= 4) {
+            eliteMissions.push({
+                id: `chapter_${chapter}_rank`,
+                section: 'elite',
+                tier: 'elite',
+                title: { zh: '精英合约：冲榜评级', en: 'Elite Contract: Ladder Rating' },
+                desc: {
+                    zh: `跑酷评分达到 ${formatNumber(1100 + (chapter - 4) * 260)}。`,
+                    en: `Reach ${formatNumber(1100 + (chapter - 4) * 260)} run rating.`
+                },
+                current: () => Math.min(getRunnerRankScore(), 1100 + (chapter - 4) * 260),
+                target: 1100 + (chapter - 4) * 260,
+                reward: buildMissionReward({ gold: 1500, core: 28, xp: 96 }, chapter, 1.28)
+            });
+        }
+
+        return [getMissionPulseVariant(dayKey, chapter), ...coreMissions, ...eliteMissions];
+    }
+
+    function sortMissionEntries(left, right) {
+        const leftRank = left.state.complete && !left.state.claimed ? 0 : !left.state.claimed ? 1 : 2;
+        const rightRank = right.state.complete && !right.state.claimed ? 0 : !right.state.claimed ? 1 : 2;
+        if (leftRank !== rightRank) return leftRank - rightRank;
+        const leftRatio = left.target > 0 ? left.state.current / left.target : 0;
+        const rightRatio = right.target > 0 ? right.state.current / right.target : 0;
+        return rightRatio - leftRatio;
+    }
+
+    function maybeAdvanceMissionChapter() {
+        const chapter = getMissionChapter();
+        const chapterContracts = buildMissionBoard(chapter, getLocalDayKey()).filter((mission) => mission.section !== 'pulse');
+        const allClaimed = chapterContracts.length > 0 && chapterContracts.every((mission) => !!playerProfile.missionsClaimed[mission.id]);
+        if (!allClaimed) return 0;
+        playerProfile.missionBoard.chapter = Math.min(30, chapter + 1);
+        return playerProfile.missionBoard.chapter;
+    }
+
+    function missionDefinitions() {
+        ensureMissionBoardState();
+        ensureDailyProgressState();
+        return buildMissionBoard(getMissionChapter(), playerProfile.dailyStats.key || getLocalDayKey());
     }
 
     function getRunner(id) {
@@ -854,6 +1130,71 @@
         ];
     }
 
+    function getRankRewards() {
+        return [
+            {
+                id: 'rank_520',
+                score: 520,
+                title: { zh: '白银启封奖励', en: 'Silver Gate Cache' },
+                desc: {
+                    zh: '第一次把评分推到白银线后，立刻给一波继续冲分的起跑资源。',
+                    en: 'Your first push into Silver should immediately fund a few stronger follow-up runs.'
+                },
+                reward: { gold: 1200, core: 10, starterOverclockRuns: 1 }
+            },
+            {
+                id: 'rank_1180',
+                score: 1180,
+                title: { zh: '黄金追击奖励', en: 'Gold Chase Cache' },
+                desc: {
+                    zh: '到了黄金以后，开始需要更稳的中局节奏，因此补一层结算增益。',
+                    en: 'Gold asks for more stable mid-run rhythm, so the reward shifts toward settlement power.'
+                },
+                reward: { gold: 2600, core: 16, settlementBoostRuns: 1 }
+            },
+            {
+                id: 'rank_2060',
+                score: 2060,
+                title: { zh: '白金突破奖励', en: 'Platinum Break Cache' },
+                desc: {
+                    zh: '白金开始容错更重要，加入一次免费复活来支持极限尝试。',
+                    en: 'At Platinum, retry tolerance matters more, so this one adds a free revive.'
+                },
+                reward: { gold: 4200, core: 24, freeRevives: 1 }
+            },
+            {
+                id: 'rank_3320',
+                score: 3320,
+                title: { zh: '钻石稳压奖励', en: 'Diamond Pressure Cache' },
+                desc: {
+                    zh: '钻石段需要持续守节奏，因此同时补起跑爆发和结算收益。',
+                    en: 'Diamond asks you to sustain pressure, so this reward supports both starts and settlements.'
+                },
+                reward: { gold: 6800, core: 36, starterOverclockRuns: 1, settlementBoostRuns: 2 }
+            },
+            {
+                id: 'rank_4980',
+                score: 4980,
+                title: { zh: '传说封顶奖励', en: 'Legend Summit Cache' },
+                desc: {
+                    zh: '传说段是榜单荣誉门槛，奖励会明显更厚，用来支撑后续守榜。',
+                    en: 'Legend is where prestige starts to matter, so the payout is noticeably heavier for ladder defense.'
+                },
+                reward: { gold: 9800, core: 52, freeRevives: 2, settlementBoostRuns: 2 }
+            },
+            {
+                id: 'rank_6200',
+                score: 6200,
+                title: { zh: '赛季超载奖励', en: 'Season Overdrive Cache' },
+                desc: {
+                    zh: '超过传说线后，继续给一档顶段冲刺奖励，保持后期目标不空。',
+                    en: 'Past the Legend line, a final overdrive cache keeps late-season aspiration alive.'
+                },
+                reward: { gold: 13600, core: 72, starterOverclockRuns: 2, settlementBoostRuns: 3, freeRevives: 2 }
+            }
+        ];
+    }
+
     function getSeasonRewardState(level) {
         const currentLevel = calcSeasonLevel(playerProfile.seasonXp);
         const claimed = !!playerProfile.seasonClaims[String(level)];
@@ -866,6 +1207,19 @@
 
     function getClaimableSeasonRewardCount() {
         return getSeasonRewards().filter((reward) => getSeasonRewardState(reward.level).claimable).length;
+    }
+
+    function getRankRewardState(reward, score = getRunnerRankScore()) {
+        const claimed = !!playerProfile.rankClaims[reward.id];
+        return {
+            claimed,
+            unlocked: score >= reward.score,
+            claimable: score >= reward.score && !claimed
+        };
+    }
+
+    function getClaimableRankRewardCount(score = getRunnerRankScore()) {
+        return getRankRewards().filter((reward) => getRankRewardState(reward, score).claimable).length;
     }
 
     function getLocalDayKey() {
@@ -1195,6 +1549,13 @@
                             ? 'Combo length and clean runs weigh heavily in rating. Stable routing beats random risks.'
                             : '段位分不只看距离，连击和无伤表现权重也很高。稳定跑法比乱赌更容易冲段。'}</p>
                     </article>
+                    <article class="modal-info-card">
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'LADDER BOUNTY' : '冲榜赏金'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Rating breakpoints also pay immediate rewards' : '关键评分档还会额外发即时奖励'}</h3>
+                        <p>${playerProfile.lang === 'en'
+                            ? 'Besides season level rewards, rating milestones now grant gold, cores, and stored boosts that can be claimed immediately.'
+                            : '除了赛季等级奖励外，跑酷评分达到关键档位后，也会立即开放金币、能核和增益储备奖励。'}</p>
+                    </article>
                 </div>
                 <div class="modal-rule-list">
                     <div class="modal-rule-head">
@@ -1204,6 +1565,88 @@
                         </div>
                     </div>
                     <div class="modal-rule-grid">${divisionRows}</div>
+                </div>
+            `
+        };
+    }
+
+    function renderMissionRulesModal() {
+        const chapter = getMissionChapter();
+        const dayKey = playerProfile.dailyStats.key || getLocalDayKey();
+        const pulseMission = getMissionPulseVariant(dayKey, chapter);
+        const pulseState = getMissionState(pulseMission);
+        const chapterContracts = buildMissionBoard(chapter, dayKey).filter((mission) => mission.section !== 'pulse');
+        const chapterClaimed = chapterContracts.filter((mission) => playerProfile.missionsClaimed[mission.id]).length;
+        const pulseScale = Math.max(0, Math.floor((chapter - 1) / 2));
+
+        return {
+            kicker: playerProfile.lang === 'en' ? 'MISSION MANUAL' : '任务手册',
+            title: playerProfile.lang === 'en' ? 'Layered mission board rules' : '分层任务板规则',
+            desc: playerProfile.lang === 'en'
+                ? 'Explains how chapter contracts, daily pulse missions, and elite objectives work together.'
+                : '把章节任务、每日脉冲和精英合约的推进关系一次讲清楚。',
+            body: `
+                <div class="modal-info-grid">
+                    <article class="modal-info-card featured">
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT BOARD' : '当前任务板'}</div>
+                        <h3>${playerProfile.lang === 'en' ? `Chapter ${chapter}` : `第 ${chapter} 章`}</h3>
+                        <strong>${playerProfile.lang === 'en' ? `${chapterClaimed}/${chapterContracts.length} chapter contracts claimed` : `已领取 ${chapterClaimed} / ${chapterContracts.length} 个章节合约`}</strong>
+                        <p>${playerProfile.lang === 'en'
+                            ? 'Claim every core and elite contract on the current board to unlock the next chapter immediately.'
+                            : '当前章节的主线任务与精英合约全部领取后，会立即解锁下一章。'}</p>
+                    </article>
+                    <article class="modal-info-card">
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DAILY PULSE' : '每日脉冲'}</div>
+                        <h3>${localize(pulseMission.title)}</h3>
+                        <p>${playerProfile.lang === 'en'
+                            ? `One rotating daily objective refreshes every local midnight. Current progress: ${formatNumber(pulseState.current)} / ${formatNumber(pulseMission.target)}.`
+                            : `每天本地零点刷新 1 个脉冲任务。当前进度：${formatNumber(pulseState.current)} / ${formatNumber(pulseMission.target)}。`}</p>
+                    </article>
+                    <article class="modal-info-card">
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE CONTRACTS' : '精英合约'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Unlock from Chapter 2 onward' : '从第 2 章开始开放'}</h3>
+                        <p>${playerProfile.lang === 'en'
+                            ? 'Elite objectives focus on total distance, clean routing, and later even ladder rating to keep late-game pressure meaningful.'
+                            : '精英合约会把总里程、无伤表现，以及后续的冲榜评分都拉进任务体系，保证后期仍有追逐压力。'}</p>
+                    </article>
+                    <article class="modal-info-card">
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'SCALING' : '难度成长'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Targets rise with your chapter' : '目标会随章节抬升'}</h3>
+                        <p>${playerProfile.lang === 'en'
+                            ? `Daily targets scale every 2 chapters. Current pulse intensity tier: +${pulseScale}.`
+                            : `每日任务每 2 章提升一档强度。当前脉冲强度档位：+${pulseScale}。`}</p>
+                    </article>
+                </div>
+                <div class="modal-rule-list">
+                    <div class="modal-rule-head">
+                        <div>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOARD FLOW' : '任务板流程'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'The board is split into three layers' : '任务板分为三层推进'}</h3>
+                        </div>
+                    </div>
+                    <div class="modal-rule-grid">
+                        <article class="modal-info-card">
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'CORE' : '主线'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Distance · Runs · Combo · Score' : '距离 · 局数 · 连击 · 分数'}</h3>
+                            <p>${playerProfile.lang === 'en'
+                                ? 'These are the backbone contracts of every chapter and are always required for advancement.'
+                                : '这是每一章都会出现的核心合约，也是推进章节的刚性条件。'}</p>
+                        </article>
+                        <article class="modal-info-card">
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE' : '精英'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Total distance · Clean run · Ladder score' : '总里程 · 无伤 · 冲榜评分'}</h3>
+                            <p>${playerProfile.lang === 'en'
+                                ? 'Elite objectives inject stronger mid and late-game pressure and reward better resources.'
+                                : '精英合约专门负责中后期压力与更厚的资源回报。'}</p>
+                        </article>
+                        <article class="modal-info-card">
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'PULSE' : '脉冲'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'One daily rotating objective' : '每天 1 个轮换目标'}</h3>
+                            <p>${playerProfile.lang === 'en'
+                                ? 'Pulse missions are optional for chapter progression, but they accelerate gold, cores, and season XP noticeably.'
+                                : '脉冲任务不强制推进章节，但能显著补充金币、能核与赛季经验。'}</p>
+                        </article>
+                    </div>
                 </div>
             `
         };
@@ -1296,6 +1739,9 @@
         if (reward.core) {
             labels.push(localize({ zh: `能核 +${formatNumber(reward.core)}`, en: `Cores +${formatNumber(reward.core)}` }));
         }
+        if (reward.xp) {
+            labels.push(localize({ zh: `赛季经验 +${formatNumber(reward.xp)}`, en: `Season XP +${formatNumber(reward.xp)}` }));
+        }
         if (reward.starterOverclockRuns) {
             labels.push(formatBoostRewardText('starterOverclockRuns', reward.starterOverclockRuns));
         }
@@ -1369,6 +1815,8 @@
         let content = null;
         if (kind === 'season-rules') {
             content = renderSeasonRulesModal();
+        } else if (kind === 'mission-rules') {
+            content = renderMissionRulesModal();
         }
         if (!content) return;
         activeInfoModal = kind;
@@ -1406,7 +1854,7 @@
     function updateTabBadges() {
         const missionCount = getClaimableMissionCount();
         const loadoutCount = getLoadoutAlertCount();
-        const seasonCount = getClaimableSeasonRewardCount();
+        const seasonCount = getClaimableSeasonRewardCount() + getClaimableRankRewardCount();
         const shopCount = getShopAlertCount();
         Array.from(dom.tabBar.querySelectorAll('.tab-btn')).forEach((button) => {
             const tab = button.dataset.tab;
@@ -1476,9 +1924,15 @@
         playerProfile.gold += mission.reward.gold;
         playerProfile.core += mission.reward.core;
         playerProfile.seasonXp += mission.reward.xp;
+        const advancedChapter = mission.section === 'pulse' ? 0 : maybeAdvanceMissionChapter();
         saveState();
-        playSfx('reward');
-        showToast(t('missionClaimed'));
+        playSfx(advancedChapter ? 'promote' : 'reward');
+        showToast(advancedChapter
+            ? localize({
+                zh: `奖励已领取，任务板升级至第 ${advancedChapter} 章`,
+                en: `Reward claimed. Mission board advanced to Chapter ${advancedChapter}`
+            })
+            : t('missionClaimed'));
         renderAll();
     }
 
@@ -1492,6 +1946,22 @@
         saveState();
         playSfx('reward');
         showToast(localize({ zh: `已领取 Lv.${level} 赛季奖励`, en: `Claimed season reward Lv.${level}` }));
+        renderAll();
+    }
+
+    function claimRankReward(id) {
+        const reward = getRankRewards().find((item) => item.id === id);
+        const state = reward ? getRankRewardState(reward) : null;
+        if (!reward || !state || !state.claimable) return;
+        playerProfile.rankClaims[reward.id] = true;
+        playerProfile.gold += reward.reward.gold || 0;
+        playerProfile.core += reward.reward.core || 0;
+        playerProfile.boosts.starterOverclockRuns += reward.reward.starterOverclockRuns || 0;
+        playerProfile.boosts.settlementBoostRuns += reward.reward.settlementBoostRuns || 0;
+        playerProfile.boosts.freeRevives += reward.reward.freeRevives || 0;
+        saveState();
+        playSfx('promote');
+        showToast(localize({ zh: `已领取冲榜奖励：${localize(reward.title)}`, en: `Ladder reward claimed: ${localize(reward.title)}` }));
         renderAll();
     }
 
@@ -1775,14 +2245,51 @@
     }
 
     function renderMissionsTab() {
+        const chapter = getMissionChapter();
         const missions = missionDefinitions()
             .map((mission) => ({ ...mission, state: getMissionState(mission) }))
-            .sort((left, right) => {
-                const leftRank = left.state.complete && !left.state.claimed ? 0 : !left.state.claimed ? 1 : 2;
-                const rightRank = right.state.complete && !right.state.claimed ? 0 : !right.state.claimed ? 1 : 2;
-                return leftRank - rightRank;
-            });
+            .sort(sortMissionEntries);
         const claimableCount = missions.filter((mission) => mission.state.complete && !mission.state.claimed).length;
+        const claimableMissions = missions.filter((mission) => mission.state.complete && !mission.state.claimed);
+        const pulseMissions = missions.filter((mission) => mission.section === 'pulse');
+        const coreMissions = missions.filter((mission) => mission.section === 'core');
+        const eliteMissions = missions.filter((mission) => mission.section === 'elite');
+        const dailyStats = playerProfile.dailyStats;
+        const renderMissionCard = (mission) => {
+            const { current, complete, claimed } = mission.state;
+            const progressPct = Math.max(0, Math.min(100, (current / mission.target) * 100));
+            const statusText = claimed
+                ? t('missionDone')
+                : complete
+                    ? localize({ zh: '可领取', en: 'Ready To Claim' })
+                    : t('missionLocked');
+            return `
+                <article class="mission-card ${complete && !claimed ? 'is-claimable' : ''}">
+                    <div class="card-title-row">
+                        <div>
+                            <div class="eyebrow">${statusText}</div>
+                            <h3>${localize(mission.title)}</h3>
+                        </div>
+                        <span class="pill ${complete && !claimed ? 'hot' : ''}">${formatNumber(current)} / ${formatNumber(mission.target)}</span>
+                    </div>
+                    <div class="panel-meta-row">
+                        <span class="tier-pill ${mission.tier}">${missionTierLabel(mission.tier)}</span>
+                        <span class="pill">${mission.section === 'pulse'
+                            ? localize({ zh: '每日轮换', en: 'Daily Rotation' })
+                            : mission.section === 'elite'
+                                ? localize({ zh: '章节高压目标', en: 'Chapter Pressure Goal' })
+                                : localize({ zh: `第 ${chapter} 章主线`, en: `Chapter ${chapter} Core` })}</span>
+                    </div>
+                    <p>${localize(mission.desc)}</p>
+                    <div class="progress-track"><i style="width:${progressPct}%"></i></div>
+                    <div class="reward-row">${renderRewardPills(mission.reward)}</div>
+                    <button class="${complete && !claimed ? 'primary-btn' : 'ghost-btn'} wide-btn" ${complete && !claimed ? '' : 'disabled'} data-claim-mission="${mission.id}" type="button">
+                        ${claimed ? t('missionDone') : t('missionClaim')}
+                    </button>
+                </article>
+            `;
+        };
+
         return `
             <div class="card-grid">
                 <article class="stat-card">
@@ -1791,53 +2298,110 @@
                             <div class="eyebrow">${t('missionsTitle')}</div>
                             <h3>${t('missionsDesc')}</h3>
                         </div>
+                        <button class="ghost-btn" type="button" data-open-modal="mission-rules">${playerProfile.lang === 'en' ? 'Rules' : '规则'}</button>
+                    </div>
+                    <div class="season-kpi-grid">
+                        <div class="season-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Board Chapter' : '任务章节'}</span>
+                            <strong>${playerProfile.lang === 'en' ? `Chapter ${chapter}` : `第 ${chapter} 章`}</strong>
+                        </div>
+                        <div class="season-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Ready Rewards' : '可领奖励'}</span>
+                            <strong>${formatNumber(claimableCount)}</strong>
+                        </div>
+                        <div class="season-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Daily Reset' : '日常刷新'}</span>
+                            <strong id="missionDailyReset">${playerProfile.lang === 'en' ? 'Updating…' : '更新中…'}</strong>
+                        </div>
+                    </div>
+                    <div class="reward-row">
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today runs ${formatNumber(dailyStats.runs)}` : `今日局数 ${formatNumber(dailyStats.runs)}`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today best combo ${formatNumber(dailyStats.bestCombo)}` : `今日最高连击 ${formatNumber(dailyStats.bestCombo)}`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today clean ${formatNumber(dailyStats.cleanDistance)}m` : `今日无伤 ${formatNumber(dailyStats.cleanDistance)}m`}</span>
                     </div>
                     <div class="panel-meta-row">
                         <span class="pill hot">${playerProfile.lang === 'en' ? `Claimable ${claimableCount}` : `可领取 ${claimableCount}`}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? `Total ${missions.length}` : `总任务 ${missions.length}`}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? `Active ${missions.length}` : `进行中 ${missions.length}`}</span>
+                        <span class="pill">${playerProfile.lang === 'en'
+                            ? 'Claim all chapter contracts to unlock the next chapter'
+                            : '领取完当前章节合约后解锁下一章'}</span>
                     </div>
                 </article>
-                ${missions.map((mission) => {
-                    const { current, complete, claimed } = mission.state;
-                    const progressPct = Math.max(0, Math.min(100, (current / mission.target) * 100));
-                    return `
-                        <article class="mission-card ${complete && !claimed ? 'is-claimable' : ''}">
+                ${claimableMissions.length
+                    ? `
+                        <article class="event-card shop-section-card">
                             <div class="card-title-row">
                                 <div>
-                                    <div class="eyebrow">${complete ? t('missionDone') : t('missionLocked')}</div>
-                                    <h3>${localize(mission.title)}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'READY NOW' : '立即可领'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Claimable contracts are pinned first' : '可领取任务已置顶显示'}</h3>
                                 </div>
-                                <span class="pill">${formatNumber(current)} / ${formatNumber(mission.target)}</span>
+                                <span class="pill hot">${formatNumber(claimableMissions.length)}</span>
                             </div>
-                            <div class="panel-meta-row">
-                                <span class="tier-pill ${mission.tier}">${missionTierLabel(mission.tier)}</span>
-                            </div>
-                            <p>${localize(mission.desc)}</p>
-                            <div class="progress-track"><i style="width:${progressPct}%"></i></div>
+                            <p>${playerProfile.lang === 'en'
+                                ? 'These rewards are already finished. Claim them first to unlock the next board faster.'
+                                : '这些奖励已经达成，先领掉可以更快解锁下一章。'}</p>
                             <div class="reward-row">
-                                <span class="reward-pill">${t('goldLabel')} +${formatNumber(mission.reward.gold)}</span>
-                                <span class="reward-pill">${t('coreLabel')} +${formatNumber(mission.reward.core)}</span>
-                                <span class="reward-pill">${t('seasonXp')} +${formatNumber(mission.reward.xp)}</span>
+                                ${claimableMissions.slice(0, 4).map((mission) => `<span class="reward-pill">${localize(mission.title)}</span>`).join('')}
                             </div>
-                            <button class="${complete && !claimed ? 'primary-btn' : 'ghost-btn'} wide-btn" ${complete && !claimed ? '' : 'disabled'} data-claim-mission="${mission.id}" type="button">
-                                ${claimed ? t('missionDone') : t('missionClaim')}
-                            </button>
                         </article>
-                    `;
-                }).join('')}
+                    `
+                    : ''}
+                ${pulseMissions.length
+                    ? `
+                        <article class="event-card shop-section-card">
+                            <div class="card-title-row">
+                                <div>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'DAILY PULSE' : '每日脉冲'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'One rotating daily mission keeps the session warm' : '轮换日常负责维持每日活跃节奏'}</h3>
+                                </div>
+                            </div>
+                        </article>
+                        ${pulseMissions.map(renderMissionCard).join('')}
+                    `
+                    : ''}
+                <article class="event-card shop-section-card">
+                    <div class="card-title-row">
+                        <div>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'CORE CONTRACTS' : '章节主线'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Distance, runs, combo, and score define chapter pacing' : '距离、局数、连击、分数共同决定章节推进'}</h3>
+                        </div>
+                    </div>
+                </article>
+                ${coreMissions.map(renderMissionCard).join('')}
+                ${eliteMissions.length
+                    ? `
+                        <article class="event-card shop-section-card">
+                            <div class="card-title-row">
+                                <div>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE CONTRACTS' : '精英合约'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Mid / late-game pressure and bigger rewards live here' : '中后期压力与更厚奖励集中在这里'}</h3>
+                                </div>
+                            </div>
+                        </article>
+                        ${eliteMissions.map(renderMissionCard).join('')}
+                    `
+                    : ''}
             </div>
         `;
     }
 
     function renderSeasonTab() {
         const level = calcSeasonLevel(playerProfile.seasonXp);
-        const divisionInfo = getDivisionInfo();
+        const rankScore = getRunnerRankScore();
+        const divisionInfo = getDivisionInfo(rankScore);
+        const leaderboard = getRunnerLeaderboard(rankScore);
         const settlementPreview = getSeasonSettlementPreview(divisionInfo, level);
         const currentXp = playerProfile.seasonXp % 120;
         const next = 120 - currentXp;
         const countdown = formatCountdown(getSeasonEndTime() - Date.now());
         const rewards = getSeasonRewards();
+        const rankRewards = getRankRewards();
         const claimableCount = getClaimableSeasonRewardCount();
+        const rankClaimableCount = getClaimableRankRewardCount(rankScore);
+        const totalClaimableCount = claimableCount + rankClaimableCount;
+        const nextRankReward = rankRewards.find((reward) => !getRankRewardState(reward, rankScore).claimed && rankScore < reward.score)
+            || rankRewards.find((reward) => !getRankRewardState(reward, rankScore).claimed)
+            || null;
         const settlementRows = getDivisionTiers().map((tier) => {
             const isCurrent = tier.id === divisionInfo.tier.id;
             return `
@@ -1866,11 +2430,12 @@
                         <span class="reward-pill">${t('seasonLevel')} Lv.${level}</span>
                         <span class="reward-pill">${t('seasonXp')} ${formatNumber(playerProfile.seasonXp)}</span>
                         <span class="reward-pill">${t('seasonNext')} ${formatNumber(next)} XP</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Claimable ${formatNumber(claimableCount)}` : `可领取 ${formatNumber(claimableCount)}`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Claimable ${formatNumber(totalClaimableCount)}` : `可领取 ${formatNumber(totalClaimableCount)}`}</span>
                     </div>
                     <div class="panel-meta-row">
                         <span class="pill hot" id="seasonCountdown">${playerProfile.lang === 'en' ? `Ends In ${countdown}` : `赛季剩余 ${countdown}`}</span>
                         <span class="pill">${playerProfile.lang === 'en' ? 'Free + Premium dual track' : '免费 + 高级双轨预览'}</span>
+                        <span class="pill ${rankClaimableCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `Ladder rewards ${formatNumber(rankClaimableCount)} ready` : `冲榜奖励待领 ${formatNumber(rankClaimableCount)}`}</span>
                     </div>
                     <div class="season-banner">
                         <div class="eyebrow">${playerProfile.lang === 'en' ? 'Season Pulse' : '赛季脉冲'}</div>
@@ -1962,6 +2527,65 @@
                                 }).join('')}
                             </div>
                         </section>
+                    </div>
+                </article>
+
+                <article class="season-track settlement-card" style="--tier-color:${divisionInfo.tier.color};">
+                    <div class="panel-title-row">
+                        <div>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'LADDER BOUNTY' : '冲榜赏金'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Every major rating breakpoint now gives an instant chase reward.' : '每个关键评分档位都会给即时可领的冲榜回馈。'}</h3>
+                        </div>
+                        <span class="pill hot">#${leaderboard.playerRank}</span>
+                    </div>
+                    <div class="settlement-highlight">
+                        <div>
+                            <div class="mini-label">${playerProfile.lang === 'en' ? 'Current ladder status' : '当前冲榜状态'}</div>
+                            <strong>${playerProfile.lang === 'en'
+                                ? `Rating ${formatNumber(rankScore)} · ${localize(divisionInfo.tier.title)}`
+                                : `评分 ${formatNumber(rankScore)} · ${localize(divisionInfo.tier.title)}`}</strong>
+                            <p>${nextRankReward
+                                ? (playerProfile.lang === 'en'
+                                    ? `${formatNumber(Math.max(0, nextRankReward.score - rankScore))} rating to ${localize(nextRankReward.title)}.`
+                                    : `距离 ${localize(nextRankReward.title)} 还差 ${formatNumber(Math.max(0, nextRankReward.score - rankScore))} 评分。`)
+                                : (playerProfile.lang === 'en'
+                                    ? 'All current ladder bounty tiers are already claimed. Keep defending the summit.'
+                                    : '当前冲榜奖励已全部领取，接下来重点转为守榜与刷更高评分。')}</p>
+                        </div>
+                        <div class="reward-row">
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Nearest rival gap ${formatNumber(leaderboard.nextGap)}` : `距上一名 ${formatNumber(leaderboard.nextGap)}`}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Ready rewards ${formatNumber(rankClaimableCount)}` : `待领奖励 ${formatNumber(rankClaimableCount)}`}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Best distance ${formatDistance(playerProfile.bestDistance)}` : `最佳距离 ${formatDistance(playerProfile.bestDistance)}`}</span>
+                        </div>
+                    </div>
+                    <div class="season-node-row">
+                        ${rankRewards.map((reward) => {
+                            const state = getRankRewardState(reward, rankScore);
+                            const gap = Math.max(0, reward.score - rankScore);
+                            const buttonLabel = state.claimed
+                                ? localize({ zh: '已领取', en: 'Claimed' })
+                                : state.claimable
+                                    ? localize({ zh: '领取冲榜奖励', en: 'Claim Ladder Reward' })
+                                    : localize({ zh: `还差 ${formatNumber(gap)}`, en: `${formatNumber(gap)} to go` });
+                            return `
+                                <article class="season-node ${state.claimable ? 'is-claimable' : ''} ${state.claimed ? 'is-claimed' : ''}">
+                                    <div class="season-node-top">
+                                        <span class="pill hot">${formatNumber(reward.score)}</span>
+                                        <span class="pill ${state.claimable ? 'good' : ''}">${state.claimed
+                                            ? localize({ zh: '已完成', en: 'Done' })
+                                            : state.claimable
+                                                ? localize({ zh: '可领取', en: 'Ready' })
+                                                : localize({ zh: '冲榜中', en: 'Climbing' })}</span>
+                                    </div>
+                                    <div>
+                                        <h3>${localize(reward.title)}</h3>
+                                        <p>${localize(reward.desc)}</p>
+                                    </div>
+                                    <div class="reward-row">${renderRewardPills(reward.reward)}</div>
+                                    <button class="${state.claimable ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" ${state.claimable ? `data-claim-rank="${reward.id}"` : 'disabled'}>${buttonLabel}</button>
+                                </article>
+                            `;
+                        }).join('')}
                     </div>
                 </article>
 
@@ -2178,7 +2802,17 @@
     }
 
     function renderAll() {
+        let shouldSave = false;
+        if (ensureMissionBoardState()) {
+            shouldSave = true;
+        }
+        if (ensureDailyProgressState()) {
+            shouldSave = true;
+        }
         if (ensureDailyShopState()) {
+            shouldSave = true;
+        }
+        if (shouldSave) {
             saveState();
         }
         applyI18n();
@@ -2187,6 +2821,7 @@
         renderHud();
         renderPanel();
         renderResultOverlayCard();
+        updateMissionCountdownUI();
         if (activeInfoModal) {
             openInfoModal(activeInfoModal);
         }
@@ -2212,6 +2847,22 @@
         if (!node) return;
         const countdown = formatCountdown(getSeasonEndTime() - Date.now());
         node.textContent = playerProfile.lang === 'en' ? `Ends In ${countdown}` : `赛季剩余 ${countdown}`;
+    }
+
+    function updateMissionCountdownUI() {
+        const dayKey = getLocalDayKey();
+        if ((playerProfile.dailyStats && playerProfile.dailyStats.key !== dayKey)
+            || (playerProfile.missionBoard && playerProfile.missionBoard.dailyKey !== dayKey)
+            || (playerProfile.shop && playerProfile.shop.dailyKey !== dayKey)) {
+            renderAll();
+            return;
+        }
+        const node = document.getElementById('missionDailyReset');
+        if (!node) return;
+        const nextReset = new Date();
+        nextReset.setHours(24, 0, 0, 0);
+        const countdown = formatCountdown(nextReset.getTime() - Date.now());
+        node.textContent = playerProfile.lang === 'en' ? `Resets In ${countdown}` : `刷新剩余 ${countdown}`;
     }
 
     function showToast(message) {
@@ -2404,18 +3055,21 @@
         const previousDivision = getDivisionInfo(getRunnerRankScore());
         const previousBestDistance = playerProfile.bestDistance;
         const perfectRun = !force && game.reviveCount === 0 && game.dodgeRun >= 12;
+        const runDistance = Math.floor(game.distance);
+        const runScore = Math.floor(game.score);
         const baseGoldGain = Math.max(120, Math.floor(game.distance * 0.42 + game.coinsRun * 9 + game.maxCombo * 14));
         const goldGain = Math.max(baseGoldGain, Math.floor(baseGoldGain * game.runGoldMultiplier));
         const coreGain = Math.max(2, Math.floor(game.distance / 260) + game.coreRun);
         const baseSeasonXpGain = Math.max(12, Math.floor(game.distance / 60) + game.dodgeRun * 2);
         const seasonXpGain = Math.max(baseSeasonXpGain, Math.floor(baseSeasonXpGain * game.runSeasonXpMultiplier));
         const gradeInfo = getRunGrade(Math.floor(game.distance), game.maxCombo, game.hitless);
+        ensureDailyProgressState();
         playerProfile.gold += goldGain;
         playerProfile.core += coreGain;
         playerProfile.totalGoldEarned += goldGain;
         playerProfile.totalRuns += 1;
-        playerProfile.totalDistance += Math.floor(game.distance);
-        playerProfile.bestScore = Math.max(playerProfile.bestScore, Math.floor(game.score));
+        playerProfile.totalDistance += runDistance;
+        playerProfile.bestScore = Math.max(playerProfile.bestScore, runScore);
         if (game.maxCombo > playerProfile.stats.longestCombo) {
             playerProfile.stats.longestCombo = game.maxCombo;
         }
@@ -2433,8 +3087,16 @@
         if (goldGain >= 1000) {
             playerProfile.stats.goldRuns += 1;
         }
-        playerProfile.bestDistance = Math.max(playerProfile.bestDistance, Math.floor(game.distance));
+        playerProfile.bestDistance = Math.max(playerProfile.bestDistance, runDistance);
         playerProfile.seasonXp += seasonXpGain;
+        playerProfile.dailyStats.runs += 1;
+        playerProfile.dailyStats.distance += runDistance;
+        playerProfile.dailyStats.bestDistance = Math.max(playerProfile.dailyStats.bestDistance, runDistance);
+        playerProfile.dailyStats.bestCombo = Math.max(playerProfile.dailyStats.bestCombo, game.maxCombo);
+        playerProfile.dailyStats.bestScore = Math.max(playerProfile.dailyStats.bestScore, runScore);
+        if (game.hitless) {
+            playerProfile.dailyStats.cleanDistance = Math.max(playerProfile.dailyStats.cleanDistance, runDistance);
+        }
 
         const divisionInfo = getDivisionInfo(
             Math.floor(
@@ -2458,8 +3120,8 @@
         game.awaitingRevive = false;
 
         lastResult = {
-            distance: Math.floor(game.distance),
-            score: Math.floor(game.score),
+            distance: runDistance,
+            score: runScore,
             goldGain,
             coreGain,
             seasonXpGain,
@@ -2589,10 +3251,12 @@
             showToast(t('overclockNeed'));
             return;
         }
+        ensureDailyProgressState();
         game.overclock = 100;
         game.overclockActive = 4.8;
         game.flashTimer = 0.55;
         playerProfile.stats.overclockUses = (playerProfile.stats.overclockUses || 0) + 1;
+        playerProfile.dailyStats.overclocks += 1;
         saveState();
         playSfx('overclock');
         showToast(t('overclockActive'));
@@ -3055,6 +3719,11 @@
                 claimSeasonReward(Number(seasonClaimButton.dataset.claimSeason));
                 return;
             }
+            const rankClaimButton = event.target.closest('[data-claim-rank]');
+            if (rankClaimButton) {
+                claimRankReward(rankClaimButton.dataset.claimRank);
+                return;
+            }
             const shopBuyButton = event.target.closest('[data-buy-shop]');
             if (shopBuyButton) {
                 purchaseShopOffer(shopBuyButton.dataset.buyShop);
@@ -3139,7 +3808,9 @@
     bindEvents();
     renderAll();
     updateSeasonCountdownUI();
+    updateMissionCountdownUI();
     seasonCountdownTimer = window.setInterval(updateSeasonCountdownUI, 1000);
+    missionCountdownTimer = window.setInterval(updateMissionCountdownUI, 1000);
     resizeCanvas();
     setOverlay(dom.startOverlay);
     requestAnimationFrame(gameLoop);
