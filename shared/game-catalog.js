@@ -48,7 +48,7 @@
                       "zh":  "\u8dd1\u9177",
                       "en":  "Runner"
                   },
-        "id":  "matrix-runner",
+        "id":  "runner",
         "tags":  [
                      {
                          "zh":  "\u77ed\u5c40",
@@ -64,23 +64,23 @@
                      }
                  ],
         "subtitle":  {
-                         "zh":  "\u8d5b\u535a\u8dd1\u9053\u51b2\u5206",
-                         "en":  "Cyber Track Rush"
+                         "zh":  "\u9713\u8679\u8d5b\u9053\u9ad8\u901f\u51b2\u523a",
+                         "en":  "Neon Track Speed Rush"
                      },
         "description":  {
-                            "zh":  "\u9002\u5408\u505a 1~3 \u5206\u949f\u4e00\u5c40\u7684\u77ed\u5c40\u73a9\u6cd5\uff0c\u80fd\u627f\u63a5\u6d3b\u8dc3\u4efb\u52a1\u3001\u51b2\u699c\u3001\u9650\u65f6\u6d3b\u52a8\u548c\u590d\u6d3b\u7c7b\u4ed8\u8d39\u70b9\u3002",
-                            "en":  "A 1~3 minute runner suited for activity missions, rank chasing, timed events, and revive monetization."
+                            "zh":  "\u4e09\u8f66\u9053\u75be\u8dd1\u539f\u578b\uff0c\u5df2\u5305\u542b\u8dc3\u8dc3\u3001\u6ed1\u94f2\u3001\u88c5\u914d\u3001\u4efb\u52a1\u3001\u8d5b\u5b63\u4e0e\u5546\u5e97\u9884\u89c8\u7ed3\u6784\u3002",
+                            "en":  "A live three-lane neon runner prototype with jump, slide, loadout, missions, season progression, and shop preview."
                         },
-        "icon":  "MR",
-        "href":  "/games/coming-soon/?id=matrix-runner",
+        "icon":  "GR",
+        "href":  "/games/runner/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u5df2\u5f00\u653e",
+                      "en":  "Live"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
-                      "zh":  "\u77e9\u9635\u8dd1\u9177",
-                      "en":  "Matrix Runner"
+                      "zh":  "\u521b\u4e16\u75be\u8dd1",
+                      "en":  "Genesis Rush"
                   }
     },
     {

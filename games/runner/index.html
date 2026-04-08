@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>创世疾跑 / Genesis Rush</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/games/runner/runner.css">
+</head>
+<body>
+    <div class="runner-bg" aria-hidden="true"></div>
+    <div class="runner-shell">
+        <header class="topbar">
+            <div class="topbar-row">
+                <a class="ghost-btn" href="/" data-i18n="backHub">返回大厅</a>
+                <div class="topbar-actions">
+                    <button class="ghost-btn icon-btn" id="soundToggle" type="button">SFX ON</button>
+                    <button class="ghost-btn icon-btn" id="langToggle" type="button">EN</button>
+                </div>
+            </div>
+            <div class="hero-card">
+                <div class="hero-copy">
+                    <div class="eyebrow" data-i18n="runnerEyebrow">高速跑酷原型</div>
+                    <h1 data-i18n="runnerTitle">创世疾跑</h1>
+                    <p data-i18n="runnerSubtitle">三车道 · 霓虹闪避 · 爽快冲榜</p>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span data-i18n="goldLabel">金币</span>
+                        <strong id="goldValue">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="coreLabel">能核</span>
+                        <strong id="coreValue">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="bestLabel">最佳距离</span>
+                        <strong id="bestDistanceValue">0m</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="runner-main">
+            <section class="stage-card">
+                <div class="stage-hud">
+                    <div class="hud-chip"><span data-i18n="distanceLabel">距离</span><strong id="distanceValue">0m</strong></div>
+                    <div class="hud-chip"><span data-i18n="scoreLabel">积分</span><strong id="scoreValue">0</strong></div>
+                    <div class="hud-chip"><span data-i18n="comboLabel">连击</span><strong id="comboValue">x1</strong></div>
+                </div>
+
+                <div class="canvas-wrap" id="canvasWrap">
+                    <canvas id="runnerCanvas" width="960" height="540" aria-label="Genesis Rush stage"></canvas>
+
+                    <div class="overlay-panel" id="startOverlay">
+                        <div class="overlay-card">
+                            <div class="overlay-kicker" data-i18n="startKicker">NEON PROTOTYPE</div>
+                            <h2 data-i18n="startTitle">准备冲刺</h2>
+                            <p data-i18n="startDesc">左右切道，上滑跳跃，下滑滑铲，尽可能吃满金币与能量。</p>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="startRunBtn" type="button" data-i18n="startRun">开始跑酷</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overlay-panel is-hidden" id="pauseOverlay">
+                        <div class="overlay-card compact">
+                            <h2 data-i18n="pauseTitle">已暂停</h2>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="resumeBtn" type="button" data-i18n="resumeRun">继续</button>
+                                <button class="ghost-btn" id="quitRunBtn" type="button" data-i18n="endRun">结束本局</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overlay-panel is-hidden" id="reviveOverlay">
+                        <div class="overlay-card compact">
+                            <div class="overlay-kicker" data-i18n="reviveKicker">SECOND CHANCE</div>
+                            <h2 data-i18n="reviveTitle">是否立即复活？</h2>
+                            <p data-i18n="reviveDesc">本原型使用能核复活，不接真实支付。每局最多复活 2 次。</p>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="reviveBtn" type="button" data-i18n="reviveBtn">消耗 20 能核复活</button>
+                                <button class="ghost-btn" id="skipReviveBtn" type="button" data-i18n="skipRevive">直接结算</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overlay-panel is-hidden" id="resultOverlay">
+                        <div class="overlay-card">
+                            <div class="overlay-kicker" data-i18n="resultKicker">RUN COMPLETE</div>
+                            <h2 data-i18n="resultTitle">本局结算</h2>
+                            <div class="result-badge-row">
+                                <div class="result-badge" id="resultBadge">A</div>
+                                <div class="result-summary" id="resultSummary">Sharp neon run</div>
+                            </div>
+                            <div class="result-grid">
+                                <div><span data-i18n="distanceLabel">距离</span><strong id="resultDistance">0m</strong></div>
+                                <div><span data-i18n="scoreLabel">积分</span><strong id="resultScore">0</strong></div>
+                                <div><span data-i18n="goldGainLabel">金币收益</span><strong id="resultGold">0</strong></div>
+                                <div><span data-i18n="coreGainLabel">能核收益</span><strong id="resultCore">0</strong></div>
+                            </div>
+                            <div id="resultRankPanel"></div>
+                            <div class="result-meta" id="resultMeta"></div>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="restartRunBtn" type="button" data-i18n="restartRun">再来一局</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="energy-row">
+                    <div class="meter">
+                        <span data-i18n="overclockLabel">超频</span>
+                        <div class="meter-bar"><i id="overclockBar"></i></div>
+                    </div>
+                    <div class="meter">
+                        <span data-i18n="skillLabel">技能冷却</span>
+                        <div class="meter-bar alt"><i id="skillBar"></i></div>
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <button class="control-btn" data-action="left" type="button" data-i18n="leftBtn">左移</button>
+                    <button class="control-btn" data-action="jump" type="button" data-i18n="jumpBtn">跳跃</button>
+                    <button class="control-btn" data-action="right" type="button" data-i18n="rightBtn">右移</button>
+                    <button class="control-btn" data-action="slide" type="button" data-i18n="slideBtn">滑铲</button>
+                </div>
+
+                <div class="action-row">
+                    <button class="ghost-btn wide-btn" id="skillBtn" type="button" data-i18n="skillBtn">释放技能</button>
+                    <button class="primary-btn wide-btn" id="overclockBtn" type="button" data-i18n="overclockBtn">超频冲刺</button>
+                    <button class="ghost-btn wide-btn" id="pauseBtn" type="button" data-i18n="pauseBtn">暂停</button>
+                </div>
+            </section>
+
+            <section class="panel-card">
+                <div class="tab-bar" id="tabBar">
+                    <button class="tab-btn is-active" data-tab="run" type="button" data-i18n="tabRun">跑酷</button>
+                    <button class="tab-btn" data-tab="loadout" type="button" data-i18n="tabLoadout">装配</button>
+                    <button class="tab-btn" data-tab="missions" type="button" data-i18n="tabMissions">任务</button>
+                    <button class="tab-btn" data-tab="season" type="button" data-i18n="tabSeason">赛季</button>
+                    <button class="tab-btn" data-tab="shop" type="button" data-i18n="tabShop">商店</button>
+                </div>
+                <div class="panel-content" id="panelContent"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="info-modal is-hidden" id="infoModal">
+        <div class="info-modal-card">
+            <div class="info-modal-head">
+                <div>
+                    <div class="overlay-kicker" id="infoModalKicker">SEASON MANUAL</div>
+                    <h2 id="infoModalTitle">赛季说明</h2>
+                    <p id="infoModalDesc">查看本赛季结算、段位与活跃奖励的完整规则。</p>
+                </div>
+                <button class="ghost-btn icon-btn" id="infoModalCloseBtn" type="button" aria-label="Close">×</button>
+            </div>
+            <div class="info-modal-body" id="infoModalBody"></div>
+        </div>
+    </div>
+
+    <script src="/games/runner/runner.js"></script>
+</body>
+</html>
