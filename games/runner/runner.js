@@ -32,6 +32,7 @@
             skipRevive: '直接结算',
             resultKicker: 'RUN COMPLETE',
             resultTitle: '本局结算',
+            resultClose: '关闭',
             goldGainLabel: '金币收益',
             coreGainLabel: '能核收益',
             restartRun: '再来一局',
@@ -140,6 +141,7 @@
             skipRevive: 'Settle Now',
             resultKicker: 'RUN COMPLETE',
             resultTitle: 'Run Results',
+            resultClose: 'Close',
             goldGainLabel: 'Gold Gain',
             coreGainLabel: 'Core Gain',
             restartRun: 'Run Again',
@@ -366,6 +368,7 @@
         pauseOverlay: document.getElementById('pauseOverlay'),
         reviveOverlay: document.getElementById('reviveOverlay'),
         resultOverlay: document.getElementById('resultOverlay'),
+        resultCloseBtn: document.getElementById('resultCloseBtn'),
         goldValue: document.getElementById('goldValue'),
         coreValue: document.getElementById('coreValue'),
         bestDistanceValue: document.getElementById('bestDistanceValue'),
@@ -2951,6 +2954,11 @@
         });
     }
 
+    function closeResultOverlay() {
+        if (!dom.resultOverlay || dom.resultOverlay.classList.contains('is-hidden')) return;
+        dom.resultOverlay.classList.add('is-hidden');
+    }
+
     function resetRunState() {
         const runner = getRunner(playerProfile.loadout.runner);
         const skill = getSkill(playerProfile.loadout.skill);
@@ -3742,6 +3750,10 @@
         });
 
         dom.resultOverlay.addEventListener('click', (event) => {
+            if (event.target === dom.resultOverlay) {
+                closeResultOverlay();
+                return;
+            }
             const openModalButton = event.target.closest('[data-open-modal]');
             if (openModalButton) {
                 openInfoModal(openModalButton.dataset.openModal);
@@ -3752,6 +3764,10 @@
                 switchTab(openTabButton.dataset.openTab || 'run');
             }
         });
+
+        if (dom.resultCloseBtn) {
+            dom.resultCloseBtn.addEventListener('click', closeResultOverlay);
+        }
 
         dom.infoModalCloseBtn.addEventListener('click', closeInfoModal);
         dom.infoModal.addEventListener('click', (event) => {

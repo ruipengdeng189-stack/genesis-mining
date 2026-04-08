@@ -89,8 +89,13 @@
 
                     <div class="overlay-panel is-hidden" id="resultOverlay">
                         <div class="overlay-card">
-                            <div class="overlay-kicker" data-i18n="resultKicker">RUN COMPLETE</div>
-                            <h2 data-i18n="resultTitle">本局结算</h2>
+                            <div class="overlay-head">
+                                <div class="overlay-head-main">
+                                    <div class="overlay-kicker" data-i18n="resultKicker">RUN COMPLETE</div>
+                                    <h2 data-i18n="resultTitle">本局结算</h2>
+                                </div>
+                                <button class="ghost-btn overlay-close-btn" id="resultCloseBtn" type="button" data-i18n="resultClose">关闭</button>
+                            </div>
                             <div class="result-badge-row">
                                 <div class="result-badge" id="resultBadge">A</div>
                                 <div class="result-summary" id="resultSummary">Sharp neon run</div>
@@ -124,8 +129,8 @@
                 <div class="control-row">
                     <button class="control-btn" data-action="left" type="button" data-i18n="leftBtn">左移</button>
                     <button class="control-btn" data-action="jump" type="button" data-i18n="jumpBtn">跳跃</button>
-                    <button class="control-btn" data-action="right" type="button" data-i18n="rightBtn">右移</button>
                     <button class="control-btn" data-action="slide" type="button" data-i18n="slideBtn">滑铲</button>
+                    <button class="control-btn" data-action="right" type="button" data-i18n="rightBtn">右移</button>
                 </div>
 
                 <div class="action-row">
