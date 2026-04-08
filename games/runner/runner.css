@@ -22,7 +22,7 @@
     --safe-top: max(16px, env(safe-area-inset-top));
     --safe-bottom: max(16px, env(safe-area-inset-bottom));
     --content-width: 1200px;
-    --tabbar-height: 78px;
+    --tabbar-height: 72px;
 }
 
 * {
@@ -1389,7 +1389,7 @@ a {
         width: min(100%, calc(100% - 16px));
         padding-left: 8px;
         padding-right: 8px;
-        padding-bottom: calc(var(--safe-bottom) + 12px);
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 14px);
     }
 
     .topbar {
@@ -1419,6 +1419,10 @@ a {
 
     .hero-card {
         gap: 10px;
+    }
+
+    .runner-main {
+        gap: 12px;
     }
 
     .hero-copy h1 {
@@ -1483,8 +1487,8 @@ a {
 
     .canvas-wrap,
     #runnerCanvas {
-        height: clamp(250px, 36dvh, 340px);
-        min-height: clamp(250px, 36dvh, 340px);
+        height: clamp(228px, 34dvh, 320px);
+        min-height: clamp(228px, 34dvh, 320px);
     }
 
     .energy-row {
@@ -1516,7 +1520,7 @@ a {
 
     .panel-card {
         min-height: 0;
-        max-height: min(58dvh, 620px);
+        max-height: min(52dvh, 560px);
         display: grid;
         grid-template-rows: auto 1fr;
         overflow: hidden;
@@ -1705,10 +1709,14 @@ a {
 }
 
 @media (max-width: 560px) {
+    :root {
+        --tabbar-height: 62px;
+    }
+
     .runner-shell {
         width: min(100%, calc(100% - 12px));
         padding-top: calc(var(--safe-top) + 2px);
-        padding-bottom: calc(var(--safe-bottom) + 10px);
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 12px);
     }
 
     .hero-card,
@@ -1724,8 +1732,21 @@ a {
     }
 
     .topbar-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: 6px;
+    }
+
+    .topbar-row > .ghost-btn {
+        justify-self: start;
+        min-width: 0;
+    }
+
+    .topbar-actions {
+        justify-self: end;
+        gap: 6px;
+        min-width: 0;
     }
 
     .topbar-row .ghost-btn,
@@ -1738,11 +1759,17 @@ a {
 
     .hero-copy h1 {
         font-size: clamp(22px, 7.2vw, 28px);
+        line-height: 1.04;
+        margin-bottom: 4px;
     }
 
     .hero-copy p {
         font-size: 11px;
         margin: 0;
+    }
+
+    .runner-main {
+        gap: 10px;
     }
 
     .summary-grid,
@@ -1769,8 +1796,15 @@ a {
 
     .canvas-wrap,
     #runnerCanvas {
-        height: clamp(220px, 32dvh, 280px);
-        min-height: clamp(220px, 32dvh, 280px);
+        height: clamp(206px, 28dvh, 248px);
+        min-height: clamp(206px, 28dvh, 248px);
+    }
+
+    .energy-row,
+    .control-row,
+    .action-row {
+        gap: 6px;
+        margin-top: 6px;
     }
 
     .overlay-card {
@@ -1995,10 +2029,15 @@ a {
 }
 
 @media (max-width: 420px) {
+    :root {
+        --tabbar-height: 58px;
+    }
+
     .runner-shell {
         width: min(100%, calc(100% - 10px));
-        padding-left: 5px;
-        padding-right: 5px;
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 10px);
     }
 
     .hero-card,
@@ -2033,13 +2072,13 @@ a {
 
     .canvas-wrap,
     #runnerCanvas {
-        height: clamp(204px, 30dvh, 250px);
-        min-height: clamp(204px, 30dvh, 250px);
+        height: clamp(194px, 26dvh, 228px);
+        min-height: clamp(194px, 26dvh, 228px);
         border-radius: 18px;
     }
 
     .panel-card {
-        max-height: min(54dvh, 520px);
+        max-height: min(46dvh, 430px);
     }
 
     .event-card,
@@ -2109,6 +2148,8 @@ a {
     -webkit-backdrop-filter: blur(16px);
     z-index: 32;
     margin-bottom: 0;
+    overflow: hidden;
+    top: auto;
 }
 
 .app-tab-bar .tab-btn {
@@ -2116,6 +2157,9 @@ a {
     padding: 12px 8px;
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.04);
+    display: grid;
+    place-items: center;
+    text-align: center;
 }
 
 .runner-payment-modal {
@@ -2146,6 +2190,7 @@ a {
     border: 1px solid rgba(96, 212, 255, 0.24);
     background: linear-gradient(180deg, rgba(9, 20, 43, 0.98), rgba(5, 10, 22, 0.98));
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+    min-width: 0;
 }
 
 .runner-payment-head {
@@ -2153,6 +2198,11 @@ a {
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
+    min-width: 0;
+}
+
+.runner-payment-head > div {
+    min-width: 0;
 }
 
 .runner-payment-head h2 {
@@ -2171,6 +2221,7 @@ a {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
+    min-width: 0;
 }
 
 .runner-payment-offer {
@@ -2185,6 +2236,8 @@ a {
     font: inherit;
     text-align: left;
     transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .runner-payment-offer.is-active {
@@ -2225,6 +2278,7 @@ a {
     background: rgba(255, 255, 255, 0.03);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    min-width: 0;
 }
 
 .runner-payment-order-top {
@@ -2270,6 +2324,7 @@ a {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    min-width: 0;
 }
 
 .runner-payment-stat,
@@ -2280,6 +2335,7 @@ a {
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
+    min-width: 0;
 }
 
 .runner-payment-address {
@@ -2374,13 +2430,14 @@ a {
     .app-tab-bar {
         width: min(calc(100vw - 16px), 760px);
         bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-        padding: 7px;
-        gap: 6px;
+        padding: 6px;
+        gap: 5px;
+        border-radius: 20px;
     }
 
     .app-tab-bar .tab-btn {
-        min-height: 46px;
-        padding: 10px 6px;
+        min-height: 42px;
+        padding: 8px 5px;
         font-size: 12px;
     }
 
@@ -2401,8 +2458,12 @@ a {
 
 @media (max-width: 640px) {
     .runner-payment-modal {
-        padding: 10px;
+        padding:
+            calc(env(safe-area-inset-top, 0px) + 8px)
+            10px
+            calc(env(safe-area-inset-bottom, 0px) + 12px);
         align-items: flex-start;
+        overflow-y: auto;
     }
 
     .runner-payment-card {
@@ -2411,15 +2472,36 @@ a {
         padding: 14px;
         gap: 12px;
         border-radius: 20px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
     .runner-payment-head {
-        flex-direction: column;
-        align-items: stretch;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 10px;
     }
 
     .runner-payment-head h2 {
         font-size: 24px;
+        margin-right: 0;
+    }
+
+    .runner-payment-head p {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    #runnerPaymentCloseBtn {
+        min-width: 40px;
+        width: 40px;
+        min-height: 40px;
+        padding: 0;
+        border-radius: 12px;
+        align-self: start;
+        justify-self: end;
     }
 
     .runner-payment-offer-grid,
@@ -2450,20 +2532,21 @@ a {
 
 @media (max-width: 420px) {
     .app-tab-bar {
-        width: calc(100vw - 12px);
-        padding: 6px;
-        border-radius: 18px;
+        width: calc(100vw - 10px);
+        padding: 4px;
+        gap: 4px;
+        border-radius: 16px;
     }
 
     .app-tab-bar .tab-btn {
-        min-height: 42px;
-        padding: 8px 4px;
-        font-size: 11px;
+        min-height: 38px;
+        padding: 6px 2px;
+        font-size: 10.5px;
         border-radius: 12px;
     }
 
     .runner-main.is-content-tab .panel-card {
-        min-height: clamp(400px, calc(100dvh - 236px), 780px);
-        max-height: clamp(400px, calc(100dvh - 236px), 780px);
+        min-height: clamp(360px, calc(100dvh - 188px), 760px);
+        max-height: clamp(360px, calc(100dvh - 188px), 760px);
     }
 }
