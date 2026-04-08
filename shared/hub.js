@@ -180,6 +180,7 @@
     let currentLang = getInitialLang();
     let activeProfile = null;
     let activeMiningSummary = null;
+    let hubRenderFrameId = 0;
 
     function decodeHtmlEntities(value) {
         const textarea = document.createElement('textarea');
@@ -428,12 +429,23 @@
         bindDynamicActions(activeProfile);
     }
 
+    function queueRenderHub() {
+        if (hubRenderFrameId) {
+            return;
+        }
+
+        hubRenderFrameId = window.requestAnimationFrame(() => {
+            hubRenderFrameId = 0;
+            renderHub();
+        });
+    }
+
     function setLanguage(lang) {
         currentLang = lang === 'zh' ? 'zh' : 'en';
         try {
             localStorage.setItem(HUB_LANG_KEY, currentLang);
         } catch (error) {}
-        renderHub();
+        queueRenderHub();
     }
 
     function bindStaticActions() {
@@ -449,7 +461,7 @@
         activeProfile = loadHubProfile();
         activeMiningSummary = getMiningSummary();
         bindStaticActions();
-        window.addEventListener('resize', renderHub);
+        window.addEventListener('resize', queueRenderHub, { passive: true });
         renderHub();
     }
 
