@@ -5,11 +5,15 @@
     const REVIVE_COST = 20;
     const SEASON_ANCHOR_UTC = Date.UTC(2026, 3, 7, 0, 0, 0);
     const SEASON_LENGTH_MS = 14 * 24 * 60 * 60 * 1000;
+    const PAYMENT_API_BASE = '/api';
+    const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 6;
+    const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
 
     const TEXT = {
         zh: {
             backHub: '返回大厅',
-            runnerEyebrow: '高速跑酷原型',
+            runnerEyebrow: '高速跑酷正式版',
             runnerTitle: '创世疾跑',
             runnerSubtitle: '三车道 · 霓虹闪避 · 爽快冲榜',
             goldLabel: '金币',
@@ -18,7 +22,7 @@
             distanceLabel: '距离',
             scoreLabel: '积分',
             comboLabel: '连击',
-            startKicker: 'NEON PROTOTYPE',
+            startKicker: 'NEON RUSH',
             startTitle: '准备冲刺',
             startDesc: '左右切道，上滑跳跃，下滑滑铲，尽可能吃满金币与能量。',
             startRun: '开始跑酷',
@@ -27,7 +31,7 @@
             endRun: '结束本局',
             reviveKicker: 'SECOND CHANCE',
             reviveTitle: '是否立即复活？',
-            reviveDesc: '本原型使用能核复活，不接真实支付。每局最多复活 2 次。',
+            reviveDesc: '复活仅消耗能核。每局最多复活 2 次，充值奖励请前往商店验证领取。',
             reviveBtn: '消耗 20 能核复活',
             skipRevive: '直接结算',
             resultKicker: 'RUN COMPLETE',
@@ -64,7 +68,7 @@
             missionClaimed: '任务奖励已领取',
             equipped: '已切换装配',
             unlocked: '解锁成功',
-            prototypeShop: '上方补给会立即生效；下方保留未来高级礼包的结构预览。',
+            topupShopInfo: '所有充值礼包都会在链上校验成功后即时发奖，并同步解锁赞助轨道。',
             runPanelTitle: '今日赛道',
             runPanelDesc: '短局爽感优先，核心是“再来一把”的高速循环。',
             runEvent1: '霓虹风暴',
@@ -79,7 +83,7 @@
             statCurrentSkill: '主动技能',
             statCurrentPassive: '被动芯片',
             loadoutTitle: '装配配置',
-            loadoutDesc: '先做数值框架：角色负责手感差异，技能承担中局逆转。',
+            loadoutDesc: '角色负责手感差异，技能负责关键逆转，被动芯片决定长期养成方向。',
             runnerTagStarter: '初始可用',
             runnerTagUnlock: '达成条件解锁',
             runnerEquip: '装备',
@@ -111,14 +115,14 @@
             bestToast: '刷新最佳距离',
             runReadyToast: '赛道已加载，准备起跑',
             hitWall: '撞击障碍，冲刺中断',
-            seasonReward: '赛季奖励预览',
+            seasonReward: '赛季奖励',
             rankTitle: '冲榜评级',
             rankDesc: '距离、连击和无伤表现一起决定跑酷评分。',
             touchHint: '手势：左/右切道 · 上跳跃 · 下滑铲'
         },
         en: {
             backHub: 'Back To Hub',
-            runnerEyebrow: 'High-Speed Runner Prototype',
+            runnerEyebrow: 'Full Runner Release',
             runnerTitle: 'Genesis Rush',
             runnerSubtitle: '3 Lanes · Neon Dodges · Rank Pressure',
             goldLabel: 'Gold',
@@ -127,7 +131,7 @@
             distanceLabel: 'Distance',
             scoreLabel: 'Score',
             comboLabel: 'Combo',
-            startKicker: 'NEON PROTOTYPE',
+            startKicker: 'NEON RUSH',
             startTitle: 'Ready To Rush',
             startDesc: 'Switch lanes, jump, slide, and grab coins plus energy to extend the run.',
             startRun: 'Start Run',
@@ -136,7 +140,7 @@
             endRun: 'End Run',
             reviveKicker: 'SECOND CHANCE',
             reviveTitle: 'Revive now?',
-            reviveDesc: 'This prototype uses cores for revive and does not connect real payment. Max 2 revives per run.',
+            reviveDesc: 'Revives spend cores only. Each run allows up to 2 revives, while top-up rewards are verified in the shop.',
             reviveBtn: 'Spend 20 Cores',
             skipRevive: 'Settle Now',
             resultKicker: 'RUN COMPLETE',
@@ -173,7 +177,7 @@
             missionClaimed: 'Mission reward claimed',
             equipped: 'Loadout updated',
             unlocked: 'Unlocked successfully',
-            prototypeShop: 'The top offers are fully functional now; the lower section keeps a premium preview for future packaging.',
+            topupShopInfo: 'Verified top-up packs grant rewards instantly after on-chain confirmation and also unlock the sponsor track.',
             runPanelTitle: 'Today\'s Track',
             runPanelDesc: 'Short-run excitement first, designed around a fast one-more-run loop.',
             runEvent1: 'Neon Storm',
@@ -188,7 +192,7 @@
             statCurrentSkill: 'Active Skill',
             statCurrentPassive: 'Passive Chip',
             loadoutTitle: 'Loadout Setup',
-            loadoutDesc: 'First prototype focuses on the number framework: runners shape feel, skills swing runs.',
+            loadoutDesc: 'Runners shape control feel, active skills swing tight moments, and passive chips define long-term builds.',
             runnerTagStarter: 'Starter',
             runnerTagUnlock: 'Unlock by milestone',
             runnerEquip: 'Equip',
@@ -220,7 +224,7 @@
             bestToast: 'New best distance',
             runReadyToast: 'Track loaded. Ready to rush',
             hitWall: 'Obstacle hit. Run interrupted',
-            seasonReward: 'Season reward preview',
+            seasonReward: 'Season rewards',
             rankTitle: 'Rank Rating',
             rankDesc: 'Distance, combo and clean dodges together define your run rating.',
             touchHint: 'Gesture: left/right switch · up jump · down slide'
@@ -286,39 +290,60 @@
         }
     ];
 
-    const SHOP_OFFERS = [
+    const RUNNER_PAYMENT_OFFERS = [
         {
             id: 'starter',
-            badge: 'hot',
-            name: { zh: '起跑补给箱', en: 'Starter Supply' },
-            desc: { zh: '适合首充：核心金币 + 入门护航。', en: 'Designed like an entry bundle with safe early momentum.' },
-            items: [
-                { zh: '金币 x 2,000', en: 'Gold x 2,000' },
-                { zh: '能核 x 30', en: 'Cores x 30' },
-                { zh: '赛季经验 x 80', en: 'Season XP x 80' }
-            ]
+            price: 1.0,
+            accent: '#57e5ff',
+            badge: { zh: '首充推荐', en: 'Starter' },
+            name: { zh: '起跑补给', en: 'Recovery Pack' },
+            desc: { zh: '补足前期金币、能核与首轮增益，适合快速把节奏跑起来。', en: 'A steady first top-up that stabilizes gold, cores, and your first boost cycle.' },
+            reward: { gold: 4000, core: 40, xp: 180, starterOverclockRuns: 2, settlementBoostRuns: 1 }
         },
         {
-            id: 'ladder',
-            badge: 'value',
-            name: { zh: '冲榜增幅包', en: 'Ladder Boost Pack' },
-            desc: { zh: '更适合中后期，重点拉高超频循环和复活容错。', en: 'A mid/late-game structure focused on overclock flow and revive safety.' },
-            items: [
-                { zh: '能核 x 90', en: 'Cores x 90' },
-                { zh: '黄金门票 x 1', en: 'Golden Ticket x 1' },
-                { zh: '冲榜分加成 1 小时', en: '1h ladder score bonus' }
-            ]
+            id: 'accelerator',
+            price: 2.99,
+            accent: '#ff8fe8',
+            badge: { zh: '高性价比', en: 'Value' },
+            name: { zh: '超频推进包', en: 'Hyper Pack' },
+            desc: { zh: '提高中期资源与超频循环，让跑局更容易进入爽点。', en: 'Builds a stronger mid-game loop with more resources and faster overclock pacing.' },
+            reward: { gold: 12000, core: 120, xp: 460, starterOverclockRuns: 4, settlementBoostRuns: 3, freeRevives: 1 }
         },
         {
-            id: 'season',
-            badge: 'hot',
-            name: { zh: '赛季通行证', en: 'Season Pass' },
-            desc: { zh: '围绕每日任务、等级奖励和限定外观设计。', en: 'Built around daily missions, level rewards and a premium skin line.' },
-            items: [
-                { zh: '额外奖励轨道', en: 'Bonus reward track' },
-                { zh: '专属霓虹尾迹', en: 'Exclusive neon trail' },
-                { zh: '结算金币 +20%', en: '+20% settlement gold' }
-            ]
+            id: 'rush',
+            price: 3.99,
+            accent: '#ffb168',
+            badge: { zh: '冲榜包', en: 'Rush' },
+            name: { zh: '冲榜脉冲包', en: 'Rank Surge Pack' },
+            desc: { zh: '偏向高分追击，补足高压跑法需要的金币、经验与容错。', en: 'A ladder-focused bundle that supports high-score attempts with safer retries.' },
+            reward: { gold: 20000, core: 180, xp: 720, starterOverclockRuns: 3, settlementBoostRuns: 5, freeRevives: 2 }
+        },
+        {
+            id: 'sovereign',
+            price: 5.99,
+            accent: '#ffe27b',
+            badge: { zh: '统治包', en: 'Core' },
+            name: { zh: '统治协定', en: 'Dominance Pack' },
+            desc: { zh: '一口气抬高后期养成强度，同时解锁本赛季赞助轨道。', en: 'A stronger late-loop injection that also makes the sponsor lane feel meaningful.' },
+            reward: { gold: 42000, core: 320, xp: 1180, starterOverclockRuns: 5, settlementBoostRuns: 8, freeRevives: 3 }
+        },
+        {
+            id: 'nexus',
+            price: 9.99,
+            accent: '#7dffb3',
+            badge: { zh: '后期核心', en: 'Endgame' },
+            name: { zh: '核心枢纽包', en: 'T4 Nexus Pack' },
+            desc: { zh: '适合冲赛季后段与守榜，储备足够覆盖多轮高压尝试。', en: 'Designed for deep-season defense and multiple high-pressure scoring attempts.' },
+            reward: { gold: 78000, core: 520, xp: 1800, starterOverclockRuns: 8, settlementBoostRuns: 12, freeRevives: 5 }
+        },
+        {
+            id: 'throne',
+            price: 12.99,
+            accent: '#89c9ff',
+            badge: { zh: '王座级', en: 'Summit' },
+            name: { zh: '王座协议', en: 'Throne Protocol' },
+            desc: { zh: '顶级礼包，覆盖冲榜、赛季、续航三条主线，直接进入后期推进节奏。', en: 'A top-end bundle that powers ladder, season, and sustain all at once.' },
+            reward: { gold: 120000, core: 780, xp: 2600, starterOverclockRuns: 12, settlementBoostRuns: 18, freeRevives: 8 }
         }
     ];
 
@@ -364,6 +389,9 @@
     const dom = {
         canvas: document.getElementById('runnerCanvas'),
         canvasWrap: document.getElementById('canvasWrap'),
+        runnerMain: document.getElementById('runnerMain'),
+        stageCard: document.getElementById('stageCard'),
+        panelCard: document.getElementById('panelCard'),
         startOverlay: document.getElementById('startOverlay'),
         pauseOverlay: document.getElementById('pauseOverlay'),
         reviveOverlay: document.getElementById('reviveOverlay'),
@@ -404,7 +432,29 @@
         infoModalTitle: document.getElementById('infoModalTitle'),
         infoModalDesc: document.getElementById('infoModalDesc'),
         infoModalBody: document.getElementById('infoModalBody'),
-        infoModalCloseBtn: document.getElementById('infoModalCloseBtn')
+        infoModalCloseBtn: document.getElementById('infoModalCloseBtn'),
+        paymentModal: document.getElementById('runnerPaymentModal'),
+        paymentOfferGrid: document.getElementById('runnerPaymentOfferGrid'),
+        paymentCloseBtn: document.getElementById('runnerPaymentCloseBtn'),
+        paymentTitle: document.getElementById('runnerPaymentTitle'),
+        paymentDesc: document.getElementById('runnerPaymentDesc'),
+        paymentAmount: document.getElementById('runnerPaymentAmount'),
+        paymentMeta: document.getElementById('runnerPaymentMeta'),
+        paymentOrderLabel: document.getElementById('runnerPaymentOrderLabel'),
+        paymentOrderId: document.getElementById('runnerPaymentOrderId'),
+        paymentExactLabel: document.getElementById('runnerPaymentExactLabel'),
+        paymentExactAmount: document.getElementById('runnerPaymentExactAmount'),
+        paymentExpiryLabel: document.getElementById('runnerPaymentExpiryLabel'),
+        paymentExpiry: document.getElementById('runnerPaymentExpiry'),
+        paymentAddressLabel: document.getElementById('runnerPaymentAddressLabel'),
+        paymentWallet: document.getElementById('runnerPaymentWallet'),
+        paymentCopyAddressBtn: document.getElementById('runnerPaymentCopyAddressBtn'),
+        paymentCopyAmountBtn: document.getElementById('runnerPaymentCopyAmountBtn'),
+        paymentTxidLabel: document.getElementById('runnerPaymentTxidLabel'),
+        paymentTxidInput: document.getElementById('runnerPaymentTxidInput'),
+        paymentTxidHint: document.getElementById('runnerPaymentTxidHint'),
+        paymentStatus: document.getElementById('runnerPaymentStatus'),
+        paymentVerifyBtn: document.getElementById('runnerPaymentVerifyBtn')
     };
 
     const ctx = dom.canvas.getContext('2d');
@@ -418,9 +468,17 @@
     let toastTimer = 0;
     let seasonCountdownTimer = 0;
     let missionCountdownTimer = 0;
+    let paymentCountdownTimer = 0;
     let audioCtx = null;
     let lastResult = null;
     let activeInfoModal = '';
+    let selectedPaymentOfferId = 'starter';
+    let currentPaymentOrder = null;
+    let paymentVerificationState = 'idle';
+    let paymentVerificationError = '';
+    let paymentVerificationNotice = '';
+    let paymentOrderNonce = 0;
+    let paymentOrderRequestPromise = null;
 
     const baseState = {
         lang: localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh',
@@ -449,6 +507,15 @@
         shop: {
             dailyKey: '',
             stock: {}
+        },
+        payment: {
+            minerId: '',
+            purchaseCount: 0,
+            totalSpent: 0,
+            passUnlocked: false,
+            claimedOrders: {},
+            premiumSeasonClaims: {},
+            verifiedTxids: []
         },
         loadout: {
             runner: 'flash',
@@ -556,6 +623,15 @@
                     ...deepClone(baseState.shop),
                     ...(parsed.shop || {}),
                     stock: { ...deepClone(baseState.shop.stock), ...((parsed.shop && parsed.shop.stock) || {}) }
+                },
+                payment: {
+                    ...deepClone(baseState.payment),
+                    ...(parsed.payment || {}),
+                    claimedOrders: { ...deepClone(baseState.payment.claimedOrders), ...((parsed.payment && parsed.payment.claimedOrders) || {}) },
+                    premiumSeasonClaims: { ...deepClone(baseState.payment.premiumSeasonClaims), ...((parsed.payment && parsed.payment.premiumSeasonClaims) || {}) },
+                    verifiedTxids: Array.isArray(parsed.payment && parsed.payment.verifiedTxids)
+                        ? Array.from(new Set((parsed.payment && parsed.payment.verifiedTxids) || [])).slice(0, 100)
+                        : []
                 },
                 missionsClaimed: { ...(parsed.missionsClaimed || {}) },
                 dailyStats: { ...deepClone(baseState.dailyStats), ...(parsed.dailyStats || {}) },
@@ -1027,9 +1103,13 @@
                     core: 6
                 },
                 premium: {
-                    title: { zh: '霓虹尾迹', en: 'Neon Trail' },
-                    desc: { zh: '更像身份展示位的赛季限定拖尾。', en: 'A premium cosmetic trail that signals season participation.' },
-                    label: { zh: '限定视觉预览', en: 'Exclusive cosmetic preview' }
+                    title: { zh: '赞助启程礼', en: 'Sponsor Kickoff' },
+                    desc: { zh: '解锁赞助轨道后，赛季前段就能额外拿到资源与起跑加速。', en: 'The sponsor lane starts paying immediately with resources and faster run starts.' },
+                    gold: 1200,
+                    core: 8,
+                    xp: 60,
+                    starterOverclockRuns: 1,
+                    label: { zh: '限定尾迹 · 已入库', en: 'Season trail · stored' }
                 }
             },
             {
@@ -1041,9 +1121,11 @@
                     core: 10
                 },
                 premium: {
-                    title: { zh: '护盾换肤', en: 'Shield Skin' },
-                    desc: { zh: '把主动技能也做成可展示资产。', en: 'Turns the active skill into something visually collectible too.' },
-                    label: { zh: '技能外观预览', en: 'Skill cosmetic preview' }
+                    title: { zh: '护盾赞助补给', en: 'Shield Sponsor Cache' },
+                    desc: { zh: '提高中段容错，给高压跑法补一层免费复活与能核。', en: 'Adds more retry safety with extra cores and a free revive for tougher runs.' },
+                    core: 14,
+                    freeRevives: 1,
+                    label: { zh: '护盾换肤 · 已记录', en: 'Shield skin · archived' }
                 }
             },
             {
@@ -1055,9 +1137,12 @@
                     core: 14
                 },
                 premium: {
-                    title: { zh: '赛季头像框', en: 'Season Frame' },
-                    desc: { zh: '强化赛季身份感与截图传播感。', en: 'Built for identity and screenshot-worthy account flair.' },
-                    label: { zh: '头像框预览', en: 'Profile frame preview' }
+                    title: { zh: '赛季框体礼', en: 'Season Frame Cache' },
+                    desc: { zh: '这一档开始给出更强的冲榜续航，适合持续拉高评分。', en: 'From here the sponsor lane shifts toward longer ladder pressure and steadier scoring.' },
+                    gold: 2400,
+                    core: 10,
+                    settlementBoostRuns: 2,
+                    label: { zh: '赛季头像框 · 已记录', en: 'Season frame · archived' }
                 }
             },
             {
@@ -1070,8 +1155,12 @@
                 },
                 premium: {
                     title: { zh: '任务增幅卡', en: 'Mission Boost Card' },
-                    desc: { zh: '如果以后接付费，这类会是非常自然的高价值奖励。', en: 'A natural premium-value item if the game later gains real monetization.' },
-                    label: { zh: '任务加成预览', en: 'Mission boost preview' }
+                    desc: { zh: '同步补强任务推进、起跑爆发和结算效率，适合中后期冲章节。', en: 'Supports chapter pushing with better starts, stronger settlements, and smoother mission flow.' },
+                    gold: 3200,
+                    xp: 120,
+                    starterOverclockRuns: 2,
+                    settlementBoostRuns: 1,
+                    label: { zh: '任务加速权限', en: 'Mission boost access' }
                 }
             },
             {
@@ -1083,9 +1172,12 @@
                     core: 30
                 },
                 premium: {
-                    title: { zh: '电弧拖尾', en: 'Arc Sprint Trail' },
-                    desc: { zh: '更夸张的视觉反馈，适合搭配高分玩家展示。', en: 'A more intense visual effect aimed at higher-performing players.' },
-                    label: { zh: '高阶拖尾预览', en: 'Advanced trail preview' }
+                    title: { zh: '电弧冲刺礼', en: 'Arc Sprint Cache' },
+                    desc: { zh: '后期容错压力开始上来，这一档重点补免费复活和核心资源。', en: 'Late-season attempts get sharper, so this tier leans into retry safety and core resources.' },
+                    gold: 4200,
+                    core: 24,
+                    freeRevives: 1,
+                    label: { zh: '高阶拖尾 · 已入库', en: 'Arc trail · stored' }
                 }
             },
             {
@@ -1097,9 +1189,12 @@
                     core: 40
                 },
                 premium: {
-                    title: { zh: '商店折扣券', en: 'Shop Discount Ticket' },
-                    desc: { zh: '给未来礼包系统预留更高层的商业化接口。', en: 'Reserved as a future high-value bridge into store offers.' },
-                    label: { zh: '商店权益预览', en: 'Store perk preview' }
+                    title: { zh: '商店权限票', en: 'Store Access Ticket' },
+                    desc: { zh: '把中后期的商店补给链拉长，让你更敢连续重开试更高分。', en: 'Expands your mid-to-late shop loop so repeated high-score attempts feel sustainable.' },
+                    gold: 6200,
+                    core: 28,
+                    settlementBoostRuns: 2,
+                    label: { zh: '商店权益已激活', en: 'Store perk activated' }
                 }
             },
             {
@@ -1111,9 +1206,13 @@
                     core: 52
                 },
                 premium: {
-                    title: { zh: '冲榜姿态', en: 'Rank Pose' },
-                    desc: { zh: '更偏荣誉展示与社交传播价值。', en: 'A prestige-facing reward meant for social proof and status.' },
-                    label: { zh: '荣誉外观预览', en: 'Prestige cosmetic preview' }
+                    title: { zh: '王座冲榜礼', en: 'Summit Prestige Cache' },
+                    desc: { zh: '临近榜首时，这一档会明显提高开局速度与容错储备。', en: 'Near the summit, this tier pushes both early tempo and late-run safety much harder.' },
+                    gold: 8400,
+                    core: 36,
+                    starterOverclockRuns: 2,
+                    freeRevives: 1,
+                    label: { zh: '荣誉姿态 · 已解锁', en: 'Prestige pose · unlocked' }
                 }
             },
             {
@@ -1125,9 +1224,13 @@
                     core: 66
                 },
                 premium: {
-                    title: { zh: '限定跑者皮肤', en: 'Season Runner Skin' },
-                    desc: { zh: '把赛季尾部价值集中到高辨识度奖励上。', en: 'Concentrates tail-end value into a highly visible collectible.' },
-                    label: { zh: '限定皮肤预览', en: 'Limited skin preview' }
+                    title: { zh: '赛季王座礼', en: 'Season Throne Cache' },
+                    desc: { zh: '赛季尾段的大额回馈，专门服务于冲榜守榜与高频重开。', en: 'A heavy end-of-season sponsor payout built for summit chasing and defense.' },
+                    gold: 12000,
+                    core: 48,
+                    settlementBoostRuns: 3,
+                    freeRevives: 2,
+                    label: { zh: '限定跑者皮肤 · 已存档', en: 'Season skin · archived' }
                 }
             }
         ];
@@ -1210,6 +1313,22 @@
 
     function getClaimableSeasonRewardCount() {
         return getSeasonRewards().filter((reward) => getSeasonRewardState(reward.level).claimable).length;
+    }
+
+    function getSeasonSponsorRewardState(level) {
+        const currentLevel = calcSeasonLevel(playerProfile.seasonXp);
+        const claimed = !!(playerProfile.payment && playerProfile.payment.premiumSeasonClaims && playerProfile.payment.premiumSeasonClaims[String(level)]);
+        const passUnlocked = !!(playerProfile.payment && playerProfile.payment.passUnlocked);
+        return {
+            claimed,
+            passUnlocked,
+            unlocked: passUnlocked && currentLevel >= level,
+            claimable: passUnlocked && currentLevel >= level && !claimed
+        };
+    }
+
+    function getClaimableSeasonSponsorRewardCount() {
+        return getSeasonRewards().filter((reward) => getSeasonSponsorRewardState(reward.level).claimable).length;
     }
 
     function getRankRewardState(reward, score = getRunnerRankScore()) {
@@ -1339,6 +1458,15 @@
         return labels.map((text) => `<span class="shop-pill">${text}</span>`).join('');
     }
 
+    function applyRewardBundle(reward = {}) {
+        playerProfile.gold += reward.gold || 0;
+        playerProfile.core += reward.core || 0;
+        playerProfile.seasonXp += reward.xp || 0;
+        playerProfile.boosts.starterOverclockRuns += reward.starterOverclockRuns || 0;
+        playerProfile.boosts.settlementBoostRuns += reward.settlementBoostRuns || 0;
+        playerProfile.boosts.freeRevives += reward.freeRevives || 0;
+    }
+
     function getShopAlertCount() {
         if (ensureDailyShopState()) {
             saveState();
@@ -1374,11 +1502,7 @@
 
         playerProfile.gold -= offer.cost.gold || 0;
         playerProfile.core -= offer.cost.core || 0;
-        playerProfile.gold += offer.reward.gold || 0;
-        playerProfile.core += offer.reward.core || 0;
-        playerProfile.boosts.starterOverclockRuns += offer.reward.starterOverclockRuns || 0;
-        playerProfile.boosts.settlementBoostRuns += offer.reward.settlementBoostRuns || 0;
-        playerProfile.boosts.freeRevives += offer.reward.freeRevives || 0;
+        applyRewardBundle(offer.reward);
         playerProfile.shop.stock[id] = Math.max(0, remaining - 1);
 
         saveState();
@@ -1388,6 +1512,521 @@
             en: `${localize(offer.title)} added`
         }));
         renderAll();
+    }
+
+    function getSelectedPaymentOffer() {
+        return RUNNER_PAYMENT_OFFERS.find((offer) => offer.id === selectedPaymentOfferId) || RUNNER_PAYMENT_OFFERS[0];
+    }
+
+    function getPaymentMinerId() {
+        if (playerProfile.payment.minerId) {
+            return playerProfile.payment.minerId;
+        }
+        playerProfile.payment.minerId = `RUNNER_${Math.random().toString(16).slice(2, 10).toUpperCase()}${Date.now().toString(16).slice(-6).toUpperCase()}`;
+        saveState();
+        return playerProfile.payment.minerId;
+    }
+
+    function mapPaymentApiError(errorMessage) {
+        const text = String(errorMessage || '').trim();
+        const lower = text.toLowerCase();
+
+        if (!text) {
+            return localize({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
+        }
+        if (lower.includes('txid not found')) {
+            return localize({ zh: '未在 TRON 主网找到该 txid，请确认已上链。', en: 'This txid was not found on TRON mainnet yet.' });
+        }
+        if (lower.includes('not confirmed yet')) {
+            return localize({ zh: '交易还未确认，请稍后再次校验。', en: 'This transfer is not confirmed yet. Try again shortly.' });
+        }
+        if (lower.includes('execution failed')) {
+            return localize({ zh: '链上交易执行失败，无法发奖。', en: 'The on-chain transaction failed, so rewards cannot be granted.' });
+        }
+        if (lower.includes('not a trc20 contract transfer')) {
+            return localize({ zh: '该交易不是 TRC20 转账。', en: 'This transaction is not a TRC20 transfer.' });
+        }
+        if (lower.includes('not trc20 usdt')) {
+            return localize({ zh: '该交易不是 TRC20-USDT 转账。', en: 'This transaction is not a TRC20-USDT payment.' });
+        }
+        if (lower.includes('recipient address')) {
+            return localize({ zh: '收款地址不匹配，请确认你转入的是当前订单地址。', en: 'Recipient address mismatch. Please send to the address shown in the current order.' });
+        }
+        if (lower.includes('amount mismatch')) {
+            return localize({ zh: '支付金额与当前订单的精确金额不一致。', en: 'The payment amount does not match the current exact order amount.' });
+        }
+        if (lower.includes('before this order was created')) {
+            return localize({ zh: '该交易早于订单创建时间，不能用于当前订单。', en: 'This transfer happened before the order was created and cannot be used.' });
+        }
+        if (lower.includes('after the order expired') || lower.includes('order expired')) {
+            return localize({ zh: '订单已过期，请重新创建订单后再支付。', en: 'This order has expired. Create a new order before paying again.' });
+        }
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) {
+            return localize({ zh: '该 txid 已被其他订单使用。', en: 'This txid has already been used by another order.' });
+        }
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) {
+            return localize({ zh: '订单创建失败，请重新选择礼包。', en: 'Failed to create the payment order. Please select the pack again.' });
+        }
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) {
+            return localize({ zh: '支付接口暂时不可用，请稍后再试。', en: 'The payment service is temporarily unavailable. Please try again later.' });
+        }
+        return text;
+    }
+
+    async function requestPaymentApi(path, init = {}) {
+        const response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.ok === false) {
+            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+        }
+        return payload;
+    }
+
+    function buildClientPaymentOrder(order) {
+        return {
+            id: String(order?.orderId || order?.order_id || '--'),
+            offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
+            offerName: String(order?.offerName || order?.offer_name || ''),
+            minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
+            createdAt: Date.parse(order?.createdAt || order?.created_at || '') || Date.now(),
+            expiresAt: Date.parse(order?.expiresAt || order?.expires_at || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS),
+            exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
+            payAddress: String(order?.payAddress || ''),
+            network: String(order?.network || 'TRON (TRC20)'),
+            status: String(order?.status || 'pending')
+        };
+    }
+
+    async function createBackendPaymentOrder(offerId) {
+        const payload = await requestPaymentApi('/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                minerId: getPaymentMinerId(),
+                offerId
+            })
+        });
+        return buildClientPaymentOrder(payload?.order);
+    }
+
+    async function verifyBackendPayment(orderId, txid) {
+        const query = new URLSearchParams({
+            orderId: String(orderId || ''),
+            txid: String(txid || '')
+        });
+        return requestPaymentApi(`/verify-payment?${query.toString()}`);
+    }
+
+    async function claimBackendPayment(orderId, txid) {
+        return requestPaymentApi('/claim-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orderId, txid })
+        });
+    }
+
+    function formatPaymentUsdt(value) {
+        return `${Number(value || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)} USDT`;
+    }
+
+    function isPaymentOrderExpired(order = currentPaymentOrder) {
+        return !order || Number(order.expiresAt || 0) <= Date.now();
+    }
+
+    function getPaymentOrderCountdown(order = currentPaymentOrder) {
+        if (!order) return '--:--';
+        return formatCountdown(Math.max(0, Number(order.expiresAt || 0) - Date.now()));
+    }
+
+    async function copyTextToClipboard(value) {
+        const text = String(value || '').trim();
+        if (!text) return false;
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+        } catch (error) {
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, 99999);
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch (error) {
+            copied = false;
+        }
+        textarea.remove();
+        return copied;
+    }
+
+    function renderPaymentOfferGrid() {
+        if (!dom.paymentOfferGrid) return;
+        dom.paymentOfferGrid.innerHTML = RUNNER_PAYMENT_OFFERS.map((offer) => `
+            <button
+                class="runner-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
+                type="button"
+                data-select-payment-offer="${offer.id}"
+                style="--offer-accent:${offer.accent};"
+            >
+                <span class="pill runner-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${localize(offer.badge)}</span>
+                <div class="runner-payment-offer-price">$${offer.price.toFixed(2)}</div>
+                <h3>${localize(offer.name)}</h3>
+                <p>${localize(offer.desc)}</p>
+                <div class="reward-row">${renderRewardPills(offer.reward, 'shop-pill')}</div>
+            </button>
+        `).join('');
+    }
+
+    function renderPaymentOrderUI() {
+        const offer = getSelectedPaymentOffer();
+        const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
+        if (dom.paymentTitle) {
+            dom.paymentTitle.textContent = playerProfile.lang === 'en' ? 'Runner Top-Up Center' : '跑酷充值中心';
+        }
+        if (dom.paymentDesc) {
+            dom.paymentDesc.textContent = playerProfile.lang === 'en'
+                ? 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.'
+                : '先创建链上订单，再去 OKX Wallet 支付精确金额，最后粘贴 txid 校验并发放奖励。';
+        }
+        if (dom.paymentOrderLabel) dom.paymentOrderLabel.textContent = playerProfile.lang === 'en' ? 'Order ID' : '订单号';
+        if (dom.paymentExactLabel) dom.paymentExactLabel.textContent = playerProfile.lang === 'en' ? 'Exact Amount' : '精确金额';
+        if (dom.paymentExpiryLabel) dom.paymentExpiryLabel.textContent = playerProfile.lang === 'en' ? 'Expires In' : '剩余时间';
+        if (dom.paymentAddressLabel) dom.paymentAddressLabel.textContent = playerProfile.lang === 'en' ? 'Receiving Address' : '收款地址';
+        if (dom.paymentTxidLabel) dom.paymentTxidLabel.textContent = playerProfile.lang === 'en' ? 'Paste OKX Wallet txid' : '粘贴 OKX Wallet 的 txid';
+        if (dom.paymentTxidInput) {
+            dom.paymentTxidInput.placeholder = playerProfile.lang === 'en'
+                ? 'Paste the on-chain txid from OKX Wallet'
+                : '请输入或粘贴 OKX Wallet 的链上 txid';
+        }
+        if (dom.paymentTxidHint) {
+            dom.paymentTxidHint.textContent = playerProfile.lang === 'en'
+                ? 'Only payments that match the exact amount, recipient address, and valid time window can pass verification.'
+                : '只有金额、收款地址和有效时间窗口全部匹配的订单，才能通过校验。';
+        }
+        if (dom.paymentCopyAddressBtn) dom.paymentCopyAddressBtn.textContent = playerProfile.lang === 'en' ? 'Copy Address' : '复制地址';
+        if (dom.paymentCopyAmountBtn) dom.paymentCopyAmountBtn.textContent = playerProfile.lang === 'en' ? 'Copy Exact Amount' : '复制精确金额';
+        if (dom.paymentVerifyBtn) dom.paymentVerifyBtn.textContent = playerProfile.lang === 'en' ? 'Verify TXID' : '校验 TXID';
+        if (dom.paymentAmount) dom.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `$${offer.price.toFixed(2)} USDT`;
+        if (dom.paymentMeta) {
+            dom.paymentMeta.textContent = playerProfile.lang === 'en'
+                ? `OKX Wallet · ${order?.network || 'TRON (TRC20)'} · ${localize(offer.name)}`
+                : `OKX 钱包 · ${order?.network || 'TRON (TRC20)'} · ${localize(offer.name)}`;
+        }
+        if (dom.paymentOrderId) dom.paymentOrderId.textContent = order ? order.id : '--';
+        if (dom.paymentExactAmount) dom.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
+        if (dom.paymentExpiry) dom.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
+        if (dom.paymentWallet) dom.paymentWallet.textContent = order?.payAddress || 'TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW';
+    }
+
+    function getNormalizedPaymentTxid() {
+        return String(dom.paymentTxidInput?.value || '').trim();
+    }
+
+    function refreshPaymentVerificationState() {
+        if (!dom.paymentStatus || !dom.paymentVerifyBtn || !dom.paymentCopyAddressBtn || !dom.paymentCopyAmountBtn) return;
+        const txid = getNormalizedPaymentTxid();
+        const txidValid = PAYMENT_TXID_REGEX.test(txid);
+        const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
+
+        dom.paymentStatus.classList.remove('is-error', 'is-success');
+
+        if (paymentVerificationState === 'creating') {
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'Creating on-chain order…' : '正在创建链上订单…';
+            dom.paymentVerifyBtn.disabled = true;
+            dom.paymentCopyAddressBtn.disabled = true;
+            dom.paymentCopyAmountBtn.disabled = true;
+            return;
+        }
+
+        if (paymentVerificationState === 'verifying') {
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'Verifying payment on-chain…' : '正在链上校验支付…';
+            dom.paymentVerifyBtn.disabled = true;
+            dom.paymentCopyAddressBtn.disabled = true;
+            dom.paymentCopyAmountBtn.disabled = true;
+            return;
+        }
+
+        dom.paymentCopyAddressBtn.disabled = false;
+        dom.paymentCopyAmountBtn.disabled = false;
+
+        if (paymentVerificationState === 'verified') {
+            dom.paymentStatus.textContent = paymentVerificationNotice || (playerProfile.lang === 'en' ? 'Payment verified and reward granted.' : '支付已校验通过，奖励已发放。');
+            dom.paymentStatus.classList.add('is-success');
+            dom.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        if (orderExpired) {
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'This order has expired. Select the pack again to create a fresh order.' : '当前订单已过期，请重新选择礼包创建新订单。';
+            dom.paymentStatus.classList.add('is-error');
+            dom.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        if (paymentVerificationError) {
+            dom.paymentStatus.textContent = paymentVerificationError;
+            dom.paymentStatus.classList.add('is-error');
+            dom.paymentVerifyBtn.disabled = !txidValid || !currentPaymentOrder;
+            return;
+        }
+
+        if (txid && !txidValid) {
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'TXID format looks invalid. Please paste the 64-character on-chain txid.' : 'TXID 格式不正确，请粘贴 64 位链上 txid。';
+            dom.paymentStatus.classList.add('is-error');
+            dom.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        dom.paymentStatus.textContent = paymentVerificationNotice || (playerProfile.lang === 'en'
+            ? 'Create an order, complete the payment in OKX Wallet, then paste the txid here.'
+            : '先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。');
+        dom.paymentVerifyBtn.disabled = !txidValid || !currentPaymentOrder;
+    }
+
+    function resetPaymentVerificationState(clearInput = false) {
+        paymentVerificationState = 'idle';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        if (clearInput && dom.paymentTxidInput) {
+            dom.paymentTxidInput.value = '';
+        }
+        refreshPaymentVerificationState();
+    }
+
+    function updatePaymentExpiryUI() {
+        if (dom.paymentExpiry && currentPaymentOrder) {
+            dom.paymentExpiry.textContent = getPaymentOrderCountdown(currentPaymentOrder);
+        }
+        if (dom.paymentModal && !dom.paymentModal.classList.contains('is-hidden')) {
+            refreshPaymentVerificationState();
+        }
+    }
+
+    async function syncPaymentOrderForSelectedOffer(force = false, clearInput = false) {
+        const offer = getSelectedPaymentOffer();
+        if (!force && currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !isPaymentOrderExpired(currentPaymentOrder)) {
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+            return currentPaymentOrder;
+        }
+
+        const requestId = ++paymentOrderNonce;
+        paymentVerificationState = 'creating';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        if (clearInput && dom.paymentTxidInput) {
+            dom.paymentTxidInput.value = '';
+        }
+        renderPaymentOrderUI();
+        refreshPaymentVerificationState();
+
+        const requestPromise = createBackendPaymentOrder(offer.id)
+            .then((order) => {
+                if (requestId !== paymentOrderNonce) {
+                    return currentPaymentOrder || order;
+                }
+                currentPaymentOrder = order;
+                paymentVerificationState = 'idle';
+                paymentVerificationError = '';
+                paymentVerificationNotice = '';
+                renderPaymentOrderUI();
+                refreshPaymentVerificationState();
+                return order;
+            })
+            .catch((error) => {
+                if (requestId === paymentOrderNonce) {
+                    currentPaymentOrder = null;
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = error?.message || localize({ zh: '订单创建失败，请稍后重试。', en: 'Failed to create order. Please try again.' });
+                    renderPaymentOrderUI();
+                    refreshPaymentVerificationState();
+                }
+                throw error;
+            })
+            .finally(() => {
+                if (paymentOrderRequestPromise === requestPromise) {
+                    paymentOrderRequestPromise = null;
+                }
+            });
+
+        paymentOrderRequestPromise = requestPromise;
+        return requestPromise;
+    }
+
+    function selectPaymentOffer(offerId, { refreshOrder = true } = {}) {
+        const offer = RUNNER_PAYMENT_OFFERS.find((item) => item.id === offerId);
+        if (!offer) return;
+        selectedPaymentOfferId = offer.id;
+        renderPaymentOfferGrid();
+        renderPaymentOrderUI();
+        if (refreshOrder && dom.paymentModal && !dom.paymentModal.classList.contains('is-hidden')) {
+            resetPaymentVerificationState(true);
+            syncPaymentOrderForSelectedOffer(true, true).catch(() => {});
+        }
+    }
+
+    async function openPaymentModal(offerId = null) {
+        if (!dom.paymentModal) return;
+        if (offerId) {
+            selectedPaymentOfferId = offerId;
+        }
+        renderPaymentOfferGrid();
+        resetPaymentVerificationState(true);
+        renderPaymentOrderUI();
+        dom.paymentModal.classList.remove('is-hidden');
+        document.body.classList.add('modal-open');
+        try {
+            await syncPaymentOrderForSelectedOffer(
+                !currentPaymentOrder
+                || currentPaymentOrder.offerId !== selectedPaymentOfferId
+                || isPaymentOrderExpired(currentPaymentOrder),
+                true
+            );
+        } catch (error) {
+        }
+        refreshPaymentVerificationState();
+    }
+
+    function closePaymentModal() {
+        if (!dom.paymentModal) return;
+        dom.paymentModal.classList.add('is-hidden');
+        if (!activeInfoModal) {
+            document.body.classList.remove('modal-open');
+        }
+    }
+
+    async function copyPaymentAddress() {
+        const wallet = String(dom.paymentWallet?.textContent || '').trim();
+        const copied = await copyTextToClipboard(wallet);
+        paymentVerificationError = '';
+        paymentVerificationNotice = copied
+            ? localize({ zh: '收款地址已复制。', en: 'Receiving address copied.' })
+            : localize({ zh: '自动复制不可用，请手动复制地址。', en: 'Automatic copy is unavailable. Please copy the address manually.' });
+        paymentVerificationState = 'idle';
+        refreshPaymentVerificationState();
+    }
+
+    async function copyPaymentAmount() {
+        let order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder) ? currentPaymentOrder : null;
+        if (!order) {
+            try {
+                order = await syncPaymentOrderForSelectedOffer(true, false);
+            } catch (error) {
+                return;
+            }
+        }
+        const copied = await copyTextToClipboard(Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS));
+        paymentVerificationError = '';
+        paymentVerificationNotice = copied
+            ? localize({ zh: '精确金额已复制。', en: 'Exact amount copied.' })
+            : localize({ zh: '自动复制不可用，请手动复制精确金额。', en: 'Automatic copy is unavailable. Please copy the exact amount manually.' });
+        paymentVerificationState = 'idle';
+        refreshPaymentVerificationState();
+    }
+
+    function grantPaymentRewards({ orderId, txid, offerId }) {
+        const offer = RUNNER_PAYMENT_OFFERS.find((item) => item.id === offerId) || getSelectedPaymentOffer();
+        if (!offer) {
+            return false;
+        }
+        if (playerProfile.payment.claimedOrders[orderId]) {
+            return false;
+        }
+
+        applyRewardBundle(offer.reward);
+        playerProfile.payment.purchaseCount += 1;
+        playerProfile.payment.totalSpent = Math.round((Number(playerProfile.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
+        playerProfile.payment.passUnlocked = true;
+        playerProfile.payment.claimedOrders[orderId] = true;
+        playerProfile.payment.verifiedTxids = [txid, ...(playerProfile.payment.verifiedTxids || []).filter((item) => item !== txid)].slice(0, 100);
+        saveState();
+        playSfx('promote');
+        showToast(localize({
+            zh: `充值成功：${localize(offer.name)} 奖励已到账`,
+            en: `Top-up complete: ${localize(offer.name)} rewards granted`
+        }));
+        renderAll();
+        return true;
+    }
+
+    async function handlePaymentConfirm() {
+        if (paymentVerificationState === 'creating' || paymentVerificationState === 'verifying') {
+            return;
+        }
+
+        const txid = getNormalizedPaymentTxid();
+        if (!PAYMENT_TXID_REGEX.test(txid)) {
+            paymentVerificationError = localize({ zh: 'TXID 格式不正确，请检查后重新输入。', en: 'Invalid TXID format. Please check and try again.' });
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if ((playerProfile.payment.verifiedTxids || []).includes(txid)) {
+            paymentVerificationError = localize({ zh: '该 txid 已经使用过，不能重复发奖。', en: 'This TXID has already been used and cannot grant rewards again.' });
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if (!currentPaymentOrder || isPaymentOrderExpired(currentPaymentOrder)) {
+            paymentVerificationError = localize({ zh: '当前订单已过期，请重新创建订单。', en: 'The current order has expired. Please create a new one.' });
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        const orderId = currentPaymentOrder.id;
+        paymentVerificationState = 'verifying';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        refreshPaymentVerificationState();
+
+        try {
+            const verificationResult = await verifyBackendPayment(orderId, txid);
+            const orderPayload = verificationResult?.order || {};
+            const resolvedOfferId = String(orderPayload?.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+
+            if (orderPayload?.rewardGranted || playerProfile.payment.claimedOrders[orderId]) {
+                paymentVerificationState = 'verified';
+                paymentVerificationNotice = localize({ zh: '该订单奖励已发放，无需重复领取。', en: 'Rewards for this order have already been granted.' });
+                refreshPaymentVerificationState();
+                saveState();
+                return;
+            }
+
+            grantPaymentRewards({
+                orderId,
+                txid,
+                offerId: resolvedOfferId
+            });
+
+            paymentVerificationState = 'verified';
+            paymentVerificationNotice = localize({ zh: '链上校验成功，奖励已发放。', en: 'On-chain verification succeeded and rewards were granted.' });
+            refreshPaymentVerificationState();
+
+            claimBackendPayment(orderId, txid).catch(() => {
+            });
+        } catch (error) {
+            paymentVerificationState = 'idle';
+            paymentVerificationNotice = '';
+            paymentVerificationError = error?.message || localize({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
+            refreshPaymentVerificationState();
+        }
     }
 
     function getRunnerRankScore() {
@@ -1524,18 +2163,18 @@
             body: `
                 <div class="modal-info-grid">
                     <article class="modal-info-card featured">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT PREVIEW' : '当前预估'}</div>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT ESTIMATE' : '当前预估'}</div>
                         <h3>${localize(divisionInfo.tier.title)}</h3>
                         <strong>${formatNumber(settlementPreview.totalGold)} ${t('goldLabel')} / ${formatNumber(settlementPreview.totalCore)} ${t('coreLabel')}</strong>
                         <p>${playerProfile.lang === 'en'
-                            ? 'Current preview = highest division reward reached this season + steady season level bonus.'
+                            ? 'Current estimate = highest division reward reached this season + steady season level bonus.'
                             : '当前预估 = 本赛季达到的最高段位奖励 + 赛季等级提供的稳定活跃加成。'}</p>
                     </article>
                     <article class="modal-info-card">
                         <div class="eyebrow">${playerProfile.lang === 'en' ? 'SETTLEMENT RULE' : '结算规则'}</div>
                         <h3>${playerProfile.lang === 'en' ? 'Highest division wins' : '按本赛季最高段位结算'}</h3>
                         <p>${playerProfile.lang === 'en'
-                            ? 'Once a higher division is reached, the seasonal settlement preview upgrades accordingly.'
+                            ? 'Once a higher division is reached, the seasonal settlement estimate upgrades accordingly.'
                             : '只要你在本赛季冲到更高段位，赛季结算预估就会同步升级，不需要一直停留在该段位。'}</p>
                     </article>
                     <article class="modal-info-card">
@@ -1835,16 +2474,32 @@
         activeInfoModal = '';
         if (!dom.infoModal) return;
         dom.infoModal.classList.add('is-hidden');
-        document.body.classList.remove('modal-open');
+        if (!dom.paymentModal || dom.paymentModal.classList.contains('is-hidden')) {
+            document.body.classList.remove('modal-open');
+        }
     }
 
     function switchTab(tab, syncHash = true) {
         if (!['run', 'loadout', 'missions', 'season', 'shop'].includes(tab)) return;
+        if (tab !== 'run' && game.running && !game.paused && !game.awaitingRevive) {
+            pauseRun();
+        }
         activeTab = tab;
         if (syncHash) {
             window.location.hash = activeTab;
         }
         renderPanel();
+        renderTabLayout();
+    }
+
+    function renderTabLayout() {
+        document.body.dataset.runnerTab = activeTab;
+        dom.runnerMain?.classList.toggle('is-run-tab', activeTab === 'run');
+        dom.runnerMain?.classList.toggle('is-content-tab', activeTab !== 'run');
+        dom.stageCard?.classList.toggle('is-tab-hidden', activeTab !== 'run');
+        if (dom.panelContent) {
+            dom.panelContent.scrollTop = 0;
+        }
     }
 
     function getLoadoutAlertCount() {
@@ -1857,8 +2512,8 @@
     function updateTabBadges() {
         const missionCount = getClaimableMissionCount();
         const loadoutCount = getLoadoutAlertCount();
-        const seasonCount = getClaimableSeasonRewardCount() + getClaimableRankRewardCount();
-        const shopCount = getShopAlertCount();
+        const seasonCount = getClaimableSeasonRewardCount() + getClaimableSeasonSponsorRewardCount() + getClaimableRankRewardCount();
+        const shopCount = getShopAlertCount() + (!playerProfile.payment.passUnlocked ? 1 : 0);
         Array.from(dom.tabBar.querySelectorAll('.tab-btn')).forEach((button) => {
             const tab = button.dataset.tab;
             const count = tab === 'missions'
@@ -1924,9 +2579,7 @@
         const complete = mission.current() >= mission.target;
         if (!complete || playerProfile.missionsClaimed[id]) return;
         playerProfile.missionsClaimed[id] = true;
-        playerProfile.gold += mission.reward.gold;
-        playerProfile.core += mission.reward.core;
-        playerProfile.seasonXp += mission.reward.xp;
+        applyRewardBundle(mission.reward);
         const advancedChapter = mission.section === 'pulse' ? 0 : maybeAdvanceMissionChapter();
         saveState();
         playSfx(advancedChapter ? 'promote' : 'reward');
@@ -1944,11 +2597,22 @@
         const state = reward ? getSeasonRewardState(reward.level) : null;
         if (!reward || !state || !state.claimable) return;
         playerProfile.seasonClaims[String(level)] = true;
-        playerProfile.gold += reward.free.gold || 0;
-        playerProfile.core += reward.free.core || 0;
+        applyRewardBundle(reward.free);
         saveState();
         playSfx('reward');
         showToast(localize({ zh: `已领取 Lv.${level} 赛季奖励`, en: `Claimed season reward Lv.${level}` }));
+        renderAll();
+    }
+
+    function claimSeasonSponsorReward(level) {
+        const reward = getSeasonRewards().find((item) => item.level === level);
+        const state = reward ? getSeasonSponsorRewardState(reward.level) : null;
+        if (!reward || !state || !state.claimable) return;
+        playerProfile.payment.premiumSeasonClaims[String(level)] = true;
+        applyRewardBundle(reward.premium);
+        saveState();
+        playSfx('promote');
+        showToast(localize({ zh: `已领取 Lv.${level} 赞助轨道奖励`, en: `Claimed sponsor reward Lv.${level}` }));
         renderAll();
     }
 
@@ -1957,11 +2621,7 @@
         const state = reward ? getRankRewardState(reward) : null;
         if (!reward || !state || !state.claimable) return;
         playerProfile.rankClaims[reward.id] = true;
-        playerProfile.gold += reward.reward.gold || 0;
-        playerProfile.core += reward.reward.core || 0;
-        playerProfile.boosts.starterOverclockRuns += reward.reward.starterOverclockRuns || 0;
-        playerProfile.boosts.settlementBoostRuns += reward.reward.settlementBoostRuns || 0;
-        playerProfile.boosts.freeRevives += reward.reward.freeRevives || 0;
+        applyRewardBundle(reward.reward);
         saveState();
         playSfx('promote');
         showToast(localize({ zh: `已领取冲榜奖励：${localize(reward.title)}`, en: `Ladder reward claimed: ${localize(reward.title)}` }));
@@ -2400,8 +3060,10 @@
         const rewards = getSeasonRewards();
         const rankRewards = getRankRewards();
         const claimableCount = getClaimableSeasonRewardCount();
+        const sponsorClaimableCount = getClaimableSeasonSponsorRewardCount();
         const rankClaimableCount = getClaimableRankRewardCount(rankScore);
-        const totalClaimableCount = claimableCount + rankClaimableCount;
+        const totalClaimableCount = claimableCount + sponsorClaimableCount + rankClaimableCount;
+        const sponsorUnlocked = !!playerProfile.payment.passUnlocked;
         const nextRankReward = rankRewards.find((reward) => !getRankRewardState(reward, rankScore).claimed && rankScore < reward.score)
             || rankRewards.find((reward) => !getRankRewardState(reward, rankScore).claimed)
             || null;
@@ -2437,7 +3099,7 @@
                     </div>
                     <div class="panel-meta-row">
                         <span class="pill hot" id="seasonCountdown">${playerProfile.lang === 'en' ? `Ends In ${countdown}` : `赛季剩余 ${countdown}`}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Free + Premium dual track' : '免费 + 高级双轨预览'}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Free + Sponsor dual track' : '免费 + 赞助双轨'}</span>
                         <span class="pill ${rankClaimableCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `Ladder rewards ${formatNumber(rankClaimableCount)} ready` : `冲榜奖励待领 ${formatNumber(rankClaimableCount)}`}</span>
                     </div>
                     <div class="season-banner">
@@ -2501,30 +3163,47 @@
                         <section class="season-lane">
                             <div class="season-lane-head">
                                 <div>
-                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'PREMIUM TRACK' : '高级轨道'}</div>
-                                    <h3>${playerProfile.lang === 'en' ? 'Preview the higher-value identity and monetization layer.' : '预览更偏身份感与付费价值的高阶奖励层。'}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'SPONSOR TRACK' : '赞助轨道'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Verified top-up unlocks a second reward lane with stronger seasonal payoffs.' : '完成链上校验后，开启第二条更偏中后期价值的赛季奖励轨道。'}</h3>
                                 </div>
-                                <span class="pill">${playerProfile.lang === 'en' ? 'Preview only' : '仅展示预览'}</span>
+                                <span class="pill ${sponsorUnlocked ? 'good' : ''}">${sponsorUnlocked
+                                    ? (playerProfile.lang === 'en' ? `${formatNumber(sponsorClaimableCount)} ready` : `待领 ${formatNumber(sponsorClaimableCount)}`)
+                                    : (playerProfile.lang === 'en' ? 'Locked by top-up' : '充值后解锁')}</span>
                             </div>
                             <div class="season-node-row">
                                 ${rewards.map((reward) => {
-                                    const state = getSeasonRewardState(reward.level);
+                                    const state = getSeasonSponsorRewardState(reward.level);
+                                    const buttonLabel = !state.passUnlocked
+                                        ? localize({ zh: '前往商店解锁', en: 'Unlock In Shop' })
+                                        : state.claimed
+                                            ? localize({ zh: '已领取', en: 'Claimed' })
+                                            : state.claimable
+                                                ? localize({ zh: '领取赞助奖励', en: 'Claim Sponsor Reward' })
+                                                : localize({ zh: `Lv.${reward.level} 解锁`, en: `Unlock at Lv.${reward.level}` });
                                     return `
-                                        <article class="season-node is-premium ${state.unlocked ? 'is-unlocked' : ''}">
+                                        <article class="season-node is-premium ${state.unlocked ? 'is-unlocked' : ''} ${state.claimable ? 'is-claimable' : ''} ${state.claimed ? 'is-claimed' : ''}">
                                             <div class="season-node-top">
                                                 <span class="pill hot">Lv.${reward.level}</span>
-                                                <span class="pill">${state.unlocked
-                                                    ? localize({ zh: '已看到该层', en: 'Track reached' })
-                                                    : localize({ zh: '待解锁预览', en: 'Preview locked' })}</span>
+                                                <span class="pill ${state.claimable ? 'good' : ''}">${!state.passUnlocked
+                                                    ? localize({ zh: '未解锁', en: 'Locked' })
+                                                    : state.claimed
+                                                        ? localize({ zh: '已完成', en: 'Done' })
+                                                        : state.claimable
+                                                            ? localize({ zh: '可领取', en: 'Ready' })
+                                                            : localize({ zh: '成长中', en: 'Progressing' })}</span>
                                             </div>
                                             <div>
                                                 <h3>${localize(reward.premium.title)}</h3>
                                                 <p>${localize(reward.premium.desc)}</p>
                                             </div>
                                             <div class="reward-row">${renderRewardPills(reward.premium, 'shop-pill')}</div>
-                                            <button class="ghost-btn wide-btn" type="button" disabled>${state.unlocked
-                                                ? localize({ zh: '高级奖励预览', en: 'Premium Preview' })
-                                                : localize({ zh: `Lv.${reward.level} 后开放`, en: `Opens at Lv.${reward.level}` })}</button>
+                                            <button
+                                                class="${state.claimable ? 'primary-btn' : 'ghost-btn'} wide-btn"
+                                                type="button"
+                                                ${state.claimable
+                                                    ? `data-claim-season-premium="${reward.level}"`
+                                                    : (!state.passUnlocked ? 'data-open-tab="shop"' : 'disabled')}
+                                            >${buttonLabel}</button>
                                         </article>
                                     `;
                                 }).join('')}
@@ -2605,7 +3284,7 @@
                             <div class="mini-label">${playerProfile.lang === 'en' ? 'Current expected payout' : '当前预计结算'}</div>
                             <strong>${formatNumber(settlementPreview.totalGold)} ${t('goldLabel')} / ${formatNumber(settlementPreview.totalCore)} ${t('coreLabel')}</strong>
                             <p>${playerProfile.lang === 'en'
-                                ? 'Final preview = current highest division reward + season level activity bonus.'
+                                ? 'Final estimate = current highest division reward + season level activity bonus.'
                                 : '当前预估 = 本赛季最高段位奖励 + 赛季等级活跃加成。'}</p>
                         </div>
                         <div class="reward-row">
@@ -2634,40 +3313,69 @@
         const boostEntries = getBoostInventoryEntries();
         const readyOffers = getShopAlertCount();
         const readyBoostCount = boostEntries.filter((entry) => entry.count > 0).length;
+        const sponsorUnlocked = !!playerProfile.payment.passUnlocked;
+        const totalSpentText = Number(playerProfile.payment.totalSpent || 0).toFixed(2);
 
         return `
             <div class="card-grid">
-                <article class="stat-card showcase-card">
+                <article class="stat-card showcase-card runner-payment-pass-card">
                     <div class="panel-title-row">
                         <div>
                             <div class="eyebrow">${t('shopTitle')}</div>
-                            <h3>${t('shopDesc')}</h3>
+                            <h3>${playerProfile.lang === 'en' ? 'Verified top-up, sponsor track, and live supplies all converge here.' : '真实充值、赞助轨道和实装补给统一收口到这个页面。'}</h3>
                         </div>
                     </div>
                     <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyOffers} live offers available` : `当前可买 ${readyOffers} 项`}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyBoostCount} boost types stored` : `增益储备 ${readyBoostCount} 类`}</span>
-                        <span class="reward-pill">${t('prototypeShop')}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyOffers} live supply offers` : `实装补给 ${readyOffers} 项`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyBoostCount} stored boost types` : `增益储备 ${readyBoostCount} 类`}</span>
+                        <span class="reward-pill">${t('topupShopInfo')}</span>
                     </div>
                     <div class="shop-kpi-grid">
+                        <div class="shop-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Verified Top-Ups' : '已校验充值'}</span>
+                            <strong>${formatNumber(playerProfile.payment.purchaseCount || 0)}</strong>
+                        </div>
+                        <div class="shop-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Sponsor Track' : '赞助轨道'}</span>
+                            <strong>${sponsorUnlocked ? (playerProfile.lang === 'en' ? 'Unlocked' : '已解锁') : (playerProfile.lang === 'en' ? 'Locked' : '未解锁')}</strong>
+                        </div>
+                        <div class="shop-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Total Spent' : '累计充值'}</span>
+                            <strong>$${totalSpentText}</strong>
+                        </div>
                         <div class="shop-kpi">
                             <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Distance' : '最佳距离'}</span>
                             <strong>${formatDistance(playerProfile.bestDistance)}</strong>
                         </div>
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Core Reserve' : '能核储备'}</span>
-                            <strong>${formatNumber(playerProfile.core)}</strong>
-                        </div>
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Gold Reserve' : '金币储备'}</span>
-                            <strong>${formatNumber(playerProfile.gold)}</strong>
-                        </div>
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Daily Stock' : '今日货架'}</span>
-                            <strong>${formatNumber(FUNCTIONAL_SHOP_OFFERS.reduce((sum, offer) => sum + getRemainingShopStock(offer.id), 0))}</strong>
-                        </div>
+                    </div>
+                    <div class="runner-payment-cta">
+                        <span class="pill ${sponsorUnlocked ? 'good' : 'hot'}">${sponsorUnlocked
+                            ? (playerProfile.lang === 'en' ? 'Sponsor rewards are now claimable in Season' : '赛季页已开放赞助奖励')
+                            : (playerProfile.lang === 'en' ? 'Any verified top-up unlocks the sponsor track' : '任意一笔校验成功的充值都会解锁赞助轨道')}</span>
+                        <button class="primary-btn" type="button" data-open-payment="starter">${playerProfile.lang === 'en' ? 'Open Top-Up' : '打开充值'}</button>
                     </div>
                 </article>
+
+                ${RUNNER_PAYMENT_OFFERS.map((offer) => `
+                    <article class="shop-card ${offer.id === 'accelerator' || offer.id === 'throne' ? 'featured' : ''}" style="--shop-accent:${offer.accent};">
+                        <div class="card-title-row">
+                            <div>
+                                <div class="eyebrow">${localize(offer.badge)}</div>
+                                <h3>${localize(offer.name)}</h3>
+                            </div>
+                            <span class="pill hot">$${offer.price.toFixed(2)}</span>
+                        </div>
+                        <p>${localize(offer.desc)}</p>
+                        <div class="panel-meta-row">
+                            <span class="shop-price">${playerProfile.lang === 'en' ? 'On-chain verified' : '链上校验发奖'}</span>
+                            <span class="pill">${playerProfile.lang === 'en' ? 'OKX Wallet · TRON (TRC20)' : 'OKX 钱包 · TRON (TRC20)'}</span>
+                        </div>
+                        <div class="shop-meta">
+                            ${renderRewardPills(offer.reward, 'shop-pill')}
+                        </div>
+                        <button class="primary-btn wide-btn" type="button" data-open-payment="${offer.id}">${playerProfile.lang === 'en' ? 'Create Order & Pay' : '创建订单并支付'}</button>
+                    </article>
+                `).join('')}
 
                 <article class="stat-card shop-section-card">
                     <div class="panel-title-row">
@@ -2726,39 +3434,6 @@
                     </article>
                     `;
                 }).join('')}
-
-                <article class="stat-card shop-section-card">
-                    <div class="panel-title-row">
-                        <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'PREMIUM PREVIEW' : '高级礼包预览'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Keep future packaging visible without mixing it into current gameplay' : '把未来礼包结构保留下来，但不再和当前实装玩法混在一起'}</h3>
-                        </div>
-                    </div>
-                    <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Preview only, no payment connected' : '仅作结构预览，不接真实支付'}</span>
-                    </div>
-                </article>
-
-                ${SHOP_OFFERS.map((offer, index) => `
-                    <article class="shop-card ${offer.badge === 'hot' ? 'featured' : ''}">
-                        <div class="card-title-row">
-                            <div>
-                                <div class="eyebrow">${offer.badge === 'hot' ? t('shopHot') : t('shopValue')}</div>
-                                <h3>${localize(offer.name)}</h3>
-                            </div>
-                            <span class="pill ${offer.badge === 'hot' ? 'hot' : 'good'}">${t('shopPreview')}</span>
-                        </div>
-                        <p>${localize(offer.desc)}</p>
-                        <div class="panel-meta-row">
-                            <span class="shop-price">${playerProfile.lang === 'en' ? `$${(index + 1) * 2.99}` : `CNY ${(index + 1) * 18}`}</span>
-                            <span class="pill">${playerProfile.lang === 'en' ? 'Structured for future monetization' : '未来可接商业化结构'}</span>
-                        </div>
-                        <div class="shop-meta">
-                            ${offer.items.map((item) => `<span class="shop-pill">${localize(item)}</span>`).join('')}
-                        </div>
-                        <button class="ghost-btn wide-btn" type="button" disabled>${t('shopPreview')}</button>
-                    </article>
-                `).join('')}
             </div>
         `;
     }
@@ -2819,11 +3494,15 @@
             saveState();
         }
         applyI18n();
+        renderTabLayout();
         updateReviveOverlayCopy();
         renderSummary();
         renderHud();
         renderPanel();
+        renderPaymentOfferGrid();
         renderResultOverlayCard();
+        renderPaymentOrderUI();
+        updatePaymentExpiryUI();
         updateMissionCountdownUI();
         if (activeInfoModal) {
             openInfoModal(activeInfoModal);
@@ -3727,6 +4406,11 @@
                 claimSeasonReward(Number(seasonClaimButton.dataset.claimSeason));
                 return;
             }
+            const seasonPremiumClaimButton = event.target.closest('[data-claim-season-premium]');
+            if (seasonPremiumClaimButton) {
+                claimSeasonSponsorReward(Number(seasonPremiumClaimButton.dataset.claimSeasonPremium));
+                return;
+            }
             const rankClaimButton = event.target.closest('[data-claim-rank]');
             if (rankClaimButton) {
                 claimRankReward(rankClaimButton.dataset.claimRank);
@@ -3746,6 +4430,11 @@
             if (openTabButton) {
                 closeInfoModal();
                 switchTab(openTabButton.dataset.openTab || 'run');
+                return;
+            }
+            const openPaymentButton = event.target.closest('[data-open-payment]');
+            if (openPaymentButton) {
+                openPaymentModal(openPaymentButton.dataset.openPayment || 'starter');
             }
         });
 
@@ -3774,6 +4463,27 @@
             if (event.target === dom.infoModal) {
                 closeInfoModal();
             }
+        });
+
+        dom.paymentCloseBtn?.addEventListener('click', closePaymentModal);
+        dom.paymentModal?.addEventListener('click', (event) => {
+            if (event.target === dom.paymentModal) {
+                closePaymentModal();
+            }
+        });
+        dom.paymentOfferGrid?.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-select-payment-offer]');
+            if (!button) return;
+            selectPaymentOffer(button.dataset.selectPaymentOffer || 'starter');
+        });
+        dom.paymentCopyAddressBtn?.addEventListener('click', copyPaymentAddress);
+        dom.paymentCopyAmountBtn?.addEventListener('click', copyPaymentAmount);
+        dom.paymentVerifyBtn?.addEventListener('click', handlePaymentConfirm);
+        dom.paymentTxidInput?.addEventListener('input', () => {
+            paymentVerificationState = paymentVerificationState === 'verified' ? 'verified' : 'idle';
+            paymentVerificationError = '';
+            paymentVerificationNotice = paymentVerificationState === 'verified' ? paymentVerificationNotice : '';
+            refreshPaymentVerificationState();
         });
 
         let touchStartX = 0;
@@ -3817,6 +4527,10 @@
         window.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && activeInfoModal) {
                 closeInfoModal();
+                return;
+            }
+            if (event.key === 'Escape' && dom.paymentModal && !dom.paymentModal.classList.contains('is-hidden')) {
+                closePaymentModal();
             }
         });
     }
@@ -3825,8 +4539,10 @@
     renderAll();
     updateSeasonCountdownUI();
     updateMissionCountdownUI();
+    updatePaymentExpiryUI();
     seasonCountdownTimer = window.setInterval(updateSeasonCountdownUI, 1000);
     missionCountdownTimer = window.setInterval(updateMissionCountdownUI, 1000);
+    paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
     resizeCanvas();
     setOverlay(dom.startOverlay);
     requestAnimationFrame(gameLoop);

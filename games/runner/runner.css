@@ -22,6 +22,7 @@
     --safe-top: max(16px, env(safe-area-inset-top));
     --safe-bottom: max(16px, env(safe-area-inset-bottom));
     --content-width: 1200px;
+    --tabbar-height: 78px;
 }
 
 * {
@@ -89,7 +90,7 @@ a {
     z-index: 1;
     width: min(100%, var(--content-width));
     margin: 0 auto;
-    padding: calc(var(--safe-top) + 8px) 14px calc(var(--safe-bottom) + 24px);
+    padding: calc(var(--safe-top) + 8px) 14px calc(var(--safe-bottom) + var(--tabbar-height) + 24px);
 }
 
 .topbar {
@@ -193,12 +194,17 @@ a {
 .runner-main {
     display: grid;
     gap: 16px;
+    min-height: 0;
 }
 
 .stage-card,
 .panel-card {
     border-radius: var(--radius-xl);
     padding: 14px;
+}
+
+.stage-card.is-tab-hidden {
+    display: none;
 }
 
 .stage-hud {
@@ -579,6 +585,7 @@ a {
 
 .panel-card {
     min-height: 280px;
+    overflow: hidden;
 }
 
 .tab-bar {
@@ -632,6 +639,7 @@ a {
 .panel-content {
     display: grid;
     gap: 12px;
+    min-height: 0;
 }
 
 .card-grid {
@@ -2063,5 +2071,399 @@ a {
     .overlay-kicker {
         font-size: 9px;
         letter-spacing: 0.14em;
+    }
+}
+
+.runner-main.is-content-tab {
+    display: block;
+}
+
+.runner-main.is-content-tab .panel-card {
+    min-height: clamp(460px, calc(100dvh - 240px), 980px);
+    max-height: clamp(460px, calc(100dvh - 240px), 980px);
+}
+
+.runner-main.is-content-tab .panel-content {
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 2px;
+    padding-bottom: calc(var(--safe-bottom) + 8px);
+    -webkit-overflow-scrolling: touch;
+}
+
+.app-tab-bar {
+    position: fixed;
+    left: 50%;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    transform: translateX(-50%);
+    width: min(calc(100vw - 20px), calc(var(--content-width) - 20px));
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+    border-radius: 24px;
+    border: 1px solid rgba(96, 212, 255, 0.18);
+    background: linear-gradient(180deg, rgba(8, 17, 36, 0.96), rgba(6, 12, 26, 0.96));
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 32;
+    margin-bottom: 0;
+}
+
+.app-tab-bar .tab-btn {
+    min-height: 52px;
+    padding: 12px 8px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.runner-payment-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(4, 9, 20, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 72;
+}
+
+.runner-payment-modal.is-hidden {
+    display: none;
+}
+
+.runner-payment-card {
+    width: min(100%, 920px);
+    max-height: min(90dvh, 960px);
+    overflow: hidden;
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 28px;
+    border: 1px solid rgba(96, 212, 255, 0.24);
+    background: linear-gradient(180deg, rgba(9, 20, 43, 0.98), rgba(5, 10, 22, 0.98));
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.runner-payment-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.runner-payment-head h2 {
+    margin: 6px 0 8px;
+    font-size: 30px;
+}
+
+.runner-payment-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.runner-payment-offer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.runner-payment-offer {
+    padding: 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    display: grid;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.runner-payment-offer.is-active {
+    border-color: color-mix(in srgb, var(--offer-accent, var(--cyan)) 54%, transparent);
+    background: color-mix(in srgb, var(--offer-accent, var(--cyan)) 14%, rgba(255,255,255,0.04));
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--offer-accent, var(--cyan)) 16%, transparent);
+}
+
+.runner-payment-offer-badge {
+    justify-self: start;
+}
+
+.runner-payment-offer h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.runner-payment-offer p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.runner-payment-offer-price {
+    font-family: "Roboto Mono", monospace;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.runner-payment-order-card {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid rgba(96, 212, 255, 0.16);
+    background: rgba(255, 255, 255, 0.03);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.runner-payment-order-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.runner-payment-amount {
+    font-family: "Roboto Mono", monospace;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.runner-payment-meta {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.runner-payment-order-line {
+    display: grid;
+    gap: 6px;
+    text-align: right;
+}
+
+.runner-payment-order-line span,
+.runner-payment-stat span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.runner-payment-order-line strong,
+.runner-payment-stat strong {
+    font-family: "Roboto Mono", monospace;
+    font-size: 16px;
+}
+
+.runner-payment-order-grid,
+.runner-payment-copy-row,
+.runner-payment-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.runner-payment-stat,
+.runner-payment-address-block,
+.runner-payment-field,
+.runner-payment-status {
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.runner-payment-address {
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(5, 10, 22, 0.9);
+    border: 1px dashed rgba(96, 212, 255, 0.22);
+    font-family: "Roboto Mono", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-all;
+}
+
+.runner-payment-input {
+    width: 100%;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(96, 212, 255, 0.18);
+    background: rgba(5, 10, 22, 0.92);
+    color: var(--text);
+    font: inherit;
+    outline: none;
+}
+
+.runner-payment-input:focus {
+    border-color: rgba(96, 212, 255, 0.42);
+    box-shadow: 0 0 0 3px rgba(96, 212, 255, 0.08);
+}
+
+.runner-payment-hint {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.runner-payment-status {
+    color: var(--muted);
+    line-height: 1.55;
+    font-size: 13px;
+}
+
+.runner-payment-status.is-success {
+    color: var(--success);
+    border-color: rgba(89, 255, 155, 0.22);
+    background: rgba(89, 255, 155, 0.08);
+}
+
+.runner-payment-status.is-error {
+    color: #ff8ca6;
+    border-color: rgba(255, 106, 136, 0.22);
+    background: rgba(255, 106, 136, 0.08);
+}
+
+.runner-payment-shop-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.runner-payment-cta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.runner-payment-cta .pill {
+    flex-shrink: 0;
+}
+
+.runner-payment-pass-card {
+    border-color: rgba(255, 214, 107, 0.18);
+    background: linear-gradient(145deg, rgba(255, 214, 107, 0.1), rgba(87, 229, 255, 0.06));
+}
+
+@media (min-width: 981px) {
+    .runner-main.is-content-tab {
+        grid-template-columns: 1fr;
+    }
+
+    .runner-main.is-content-tab .panel-card {
+        position: relative;
+        top: auto;
+        min-height: clamp(520px, calc(100dvh - 210px), 980px);
+        max-height: clamp(520px, calc(100dvh - 210px), 980px);
+    }
+}
+
+@media (max-width: 900px) {
+    .app-tab-bar {
+        width: min(calc(100vw - 16px), 760px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+        padding: 7px;
+        gap: 6px;
+    }
+
+    .app-tab-bar .tab-btn {
+        min-height: 46px;
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+
+    .runner-main.is-content-tab .panel-card {
+        min-height: clamp(420px, calc(100dvh - 250px), 860px);
+        max-height: clamp(420px, calc(100dvh - 250px), 860px);
+    }
+
+    .runner-payment-card {
+        padding: 16px;
+        border-radius: 24px;
+    }
+
+    .runner-payment-offer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .runner-payment-modal {
+        padding: 10px;
+        align-items: flex-start;
+    }
+
+    .runner-payment-card {
+        width: 100%;
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px);
+        padding: 14px;
+        gap: 12px;
+        border-radius: 20px;
+    }
+
+    .runner-payment-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .runner-payment-head h2 {
+        font-size: 24px;
+    }
+
+    .runner-payment-offer-grid,
+    .runner-payment-order-grid,
+    .runner-payment-copy-row,
+    .runner-payment-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .runner-payment-order-top,
+    .runner-payment-cta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .runner-payment-order-line {
+        text-align: left;
+    }
+
+    .runner-payment-amount {
+        font-size: 24px;
+    }
+
+    .runner-payment-offer h3 {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 420px) {
+    .app-tab-bar {
+        width: calc(100vw - 12px);
+        padding: 6px;
+        border-radius: 18px;
+    }
+
+    .app-tab-bar .tab-btn {
+        min-height: 42px;
+        padding: 8px 4px;
+        font-size: 11px;
+        border-radius: 12px;
+    }
+
+    .runner-main.is-content-tab .panel-card {
+        min-height: clamp(400px, calc(100dvh - 236px), 780px);
+        max-height: clamp(400px, calc(100dvh - 236px), 780px);
     }
 }
