@@ -63,7 +63,7 @@
             missionClaimed: '任务奖励已领取',
             equipped: '已切换装配',
             unlocked: '解锁成功',
-            prototypeShop: '此页仅展示商业化结构，当前未接真实支付。',
+            prototypeShop: '上方补给会立即生效；下方保留未来高级礼包的结构预览。',
             runPanelTitle: '今日赛道',
             runPanelDesc: '短局爽感优先，核心是“再来一把”的高速循环。',
             runEvent1: '霓虹风暴',
@@ -96,11 +96,17 @@
             seasonLevel: '赛季等级',
             seasonXp: '赛季经验',
             seasonNext: '距离下一级',
-            shopTitle: '商店预览',
-            shopDesc: '这里只展示未来礼包结构，不会触发付费或扣款。',
+            shopTitle: '补给商店',
+            shopDesc: '使用游戏内资源换即时增益，直接强化接下来几局跑酷。',
             shopPreview: '仅预览',
             shopHot: '高转化',
             shopValue: '高价值',
+            shopClaim: '免费领取',
+            shopBuy: '立即购买',
+            shopSoldOut: '今日售罄',
+            shopUnavailable: '资源不足',
+            freeReviveUsed: '已使用免费复活，继续冲榜',
+            freeReviveReady: '本局已携带免费复活',
             bestToast: '刷新最佳距离',
             runReadyToast: '赛道已加载，准备起跑',
             hitWall: '撞击障碍，冲刺中断',
@@ -165,7 +171,7 @@
             missionClaimed: 'Mission reward claimed',
             equipped: 'Loadout updated',
             unlocked: 'Unlocked successfully',
-            prototypeShop: 'This page only previews monetization structure. No real payment is connected.',
+            prototypeShop: 'The top offers are fully functional now; the lower section keeps a premium preview for future packaging.',
             runPanelTitle: 'Today\'s Track',
             runPanelDesc: 'Short-run excitement first, designed around a fast one-more-run loop.',
             runEvent1: 'Neon Storm',
@@ -198,11 +204,17 @@
             seasonLevel: 'Season Level',
             seasonXp: 'Season XP',
             seasonNext: 'To Next Level',
-            shopTitle: 'Shop Preview',
-            shopDesc: 'This panel shows future packs only. No payment or charge happens here.',
+            shopTitle: 'Supply Shop',
+            shopDesc: 'Spend in-game resources on instant boosts that improve your next few runs.',
             shopPreview: 'Preview Only',
             shopHot: 'Hot',
             shopValue: 'Value',
+            shopClaim: 'Claim Free',
+            shopBuy: 'Buy Now',
+            shopSoldOut: 'Sold Out Today',
+            shopUnavailable: 'Need More Resources',
+            freeReviveUsed: 'Free revive used. Back to the rush',
+            freeReviveReady: 'Free revive armed for this run',
             bestToast: 'New best distance',
             runReadyToast: 'Track loaded. Ready to rush',
             hitWall: 'Obstacle hit. Run interrupted',
@@ -308,6 +320,45 @@
         }
     ];
 
+    const FUNCTIONAL_SHOP_OFFERS = [
+        {
+            id: 'daily-cache',
+            accent: '#57e5ff',
+            stock: 1,
+            title: { zh: '每日补给箱', en: 'Daily Supply Cache' },
+            desc: { zh: '每天可免费领取一次，给你稳定的开局资源。', en: 'Free once per day to keep your session loop moving.' },
+            cost: { gold: 0, core: 0 },
+            reward: { gold: 520, core: 4 }
+        },
+        {
+            id: 'core-crate',
+            accent: '#ffd66b',
+            stock: 2,
+            title: { zh: '能核补充包', en: 'Core Refill Crate' },
+            desc: { zh: '用金币换取更多能核，降低复活和技能试错压力。', en: 'Convert gold into cores so revives and retries feel less punishing.' },
+            cost: { gold: 1600, core: 0 },
+            reward: { gold: 0, core: 14 }
+        },
+        {
+            id: 'battery-pack',
+            accent: '#a46bff',
+            stock: 2,
+            title: { zh: '超频电池组', en: 'Overclock Battery Pack' },
+            desc: { zh: '接下来 3 局开局自带额外超频能量，更容易进入爽点。', en: 'Your next 3 runs start with bonus overclock charge for a faster excitement curve.' },
+            cost: { gold: 0, core: 10 },
+            reward: { starterOverclockRuns: 3 }
+        },
+        {
+            id: 'summit-contract',
+            accent: '#59ff9b',
+            stock: 1,
+            title: { zh: '冲榜赞助合同', en: 'Summit Sponsor Contract' },
+            desc: { zh: '接下来 3 局额外提高结算金币与赛季经验，并附带 1 次免费复活。', en: 'Boost the next 3 runs with extra settlement gold, season XP, and 1 free revive.' },
+            cost: { gold: 2600, core: 8 },
+            reward: { settlementBoostRuns: 3, freeRevives: 1 }
+        }
+    ];
+
     const dom = {
         canvas: document.getElementById('runnerCanvas'),
         canvasWrap: document.getElementById('canvasWrap'),
@@ -380,6 +431,15 @@
         seasonXp: 120,
         seasonLevel: 2,
         seasonClaims: {},
+        boosts: {
+            starterOverclockRuns: 0,
+            settlementBoostRuns: 0,
+            freeRevives: 0
+        },
+        shop: {
+            dailyKey: '',
+            stock: {}
+        },
         loadout: {
             runner: 'flash',
             skill: 'shield',
@@ -418,7 +478,12 @@
         skillCooldownMax: 14,
         overclock: 0,
         overclockActive: 0,
+        runGoldMultiplier: 1,
+        runSeasonXpMultiplier: 1,
         reviveCount: 0,
+        freeReviveAvailable: false,
+        freeReviveConsumed: false,
+        activeBoosts: [],
         distance: 0,
         score: 0,
         combo: 1,
@@ -464,6 +529,12 @@
                     passives: Array.from(new Set([...(baseState.unlocked.passives || []), ...((parsed.unlocked && parsed.unlocked.passives) || [])]))
                 },
                 seasonClaims: { ...(parsed.seasonClaims || {}) },
+                boosts: { ...deepClone(baseState.boosts), ...(parsed.boosts || {}) },
+                shop: {
+                    ...deepClone(baseState.shop),
+                    ...(parsed.shop || {}),
+                    stock: { ...deepClone(baseState.shop.stock), ...((parsed.shop && parsed.shop.stock) || {}) }
+                },
                 missionsClaimed: { ...(parsed.missionsClaimed || {}) },
                 stats: { ...deepClone(baseState.stats), ...(parsed.stats || {}) }
             };
@@ -797,6 +868,171 @@
         return getSeasonRewards().filter((reward) => getSeasonRewardState(reward.level).claimable).length;
     }
 
+    function getLocalDayKey() {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${now.getFullYear()}-${month}-${day}`;
+    }
+
+    function getDefaultShopStock() {
+        return FUNCTIONAL_SHOP_OFFERS.reduce((stock, offer) => {
+            stock[offer.id] = offer.stock;
+            return stock;
+        }, {});
+    }
+
+    function ensureDailyShopState() {
+        if (!playerProfile.shop || typeof playerProfile.shop !== 'object') {
+            playerProfile.shop = deepClone(baseState.shop);
+        }
+        if (!playerProfile.shop.stock || typeof playerProfile.shop.stock !== 'object') {
+            playerProfile.shop.stock = {};
+        }
+
+        const dayKey = getLocalDayKey();
+        let changed = false;
+
+        if (playerProfile.shop.dailyKey !== dayKey) {
+            playerProfile.shop.dailyKey = dayKey;
+            playerProfile.shop.stock = getDefaultShopStock();
+            changed = true;
+        }
+
+        FUNCTIONAL_SHOP_OFFERS.forEach((offer) => {
+            const raw = Number(playerProfile.shop.stock[offer.id]);
+            const normalized = Number.isFinite(raw)
+                ? Math.max(0, Math.min(offer.stock, Math.floor(raw)))
+                : offer.stock;
+            if (playerProfile.shop.stock[offer.id] !== normalized) {
+                playerProfile.shop.stock[offer.id] = normalized;
+                changed = true;
+            }
+        });
+
+        return changed;
+    }
+
+    function getFunctionalShopOffer(id) {
+        return FUNCTIONAL_SHOP_OFFERS.find((offer) => offer.id === id) || null;
+    }
+
+    function getRemainingShopStock(id) {
+        const offer = getFunctionalShopOffer(id);
+        if (!offer) return 0;
+        const current = Number(playerProfile.shop.stock[offer.id]);
+        return Number.isFinite(current) ? Math.max(0, current) : offer.stock;
+    }
+
+    function canAffordCost(cost = {}) {
+        return (cost.gold || 0) <= playerProfile.gold && (cost.core || 0) <= playerProfile.core;
+    }
+
+    function formatBoostRewardText(key, value = 0) {
+        const amount = formatNumber(value);
+        if (key === 'starterOverclockRuns') {
+            return localize({ zh: `超频开局 x${amount}`, en: `Boosted starts x${amount}` });
+        }
+        if (key === 'settlementBoostRuns') {
+            return localize({ zh: `结算增益 x${amount}`, en: `Settlement boost x${amount}` });
+        }
+        if (key === 'freeRevives') {
+            return localize({ zh: `免费复活 x${amount}`, en: `Free revives x${amount}` });
+        }
+        return amount;
+    }
+
+    function getBoostInventoryEntries() {
+        return [
+            {
+                key: 'starterOverclockRuns',
+                accent: '#a46bff',
+                title: localize({ zh: '起跑超频', en: 'Starter Overclock' }),
+                desc: localize({ zh: '每次消耗 1 局，开局额外携带 28% 超频能量，更快进入爽点。', en: 'Consumes 1 charge per run and starts you with +28% overclock.' }),
+                count: playerProfile.boosts.starterOverclockRuns || 0
+            },
+            {
+                key: 'settlementBoostRuns',
+                accent: '#59ff9b',
+                title: localize({ zh: '结算增益', en: 'Settlement Boost' }),
+                desc: localize({ zh: '每次消耗 1 局，结算金币与赛季经验同时提升至 1.25 倍。', en: 'Consumes 1 charge per run and boosts settlement gold plus season XP to x1.25.' }),
+                count: playerProfile.boosts.settlementBoostRuns || 0
+            },
+            {
+                key: 'freeRevives',
+                accent: '#57e5ff',
+                title: localize({ zh: '免费复活', en: 'Free Revive' }),
+                desc: localize({ zh: '保留到真正失误时才消耗，不会在开局白白浪费。', en: 'Stays stored until a real revive is used, so the charge is never wasted on run start.' }),
+                count: playerProfile.boosts.freeRevives || 0
+            }
+        ];
+    }
+
+    function renderCostPills(cost = {}) {
+        const labels = [];
+        if (cost.gold) {
+            labels.push(localize({ zh: `消耗金币 ${formatNumber(cost.gold)}`, en: `Costs ${formatNumber(cost.gold)} gold` }));
+        }
+        if (cost.core) {
+            labels.push(localize({ zh: `消耗能核 ${formatNumber(cost.core)}`, en: `Costs ${formatNumber(cost.core)} cores` }));
+        }
+        if (!labels.length) {
+            labels.push(localize({ zh: '免费领取', en: 'Free claim' }));
+        }
+        return labels.map((text) => `<span class="shop-pill">${text}</span>`).join('');
+    }
+
+    function getShopAlertCount() {
+        if (ensureDailyShopState()) {
+            saveState();
+        }
+        return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
+            const remaining = getRemainingShopStock(offer.id);
+            return remaining > 0 && canAffordCost(offer.cost);
+        }).length;
+    }
+
+    function purchaseShopOffer(id) {
+        if (ensureDailyShopState()) {
+            saveState();
+        }
+
+        const offer = getFunctionalShopOffer(id);
+        if (!offer) return;
+
+        const remaining = getRemainingShopStock(id);
+        if (remaining <= 0) {
+            showToast(t('shopSoldOut'));
+            return;
+        }
+
+        if (!canAffordCost(offer.cost)) {
+            const needGold = (offer.cost.gold || 0) > playerProfile.gold;
+            const needCore = (offer.cost.core || 0) > playerProfile.core;
+            if (needGold && needCore) showToast(t('shopUnavailable'));
+            else if (needGold) showToast(t('notEnoughGold'));
+            else showToast(t('notEnoughCore'));
+            return;
+        }
+
+        playerProfile.gold -= offer.cost.gold || 0;
+        playerProfile.core -= offer.cost.core || 0;
+        playerProfile.gold += offer.reward.gold || 0;
+        playerProfile.core += offer.reward.core || 0;
+        playerProfile.boosts.starterOverclockRuns += offer.reward.starterOverclockRuns || 0;
+        playerProfile.boosts.settlementBoostRuns += offer.reward.settlementBoostRuns || 0;
+        playerProfile.boosts.freeRevives += offer.reward.freeRevives || 0;
+        playerProfile.shop.stock[id] = Math.max(0, remaining - 1);
+
+        saveState();
+        playSfx('reward');
+        showToast(localize({
+            zh: `${localize(offer.title)} 已入库`,
+            en: `${localize(offer.title)} added`
+        }));
+        renderAll();
+    }
+
     function getRunnerRankScore() {
         return Math.floor(
             playerProfile.bestDistance * 0.7
@@ -1060,6 +1296,15 @@
         if (reward.core) {
             labels.push(localize({ zh: `能核 +${formatNumber(reward.core)}`, en: `Cores +${formatNumber(reward.core)}` }));
         }
+        if (reward.starterOverclockRuns) {
+            labels.push(formatBoostRewardText('starterOverclockRuns', reward.starterOverclockRuns));
+        }
+        if (reward.settlementBoostRuns) {
+            labels.push(formatBoostRewardText('settlementBoostRuns', reward.settlementBoostRuns));
+        }
+        if (reward.freeRevives) {
+            labels.push(formatBoostRewardText('freeRevives', reward.freeRevives));
+        }
         if (reward.label) {
             labels.push(localize(reward.label));
         }
@@ -1162,6 +1407,7 @@
         const missionCount = getClaimableMissionCount();
         const loadoutCount = getLoadoutAlertCount();
         const seasonCount = getClaimableSeasonRewardCount();
+        const shopCount = getShopAlertCount();
         Array.from(dom.tabBar.querySelectorAll('.tab-btn')).forEach((button) => {
             const tab = button.dataset.tab;
             const count = tab === 'missions'
@@ -1170,6 +1416,8 @@
                     ? loadoutCount
                     : tab === 'season'
                         ? seasonCount
+                        : tab === 'shop'
+                            ? shopCount
                         : 0;
             if (count > 0) {
                 button.dataset.count = String(Math.min(99, count));
@@ -1282,6 +1530,9 @@
         const leaderboard = getRunnerLeaderboard(rankScore);
         const fastest500 = formatTimeMs(playerProfile.stats.fastest500TimeMs);
         const bestClean = formatDistance(playerProfile.stats.bestCleanDistance || 0);
+        const boostEntries = getBoostInventoryEntries();
+        const readyBoostCount = boostEntries.filter((entry) => entry.count > 0).length;
+        const liveBoosts = boostEntries.filter((entry) => game.activeBoosts.includes(entry.key));
         return `
             <div class="card-grid">
                 <article class="stat-card showcase-card">
@@ -1303,6 +1554,38 @@
                         <span class="pill">${t('statCurrentSkill')}: ${localize(skill.title)}</span>
                         <span class="pill">${t('statCurrentPassive')}: ${localize(passive.title)}</span>
                         <span class="pill good">${t('touchHint')}</span>
+                    </div>
+                </article>
+
+                <article class="event-card boost-card">
+                    <div class="card-title-row">
+                        <div>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'RUN BOOSTS' : '运行增益'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Turn stored resources into stronger next runs' : '把储备资源直接转成接下来几局的爽点'}</h3>
+                        </div>
+                        <span class="pill ${readyBoostCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${readyBoostCount} armed` : `已备战 ${readyBoostCount}`}</span>
+                    </div>
+                    <p>${playerProfile.lang === 'en'
+                        ? 'Supply-shop boosts now affect real gameplay: faster overclock starts, stronger settlement, and safer revive flow.'
+                        : '补给商店里的增益已经会真实作用到跑局里：更快开爽、更强结算、以及更稳的复活容错。'}</p>
+                    <div class="reward-row">
+                        ${liveBoosts.length
+                            ? liveBoosts.map((entry) => `<span class="reward-pill">${playerProfile.lang === 'en' ? 'Live Now' : '本局生效'} · ${entry.title}</span>`).join('')
+                            : `<span class="reward-pill">${playerProfile.lang === 'en' ? 'No temporary boost is active this run' : '当前没有生效中的临时增益'}</span>`}
+                    </div>
+                    <div class="boost-list">
+                        ${boostEntries.map((entry) => `
+                            <div class="boost-row ${entry.count > 0 || game.activeBoosts.includes(entry.key) ? 'is-live' : ''}" style="--boost-accent:${entry.accent};">
+                                <div class="card-title-row">
+                                    <div>
+                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'RESERVE' : '储备'}</div>
+                                        <h3>${entry.title}</h3>
+                                    </div>
+                                    <span class="pill ${entry.count > 0 || game.activeBoosts.includes(entry.key) ? 'good' : ''}">${formatBoostRewardText(entry.key, entry.count)}</span>
+                                </div>
+                                <p>${entry.desc}</p>
+                            </div>
+                        `).join('')}
                     </div>
                 </article>
 
@@ -1717,6 +2000,14 @@
     }
 
     function renderShopTab() {
+        if (ensureDailyShopState()) {
+            saveState();
+        }
+
+        const boostEntries = getBoostInventoryEntries();
+        const readyOffers = getShopAlertCount();
+        const readyBoostCount = boostEntries.filter((entry) => entry.count > 0).length;
+
         return `
             <div class="card-grid">
                 <article class="stat-card showcase-card">
@@ -1727,6 +2018,8 @@
                         </div>
                     </div>
                     <div class="reward-row">
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyOffers} live offers available` : `当前可买 ${readyOffers} 项`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyBoostCount} boost types stored` : `增益储备 ${readyBoostCount} 类`}</span>
                         <span class="reward-pill">${t('prototypeShop')}</span>
                     </div>
                     <div class="shop-kpi-grid">
@@ -1742,8 +2035,83 @@
                             <span class="mini-label">${playerProfile.lang === 'en' ? 'Gold Reserve' : '金币储备'}</span>
                             <strong>${formatNumber(playerProfile.gold)}</strong>
                         </div>
+                        <div class="shop-kpi">
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Daily Stock' : '今日货架'}</span>
+                            <strong>${formatNumber(FUNCTIONAL_SHOP_OFFERS.reduce((sum, offer) => sum + getRemainingShopStock(offer.id), 0))}</strong>
+                        </div>
                     </div>
                 </article>
+
+                <article class="stat-card shop-section-card">
+                    <div class="panel-title-row">
+                        <div>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOOST RESERVE' : '增益仓库'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Everything bought here feeds directly into the next sessions' : '这里买到的东西会直接喂给后续几局，不再只是展示'}</h3>
+                        </div>
+                    </div>
+                    <div class="boost-list">
+                        ${boostEntries.map((entry) => `
+                            <div class="boost-row ${entry.count > 0 ? 'is-live' : ''}" style="--boost-accent:${entry.accent};">
+                                <div class="card-title-row">
+                                    <div>
+                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'STORED' : '已储备'}</div>
+                                        <h3>${entry.title}</h3>
+                                    </div>
+                                    <span class="pill ${entry.count > 0 ? 'good' : ''}">${formatBoostRewardText(entry.key, entry.count)}</span>
+                                </div>
+                                <p>${entry.desc}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </article>
+
+                ${FUNCTIONAL_SHOP_OFFERS.map((offer) => {
+                    const remaining = getRemainingShopStock(offer.id);
+                    const freeClaim = (offer.cost.gold || 0) === 0 && (offer.cost.core || 0) === 0;
+                    const actionable = remaining > 0 && canAffordCost(offer.cost);
+                    const buttonLabel = remaining <= 0
+                        ? t('shopSoldOut')
+                        : freeClaim
+                            ? t('shopClaim')
+                            : actionable
+                                ? t('shopBuy')
+                                : t('shopUnavailable');
+
+                    return `
+                    <article class="shop-card functional ${actionable ? 'featured' : ''}" style="--shop-accent:${offer.accent};">
+                        <div class="card-title-row">
+                            <div>
+                                <div class="eyebrow">${playerProfile.lang === 'en' ? 'LIVE OFFER' : '实装补给'}</div>
+                                <h3>${localize(offer.title)}</h3>
+                            </div>
+                            <span class="pill ${remaining > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${remaining}/${offer.stock} left` : `剩余 ${remaining}/${offer.stock}`}</span>
+                        </div>
+                        <p>${localize(offer.desc)}</p>
+                        <div class="panel-meta-row">
+                            <span class="shop-price">${freeClaim ? localize({ zh: 'FREE', en: 'FREE' }) : localize({ zh: '即时生效', en: 'Instant effect' })}</span>
+                            <span class="pill">${playerProfile.lang === 'en' ? 'Affects your next runs immediately' : '立即作用到接下来几局'}</span>
+                        </div>
+                        <div class="shop-meta">
+                            ${renderCostPills(offer.cost)}
+                            ${renderRewardPills(offer.reward, 'shop-pill')}
+                        </div>
+                        <button class="${actionable ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" ${actionable ? `data-buy-shop="${offer.id}"` : 'disabled'}>${buttonLabel}</button>
+                    </article>
+                    `;
+                }).join('')}
+
+                <article class="stat-card shop-section-card">
+                    <div class="panel-title-row">
+                        <div>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'PREMIUM PREVIEW' : '高级礼包预览'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Keep future packaging visible without mixing it into current gameplay' : '把未来礼包结构保留下来，但不再和当前实装玩法混在一起'}</h3>
+                        </div>
+                    </div>
+                    <div class="reward-row">
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Preview only, no payment connected' : '仅作结构预览，不接真实支付'}</span>
+                    </div>
+                </article>
+
                 ${SHOP_OFFERS.map((offer, index) => `
                     <article class="shop-card ${offer.badge === 'hot' ? 'featured' : ''}">
                         <div class="card-title-row">
@@ -1810,7 +2178,11 @@
     }
 
     function renderAll() {
+        if (ensureDailyShopState()) {
+            saveState();
+        }
         applyI18n();
+        updateReviveOverlayCopy();
         renderSummary();
         renderHud();
         renderPanel();
@@ -1818,6 +2190,21 @@
         if (activeInfoModal) {
             openInfoModal(activeInfoModal);
         }
+    }
+
+    function updateReviveOverlayCopy() {
+        const descNode = dom.reviveOverlay.querySelector('[data-i18n="reviveDesc"]');
+        if (!descNode) return;
+        if (game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0) {
+            dom.reviveBtn.textContent = localize({ zh: '免费复活', en: 'Free Revive' });
+            descNode.textContent = localize({
+                zh: '本局已携带 1 次免费复活，本次点击不会消耗能核。',
+                en: 'This run has 1 free revive armed, so this revive spends no cores.'
+            });
+            return;
+        }
+        dom.reviveBtn.textContent = t('reviveBtn');
+        descNode.textContent = t('reviveDesc');
     }
 
     function updateSeasonCountdownUI() {
@@ -1934,7 +2321,12 @@
         game.skillCooldownMax = skill.cooldown;
         game.overclock = 0;
         game.overclockActive = 0;
+        game.runGoldMultiplier = 1;
+        game.runSeasonXpMultiplier = 1;
         game.reviveCount = 0;
+        game.freeReviveAvailable = false;
+        game.freeReviveConsumed = false;
+        game.activeBoosts = [];
         game.distance = 0;
         game.score = 0;
         game.combo = 1;
@@ -1955,10 +2347,41 @@
         renderHud();
     }
 
+    function applyRunBoosts() {
+        let changed = false;
+        game.activeBoosts = [];
+
+        if ((playerProfile.boosts.starterOverclockRuns || 0) > 0) {
+            playerProfile.boosts.starterOverclockRuns -= 1;
+            game.overclock = Math.max(game.overclock, 28);
+            game.activeBoosts.push('starterOverclockRuns');
+            changed = true;
+        }
+
+        if ((playerProfile.boosts.settlementBoostRuns || 0) > 0) {
+            playerProfile.boosts.settlementBoostRuns -= 1;
+            game.runGoldMultiplier = 1.25;
+            game.runSeasonXpMultiplier = 1.25;
+            game.activeBoosts.push('settlementBoostRuns');
+            changed = true;
+        }
+
+        if ((playerProfile.boosts.freeRevives || 0) > 0) {
+            game.freeReviveAvailable = true;
+            game.activeBoosts.push('freeRevives');
+        }
+
+        if (changed) {
+            saveState();
+        }
+    }
+
     function startRun() {
         resetRunState();
+        applyRunBoosts();
         hideOverlays();
         game.running = true;
+        renderAll();
         playSfx('start');
         showToast(t('runReadyToast'));
     }
@@ -1981,8 +2404,11 @@
         const previousDivision = getDivisionInfo(getRunnerRankScore());
         const previousBestDistance = playerProfile.bestDistance;
         const perfectRun = !force && game.reviveCount === 0 && game.dodgeRun >= 12;
-        const goldGain = Math.max(120, Math.floor(game.distance * 0.42 + game.coinsRun * 9 + game.maxCombo * 14));
+        const baseGoldGain = Math.max(120, Math.floor(game.distance * 0.42 + game.coinsRun * 9 + game.maxCombo * 14));
+        const goldGain = Math.max(baseGoldGain, Math.floor(baseGoldGain * game.runGoldMultiplier));
         const coreGain = Math.max(2, Math.floor(game.distance / 260) + game.coreRun);
+        const baseSeasonXpGain = Math.max(12, Math.floor(game.distance / 60) + game.dodgeRun * 2);
+        const seasonXpGain = Math.max(baseSeasonXpGain, Math.floor(baseSeasonXpGain * game.runSeasonXpMultiplier));
         const gradeInfo = getRunGrade(Math.floor(game.distance), game.maxCombo, game.hitless);
         playerProfile.gold += goldGain;
         playerProfile.core += coreGain;
@@ -2008,7 +2434,7 @@
             playerProfile.stats.goldRuns += 1;
         }
         playerProfile.bestDistance = Math.max(playerProfile.bestDistance, Math.floor(game.distance));
-        playerProfile.seasonXp += Math.floor(game.distance / 60) + game.dodgeRun * 2;
+        playerProfile.seasonXp += seasonXpGain;
 
         const divisionInfo = getDivisionInfo(
             Math.floor(
@@ -2036,6 +2462,7 @@
             score: Math.floor(game.score),
             goldGain,
             coreGain,
+            seasonXpGain,
             gradeInfo,
             divisionInfo,
             promoted,
@@ -2044,7 +2471,11 @@
             maxCombo: game.maxCombo,
             dodgeRun: game.dodgeRun,
             reviveCount: game.reviveCount,
-            hitless: game.hitless
+            hitless: game.hitless,
+            runGoldMultiplier: game.runGoldMultiplier,
+            runSeasonXpMultiplier: game.runSeasonXpMultiplier,
+            activeBoosts: [...game.activeBoosts],
+            freeReviveConsumed: game.freeReviveConsumed
         };
 
         dom.resultDistance.textContent = formatDistance(lastResult.distance);
@@ -2059,8 +2490,12 @@
             playerProfile.lang === 'en' ? `Combo x${formatNumber(game.maxCombo)}` : `连击 x${formatNumber(game.maxCombo)}`,
             playerProfile.lang === 'en' ? `Dodges ${formatNumber(game.dodgeRun)}` : `闪避 ${formatNumber(game.dodgeRun)}`,
             playerProfile.lang === 'en' ? `Revives ${formatNumber(game.reviveCount)}` : `复活 ${formatNumber(game.reviveCount)}`,
+            playerProfile.lang === 'en' ? `Season XP +${formatNumber(seasonXpGain)}` : `赛季经验 +${formatNumber(seasonXpGain)}`,
+            game.runGoldMultiplier > 1 ? (playerProfile.lang === 'en' ? `Gold x${game.runGoldMultiplier.toFixed(2)}` : `金币倍率 x${game.runGoldMultiplier.toFixed(2)}`) : '',
+            game.runSeasonXpMultiplier > 1 ? (playerProfile.lang === 'en' ? `XP x${game.runSeasonXpMultiplier.toFixed(2)}` : `经验倍率 x${game.runSeasonXpMultiplier.toFixed(2)}`) : '',
+            game.freeReviveConsumed ? t('freeReviveUsed') : '',
             game.hitless ? (playerProfile.lang === 'en' ? 'Clean Run' : '无伤完成') : (playerProfile.lang === 'en' ? 'Damaged Run' : '受损完成')
-        ].map((text) => `<span class="reward-pill">${text}</span>`).join('');
+        ].filter(Boolean).map((text) => `<span class="reward-pill">${text}</span>`).join('');
         renderResultOverlayCard();
         setOverlay(dom.resultOverlay);
         playSfx(promoted ? 'promote' : 'reward');
@@ -2074,11 +2509,19 @@
 
     function tryRevive() {
         if (!game.awaitingRevive) return;
-        if (playerProfile.core < REVIVE_COST) {
+        const canUseFreeRevive = game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0;
+        if (!canUseFreeRevive && playerProfile.core < REVIVE_COST) {
             showToast(t('notEnoughCore'));
             return;
         }
-        playerProfile.core -= REVIVE_COST;
+        if (canUseFreeRevive) {
+            playerProfile.boosts.freeRevives = Math.max(0, (playerProfile.boosts.freeRevives || 0) - 1);
+            game.freeReviveAvailable = false;
+            game.freeReviveConsumed = true;
+            game.activeBoosts = game.activeBoosts.filter((key) => key !== 'freeRevives');
+        } else {
+            playerProfile.core -= REVIVE_COST;
+        }
         saveState();
         game.awaitingRevive = false;
         game.running = true;
@@ -2088,7 +2531,7 @@
         game.objects = game.objects.filter((obj) => obj.z > 10);
         hideOverlays();
         playSfx('reward');
-        showToast(t('revived'));
+        showToast(canUseFreeRevive ? t('freeReviveUsed') : t('revived'));
         renderAll();
     }
 
@@ -2096,6 +2539,7 @@
         game.running = false;
         if (game.reviveCount < MAX_REVIVES) {
             game.awaitingRevive = true;
+            updateReviveOverlayCopy();
             setOverlay(dom.reviveOverlay);
             return;
         }
@@ -2500,6 +2944,17 @@
         ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
         ctx.fillStyle = 'rgba(142,166,191,0.95)';
         ctx.fillText(playerProfile.lang === 'en' ? `Revives ${MAX_REVIVES - game.reviveCount}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
+        const liveBoostLabels = [];
+        if (game.runGoldMultiplier > 1 || game.runSeasonXpMultiplier > 1) {
+            liveBoostLabels.push(playerProfile.lang === 'en' ? 'SETTLEMENT x1.25' : '结算 x1.25');
+        }
+        if (game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0) {
+            liveBoostLabels.push(playerProfile.lang === 'en' ? 'FREE REVIVE READY' : '免费复活待命');
+        }
+        if (liveBoostLabels.length) {
+            ctx.fillStyle = 'rgba(89,255,155,0.95)';
+            ctx.fillText(liveBoostLabels.join(' · '), 18, 72);
+        }
 
         ctx.textAlign = 'right';
         ctx.fillStyle = 'rgba(159,233,255,0.94)';
@@ -2598,6 +3053,11 @@
             const seasonClaimButton = event.target.closest('[data-claim-season]');
             if (seasonClaimButton) {
                 claimSeasonReward(Number(seasonClaimButton.dataset.claimSeason));
+                return;
+            }
+            const shopBuyButton = event.target.closest('[data-buy-shop]');
+            if (shopBuyButton) {
+                purchaseShopOffer(shopBuyButton.dataset.buyShop);
                 return;
             }
             const openModalButton = event.target.closest('[data-open-modal]');
