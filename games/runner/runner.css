@@ -476,12 +476,124 @@ a {
     flex: 1 1 180px;
 }
 
+#resultOverlay .overlay-card {
+    width: min(100%, 500px);
+}
+
 .energy-row,
 .control-row,
 .action-row {
     display: grid;
     gap: 10px;
     margin-top: 12px;
+}
+
+.object-legend {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.legend-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 9px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(7, 15, 30, 0.72);
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.legend-chip.is-reward {
+    border-color: rgba(87, 229, 255, 0.16);
+    background: linear-gradient(180deg, rgba(10, 24, 44, 0.9), rgba(7, 15, 30, 0.78));
+}
+
+.legend-chip.is-danger {
+    border-color: rgba(255, 106, 136, 0.18);
+    background: linear-gradient(180deg, rgba(34, 12, 23, 0.9), rgba(24, 9, 18, 0.78));
+}
+
+.legend-dot {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #041520;
+}
+
+.legend-dot.coin {
+    background: radial-gradient(circle at 35% 35%, #fff2bf 0%, #ffd66b 55%, #ffb84c 100%);
+    box-shadow: 0 0 18px rgba(255, 214, 107, 0.3);
+}
+
+.legend-dot.energy {
+    transform: rotate(45deg);
+    border-radius: 7px;
+    background: linear-gradient(135deg, #a7f4ff, #57e5ff 55%, #4d7cff);
+    box-shadow: 0 0 18px rgba(87, 229, 255, 0.3);
+}
+
+.legend-dot.energy::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 3px;
+    background: rgba(4, 21, 32, 0.74);
+}
+
+.legend-dot.danger,
+.legend-dot.guide {
+    color: #fff3f7;
+    background: linear-gradient(135deg, rgba(255, 106, 136, 0.94), rgba(255, 149, 79, 0.92));
+    box-shadow: 0 0 18px rgba(255, 106, 136, 0.28);
+}
+
+.legend-dot.guide {
+    background: linear-gradient(135deg, rgba(164, 107, 255, 0.94), rgba(255, 106, 136, 0.92));
+    font-size: 9px;
+}
+
+.assist-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(89, 255, 155, 0.18);
+    background: linear-gradient(180deg, rgba(7, 26, 28, 0.92), rgba(8, 20, 24, 0.82));
+    color: #d9fff0;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.assist-banner.is-hidden {
+    display: none;
+}
+
+.assist-badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 68px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(89, 255, 155, 0.96), rgba(87, 229, 255, 0.92));
+    color: #041520;
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .energy-row {
@@ -914,6 +1026,37 @@ a {
 .mission-card button,
 .shop-card button {
     margin-top: 14px;
+}
+
+.loadout-card {
+    height: 100%;
+    display: grid;
+    align-content: start;
+}
+
+.loadout-action-btn {
+    margin-top: auto;
+}
+
+.loadout-equip-btn {
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    box-shadow: 0 12px 26px rgba(87, 229, 255, 0.24);
+}
+
+.loadout-equipped-btn,
+.loadout-equipped-btn[disabled] {
+    background: linear-gradient(135deg, rgba(89, 255, 155, 0.92), rgba(87, 229, 255, 0.78));
+    border: 1px solid rgba(89, 255, 155, 0.22);
+    color: #041520;
+    opacity: 1;
+    cursor: default;
+    box-shadow: 0 12px 26px rgba(89, 255, 155, 0.18);
+}
+
+.loadout-unlock-btn {
+    border-color: rgba(255, 214, 107, 0.2);
+    background: rgba(255, 214, 107, 0.1);
+    color: #ffe59a;
 }
 
 .shop-section-card {
@@ -1425,6 +1568,23 @@ a {
         gap: 12px;
     }
 
+    .loadout-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+
+    .loadout-grid .showcase-card,
+    .loadout-grid .shop-section-card {
+        grid-column: 1 / -1;
+    }
+
+    .loadout-grid .runner-card p {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     .hero-copy h1 {
         font-size: clamp(24px, 8vw, 32px);
         margin: 4px 0 6px;
@@ -1448,6 +1608,10 @@ a {
         top: 0;
         z-index: 3;
         background: linear-gradient(180deg, rgba(7, 14, 28, 0.98), rgba(7, 14, 28, 0.92) 68%, rgba(7, 14, 28, 0));
+    }
+
+    .object-legend {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .energy-row,
@@ -1493,6 +1657,25 @@ a {
 
     .energy-row {
         margin-top: 8px;
+    }
+
+    .legend-chip {
+        min-height: 40px;
+        padding: 8px 9px;
+        font-size: 11px;
+    }
+
+    .assist-banner {
+        gap: 8px;
+        padding: 9px 10px;
+        font-size: 11px;
+    }
+
+    .assist-badge {
+        min-width: 60px;
+        min-height: 26px;
+        padding: 0 8px;
+        font-size: 10px;
     }
 
     .meter {
@@ -1772,6 +1955,39 @@ a {
         gap: 10px;
     }
 
+    .loadout-grid {
+        gap: 8px;
+    }
+
+    .loadout-grid .runner-card,
+    .loadout-grid .showcase-card {
+        padding: 10px;
+    }
+
+    .loadout-grid .runner-meta,
+    .loadout-grid .panel-meta-row {
+        gap: 5px;
+        margin-top: 8px;
+    }
+
+    .loadout-grid .runner-card p {
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.45;
+        -webkit-line-clamp: 2;
+    }
+
+    .loadout-grid .runner-card h3,
+    .loadout-grid .showcase-card h3 {
+        font-size: 13px;
+    }
+
+    .loadout-grid .loadout-action-btn {
+        min-height: 38px;
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+
     .summary-grid,
     .stage-hud {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1811,6 +2027,72 @@ a {
         padding: 16px 14px;
         border-radius: 20px;
         max-height: calc(100% - 4px);
+    }
+
+    #resultOverlay .overlay-card {
+        padding: 12px;
+        max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px);
+    }
+
+    #resultOverlay .overlay-actions {
+        margin-top: 12px;
+    }
+
+    .result-badge-row {
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .result-summary {
+        padding: 10px 12px;
+        min-height: 62px;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .result-grid {
+        margin-top: 10px;
+        gap: 8px;
+    }
+
+    .result-grid > div {
+        padding: 9px 10px;
+        gap: 4px;
+    }
+
+    .result-grid strong {
+        font-size: 15px;
+    }
+
+    .result-meta {
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .result-rank-card {
+        margin-top: 10px;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .promotion-banner {
+        padding: 10px 10px 12px;
+    }
+
+    .promotion-banner h3,
+    .result-rank-head h3 {
+        font-size: 18px;
+    }
+
+    .promotion-banner p,
+    .result-rank-desc p,
+    .result-rank-desc strong {
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .promotion-actions {
+        gap: 8px;
     }
 
     .overlay-card h2 {
@@ -2077,8 +2359,93 @@ a {
         border-radius: 18px;
     }
 
+    .object-legend {
+        gap: 6px;
+    }
+
+    .legend-chip {
+        gap: 6px;
+        min-height: 38px;
+        padding: 8px;
+        font-size: 10px;
+    }
+
+    .legend-dot {
+        width: 20px;
+        height: 20px;
+    }
+
+    .assist-banner {
+        gap: 7px;
+        padding: 8px 9px;
+        font-size: 10px;
+    }
+
+    .assist-badge {
+        min-width: 54px;
+        min-height: 24px;
+        font-size: 9px;
+    }
+
     .panel-card {
         max-height: min(46dvh, 430px);
+    }
+
+    .loadout-grid {
+        gap: 6px;
+    }
+
+    .loadout-grid .runner-card,
+    .loadout-grid .showcase-card {
+        padding: 9px;
+    }
+
+    .loadout-grid .runner-card p {
+        font-size: 11px;
+        -webkit-line-clamp: 2;
+    }
+
+    .loadout-grid .runner-card h3,
+    .loadout-grid .showcase-card h3 {
+        font-size: 12px;
+    }
+
+    .loadout-grid .loadout-action-btn {
+        min-height: 36px;
+        font-size: 10px;
+    }
+
+    #resultOverlay .overlay-card {
+        padding: 10px;
+    }
+
+    .result-grid {
+        gap: 6px;
+    }
+
+    .result-grid > div {
+        padding: 8px;
+    }
+
+    .result-grid strong {
+        font-size: 14px;
+    }
+
+    .result-badge {
+        width: 62px;
+        height: 62px;
+        border-radius: 18px;
+        font-size: 24px;
+    }
+
+    .result-summary {
+        min-height: 54px;
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+
+    .result-rank-card {
+        padding: 9px;
     }
 
     .event-card,

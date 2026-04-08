@@ -9,6 +9,10 @@
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 6;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const NEWBIE_ASSIST_DISTANCE = 900;
+    const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
+    const NEWBIE_ASSIST_SPAWN_BASE = 0.98;
+    const NEWBIE_ASSIST_SPAWN_MIN = 0.36;
 
     const TEXT = {
         zh: {
@@ -77,6 +81,13 @@
             runEvent2Desc: '保持 20 连击后，金币得分加成大幅提高。',
             runEvent3: '赛季脉冲',
             runEvent3Desc: '每跑满 800m 额外获得赛季经验与冲榜分。',
+            legendCoin: '金币奖励',
+            legendEnergy: '能量奖励',
+            legendWall: '红色危险墙',
+            legendGuide: '↑跳栏 · ↓滑门',
+            newbieAssistBadge: '新手保护',
+            newbieAssistHint: '首局前 900m 障碍减速并放缓刷新，先熟悉跳跃和滑铲节奏。',
+            newbieAssistToast: '新手保护已开启：前 900m 障碍更慢、更易观察',
             controlsTitle: '操作提示',
             controlsDesc: '手机支持左右 / 上下滑动，桌面也支持方向键与空格。',
             statCurrentRunner: '当前角色',
@@ -186,6 +197,13 @@
             runEvent2Desc: 'Reach combo 20 and gold scoring ramps up sharply.',
             runEvent3: 'Season Pulse',
             runEvent3Desc: 'Every 800m grants extra season XP and ladder points.',
+            legendCoin: 'Coin Reward',
+            legendEnergy: 'Energy Reward',
+            legendWall: 'Red Crash Wall',
+            legendGuide: '↑ Jump · ↓ Slide',
+            newbieAssistBadge: 'NEWBIE',
+            newbieAssistHint: 'Before 900m in your first run, obstacles move slower and spawn more gently.',
+            newbieAssistToast: 'Newbie assist active: early obstacles are slower and easier to read',
             controlsTitle: 'Controls',
             controlsDesc: 'Phones support swipe gestures. Desktop also supports arrows and space.',
             statCurrentRunner: 'Runner',
@@ -411,6 +429,7 @@
         resultSummary: document.getElementById('resultSummary'),
         resultRankPanel: document.getElementById('resultRankPanel'),
         resultMeta: document.getElementById('resultMeta'),
+        newbieAssistHint: document.getElementById('newbieAssistHint'),
         overclockBar: document.getElementById('overclockBar'),
         skillBar: document.getElementById('skillBar'),
         panelContent: document.getElementById('panelContent'),
@@ -587,7 +606,8 @@
         flashTimer: 0,
         hitless: true,
         timeAt500: null,
-        message: ''
+        message: '',
+        newbieAssist: false
     };
 
     function t(key) {
@@ -2804,6 +2824,17 @@
         `;
     }
 
+    function renderLoadoutActionButton(type, id, owned, equipped) {
+        const unlockType = type === 'runner' ? 'runners' : type === 'skill' ? 'skills' : 'passives';
+        if (!owned) {
+            return `<button class="ghost-btn loadout-action-btn loadout-unlock-btn wide-btn" data-unlock="${unlockType}" data-id="${id}" type="button">${t('runnerUnlock')}</button>`;
+        }
+        if (equipped) {
+            return `<button class="ghost-btn loadout-action-btn loadout-equipped-btn wide-btn" type="button" disabled>${t('runnerEquipped')}</button>`;
+        }
+        return `<button class="primary-btn loadout-action-btn loadout-equip-btn wide-btn" data-equip="${type}" data-id="${id}" type="button">${t('runnerEquip')}</button>`;
+    }
+
     function renderLoadoutTab() {
         const equippedRunner = getRunner(playerProfile.loadout.runner);
         const equippedSkill = getSkill(playerProfile.loadout.skill);
@@ -2812,7 +2843,7 @@
             const owned = isUnlocked('runners', runner);
             const equipped = playerProfile.loadout.runner === runner.id;
             return `
-                <article class="runner-card ${equipped ? 'is-active' : ''}">
+                <article class="runner-card loadout-card ${equipped ? 'is-active' : ''}">
                     <div class="card-title-row">
                         <div>
                             <div class="eyebrow">${owned ? t('runnerTagStarter') : t('runnerTagUnlock')}</div>
@@ -2826,9 +2857,7 @@
                         <span class="pill">${playerProfile.lang === 'en' ? 'Combo' : '连击'} x${runner.stats.combo.toFixed(2)}</span>
                         <span class="pill">${playerProfile.lang === 'en' ? 'Control' : '操控'} x${runner.stats.control.toFixed(2)}</span>
                     </div>
-                    ${owned
-                        ? `<button class="primary-btn wide-btn" data-equip="runner" data-id="${runner.id}" type="button">${equipped ? t('runnerEquipped') : t('runnerEquip')}</button>`
-                        : `<button class="ghost-btn wide-btn" data-unlock="runners" data-id="${runner.id}" type="button">${t('runnerUnlock')}</button>`}
+                    ${renderLoadoutActionButton('runner', runner.id, owned, equipped)}
                 </article>
             `;
         }).join('');
@@ -2837,7 +2866,7 @@
             const owned = isUnlocked('skills', skill);
             const equipped = playerProfile.loadout.skill === skill.id;
             return `
-                <article class="runner-card ${equipped ? 'is-active' : ''}">
+                <article class="runner-card loadout-card ${equipped ? 'is-active' : ''}">
                     <div class="card-title-row">
                         <div>
                             <div class="eyebrow">${t('skillSection')}</div>
@@ -2849,9 +2878,7 @@
                     <div class="runner-meta">
                         <span class="pill">${unlockConditionText(skill)}</span>
                     </div>
-                    ${owned
-                        ? `<button class="primary-btn wide-btn" data-equip="skill" data-id="${skill.id}" type="button">${equipped ? t('runnerEquipped') : t('runnerEquip')}</button>`
-                        : `<button class="ghost-btn wide-btn" data-unlock="skills" data-id="${skill.id}" type="button">${t('runnerUnlock')}</button>`}
+                    ${renderLoadoutActionButton('skill', skill.id, owned, equipped)}
                 </article>
             `;
         }).join('');
@@ -2860,7 +2887,7 @@
             const owned = isUnlocked('passives', passive);
             const equipped = playerProfile.loadout.passive === passive.id;
             return `
-                <article class="runner-card ${equipped ? 'is-active' : ''}">
+                <article class="runner-card loadout-card ${equipped ? 'is-active' : ''}">
                     <div class="card-title-row">
                         <div>
                             <div class="eyebrow">${t('passiveSection')}</div>
@@ -2871,15 +2898,13 @@
                     <div class="runner-meta">
                         <span class="pill">${unlockConditionText(passive)}</span>
                     </div>
-                    ${owned
-                        ? `<button class="primary-btn wide-btn" data-equip="passive" data-id="${passive.id}" type="button">${equipped ? t('runnerEquipped') : t('runnerEquip')}</button>`
-                        : `<button class="ghost-btn wide-btn" data-unlock="passives" data-id="${passive.id}" type="button">${t('runnerUnlock')}</button>`}
+                    ${renderLoadoutActionButton('passive', passive.id, owned, equipped)}
                 </article>
             `;
         }).join('');
 
         return `
-            <div class="card-grid">
+            <div class="card-grid loadout-grid">
                 <article class="stat-card showcase-card">
                     <div class="panel-title-row">
                         <div>
@@ -2914,9 +2939,9 @@
             .sort(sortMissionEntries);
         const claimableCount = missions.filter((mission) => mission.state.complete && !mission.state.claimed).length;
         const claimableMissions = missions.filter((mission) => mission.state.complete && !mission.state.claimed);
-        const pulseMissions = missions.filter((mission) => mission.section === 'pulse');
-        const coreMissions = missions.filter((mission) => mission.section === 'core');
-        const eliteMissions = missions.filter((mission) => mission.section === 'elite');
+        const pulseMissions = missions.filter((mission) => mission.section === 'pulse' && (mission.state.claimed || !mission.state.complete));
+        const coreMissions = missions.filter((mission) => mission.section === 'core' && (mission.state.claimed || !mission.state.complete));
+        const eliteMissions = missions.filter((mission) => mission.section === 'elite' && (mission.state.claimed || !mission.state.complete));
         const dailyStats = playerProfile.dailyStats;
         const renderMissionCard = (mission) => {
             const { current, complete, claimed } = mission.state;
@@ -3007,6 +3032,7 @@
                                 ${claimableMissions.slice(0, 4).map((mission) => `<span class="reward-pill">${localize(mission.title)}</span>`).join('')}
                             </div>
                         </article>
+                        ${claimableMissions.map(renderMissionCard).join('')}
                     `
                     : ''}
                 ${pulseMissions.length
@@ -3477,6 +3503,16 @@
             ? ((game.skillCooldownMax - game.skillCooldown) / game.skillCooldownMax) * 100
             : 100;
         dom.skillBar.style.width = `${Math.max(0, Math.min(100, cooldownPct))}%`;
+        updateNewbieAssistUI();
+    }
+
+    function isNewbieAssistActive() {
+        return playerProfile.totalRuns === 0 && (!game.running || game.distance < NEWBIE_ASSIST_DISTANCE);
+    }
+
+    function updateNewbieAssistUI() {
+        if (!dom.newbieAssistHint) return;
+        dom.newbieAssistHint.classList.toggle('is-hidden', !isNewbieAssistActive());
     }
 
     function renderAll() {
@@ -3635,7 +3671,20 @@
 
     function closeResultOverlay() {
         if (!dom.resultOverlay || dom.resultOverlay.classList.contains('is-hidden')) return;
+        if (!game.running && !game.awaitingRevive) {
+            setOverlay(dom.startOverlay);
+            return;
+        }
         dom.resultOverlay.classList.add('is-hidden');
+    }
+
+    function resetResultOverlayScroll() {
+        if (!dom.resultOverlay) return;
+        dom.resultOverlay.scrollTop = 0;
+        const resultCard = dom.resultOverlay.querySelector('.overlay-card');
+        if (resultCard) {
+            resultCard.scrollTop = 0;
+        }
     }
 
     function resetRunState() {
@@ -3682,6 +3731,7 @@
         game.hitless = true;
         game.timeAt500 = null;
         game.message = '';
+        game.newbieAssist = playerProfile.totalRuns === 0;
         renderHud();
     }
 
@@ -3717,10 +3767,15 @@
     function startRun() {
         resetRunState();
         applyRunBoosts();
+        resetResultOverlayScroll();
         hideOverlays();
         game.running = true;
         renderAll();
         playSfx('start');
+        if (game.newbieAssist) {
+            showToast(t('newbieAssistToast'));
+            return;
+        }
         showToast(t('runReadyToast'));
     }
 
@@ -3846,6 +3901,7 @@
             game.hitless ? (playerProfile.lang === 'en' ? 'Clean Run' : '无伤完成') : (playerProfile.lang === 'en' ? 'Damaged Run' : '受损完成')
         ].filter(Boolean).map((text) => `<span class="reward-pill">${text}</span>`).join('');
         renderResultOverlayCard();
+        resetResultOverlayScroll();
         setOverlay(dom.resultOverlay);
         playSfx(promoted ? 'promote' : 'reward');
         if (promoted) {
@@ -3950,26 +4006,29 @@
     }
 
     function spawnObject() {
+        const newbieAssistActive = isNewbieAssistActive();
         const roll = Math.random();
         const lane = Math.floor(Math.random() * 3);
+        const rewardBaseZ = newbieAssistActive ? 138 : 132;
+        const obstacleBaseZ = newbieAssistActive ? 148 : 132;
         if (roll < 0.36) {
-            game.objects.push({ type: 'coin', lane, z: 132 + Math.random() * 14, value: 1 });
+            game.objects.push({ type: 'coin', lane, z: rewardBaseZ + Math.random() * 14, value: 1 });
             if (Math.random() < 0.45) {
-                game.objects.push({ type: 'coin', lane, z: 142 + Math.random() * 10, value: 1 });
+                game.objects.push({ type: 'coin', lane, z: rewardBaseZ + 10 + Math.random() * 10, value: 1 });
             }
             return;
         }
         if (roll < 0.5) {
-            game.objects.push({ type: 'energy', lane, z: 132 + Math.random() * 12, value: 1 });
+            game.objects.push({ type: 'energy', lane, z: rewardBaseZ + Math.random() * 12, value: 1 });
             return;
         }
         const obstacleType = roll < 0.7 ? 'wall' : roll < 0.85 ? 'hurdle' : 'gate';
-        game.objects.push({ type: obstacleType, lane, z: 132 + Math.random() * 18, value: 1 });
+        game.objects.push({ type: obstacleType, lane, z: obstacleBaseZ + Math.random() * 18, value: 1 });
         if (Math.random() < 0.22) {
             game.objects.push({
                 type: Math.random() < 0.55 ? 'coin' : 'energy',
                 lane: Math.floor(Math.random() * 3),
-                z: 150 + Math.random() * 12,
+                z: (newbieAssistActive ? 158 : 150) + Math.random() * 12,
                 value: 1
             });
         }
@@ -4046,6 +4105,7 @@
         if (!game.running || game.paused || game.awaitingRevive) return;
         const runner = getRunner(playerProfile.loadout.runner);
         const passive = getPassive(playerProfile.loadout.passive);
+        const newbieAssistActive = isNewbieAssistActive();
 
         game.elapsed += dt;
         game.spawnTimer -= dt;
@@ -4079,11 +4139,18 @@
 
         if (game.spawnTimer <= 0) {
             spawnObject();
-            game.spawnTimer = Math.max(0.24, 0.82 - Math.min(0.48, game.distance / 2800));
+            if (newbieAssistActive) {
+                game.spawnTimer = Math.max(NEWBIE_ASSIST_SPAWN_MIN, NEWBIE_ASSIST_SPAWN_BASE - Math.min(0.36, game.distance / 3600));
+            } else {
+                game.spawnTimer = Math.max(0.24, 0.82 - Math.min(0.48, game.distance / 2800));
+            }
         }
 
         game.objects.forEach((obj) => {
-            obj.z -= game.speedCurrent * dt * 3.8;
+            const approachMultiplier = newbieAssistActive && obj.type !== 'coin' && obj.type !== 'energy'
+                ? NEWBIE_ASSIST_OBSTACLE_SPEED
+                : 1;
+            obj.z -= game.speedCurrent * dt * 3.8 * approachMultiplier;
             if (obj.type === 'coin' && passive.id === 'magnet' && Math.abs(obj.lane - game.lane) <= 1 && obj.z < 32) {
                 obj.lane = game.lane;
             }
@@ -4224,6 +4291,11 @@
                 ctx.strokeStyle = 'rgba(255,255,255,0.75)';
                 ctx.lineWidth = 2;
                 ctx.stroke();
+                ctx.fillStyle = 'rgba(14, 20, 32, 0.92)';
+                ctx.font = `700 ${Math.max(10, size * 0.18)}px Inter`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('+', x, y);
             } else if (obj.type === 'energy') {
                 ctx.shadowBlur = 20;
                 ctx.shadowColor = 'rgba(87,229,255,0.44)';
@@ -4235,16 +4307,41 @@
                 ctx.lineTo(x - size * 0.18, y);
                 ctx.closePath();
                 ctx.fill();
+                ctx.fillStyle = 'rgba(14, 20, 32, 0.96)';
+                ctx.font = `700 ${Math.max(10, size * 0.18)}px Inter`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⚡', x, y + 1);
             } else {
-                ctx.shadowBlur = 16;
-                ctx.shadowColor = obj.type === 'wall' ? 'rgba(255,106,136,0.32)' : obj.type === 'hurdle' ? 'rgba(255,214,107,0.24)' : 'rgba(157,134,255,0.32)';
-                ctx.fillStyle = obj.type === 'wall' ? '#ff6a88' : obj.type === 'hurdle' ? '#ffd66b' : '#9d86ff';
-                const w = obj.type === 'gate' ? size * 0.9 : size * 0.62;
-                const h = obj.type === 'hurdle' ? size * 0.28 : size * 0.72;
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = obj.type === 'wall' ? 'rgba(255,106,136,0.38)' : obj.type === 'hurdle' ? 'rgba(255,149,79,0.32)' : 'rgba(157,134,255,0.36)';
+                ctx.fillStyle = obj.type === 'wall' ? '#ff5f7f' : obj.type === 'hurdle' ? '#ff954f' : '#9d86ff';
+                const w = obj.type === 'gate' ? size * 0.94 : size * 0.64;
+                const h = obj.type === 'hurdle' ? size * 0.28 : size * 0.74;
                 const top = obj.type === 'gate' ? y - size * 0.7 : y - h;
                 ctx.fillRect(x - w / 2, top, w, h);
+                ctx.strokeStyle = 'rgba(255,255,255,0.78)';
+                ctx.lineWidth = Math.max(1.5, size * 0.035);
+                ctx.strokeRect(x - w / 2, top, w, h);
                 if (obj.type === 'gate') {
                     ctx.clearRect(x - w * 0.28, y - size * 0.3, w * 0.56, size * 0.3);
+                    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+                    ctx.font = `800 ${Math.max(10, size * 0.16)}px Inter`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('↓', x, top + h * 0.22);
+                } else if (obj.type === 'hurdle') {
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.font = `800 ${Math.max(10, size * 0.16)}px Inter`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('↑', x, top - Math.max(8, size * 0.14));
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                    ctx.font = `800 ${Math.max(10, size * 0.18)}px Inter`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('!', x, top + h * 0.5);
                 }
             }
             ctx.shadowBlur = 0;
@@ -4365,8 +4462,16 @@
             renderScene();
         });
 
-        dom.startRunBtn.addEventListener('click', startRun);
-        dom.restartRunBtn.addEventListener('click', startRun);
+        dom.startRunBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            startRun();
+        });
+        dom.restartRunBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            startRun();
+        });
         dom.pauseBtn.addEventListener('click', pauseRun);
         dom.resumeBtn.addEventListener('click', resumeRun);
         dom.quitRunBtn.addEventListener('click', () => endRun(true));
