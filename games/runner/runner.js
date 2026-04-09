@@ -4388,10 +4388,24 @@
         return clamp((y - height * 0.18) / (height * 0.82), 0, 1);
     }
 
-    function getLaneCenterX(lane, width, roadProgress) {
+    function getRoadEdges(width, roadProgress) {
         const clampedProgress = clamp(roadProgress, 0, 1);
-        const laneOffset = width * (0.09 + clampedProgress * 0.18);
-        return width / 2 + (lane - 1) * laneOffset;
+        return {
+            left: width * (0.38 + (0.14 - 0.38) * clampedProgress),
+            right: width * (0.62 + (0.86 - 0.62) * clampedProgress)
+        };
+    }
+
+    function getLaneBoundaryX(boundaryIndex, width, roadProgress) {
+        const { left, right } = getRoadEdges(width, roadProgress);
+        const laneWidth = (right - left) / 3;
+        return left + laneWidth * boundaryIndex;
+    }
+
+    function getLaneCenterX(lane, width, roadProgress) {
+        const { left, right } = getRoadEdges(width, roadProgress);
+        const laneWidth = (right - left) / 3;
+        return left + laneWidth * (lane + 0.5);
     }
 
     function projectObject(obj, width, height) {
@@ -4486,20 +4500,17 @@
             ctx.stroke();
         }
 
-        ctx.strokeStyle = 'rgba(96,212,255,0.35)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(width * 0.5, height);
-        ctx.lineTo(width * 0.5, height * 0.18);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(width * 0.32, height);
-        ctx.lineTo(width * 0.46, height * 0.18);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(width * 0.68, height);
-        ctx.lineTo(width * 0.54, height * 0.18);
-        ctx.stroke();
+        for (let boundaryIndex = 0; boundaryIndex <= 3; boundaryIndex += 1) {
+            const topX = getLaneBoundaryX(boundaryIndex, width, 0);
+            const bottomX = getLaneBoundaryX(boundaryIndex, width, 1);
+            const isOuter = boundaryIndex === 0 || boundaryIndex === 3;
+            ctx.strokeStyle = isOuter ? 'rgba(96,212,255,0.32)' : 'rgba(96,212,255,0.42)';
+            ctx.lineWidth = isOuter ? 2.4 : 3;
+            ctx.beginPath();
+            ctx.moveTo(bottomX, height);
+            ctx.lineTo(topX, height * 0.18);
+            ctx.stroke();
+        }
 
         const sortedObjects = [...game.objects].sort((a, b) => b.z - a.z);
         sortedObjects.forEach((obj) => {
