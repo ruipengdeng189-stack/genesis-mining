@@ -4772,20 +4772,17 @@
             ctx.stroke();
         }
 
-        ctx.strokeStyle = 'rgba(96,212,255,0.35)';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(width * 0.5, height);
-        ctx.lineTo(width * 0.5, height * 0.18);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(width * 0.32, height);
-        ctx.lineTo(width * 0.46, height * 0.18);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(width * 0.68, height);
-        ctx.lineTo(width * 0.54, height * 0.18);
-        ctx.stroke();
+        for (let boundaryIndex = 0; boundaryIndex <= 3; boundaryIndex += 1) {
+            const topX = getLaneBoundaryX(boundaryIndex, width, 0);
+            const bottomX = getLaneBoundaryX(boundaryIndex, width, 1);
+            const isOuter = boundaryIndex === 0 || boundaryIndex === 3;
+            ctx.strokeStyle = isOuter ? 'rgba(96,212,255,0.28)' : 'rgba(96,212,255,0.44)';
+            ctx.lineWidth = isOuter ? 2.2 : 3;
+            ctx.beginPath();
+            ctx.moveTo(bottomX, height);
+            ctx.lineTo(topX, height * 0.18);
+            ctx.stroke();
+        }
 
         const sortedObjects = [...game.objects].sort((a, b) => b.z - a.z);
         sortedObjects.forEach((obj) => {
