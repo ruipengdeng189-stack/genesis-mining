@@ -3272,8 +3272,8 @@ a {
 
     .runner-main.is-run-tab .canvas-wrap,
     .runner-main.is-run-tab #runnerCanvas {
-        height: clamp(206px, 29dvh, 264px);
-        min-height: clamp(206px, 29dvh, 264px);
+        height: clamp(272px, 37dvh, 360px);
+        min-height: clamp(272px, 37dvh, 360px);
     }
 
     .runner-main.is-run-tab .object-legend {
@@ -3330,11 +3330,23 @@ a {
     }
 
     body[data-runner-tab="run"] .runner-shell {
+        width: min(100%, calc(100% - 8px));
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    body[data-runner-tab="run"] .runner-shell {
         padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 102px);
     }
 
     .runner-main.is-run-tab .stage-card {
-        padding-bottom: 92px;
+        padding-bottom: 16px;
+    }
+
+    .runner-main.is-run-tab .canvas-wrap,
+    .runner-main.is-run-tab #runnerCanvas {
+        height: clamp(304px, 42dvh, 392px);
+        min-height: clamp(304px, 42dvh, 392px);
     }
 
     .runner-main.is-run-tab .run-control-dock {
@@ -3410,7 +3422,13 @@ a {
     }
 
     .runner-main.is-run-tab .stage-card {
-        padding-bottom: 88px;
+        padding-bottom: 12px;
+    }
+
+    .runner-main.is-run-tab .canvas-wrap,
+    .runner-main.is-run-tab #runnerCanvas {
+        height: clamp(330px, 46dvh, 430px);
+        min-height: clamp(330px, 46dvh, 430px);
     }
 
     .runner-main.is-run-tab .run-control-dock {

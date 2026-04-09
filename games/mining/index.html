@@ -7122,7 +7122,7 @@
 
         @media (max-width: 900px) {
             body.mobile-optimized #mineBtn {
-                touch-action: manipulation !important;
+                touch-action: none !important;
                 -webkit-tap-highlight-color: transparent !important;
             }
 
@@ -17299,9 +17299,11 @@
             renderMobileSystemsToggle();
         }
 
-        function setMobilePanel(panel) {
+        function setMobilePanel(panel, options = {}) {
             if (!document.body.classList.contains('mobile-optimized')) return;
 
+            const resetPanelScroll = options.resetPanelScroll !== false;
+            const resetViewportScroll = options.resetViewportScroll !== false;
             const nextPanel = panel || 'main';
             document.body.setAttribute('data-mobile-panel', nextPanel);
 
@@ -17315,10 +17317,10 @@
                 rank: '.leaderboard'
             };
             const activePanel = panelMap[nextPanel] ? document.querySelector(panelMap[nextPanel]) : null;
-            if (activePanel) {
+            if (activePanel && resetPanelScroll) {
                 activePanel.scrollTop = 0;
             }
-            if (typeof window.scrollTo === 'function') {
+            if (resetViewportScroll && typeof window.scrollTo === 'function') {
                 window.scrollTo(0, 0);
             }
         }
@@ -17326,6 +17328,7 @@
         function syncMobileLayout() {
             updateMobileViewportMetrics();
             const mobile = isMobileViewport();
+            const wasMobile = document.body.classList.contains('mobile-optimized');
             document.body.classList.toggle('mobile-optimized', mobile);
 
             if (mobile) {
@@ -17336,7 +17339,10 @@
                     document.body.setAttribute('data-mobile-systems-expanded', '0');
                 }
                 setMobileSystemsExpanded(document.body.getAttribute('data-mobile-systems-expanded') === '1');
-                setMobilePanel(document.body.getAttribute('data-mobile-panel'));
+                setMobilePanel(document.body.getAttribute('data-mobile-panel'), {
+                    resetPanelScroll: !wasMobile,
+                    resetViewportScroll: !wasMobile
+                });
             } else {
                 document.body.removeAttribute('data-mobile-panel');
                 document.body.removeAttribute('data-mobile-systems-expanded');
@@ -19407,7 +19413,6 @@
         window.addEventListener('orientationchange', scheduleMobileLayoutSync);
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', scheduleMobileLayoutSync);
-            window.visualViewport.addEventListener('scroll', scheduleMobileLayoutSync);
         }
         window.addEventListener('beforeunload', () => {
             saveGameData(false);
