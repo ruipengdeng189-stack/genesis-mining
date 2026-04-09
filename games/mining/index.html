@@ -7146,6 +7146,447 @@
             }
         }
     </style>
+    <style id="mobile-mining-v3">
+        @media (max-width: 900px) {
+            :root {
+                --gm-mobile-vh: 100dvh;
+                --gm-mobile-shell: min(calc(100vw - 14px), 430px);
+            }
+
+            body.mobile-optimized {
+                --mobile-shell-width: var(--gm-mobile-shell) !important;
+            }
+
+            body.mobile-optimized .container {
+                gap: 6px !important;
+                min-height: var(--gm-mobile-vh) !important;
+                padding: 0 7px calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
+            }
+
+            body.mobile-optimized .header {
+                width: var(--mobile-shell-width) !important;
+                padding: 2px 66px 0 66px !important;
+            }
+
+            body.mobile-optimized .header h1 {
+                font-size: clamp(20px, 6.2vw, 26px) !important;
+                margin-bottom: 2px !important;
+                letter-spacing: 1.2px !important;
+            }
+
+            body.mobile-optimized #headerSubtitle {
+                font-size: 8px !important;
+                opacity: 0.68 !important;
+            }
+
+            body.mobile-optimized .difficulty-indicator {
+                margin-top: 4px !important;
+                padding: 4px 10px !important;
+                font-size: 9px !important;
+            }
+
+            body.mobile-optimized .gem-codex-btn,
+            body.mobile-optimized .lang-switcher,
+            body.mobile-optimized .hub-return-btn,
+            body.mobile-optimized .v2-card,
+            body.mobile-optimized .payment-content,
+            body.mobile-optimized .gem-codex-content,
+            body.mobile-optimized .gem-tip-content,
+            body.mobile-optimized .fragment-unlock-overlay .fragment-unlock-content {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+
+            body.mobile-optimized .v2-sidebar {
+                width: var(--mobile-shell-width) !important;
+                margin: calc(env(safe-area-inset-top, 0px) + 92px) auto 6px !important;
+            }
+
+            body.mobile-optimized .v2-card {
+                padding: 9px 10px 10px !important;
+            }
+
+            body.mobile-optimized .v2-summary-row {
+                min-height: 50px !important;
+            }
+
+            body.mobile-optimized .v2-action-btn {
+                min-height: 44px !important;
+            }
+
+            body.mobile-optimized .power-center-section {
+                width: var(--mobile-shell-width) !important;
+                min-height: min(596px, calc(var(--gm-mobile-vh) - 176px)) !important;
+                padding: 10px 10px 12px !important;
+                gap: 8px !important;
+                overflow: visible !important;
+            }
+
+            body.mobile-optimized .power-center-section > .stats,
+            body.mobile-optimized .power-center-section > .main-content {
+                width: 100% !important;
+                max-width: 336px !important;
+            }
+
+            body.mobile-optimized .stats {
+                max-width: 336px !important;
+                gap: 7px !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            body.mobile-optimized .stats .stat-item {
+                min-height: 70px !important;
+                padding: 8px 8px 6px !important;
+                border-width: 1px !important;
+                box-shadow: 0 0 12px rgba(0, 255, 65, 0.16) !important;
+            }
+
+            body.mobile-optimized .stats .stat-item:last-child {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                justify-self: stretch !important;
+            }
+
+            body.mobile-optimized .stat-item > div:first-child,
+            body.mobile-optimized .stat-item > div:last-child {
+                font-size: 9px !important;
+            }
+
+            body.mobile-optimized .stat-value {
+                font-size: 16px !important;
+            }
+
+            body.mobile-optimized .main-content {
+                max-width: 336px !important;
+                gap: 9px !important;
+                justify-content: flex-start !important;
+            }
+
+            body.mobile-optimized .mine-section {
+                max-width: 336px !important;
+                gap: 8px !important;
+            }
+
+            body.mobile-optimized #mineBtn {
+                width: min(63vw, 244px) !important;
+                height: min(63vw, 244px) !important;
+                min-width: 188px !important;
+                min-height: 188px !important;
+            }
+
+            body.mobile-optimized #mineBtn::before {
+                content: '';
+                position: absolute;
+                inset: -14px;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(0, 255, 65, 0.08), rgba(0, 255, 65, 0));
+                pointer-events: none;
+            }
+
+            body.mobile-optimized #mineBtn img {
+                width: 100% !important;
+                max-width: 100% !important;
+                filter: brightness(1.06) contrast(1.05) drop-shadow(0 0 10px rgba(0, 255, 65, 0.5)) drop-shadow(0 0 24px rgba(0, 255, 65, 0.3)) !important;
+                will-change: transform !important;
+            }
+
+            body.mobile-optimized #mineBtn:active img {
+                transform: scale(0.97) !important;
+                filter: brightness(1.12) contrast(1.08) drop-shadow(0 0 14px rgba(0, 255, 65, 0.64)) drop-shadow(0 0 28px rgba(0, 255, 65, 0.34)) !important;
+            }
+
+            body.mobile-optimized .overclock-btn {
+                max-width: 336px !important;
+            }
+
+            body.mobile-optimized .countdown-timer {
+                padding: 8px 10px !important;
+            }
+
+            body.mobile-optimized .countdown-title {
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .countdown-time {
+                font-size: 18px !important;
+            }
+
+            body.mobile-optimized #overclockBtn {
+                padding: 11px 12px !important;
+                font-size: 13px !important;
+                line-height: 1.25 !important;
+            }
+
+            body.mobile-optimized .overclock-stats {
+                padding: 8px 10px !important;
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .upgrade-container,
+            body.mobile-optimized .collection-section,
+            body.mobile-optimized .leaderboard {
+                top: calc(env(safe-area-inset-top, 0px) + 88px) !important;
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 74px) !important;
+                left: 7px !important;
+                right: 7px !important;
+                max-width: var(--mobile-shell-width) !important;
+                padding: 11px !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42), 0 0 18px rgba(0, 255, 65, 0.1) !important;
+            }
+
+            body.mobile-optimized .upgrade-container {
+                display: none !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px !important;
+                align-content: start !important;
+            }
+
+            body.mobile-optimized .upgrade-section {
+                padding: 12px 10px !important;
+                gap: 8px !important;
+                border-width: 1px !important;
+                box-shadow: 0 0 14px rgba(0, 255, 65, 0.16) !important;
+            }
+
+            body.mobile-optimized .upgrade-section.ready {
+                border-color: rgba(120, 255, 180, 0.55) !important;
+                box-shadow: 0 0 20px rgba(76, 255, 170, 0.16), inset 0 0 18px rgba(0, 255, 65, 0.05) !important;
+                transform: translateY(-1px);
+            }
+
+            body.mobile-optimized .upgrade-section.ready button:not(:disabled) {
+                background: linear-gradient(135deg, rgba(0, 255, 170, 0.22), rgba(0, 255, 65, 0.18)) !important;
+                border-color: rgba(120, 255, 180, 0.72) !important;
+                box-shadow: 0 0 16px rgba(0, 255, 170, 0.18) !important;
+            }
+
+            body.mobile-optimized .upgrade-section button:disabled {
+                opacity: 0.58 !important;
+                filter: saturate(0.72);
+            }
+
+            body.mobile-optimized .upgrade-section:last-child {
+                grid-column: 1 / -1;
+            }
+
+            body.mobile-optimized .upgrade-section h2 {
+                font-size: 14px !important;
+                margin-bottom: 1px !important;
+            }
+
+            body.mobile-optimized .upgrade-info {
+                font-size: 11px !important;
+                margin-bottom: 2px !important;
+                line-height: 1.45 !important;
+            }
+
+            body.mobile-optimized .upgrade-section button {
+                min-height: 42px !important;
+                font-size: 13px !important;
+                padding: 10px 8px !important;
+            }
+
+            body.mobile-optimized[data-mobile-panel="upgrades"] .upgrade-container {
+                display: grid !important;
+            }
+
+            body.mobile-optimized .collection-section {
+                display: flex;
+                flex-direction: column;
+                gap: 10px !important;
+            }
+
+            body.mobile-optimized .collection-subtitle {
+                font-size: 10px !important;
+                line-height: 1.5 !important;
+            }
+
+            body.mobile-optimized .collection-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            body.mobile-optimized .collection-slot {
+                min-height: 74px !important;
+            }
+
+            body.mobile-optimized .leaderboard-list {
+                gap: 7px !important;
+            }
+
+            body.mobile-optimized .leaderboard-item {
+                padding: 9px !important;
+                border-radius: 13px !important;
+            }
+
+            body.mobile-optimized .leaderboard-address {
+                font-size: 10px !important;
+            }
+
+            body.mobile-optimized .leaderboard-power {
+                font-size: 12px !important;
+            }
+
+            body.mobile-optimized .payment-modal {
+                padding: calc(env(safe-area-inset-top, 0px) + 6px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+                align-items: flex-start !important;
+                overflow-y: auto !important;
+                z-index: 10060 !important;
+            }
+
+            body.mobile-optimized .payment-content {
+                width: min(100vw - 16px, 430px) !important;
+                max-width: min(100vw - 16px, 430px) !important;
+                max-height: calc(var(--gm-mobile-vh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 16px) !important;
+                padding: 16px 12px 14px !important;
+                border-radius: 18px !important;
+                overflow-y: auto !important;
+                box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42), 0 0 16px rgba(0, 255, 255, 0.12) !important;
+            }
+
+            body.mobile-optimized .payment-top-close {
+                top: 8px !important;
+                right: 8px !important;
+                width: 38px !important;
+                height: 38px !important;
+                box-shadow: none !important;
+            }
+
+            body.mobile-optimized .payment-offer-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+                margin: 10px 0 12px !important;
+            }
+
+            body.mobile-optimized .payment-offer-card {
+                min-height: 96px !important;
+                padding: 11px 10px !important;
+            }
+
+            body.mobile-optimized .payment-offer-card.active {
+                transform: translateY(-1px) !important;
+                border-color: rgba(0, 255, 255, 0.55) !important;
+                box-shadow: 0 0 16px rgba(0, 255, 255, 0.18) !important;
+                background: linear-gradient(180deg, rgba(8, 38, 46, 0.92), rgba(4, 18, 24, 0.96)) !important;
+            }
+
+            body.mobile-optimized .payment-copy-btn,
+            body.mobile-optimized .payment-close,
+            body.mobile-optimized .payment-confirm-btn {
+                min-height: 44px !important;
+                font-size: 13px !important;
+                padding: 0 12px !important;
+            }
+
+            body.mobile-optimized .payment-order-card {
+                margin-top: 10px !important;
+                padding: 12px !important;
+            }
+
+            body.mobile-optimized .payment-order-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 8px !important;
+            }
+
+            body.mobile-optimized .payment-order-item {
+                padding: 9px 10px !important;
+            }
+
+            body.mobile-optimized .payment-order-item-value {
+                font-size: 15px !important;
+            }
+
+            body.mobile-optimized .payment-txid-input {
+                font-size: 12px !important;
+                padding: 12px 13px !important;
+            }
+
+            body.mobile-optimized .payment-log {
+                min-height: 92px !important;
+                max-height: 18vh !important;
+                padding: 10px 11px !important;
+                font-size: 11px !important;
+            }
+        }
+
+        @media (max-width: 900px) and (max-height: 780px) {
+            body.mobile-optimized.mobile-compact-height .v2-sidebar {
+                margin: calc(env(safe-area-inset-top, 0px) + 84px) auto 4px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .header {
+                padding-top: 0 !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .header h1 {
+                font-size: clamp(18px, 5.8vw, 24px) !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height #headerSubtitle {
+                font-size: 7px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .difficulty-indicator {
+                margin-top: 3px !important;
+                padding: 3px 9px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .container {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 78px) !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .power-center-section {
+                min-height: min(548px, calc(var(--gm-mobile-vh) - 164px)) !important;
+                padding: 8px 9px 10px !important;
+                gap: 7px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .stats {
+                gap: 6px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .stats .stat-item {
+                min-height: 64px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .stat-value {
+                font-size: 15px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height #mineBtn {
+                width: min(56vw, 212px) !important;
+                height: min(56vw, 212px) !important;
+                min-width: 170px !important;
+                min-height: 170px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .mine-section {
+                gap: 7px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .countdown-time {
+                font-size: 16px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height #overclockBtn {
+                padding: 9px 10px !important;
+                font-size: 12px !important;
+            }
+
+            body.mobile-optimized.mobile-compact-height .mobile-dock-btn {
+                min-height: 46px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body.mobile-optimized .collection-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <style>
@@ -14122,6 +14563,7 @@
         let selectedGemTipRecord = null;
         let rewardFeedbackOverlayTimer = null;
         let audioContext = null;
+        let mobileFloatingParticleGate = 0;
         let backgroundMusicStarted = false;
         let backgroundMusicTimer = null;
         let lastMineSoundAt = 0;
@@ -16327,13 +16769,13 @@
         const GEM_DROP_SCALE = 10000;
 
         const DECAY_RATE = 0.01;
-        const DECAY_IDLE_DELAY_MS = 1200;
+        const DECAY_IDLE_DELAY_MS = 1800;
         const CRITICAL_CHANCE = 0.05;
         const CRITICAL_MULTIPLIER = 10;
         const MIN_POWER = 1;
         let rewardedMinPower = MIN_POWER;
-        const OVERHEAT_THRESHOLD = 74;
-        const HEAT_PER_CLICK = 13;
+        const OVERHEAT_THRESHOLD = 78;
+        const HEAT_PER_CLICK = 11;
         const HEAT_DECAY_RATE = 6;
         const CLICK_WINDOW = 2600;
         const DIFFICULTY_THRESHOLD = 4500;
@@ -16359,6 +16801,7 @@
         const upgradeBtn = document.getElementById('upgradeBtn');
         const autoBtn = document.getElementById('autoBtn');
         const coolingBtn = document.getElementById('coolingBtn');
+        const upgradeSectionCards = document.querySelectorAll('.upgrade-section');
         const payBtn = document.getElementById('payBtn');
         const boostBtn = document.getElementById('boostBtn');
         const overclockBtn = document.getElementById('overclockBtn');
@@ -16543,6 +16986,21 @@
             return !!(sidebar && sidebar.classList.contains('expanded'));
         }
 
+        function updateMobileViewportMetrics() {
+            const viewportHeight = Math.max(
+                520,
+                Math.round(window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0)
+            );
+            const viewportWidth = Math.max(
+                320,
+                Math.round(window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 0)
+            );
+
+            document.documentElement.style.setProperty('--gm-mobile-vh', `${viewportHeight}px`);
+            document.documentElement.style.setProperty('--gm-mobile-vw', `${viewportWidth}px`);
+            document.body.classList.toggle('mobile-compact-height', isMobileViewport() && viewportHeight <= 780);
+        }
+
         function renderMobileSystemsToggle() {
             if (!mobileSystemsToggleBtn || !mobileSystemsToggleText) {
                 return;
@@ -16578,9 +17036,23 @@
             mobileDockButtons.forEach((button) => {
                 button.classList.toggle('active', button.dataset.panel === nextPanel);
             });
+
+            const panelMap = {
+                upgrades: '.upgrade-container',
+                vault: '.collection-section',
+                rank: '.leaderboard'
+            };
+            const activePanel = panelMap[nextPanel] ? document.querySelector(panelMap[nextPanel]) : null;
+            if (activePanel) {
+                activePanel.scrollTop = 0;
+            }
+            if (typeof window.scrollTo === 'function') {
+                window.scrollTo(0, 0);
+            }
         }
 
         function syncMobileLayout() {
+            updateMobileViewportMetrics();
             const mobile = isMobileViewport();
             document.body.classList.toggle('mobile-optimized', mobile);
 
@@ -16596,6 +17068,7 @@
             } else {
                 document.body.removeAttribute('data-mobile-panel');
                 document.body.removeAttribute('data-mobile-systems-expanded');
+                document.body.classList.remove('mobile-compact-height');
                 mobileDockButtons.forEach((button) => button.classList.remove('active'));
                 setMobileSystemsExpanded(false);
             }
@@ -16781,15 +17254,16 @@
         }
 
         function calculateDifficultyMultiplier() {
-            const powerPressure = Math.max(0, Math.floor(Math.max(0, getEffectiveHashrate() - 140) / 120)) * 0.12;
-            const missionPressure = missionStage * 0.07;
-            const prestigePressure = Math.max(0, prestigeCount - 1) * 0.05;
+            const powerPressure = Math.max(0, Math.floor(Math.max(0, getEffectiveHashrate() - 220) / 150)) * 0.09;
+            const missionPressure = missionStage * 0.055;
+            const prestigePressure = Math.max(0, prestigeCount - 1) * 0.045;
             const relief = Math.min(
-                0.3,
-                (researchLevels.thermal * 0.025)
-                + (getUniqueGemTierCount() * 0.015)
-                + Math.min(0.08, forgeReserveBonus / 3000)
-                + Math.min(0.12, paymentPurchaseCount * 0.03)
+                0.36,
+                (researchLevels.thermal * 0.028)
+                + (getUniqueGemTierCount() * 0.02)
+                + Math.min(0.1, forgeReserveBonus / 2600)
+                + Math.min(0.14, paymentPurchaseCount * 0.03)
+                + Math.min(0.08, researchLevels.capital * 0.015)
             );
             return Math.max(1, 1 + powerPressure + missionPressure + prestigePressure - relief);
         }
@@ -16906,37 +17380,39 @@
 
         function getUpgradePowerGain() {
             return 1
-                + Math.floor(level / 20)
-                + Math.floor(researchLevels.tap / 5)
+                + (level < 12 ? 1 : 0)
+                + Math.floor(level / 18)
+                + Math.floor(researchLevels.tap / 4)
                 + Math.floor(missionStage / 3);
         }
 
         function getUpgradeCostGrowth() {
-            if (level < 20) return 1.24;
-            if (level < 60) return 1.28;
-            if (level < 120) return 1.32;
-            return 1.36;
+            if (level < 12) return 1.18;
+            if (level < 36) return 1.22;
+            if (level < 80) return 1.27;
+            if (level < 140) return 1.31;
+            return 1.34;
         }
 
         function getAutoPurchaseGain() {
-            const gain = 0.45
+            const gain = 0.6
                 + (missionStage * 0.08)
-                + (researchLevels.auto * 0.07)
-                + (Math.floor(autoLevel / 5) * 0.05)
-                + Math.min(0.45, lifetimePrestigeCores * 0.015);
+                + (researchLevels.auto * 0.08)
+                + (Math.floor(autoLevel / 4) * 0.06)
+                + Math.min(0.55, lifetimePrestigeCores * 0.016);
             return Number(gain.toFixed(2));
         }
 
         function getAutoCostGrowth() {
-            if (autoLevel < 5) return 1.7;
-            if (autoLevel < 15) return 1.82;
-            return 1.95;
+            if (autoLevel < 5) return 1.58;
+            if (autoLevel < 15) return 1.72;
+            return 1.86;
         }
 
         function getCoolingCostGrowth() {
-            if (coolingLevel < 5) return 1.75;
-            if (coolingLevel < 12) return 1.88;
-            return 2.02;
+            if (coolingLevel < 5) return 1.54;
+            if (coolingLevel < 12) return 1.68;
+            return 1.82;
         }
 
         function ensureAudioContext() {
@@ -18020,6 +18496,13 @@
         }
 
         function createParticle(x, y, value, isCritical = false) {
+            if (isMobilePerformanceMode() && !isCritical) {
+                mobileFloatingParticleGate = (mobileFloatingParticleGate + 1) % 2;
+                if (mobileFloatingParticleGate !== 0) {
+                    return;
+                }
+            }
+
             const particle = document.createElement('div');
             particle.className = isCritical ? 'particle critical' : 'particle';
             particle.textContent = `+${Math.floor(value)}`;
@@ -18113,6 +18596,16 @@
                 powerStat.classList.add('warning');
             } else {
                 powerStat.classList.remove('warning');
+            }
+
+            if (upgradeSectionCards[0]) {
+                upgradeSectionCards[0].classList.toggle('ready', coins >= upgradeCost);
+            }
+            if (upgradeSectionCards[1]) {
+                upgradeSectionCards[1].classList.toggle('ready', coins >= coolingCost);
+            }
+            if (upgradeSectionCards[2]) {
+                upgradeSectionCards[2].classList.toggle('ready', coins >= autoCost);
             }
 
             if (coins >= upgradeCost) {
