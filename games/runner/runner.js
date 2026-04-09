@@ -497,6 +497,13 @@
     let paymentVerificationNotice = '';
     let paymentOrderNonce = 0;
     let paymentOrderRequestPromise = null;
+    const panelScrollState = {
+        run: 0,
+        loadout: 0,
+        missions: 0,
+        season: 0,
+        shop: 0
+    };
 
     const baseState = {
         lang: localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh',
@@ -1113,6 +1120,17 @@
         }).length;
     }
 
+    function getTrueShopClaimCount() {
+        if (ensureDailyShopState()) {
+            saveState();
+        }
+        return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
+            const remaining = getRemainingShopStock(offer.id);
+            const isFreeClaim = (offer.cost?.gold || 0) <= 0 && (offer.cost?.core || 0) <= 0;
+            return remaining > 0 && isFreeClaim;
+        }).length;
+    }
+
     function getSeasonRewards() {
         return [
             {
@@ -1489,13 +1507,7 @@
     }
 
     function getShopAlertCount() {
-        if (ensureDailyShopState()) {
-            saveState();
-        }
-        return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
-            const remaining = getRemainingShopStock(offer.id);
-            return remaining > 0 && canAffordCost(offer.cost);
-        }).length;
+        return getTrueShopClaimCount();
     }
 
     function purchaseShopOffer(id) {
@@ -2464,6 +2476,22 @@
         return labels.map((text) => `<span class="${className}">${text}</span>`).join('');
     }
 
+    function showRewardToast(title, reward = {}, note = '') {
+        if (!dom.toast) return;
+        const rewardsHtml = renderRewardPills(reward).trim();
+        dom.toast.classList.add('is-visible', 'is-reward');
+        dom.toast.innerHTML = `
+            <div class="toast-title">${title}</div>
+            ${note ? `<div class="toast-note">${note}</div>` : ''}
+            ${rewardsHtml ? `<div class="toast-rewards">${rewardsHtml}</div>` : ''}
+        `;
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => {
+            dom.toast.classList.remove('is-visible', 'is-reward');
+            dom.toast.textContent = '';
+        }, 2200);
+    }
+
     function renderResultOverlayCard() {
         if (!lastResult || !dom.resultRankPanel) return;
         const { divisionInfo, promoted, promotionText, settlementPreview } = lastResult;
@@ -2546,6 +2574,9 @@
 
     function switchTab(tab, syncHash = true) {
         if (!['run', 'loadout', 'missions', 'season', 'shop'].includes(tab)) return;
+        if (dom.panelContent) {
+            panelScrollState[activeTab] = dom.panelContent.scrollTop || 0;
+        }
         if (tab !== 'run' && game.running && !game.paused && !game.awaitingRevive) {
             pauseRun();
         }
@@ -2553,34 +2584,36 @@
         if (syncHash) {
             window.location.hash = activeTab;
         }
-        renderPanel();
-        renderTabLayout();
+        renderPanel({ preserveScroll: true });
+        renderTabLayout({ preserveScroll: true });
     }
 
-    function renderTabLayout() {
+    function renderTabLayout({ preserveScroll = true } = {}) {
         document.body.dataset.runnerTab = activeTab;
         dom.runnerMain?.classList.toggle('is-run-tab', activeTab === 'run');
         dom.runnerMain?.classList.toggle('is-content-tab', activeTab !== 'run');
         dom.stageCard?.classList.toggle('is-tab-hidden', activeTab !== 'run');
         updateRuntimeBodyState();
         if (dom.panelContent) {
-            dom.panelContent.scrollTop = 0;
+            const nextScroll = preserveScroll ? (panelScrollState[activeTab] || 0) : 0;
+            requestAnimationFrame(() => {
+                if (dom.panelContent) {
+                    dom.panelContent.scrollTop = nextScroll;
+                }
+            });
         }
         requestAnimationFrame(resizeCanvas);
     }
 
     function getLoadoutAlertCount() {
-        const runners = RUNNERS.filter((item) => !isUnlocked('runners', item) && canPurchaseUnlock(item)).length;
-        const skills = ACTIVE_SKILLS.filter((item) => !isUnlocked('skills', item) && canPurchaseUnlock(item)).length;
-        const passives = PASSIVES.filter((item) => !isUnlocked('passives', item) && canPurchaseUnlock(item)).length;
-        return runners + skills + passives;
+        return 0;
     }
 
     function updateTabBadges() {
         const missionCount = getClaimableMissionCount();
         const loadoutCount = getLoadoutAlertCount();
         const seasonCount = getClaimableSeasonRewardCount() + getClaimableSeasonSponsorRewardCount() + getClaimableRankRewardCount();
-        const shopCount = getShopAlertCount() + (!playerProfile.payment.passUnlocked ? 1 : 0);
+        const shopCount = getTrueShopClaimCount();
         Array.from(dom.tabBar.querySelectorAll('.tab-btn')).forEach((button) => {
             const tab = button.dataset.tab;
             const count = tab === 'missions'
@@ -2650,13 +2683,17 @@
         const advancedChapter = mission.section === 'pulse' ? 0 : maybeAdvanceMissionChapter();
         saveState();
         playSfx(advancedChapter ? 'promote' : 'reward');
-        showToast(advancedChapter
-            ? localize({
-                zh: `奖励已领取，任务板升级至第 ${advancedChapter} 章`,
-                en: `Reward claimed. Mission board advanced to Chapter ${advancedChapter}`
-            })
-            : t('missionClaimed'));
-        renderAll();
+        showRewardToast(
+            advancedChapter
+                ? localize({
+                    zh: `任务奖励已领取 · 已推进到第 ${advancedChapter} 章`,
+                    en: `Mission reward claimed · advanced to Chapter ${advancedChapter}`
+                })
+                : t('missionClaimed'),
+            mission.reward,
+            localize(mission.title)
+        );
+        renderAll({ preservePanelScroll: true });
     }
 
     function claimSeasonReward(level) {
@@ -2667,8 +2704,12 @@
         applyRewardBundle(reward.free);
         saveState();
         playSfx('reward');
-        showToast(localize({ zh: `已领取 Lv.${level} 赛季奖励`, en: `Claimed season reward Lv.${level}` }));
-        renderAll();
+        showRewardToast(
+            localize({ zh: `已领取 Lv.${level} 赛季奖励`, en: `Claimed season reward Lv.${level}` }),
+            reward.free,
+            localize(reward.free.title)
+        );
+        renderAll({ preservePanelScroll: true });
     }
 
     function claimSeasonSponsorReward(level) {
@@ -2679,8 +2720,12 @@
         applyRewardBundle(reward.premium);
         saveState();
         playSfx('promote');
-        showToast(localize({ zh: `已领取 Lv.${level} 赞助轨道奖励`, en: `Claimed sponsor reward Lv.${level}` }));
-        renderAll();
+        showRewardToast(
+            localize({ zh: `已领取 Lv.${level} 赞助轨道奖励`, en: `Claimed sponsor reward Lv.${level}` }),
+            reward.premium,
+            localize(reward.premium.title)
+        );
+        renderAll({ preservePanelScroll: true });
     }
 
     function claimRankReward(id) {
@@ -2691,8 +2736,12 @@
         applyRewardBundle(reward.reward);
         saveState();
         playSfx('promote');
-        showToast(localize({ zh: `已领取冲榜奖励：${localize(reward.title)}`, en: `Ladder reward claimed: ${localize(reward.title)}` }));
-        renderAll();
+        showRewardToast(
+            localize({ zh: `已领取冲榜奖励`, en: 'Ladder reward claimed' }),
+            reward.reward,
+            localize(reward.title)
+        );
+        renderAll({ preservePanelScroll: true });
     }
 
     function unlockEntry(category, id) {
@@ -3511,7 +3560,10 @@
         `;
     }
 
-    function renderPanel() {
+    function renderPanel({ preserveScroll = false } = {}) {
+        const currentScroll = preserveScroll && dom.panelContent
+            ? (dom.panelContent.scrollTop || panelScrollState[activeTab] || 0)
+            : 0;
         const htmlByTab = {
             run: renderRunTab(),
             loadout: renderLoadoutTab(),
@@ -3520,7 +3572,15 @@
             shop: renderShopTab()
         };
         dom.panelContent.innerHTML = htmlByTab[activeTab] || htmlByTab.run;
+        panelScrollState[activeTab] = currentScroll;
         updateTabBadges();
+        if (dom.panelContent) {
+            requestAnimationFrame(() => {
+                if (dom.panelContent) {
+                    dom.panelContent.scrollTop = panelScrollState[activeTab] || 0;
+                }
+            });
+        }
     }
 
     function applyI18n() {
@@ -3569,14 +3629,14 @@
                 goldMultiplier: 1.2,
                 xpMultiplier: 1.08,
                 coreFloor: 4,
-                rewardBias: 0.12,
-                trackSpeedMultiplier: 0.88,
-                obstacleApproachMultiplier: NEWBIE_ASSIST_OBSTACLE_SPEED,
-                spawnRelax: 0.16,
-                spawnMin: NEWBIE_ASSIST_SPAWN_MIN,
-                rewardZBonus: 6,
-                obstacleZBonus: 16,
-                trailingRewardZBonus: 8
+                rewardBias: 0.16,
+                trackSpeedMultiplier: 0.8,
+                obstacleApproachMultiplier: 0.68,
+                spawnRelax: 0.32,
+                spawnMin: 0.64,
+                rewardZBonus: 14,
+                obstacleZBonus: 30,
+                trailingRewardZBonus: 16
             };
         }
         if (totalRuns < 3) {
@@ -3584,14 +3644,14 @@
                 goldMultiplier: 1.12,
                 xpMultiplier: 1.04,
                 coreFloor: 3,
-                rewardBias: 0.06,
-                trackSpeedMultiplier: 0.94,
-                obstacleApproachMultiplier: 0.88,
-                spawnRelax: 0.08,
-                spawnMin: 0.3,
-                rewardZBonus: 3,
-                obstacleZBonus: 8,
-                trailingRewardZBonus: 4
+                rewardBias: 0.1,
+                trackSpeedMultiplier: 0.88,
+                obstacleApproachMultiplier: 0.8,
+                spawnRelax: 0.22,
+                spawnMin: 0.48,
+                rewardZBonus: 8,
+                obstacleZBonus: 18,
+                trailingRewardZBonus: 10
             };
         }
         if (totalRuns < 6) {
@@ -3599,14 +3659,14 @@
                 goldMultiplier: 1.05,
                 xpMultiplier: 1.02,
                 coreFloor: 2,
-                rewardBias: 0.03,
-                trackSpeedMultiplier: 0.98,
-                obstacleApproachMultiplier: 0.95,
-                spawnRelax: 0.04,
-                spawnMin: 0.26,
-                rewardZBonus: 1,
-                obstacleZBonus: 4,
-                trailingRewardZBonus: 2
+                rewardBias: 0.05,
+                trackSpeedMultiplier: 0.94,
+                obstacleApproachMultiplier: 0.9,
+                spawnRelax: 0.14,
+                spawnMin: 0.38,
+                rewardZBonus: 4,
+                obstacleZBonus: 10,
+                trailingRewardZBonus: 5
             };
         }
         return {
@@ -3616,8 +3676,8 @@
             rewardBias: 0,
             trackSpeedMultiplier: 1,
             obstacleApproachMultiplier: 1,
-            spawnRelax: 0,
-            spawnMin: 0.24,
+            spawnRelax: 0.08,
+            spawnMin: 0.32,
             rewardZBonus: 0,
             obstacleZBonus: 0,
             trailingRewardZBonus: 0
@@ -3628,7 +3688,10 @@
         document.body.classList.toggle('runner-playing', activeTab === 'run' && game.running);
     }
 
-    function renderAll() {
+    function renderAll({ preservePanelScroll = true } = {}) {
+        if (preservePanelScroll && dom.panelContent) {
+            panelScrollState[activeTab] = dom.panelContent.scrollTop || 0;
+        }
         let shouldSave = false;
         if (ensureMissionBoardState()) {
             shouldSave = true;
@@ -3643,11 +3706,11 @@
             saveState();
         }
         applyI18n();
-        renderTabLayout();
+        renderTabLayout({ preserveScroll: preservePanelScroll });
         updateReviveOverlayCopy();
         renderSummary();
         renderHud();
-        renderPanel();
+        renderPanel({ preserveScroll: preservePanelScroll });
         renderPaymentOfferGrid();
         renderResultOverlayCard();
         renderPaymentOrderUI();
@@ -3698,11 +3761,13 @@
 
     function showToast(message) {
         if (!message) return;
+        dom.toast.classList.remove('is-reward');
         dom.toast.textContent = message;
         dom.toast.classList.add('is-visible');
         window.clearTimeout(toastTimer);
         toastTimer = window.setTimeout(() => {
             dom.toast.classList.remove('is-visible');
+            dom.toast.classList.remove('is-reward');
         }, 1700);
     }
 
@@ -4124,10 +4189,11 @@
         const tuning = getRunTuningProfile();
         const roll = Math.random();
         const lane = Math.floor(Math.random() * 3);
+        const earlyRunFactor = Math.max(0, 1 - (game.elapsed / 12));
         const rewardBaseZ = 132 + tuning.rewardZBonus;
-        const obstacleBaseZ = 132 + tuning.obstacleZBonus;
-        const coinThreshold = 0.36 + tuning.rewardBias * 0.65;
-        const energyThreshold = coinThreshold + 0.14 + tuning.rewardBias * 0.35;
+        const obstacleBaseZ = 132 + tuning.obstacleZBonus + (earlyRunFactor * 22);
+        const coinThreshold = 0.36 + tuning.rewardBias * 0.65 + earlyRunFactor * 0.08;
+        const energyThreshold = coinThreshold + 0.14 + tuning.rewardBias * 0.35 + earlyRunFactor * 0.03;
         if (roll < coinThreshold) {
             game.objects.push({ type: 'coin', lane, z: rewardBaseZ + Math.random() * 14, value: 1 });
             if (Math.random() < 0.45) {
@@ -4237,8 +4303,10 @@
             game.overclock = Math.min(100, game.overclock + dt * 3.2);
         }
 
-        const baseTrackSpeed = game.speedBase + Math.min(14, game.distance / 130);
-        game.speedCurrent = baseTrackSpeed * tuning.trackSpeedMultiplier + (game.overclockActive > 0 ? 12 : 0);
+        const warmupFactor = Math.min(1, game.elapsed / 14);
+        const distanceSpeedGain = Math.min(12, Math.max(0, game.distance - 240) / 260);
+        const baseTrackSpeed = (game.speedBase + distanceSpeedGain) * (0.78 + warmupFactor * 0.22);
+        game.speedCurrent = baseTrackSpeed * tuning.trackSpeedMultiplier + (game.overclockActive > 0 ? 10 : 0);
         game.distance += game.speedCurrent * dt * 10;
         game.score += game.speedCurrent * dt * 4 + game.combo * dt * 8;
         if (!game.timeAt500 && game.distance >= 500) {
@@ -4257,7 +4325,7 @@
 
         if (game.spawnTimer <= 0) {
             spawnObject();
-            const baseSpawnTimer = Math.max(0.24, 0.82 - Math.min(0.48, game.distance / 2800));
+            const baseSpawnTimer = Math.max(0.4, 1.06 - Math.min(0.52, Math.max(0, game.distance - 180) / 3600));
             game.spawnTimer = Math.max(tuning.spawnMin, baseSpawnTimer + tuning.spawnRelax);
         }
 
@@ -4735,6 +4803,9 @@
             paymentVerificationNotice = paymentVerificationState === 'verified' ? paymentVerificationNotice : '';
             refreshPaymentVerificationState();
         });
+        dom.panelContent?.addEventListener('scroll', () => {
+            panelScrollState[activeTab] = dom.panelContent?.scrollTop || 0;
+        }, { passive: true });
 
         let touchStartX = 0;
         let touchStartY = 0;

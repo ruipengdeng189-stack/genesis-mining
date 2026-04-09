@@ -1624,6 +1624,37 @@ a {
     transform: translate(-50%, 0);
 }
 
+.toast.is-reward {
+    min-width: min(90vw, 360px);
+    max-width: min(92vw, 520px);
+    padding: 12px 14px;
+    text-align: left;
+    color: var(--text);
+    background: linear-gradient(180deg, rgba(11, 24, 52, 0.98), rgba(6, 13, 28, 0.98));
+    border: 1px solid rgba(96, 212, 255, 0.28);
+    box-shadow: 0 22px 56px rgba(0, 0, 0, 0.42);
+}
+
+.toast-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--cyan);
+}
+
+.toast-note {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+.toast-rewards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
 @media (max-width: 880px) {
     .runner-shell {
         width: min(100%, calc(100% - 16px));
@@ -3046,5 +3077,78 @@ a {
     .runner-main.is-content-tab .panel-card {
         min-height: clamp(360px, calc(100dvh - 188px), 760px);
         max-height: clamp(360px, calc(100dvh - 188px), 760px);
+    }
+}
+
+@media (max-width: 560px) {
+    .runner-main.is-content-tab .panel-card {
+        min-height: calc(100dvh - 136px);
+        max-height: calc(100dvh - 136px);
+    }
+
+    .runner-main.is-content-tab .panel-content {
+        padding-bottom: calc(var(--safe-bottom) + 18px);
+    }
+
+    body[data-runner-tab="missions"] .panel-content .card-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    body[data-runner-tab="missions"] .panel-content .card-grid > .stat-card:first-child {
+        order: 1;
+    }
+
+    body[data-runner-tab="missions"] .mission-card.is-claimable,
+    body[data-runner-tab="season"] .season-node.is-claimable {
+        order: -2;
+    }
+
+    body[data-runner-tab="missions"] .mission-card:not(.is-claimable),
+    body[data-runner-tab="season"] .season-node:not(.is-claimable):not(.is-claimed) {
+        order: 0;
+    }
+
+    body[data-runner-tab="season"] .season-node.is-claimed {
+        order: 1;
+    }
+
+    body[data-runner-tab="season"] .season-rail {
+        gap: 8px;
+    }
+
+    body[data-runner-tab="season"] .season-node-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: visible;
+        grid-auto-columns: unset;
+    }
+
+    body[data-runner-tab="season"] .season-node {
+        min-height: 0;
+        padding: 10px;
+    }
+
+    .toast.is-reward {
+        width: min(94vw, 360px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 420px) {
+    .runner-main.is-content-tab .panel-card {
+        min-height: calc(100dvh - 126px);
+        max-height: calc(100dvh - 126px);
+    }
+
+    .toast-title {
+        font-size: 12px;
+    }
+
+    .toast-note {
+        font-size: 11px;
     }
 }
