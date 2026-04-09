@@ -497,6 +497,10 @@ a {
     margin-top: 12px;
 }
 
+.run-control-dock {
+    display: contents;
+}
+
 .object-legend {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -3220,4 +3224,313 @@ a {
     .run-brief-copy p {
         font-size: 11px;
     }
+}
+
+@media (max-width: 820px) {
+    :root {
+        --tabbar-height: 68px;
+    }
+
+    body[data-runner-tab="run"] .runner-shell {
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 120px);
+    }
+
+    .topbar {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .hero-card,
+    .stage-card,
+    .panel-card {
+        border-radius: 22px;
+    }
+
+    .hero-card {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .runner-main.is-run-tab .stage-card {
+        padding: 10px;
+    }
+
+    .runner-main.is-run-tab .stage-hud {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .runner-main.is-run-tab .summary-item,
+    .runner-main.is-run-tab .hud-chip {
+        padding: 8px 9px;
+    }
+
+    .runner-main.is-run-tab .summary-item strong,
+    .runner-main.is-run-tab .hud-chip strong {
+        font-size: 15px;
+    }
+
+    .runner-main.is-run-tab .canvas-wrap,
+    .runner-main.is-run-tab #runnerCanvas {
+        height: clamp(206px, 29dvh, 264px);
+        min-height: clamp(206px, 29dvh, 264px);
+    }
+
+    .runner-main.is-run-tab .object-legend {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .runner-main.is-run-tab .legend-chip {
+        min-height: 38px;
+        padding: 7px 8px;
+        gap: 6px;
+        font-size: 10px;
+    }
+
+    .runner-main.is-run-tab .assist-banner {
+        gap: 6px;
+        padding: 8px 9px;
+        font-size: 10px;
+    }
+
+    .runner-main.is-run-tab .assist-badge {
+        min-width: 56px;
+        min-height: 24px;
+        font-size: 9px;
+    }
+
+    .runner-main.is-run-tab .energy-row {
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .runner-main.is-run-tab .meter span {
+        font-size: 10px;
+    }
+
+    .runner-main.is-run-tab .run-brief-strip {
+        gap: 10px;
+        padding: 10px 12px;
+        margin-top: 10px;
+    }
+
+    .runner-main.is-run-tab .run-brief-copy strong {
+        font-size: 13px;
+    }
+
+    .runner-main.is-run-tab .run-brief-copy p {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 680px) {
+    :root {
+        --tabbar-height: 64px;
+    }
+
+    body[data-runner-tab="run"] .runner-shell {
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 102px);
+    }
+
+    .runner-main.is-run-tab .stage-card {
+        padding-bottom: 92px;
+    }
+
+    .runner-main.is-run-tab .run-control-dock {
+        position: fixed;
+        left: 50%;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + var(--tabbar-height) - 2px);
+        transform: translateX(-50%);
+        width: min(calc(100vw - 16px), calc(var(--content-width) - 16px));
+        display: grid;
+        gap: 4px;
+        padding: 5px;
+        border-radius: 16px;
+        border: 1px solid rgba(96, 212, 255, 0.16);
+        background: linear-gradient(180deg, rgba(7, 14, 28, 0.98), rgba(5, 10, 20, 0.96));
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+        z-index: 31;
+    }
+
+    .runner-main.is-run-tab .run-control-dock .control-row,
+    .runner-main.is-run-tab .run-control-dock .action-row {
+        gap: 4px;
+        margin-top: 0;
+    }
+
+    .runner-main.is-run-tab .run-control-dock .control-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .runner-main.is-run-tab .run-control-dock .action-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .runner-main.is-run-tab .run-control-dock .control-btn,
+    .runner-main.is-run-tab .run-control-dock .ghost-btn,
+    .runner-main.is-run-tab .run-control-dock .primary-btn {
+        min-height: 34px;
+        padding: 5px 4px;
+        font-size: 10px;
+        line-height: 1.15;
+        border-radius: 10px;
+    }
+
+    .runner-main.is-run-tab .run-control-dock .control-btn::before,
+    .runner-main.is-run-tab .run-control-dock #skillBtn::before,
+    .runner-main.is-run-tab .run-control-dock #overclockBtn::before,
+    .runner-main.is-run-tab .run-control-dock #pauseBtn::before {
+        font-size: 12px;
+    }
+
+    .runner-main.is-run-tab .run-brief-strip {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .app-tab-bar {
+        width: calc(100vw - 8px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+        padding: 4px;
+        gap: 3px;
+        border-radius: 18px;
+    }
+
+    .app-tab-bar .tab-btn {
+        min-height: 40px;
+        padding: 5px 1px;
+        font-size: 10px;
+        border-radius: 12px;
+    }
+
+    body[data-runner-tab="run"] .runner-shell {
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 98px);
+    }
+
+    .runner-main.is-run-tab .stage-card {
+        padding-bottom: 88px;
+    }
+
+    .runner-main.is-run-tab .run-control-dock {
+        width: calc(100vw - 12px);
+        gap: 6px;
+        padding: 7px;
+        border-radius: 18px;
+    }
+}
+
+@media (max-width: 680px) {
+    body[data-runner-tab="run"] .topbar {
+        gap: 4px;
+        margin-bottom: 6px;
+    }
+
+    body[data-runner-tab="run"] .topbar-row {
+        gap: 4px;
+    }
+
+    body[data-runner-tab="run"] .topbar-actions {
+        gap: 4px;
+    }
+
+    body[data-runner-tab="run"] .topbar-row .ghost-btn,
+    body[data-runner-tab="run"] .topbar-actions .ghost-btn,
+    body[data-runner-tab="run"] .topbar-actions .icon-btn {
+        min-height: 32px;
+        padding: 0 8px;
+        font-size: 10px;
+        border-radius: 10px;
+    }
+
+    body[data-runner-tab="run"] .hero-card {
+        gap: 8px;
+        padding: 8px 9px;
+    }
+
+    body[data-runner-tab="run"] .hero-copy .eyebrow {
+        font-size: 8px;
+        letter-spacing: 0.12em;
+    }
+
+    body[data-runner-tab="run"] .hero-copy h1 {
+        margin: 2px 0 0;
+        font-size: clamp(18px, 5.8vw, 22px);
+        line-height: 1.02;
+    }
+
+    body[data-runner-tab="run"] .hero-copy p {
+        display: none;
+    }
+
+    body[data-runner-tab="run"] .summary-grid {
+        gap: 4px;
+    }
+
+    body[data-runner-tab="run"] .summary-item {
+        padding: 5px 6px;
+        gap: 2px;
+        border-radius: 12px;
+    }
+
+    body[data-runner-tab="run"] .summary-item span {
+        font-size: 9px;
+    }
+
+    body[data-runner-tab="run"] .summary-item strong {
+        font-size: 13px;
+    }
+
+    body[data-runner-tab="run"] .legend-chip {
+        min-height: 34px;
+        padding: 6px 7px;
+        font-size: 9.5px;
+    }
+
+    body[data-runner-tab="run"] .legend-dot {
+        width: 20px;
+        height: 20px;
+    }
+
+    body[data-runner-tab="run"] .energy-row {
+        display: none;
+    }
+
+    body[data-runner-tab="run"] .run-brief-strip,
+    body[data-runner-tab="run"] .run-brief-copy .eyebrow,
+    body[data-runner-tab="run"] .run-brief-copy p {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    body[data-runner-tab="run"] .runner-shell {
+        padding-top: calc(var(--safe-top) + 1px);
+    }
+
+    body[data-runner-tab="run"] .hero-card {
+        padding: 7px 8px;
+    }
+
+    body[data-runner-tab="run"] .hero-copy .eyebrow {
+        display: none;
+    }
+
+    body[data-runner-tab="run"] .hero-copy h1 {
+        font-size: 17px;
+    }
+
+    body[data-runner-tab="run"] .summary-item {
+        padding: 5px;
+    }
+
+    body[data-runner-tab="run"] .summary-item span {
+        font-size: 8px;
+    }
+
+    body[data-runner-tab="run"] .summary-item strong {
+        font-size: 12px;
+    }
+
 }
