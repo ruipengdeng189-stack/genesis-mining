@@ -48,6 +48,11 @@ body.modal-open {
     overflow: hidden;
 }
 
+body.runner-playing {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 button,
 a {
     -webkit-tap-highlight-color: transparent;
@@ -227,6 +232,10 @@ a {
     min-height: min(58vh, 520px);
     background: linear-gradient(180deg, rgba(7, 17, 36, 0.9), rgba(5, 9, 20, 0.96));
     border: 1px solid rgba(88, 229, 255, 0.18);
+    touch-action: none;
+    -ms-touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 #runnerCanvas {
@@ -689,6 +698,94 @@ a {
     background: rgba(10, 23, 46, 0.88);
     border: 1px solid rgba(87, 229, 255, 0.18);
     font-weight: 700;
+    display: grid;
+    place-items: center;
+    gap: 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn::before,
+#skillBtn::before,
+#overclockBtn::before,
+#pauseBtn::before {
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 900;
+}
+
+.control-btn[data-action="left"] {
+    background: linear-gradient(180deg, rgba(77, 124, 255, 0.24), rgba(10, 23, 46, 0.92));
+    border-color: rgba(77, 124, 255, 0.28);
+}
+
+.control-btn[data-action="left"]::before {
+    content: "←";
+}
+
+.control-btn[data-action="right"] {
+    background: linear-gradient(180deg, rgba(77, 124, 255, 0.24), rgba(10, 23, 46, 0.92));
+    border-color: rgba(77, 124, 255, 0.28);
+}
+
+.control-btn[data-action="right"]::before {
+    content: "→";
+}
+
+.control-btn[data-action="jump"] {
+    background: linear-gradient(180deg, rgba(89, 255, 155, 0.2), rgba(10, 23, 46, 0.92));
+    border-color: rgba(89, 255, 155, 0.24);
+}
+
+.control-btn[data-action="jump"]::before {
+    content: "↑";
+}
+
+.control-btn[data-action="slide"] {
+    background: linear-gradient(180deg, rgba(255, 185, 95, 0.22), rgba(10, 23, 46, 0.92));
+    border-color: rgba(255, 185, 95, 0.26);
+}
+
+.control-btn[data-action="slide"]::before {
+    content: "↓";
+}
+
+#skillBtn,
+#overclockBtn,
+#pauseBtn {
+    display: grid;
+    place-items: center;
+    gap: 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+#skillBtn {
+    border-color: rgba(87, 229, 255, 0.22);
+    background: linear-gradient(180deg, rgba(87, 229, 255, 0.12), rgba(255, 255, 255, 0.04));
+}
+
+#skillBtn::before {
+    content: "✦";
+}
+
+#overclockBtn {
+    background: linear-gradient(135deg, #ffe07b, #ff9c54);
+    color: #041520;
+    box-shadow: 0 12px 26px rgba(255, 174, 84, 0.28);
+}
+
+#overclockBtn::before {
+    content: "⚡";
+}
+
+#pauseBtn {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+#pauseBtn::before {
+    content: "Ⅱ";
 }
 
 .wide-btn {
@@ -1599,6 +1696,24 @@ a {
         overflow: hidden;
     }
 
+    .runner-main.is-run-tab {
+        gap: 10px;
+    }
+
+    .runner-main.is-run-tab .panel-card {
+        min-height: 0;
+        max-height: min(30dvh, 300px);
+        display: grid;
+        grid-template-rows: 1fr;
+    }
+
+    .runner-main.is-run-tab .panel-content {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 2px;
+        padding-bottom: 6px;
+    }
+
     .tab-bar {
         grid-template-columns: repeat(5, minmax(72px, 1fr));
         overflow-x: auto;
@@ -1693,12 +1808,20 @@ a {
     .control-btn {
         min-height: 42px;
         padding: 10px 6px;
+        gap: 3px;
     }
 
     .primary-btn,
     .ghost-btn {
         min-height: 42px;
         padding: 10px 8px;
+    }
+
+    .control-btn::before,
+    #skillBtn::before,
+    #overclockBtn::before,
+    #pauseBtn::before {
+        font-size: 14px;
     }
 
     .panel-card {
@@ -1953,6 +2076,10 @@ a {
 
     .runner-main {
         gap: 10px;
+    }
+
+    .runner-main.is-run-tab .panel-card {
+        max-height: min(27dvh, 246px);
     }
 
     .loadout-grid {
@@ -2357,6 +2484,10 @@ a {
         height: clamp(194px, 26dvh, 228px);
         min-height: clamp(194px, 26dvh, 228px);
         border-radius: 18px;
+    }
+
+    .runner-main.is-run-tab .panel-card {
+        max-height: min(25dvh, 212px);
     }
 
     .object-legend {

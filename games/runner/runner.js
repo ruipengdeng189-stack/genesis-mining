@@ -11,7 +11,6 @@
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
     const NEWBIE_ASSIST_DISTANCE = 900;
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
-    const NEWBIE_ASSIST_SPAWN_BASE = 0.98;
     const NEWBIE_ASSIST_SPAWN_MIN = 0.36;
 
     const TEXT = {
@@ -89,7 +88,7 @@
             newbieAssistHint: '首局前 900m 障碍减速并放缓刷新，先熟悉跳跃和滑铲节奏。',
             newbieAssistToast: '新手保护已开启：前 900m 障碍更慢、更易观察',
             controlsTitle: '操作提示',
-            controlsDesc: '手机支持左右 / 上下滑动，桌面也支持方向键与空格。',
+            controlsDesc: '手机支持左右点击切道、上滑跳跃、下滑滑铲；桌面也支持方向键与空格。',
             statCurrentRunner: '当前角色',
             statCurrentSkill: '主动技能',
             statCurrentPassive: '被动芯片',
@@ -129,7 +128,7 @@
             seasonReward: '赛季奖励',
             rankTitle: '冲榜评级',
             rankDesc: '距离、连击和无伤表现一起决定跑酷评分。',
-            touchHint: '手势：左/右切道 · 上跳跃 · 下滑铲'
+            touchHint: '点击左右切道 · 上滑跳跃 · 下滑滑铲'
         },
         en: {
             backHub: 'Back To Hub',
@@ -205,7 +204,7 @@
             newbieAssistHint: 'Before 900m in your first run, obstacles move slower and spawn more gently.',
             newbieAssistToast: 'Newbie assist active: early obstacles are slower and easier to read',
             controlsTitle: 'Controls',
-            controlsDesc: 'Phones support swipe gestures. Desktop also supports arrows and space.',
+            controlsDesc: 'Phone controls support left / right taps for lane swaps, swipe up to jump, and swipe down to slide.',
             statCurrentRunner: 'Runner',
             statCurrentSkill: 'Active Skill',
             statCurrentPassive: 'Passive Chip',
@@ -245,7 +244,7 @@
             seasonReward: 'Season rewards',
             rankTitle: 'Rank Rating',
             rankDesc: 'Distance, combo and clean dodges together define your run rating.',
-            touchHint: 'Gesture: left/right switch · up jump · down slide'
+            touchHint: 'Tap left/right to lane swap · swipe up jump · swipe down slide'
         }
     };
 
@@ -2517,9 +2516,11 @@
         dom.runnerMain?.classList.toggle('is-run-tab', activeTab === 'run');
         dom.runnerMain?.classList.toggle('is-content-tab', activeTab !== 'run');
         dom.stageCard?.classList.toggle('is-tab-hidden', activeTab !== 'run');
+        updateRuntimeBodyState();
         if (dom.panelContent) {
             dom.panelContent.scrollTop = 0;
         }
+        requestAnimationFrame(resizeCanvas);
     }
 
     function getLoadoutAlertCount() {
@@ -3515,6 +3516,72 @@
         dom.newbieAssistHint.classList.toggle('is-hidden', !isNewbieAssistActive());
     }
 
+    function getRunTuningProfile() {
+        const totalRuns = playerProfile.totalRuns || 0;
+        if (totalRuns === 0) {
+            return {
+                goldMultiplier: 1.2,
+                xpMultiplier: 1.08,
+                coreFloor: 4,
+                rewardBias: 0.12,
+                trackSpeedMultiplier: 0.88,
+                obstacleApproachMultiplier: NEWBIE_ASSIST_OBSTACLE_SPEED,
+                spawnRelax: 0.16,
+                spawnMin: NEWBIE_ASSIST_SPAWN_MIN,
+                rewardZBonus: 6,
+                obstacleZBonus: 16,
+                trailingRewardZBonus: 8
+            };
+        }
+        if (totalRuns < 3) {
+            return {
+                goldMultiplier: 1.12,
+                xpMultiplier: 1.04,
+                coreFloor: 3,
+                rewardBias: 0.06,
+                trackSpeedMultiplier: 0.94,
+                obstacleApproachMultiplier: 0.88,
+                spawnRelax: 0.08,
+                spawnMin: 0.3,
+                rewardZBonus: 3,
+                obstacleZBonus: 8,
+                trailingRewardZBonus: 4
+            };
+        }
+        if (totalRuns < 6) {
+            return {
+                goldMultiplier: 1.05,
+                xpMultiplier: 1.02,
+                coreFloor: 2,
+                rewardBias: 0.03,
+                trackSpeedMultiplier: 0.98,
+                obstacleApproachMultiplier: 0.95,
+                spawnRelax: 0.04,
+                spawnMin: 0.26,
+                rewardZBonus: 1,
+                obstacleZBonus: 4,
+                trailingRewardZBonus: 2
+            };
+        }
+        return {
+            goldMultiplier: 1,
+            xpMultiplier: 1,
+            coreFloor: 2,
+            rewardBias: 0,
+            trackSpeedMultiplier: 1,
+            obstacleApproachMultiplier: 1,
+            spawnRelax: 0,
+            spawnMin: 0.24,
+            rewardZBonus: 0,
+            obstacleZBonus: 0,
+            trailingRewardZBonus: 0
+        };
+    }
+
+    function updateRuntimeBodyState() {
+        document.body.classList.toggle('runner-playing', activeTab === 'run' && game.running);
+    }
+
     function renderAll() {
         let shouldSave = false;
         if (ensureMissionBoardState()) {
@@ -3769,6 +3836,7 @@
         applyRunBoosts();
         resetResultOverlayScroll();
         hideOverlays();
+        dom.stageCard?.scrollIntoView({ block: 'start', behavior: 'auto' });
         game.running = true;
         renderAll();
         playSfx('start');
@@ -3794,16 +3862,17 @@
     }
 
     function endRun(force = false) {
+        const tuning = getRunTuningProfile();
         const previousDivision = getDivisionInfo(getRunnerRankScore());
         const previousBestDistance = playerProfile.bestDistance;
         const perfectRun = !force && game.reviveCount === 0 && game.dodgeRun >= 12;
         const runDistance = Math.floor(game.distance);
         const runScore = Math.floor(game.score);
         const baseGoldGain = Math.max(120, Math.floor(game.distance * 0.42 + game.coinsRun * 9 + game.maxCombo * 14));
-        const goldGain = Math.max(baseGoldGain, Math.floor(baseGoldGain * game.runGoldMultiplier));
-        const coreGain = Math.max(2, Math.floor(game.distance / 260) + game.coreRun);
+        const goldGain = Math.max(baseGoldGain, Math.floor(baseGoldGain * game.runGoldMultiplier * tuning.goldMultiplier));
+        const coreGain = Math.max(tuning.coreFloor, Math.floor(game.distance / 260) + game.coreRun);
         const baseSeasonXpGain = Math.max(12, Math.floor(game.distance / 60) + game.dodgeRun * 2);
-        const seasonXpGain = Math.max(baseSeasonXpGain, Math.floor(baseSeasonXpGain * game.runSeasonXpMultiplier));
+        const seasonXpGain = Math.max(baseSeasonXpGain, Math.floor(baseSeasonXpGain * game.runSeasonXpMultiplier * tuning.xpMultiplier));
         const gradeInfo = getRunGrade(Math.floor(game.distance), game.maxCombo, game.hitless);
         ensureDailyProgressState();
         playerProfile.gold += goldGain;
@@ -4006,19 +4075,21 @@
     }
 
     function spawnObject() {
-        const newbieAssistActive = isNewbieAssistActive();
+        const tuning = getRunTuningProfile();
         const roll = Math.random();
         const lane = Math.floor(Math.random() * 3);
-        const rewardBaseZ = newbieAssistActive ? 138 : 132;
-        const obstacleBaseZ = newbieAssistActive ? 148 : 132;
-        if (roll < 0.36) {
+        const rewardBaseZ = 132 + tuning.rewardZBonus;
+        const obstacleBaseZ = 132 + tuning.obstacleZBonus;
+        const coinThreshold = 0.36 + tuning.rewardBias * 0.65;
+        const energyThreshold = coinThreshold + 0.14 + tuning.rewardBias * 0.35;
+        if (roll < coinThreshold) {
             game.objects.push({ type: 'coin', lane, z: rewardBaseZ + Math.random() * 14, value: 1 });
             if (Math.random() < 0.45) {
                 game.objects.push({ type: 'coin', lane, z: rewardBaseZ + 10 + Math.random() * 10, value: 1 });
             }
             return;
         }
-        if (roll < 0.5) {
+        if (roll < energyThreshold) {
             game.objects.push({ type: 'energy', lane, z: rewardBaseZ + Math.random() * 12, value: 1 });
             return;
         }
@@ -4028,7 +4099,7 @@
             game.objects.push({
                 type: Math.random() < 0.55 ? 'coin' : 'energy',
                 lane: Math.floor(Math.random() * 3),
-                z: (newbieAssistActive ? 158 : 150) + Math.random() * 12,
+                z: (150 + tuning.trailingRewardZBonus) + Math.random() * 12,
                 value: 1
             });
         }
@@ -4105,7 +4176,7 @@
         if (!game.running || game.paused || game.awaitingRevive) return;
         const runner = getRunner(playerProfile.loadout.runner);
         const passive = getPassive(playerProfile.loadout.passive);
-        const newbieAssistActive = isNewbieAssistActive();
+        const tuning = getRunTuningProfile();
 
         game.elapsed += dt;
         game.spawnTimer -= dt;
@@ -4120,7 +4191,8 @@
             game.overclock = Math.min(100, game.overclock + dt * 3.2);
         }
 
-        game.speedCurrent = game.speedBase + Math.min(14, game.distance / 130) + (game.overclockActive > 0 ? 12 : 0);
+        const baseTrackSpeed = game.speedBase + Math.min(14, game.distance / 130);
+        game.speedCurrent = baseTrackSpeed * tuning.trackSpeedMultiplier + (game.overclockActive > 0 ? 12 : 0);
         game.distance += game.speedCurrent * dt * 10;
         game.score += game.speedCurrent * dt * 4 + game.combo * dt * 8;
         if (!game.timeAt500 && game.distance >= 500) {
@@ -4139,16 +4211,13 @@
 
         if (game.spawnTimer <= 0) {
             spawnObject();
-            if (newbieAssistActive) {
-                game.spawnTimer = Math.max(NEWBIE_ASSIST_SPAWN_MIN, NEWBIE_ASSIST_SPAWN_BASE - Math.min(0.36, game.distance / 3600));
-            } else {
-                game.spawnTimer = Math.max(0.24, 0.82 - Math.min(0.48, game.distance / 2800));
-            }
+            const baseSpawnTimer = Math.max(0.24, 0.82 - Math.min(0.48, game.distance / 2800));
+            game.spawnTimer = Math.max(tuning.spawnMin, baseSpawnTimer + tuning.spawnRelax);
         }
 
         game.objects.forEach((obj) => {
-            const approachMultiplier = newbieAssistActive && obj.type !== 'coin' && obj.type !== 'energy'
-                ? NEWBIE_ASSIST_OBSTACLE_SPEED
+            const approachMultiplier = obj.type !== 'coin' && obj.type !== 'energy'
+                ? tuning.obstacleApproachMultiplier
                 : 1;
             obj.z -= game.speedCurrent * dt * 3.8 * approachMultiplier;
             if (obj.type === 'coin' && passive.id === 'magnet' && Math.abs(obj.lane - game.lane) <= 1 && obj.z < 32) {
@@ -4444,6 +4513,36 @@
         if (action === 'slide') slide();
     }
 
+    function getCanvasTouchThresholds() {
+        const rect = dom.canvasWrap.getBoundingClientRect();
+        return {
+            horizontal: Math.max(32, rect.width * 0.08),
+            vertical: Math.max(28, rect.height * 0.12)
+        };
+    }
+
+    function resolveTouchGestureAction(dx, dy) {
+        const threshold = getCanvasTouchThresholds();
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold.horizontal) {
+            return dx > 0 ? 'right' : 'left';
+        }
+        if (Math.abs(dy) > threshold.vertical) {
+            return dy < 0 ? 'jump' : 'slide';
+        }
+        return '';
+    }
+
+    function resolveTouchTapAction(touch) {
+        const rect = dom.canvasWrap.getBoundingClientRect();
+        if (!rect.width || !rect.height) return '';
+        const relX = (touch.clientX - rect.left) / rect.width;
+        const relY = (touch.clientY - rect.top) / rect.height;
+        if (relX < 0.34) return 'left';
+        if (relX > 0.66) return 'right';
+        if (relY > 0.68) return 'slide';
+        return 'jump';
+    }
+
     function bindEvents() {
         dom.soundToggle.addEventListener('click', () => {
             playerProfile.soundEnabled = !playerProfile.soundEnabled;
@@ -4593,20 +4692,35 @@
 
         let touchStartX = 0;
         let touchStartY = 0;
+        let touchActionHandled = false;
         dom.canvasWrap.addEventListener('touchstart', (event) => {
             const touch = event.changedTouches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
+            touchActionHandled = false;
+        }, { passive: true });
+
+        dom.canvasWrap.addEventListener('touchmove', (event) => {
+            if (touchActionHandled) return;
+            const touch = event.changedTouches[0];
+            const action = resolveTouchGestureAction(touch.clientX - touchStartX, touch.clientY - touchStartY);
+            if (!action) return;
+            touchActionHandled = true;
+            handleAction(action);
         }, { passive: true });
 
         dom.canvasWrap.addEventListener('touchend', (event) => {
             const touch = event.changedTouches[0];
             const dx = touch.clientX - touchStartX;
             const dy = touch.clientY - touchStartY;
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 28) {
-                handleAction(dx > 0 ? 'right' : 'left');
-            } else if (Math.abs(dy) > 28) {
-                handleAction(dy < 0 ? 'jump' : 'slide');
+            if (touchActionHandled) {
+                touchActionHandled = false;
+                return;
+            }
+            const gestureAction = resolveTouchGestureAction(dx, dy);
+            const tapAction = gestureAction || resolveTouchTapAction(touch);
+            if (tapAction) {
+                handleAction(tapAction);
             }
         }, { passive: true });
 
@@ -4623,6 +4737,8 @@
         });
 
         window.addEventListener('resize', resizeCanvas);
+        window.visualViewport?.addEventListener('resize', resizeCanvas);
+        window.visualViewport?.addEventListener('scroll', resizeCanvas);
         window.addEventListener('hashchange', () => {
             const nextTab = getTabFromHash();
             if (nextTab !== activeTab) {
