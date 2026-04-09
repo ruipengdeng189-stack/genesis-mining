@@ -74,6 +74,8 @@
             topupShopInfo: '所有充值礼包都会在链上校验成功后即时发奖，并同步解锁赞助轨道。',
             runPanelTitle: '今日赛道',
             runPanelDesc: '短局爽感优先，核心是“再来一把”的高速循环。',
+            runBriefEyebrow: '赛道简报',
+            runBriefBtn: '查看详情',
             runEvent1: '霓虹风暴',
             runEvent1Desc: '障碍刷新更快，但能量胶囊出现率提升。',
             runEvent2: '连击试炼',
@@ -190,6 +192,8 @@
             topupShopInfo: 'Verified top-up packs grant rewards instantly after on-chain confirmation and also unlock the sponsor track.',
             runPanelTitle: 'Today\'s Track',
             runPanelDesc: 'Short-run excitement first, designed around a fast one-more-run loop.',
+            runBriefEyebrow: 'Run Brief',
+            runBriefBtn: 'View Details',
             runEvent1: 'Neon Storm',
             runEvent1Desc: 'Faster obstacle pacing, but more energy capsules spawn.',
             runEvent2: 'Combo Trial',
@@ -431,6 +435,9 @@
         newbieAssistHint: document.getElementById('newbieAssistHint'),
         overclockBar: document.getElementById('overclockBar'),
         skillBar: document.getElementById('skillBar'),
+        runBriefBtn: document.getElementById('runBriefBtn'),
+        runBriefHeadline: document.getElementById('runBriefHeadline'),
+        runBriefMeta: document.getElementById('runBriefMeta'),
         panelContent: document.getElementById('panelContent'),
         tabBar: document.getElementById('tabBar'),
         soundToggle: document.getElementById('soundToggle'),
@@ -2376,6 +2383,17 @@
         };
     }
 
+    function renderRunBriefModal() {
+        return {
+            kicker: playerProfile.lang === 'en' ? 'RUN BRIEF' : '赛道简报',
+            title: playerProfile.lang === 'en' ? 'Track, boosts, and ladder overview' : '赛道、增益与榜单总览',
+            desc: playerProfile.lang === 'en'
+                ? 'Keep the main run screen clean, and open this panel whenever you want the full track briefing.'
+                : '把跑酷主界面留给操作，把今日赛道、增益、段位与榜单情报集中到这里查看。',
+            body: `<div class="run-brief-modal-body">${renderRunTab()}</div>`
+        };
+    }
+
     function getRunnerLeaderboard(rankScore = getRunnerRankScore()) {
         const rivalNames = ['Nova-17', 'PulseX', 'ArcMira', 'VoltKid', 'ZeroKai', 'Rune-8', 'Astra-V', 'Helix', 'IonFox', 'Blink-3', 'StormQ', 'Nexa'];
         const playerRank = Math.max(1, 48 - Math.floor(rankScore / 180));
@@ -2557,6 +2575,8 @@
             content = renderSeasonRulesModal();
         } else if (kind === 'mission-rules') {
             content = renderMissionRulesModal();
+        } else if (kind === 'run-brief') {
+            content = renderRunBriefModal();
         }
         if (!content) return;
         activeInfoModal = kind;
@@ -3604,6 +3624,25 @@
         dom.goldValue.textContent = formatNumber(playerProfile.gold);
         dom.coreValue.textContent = formatNumber(playerProfile.core);
         dom.bestDistanceValue.textContent = formatDistance(playerProfile.bestDistance);
+        renderRunBriefStrip();
+    }
+
+    function renderRunBriefStrip() {
+        if (!dom.runBriefHeadline || !dom.runBriefMeta) return;
+        const runner = getRunner(playerProfile.loadout.runner);
+        const skill = getSkill(playerProfile.loadout.skill);
+        const passive = getPassive(playerProfile.loadout.passive);
+        const rankScore = getRunnerRankScore();
+        const divisionInfo = getDivisionInfo(rankScore);
+        const leaderboard = getRunnerLeaderboard(rankScore);
+
+        dom.runBriefHeadline.textContent = playerProfile.lang === 'en'
+            ? `${localize(runner.title)} · ${localize(divisionInfo.tier.title)} · #${leaderboard.playerRank}`
+            : `${localize(runner.title)} · ${localize(divisionInfo.tier.title)} · 排名 #${leaderboard.playerRank}`;
+
+        dom.runBriefMeta.textContent = playerProfile.lang === 'en'
+            ? `${localize(skill.title)} / ${localize(passive.title)} · Open the full run brief for boosts, ladder, and track details.`
+            : `${localize(skill.title)} / ${localize(passive.title)} · 点击查看完整赛道简报，集中浏览增益、榜单与赛道情报。`;
     }
 
     function renderHud() {
@@ -4996,6 +5035,10 @@
             saveState();
             renderAll();
             renderSceneV2();
+        });
+
+        dom.runBriefBtn?.addEventListener('click', () => {
+            openInfoModal('run-brief');
         });
 
         dom.startRunBtn.addEventListener('click', (event) => {
