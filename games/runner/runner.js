@@ -7,7 +7,7 @@
     const SEASON_LENGTH_MS = 14 * 24 * 60 * 60 * 1000;
     const PAYMENT_API_BASE = '/api';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
-    const PAYMENT_ORDER_DISPLAY_DECIMALS = 6;
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
     const NEWBIE_ASSIST_DISTANCE = 900;
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
@@ -532,6 +532,7 @@
             totalSpent: 0,
             passUnlocked: false,
             claimedOrders: {},
+            pendingClaims: {},
             premiumSeasonClaims: {},
             verifiedTxids: []
         },
@@ -647,6 +648,7 @@
                     ...deepClone(baseState.payment),
                     ...(parsed.payment || {}),
                     claimedOrders: { ...deepClone(baseState.payment.claimedOrders), ...((parsed.payment && parsed.payment.claimedOrders) || {}) },
+                    pendingClaims: { ...deepClone(baseState.payment.pendingClaims), ...((parsed.payment && parsed.payment.pendingClaims) || {}) },
                     premiumSeasonClaims: { ...deepClone(baseState.payment.premiumSeasonClaims), ...((parsed.payment && parsed.payment.premiumSeasonClaims) || {}) },
                     verifiedTxids: Array.isArray(parsed.payment && parsed.payment.verifiedTxids)
                         ? Array.from(new Set((parsed.payment && parsed.payment.verifiedTxids) || [])).slice(0, 100)
@@ -1652,6 +1654,37 @@
         return `${Number(value || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)} USDT`;
     }
 
+    async function flushPendingPaymentClaims({ silent = true } = {}) {
+        const pendingClaims = playerProfile.payment.pendingClaims || {};
+        const pendingEntries = Object.entries(pendingClaims);
+
+        if (!pendingEntries.length) {
+            return 0;
+        }
+
+        let syncedCount = 0;
+
+        for (const [orderId, txid] of pendingEntries) {
+            if (!orderId || !txid) {
+                delete pendingClaims[orderId];
+                continue;
+            }
+
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete pendingClaims[orderId];
+                syncedCount += 1;
+            } catch (error) {
+                if (!silent) {
+                    console.warn('Runner payment claim sync failed.', { orderId, error });
+                }
+            }
+        }
+
+        saveState();
+        return syncedCount;
+    }
+
     function isPaymentOrderExpired(order = currentPaymentOrder) {
         return !order || Number(order.expiresAt || 0) <= Date.now();
     }
@@ -1903,6 +1936,7 @@
         if (offerId) {
             selectedPaymentOfferId = offerId;
         }
+        flushPendingPaymentClaims().catch(() => {});
         renderPaymentOfferGrid();
         resetPaymentVerificationState(true);
         renderPaymentOrderUI();
@@ -1971,6 +2005,7 @@
         playerProfile.payment.totalSpent = Math.round((Number(playerProfile.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
         playerProfile.payment.passUnlocked = true;
         playerProfile.payment.claimedOrders[orderId] = true;
+        playerProfile.payment.pendingClaims[orderId] = txid;
         playerProfile.payment.verifiedTxids = [txid, ...(playerProfile.payment.verifiedTxids || []).filter((item) => item !== txid)].slice(0, 100);
         saveState();
         playSfx('promote');
@@ -2021,6 +2056,9 @@
             const resolvedOfferId = String(orderPayload?.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
 
             if (orderPayload?.rewardGranted || playerProfile.payment.claimedOrders[orderId]) {
+                if (orderPayload?.rewardGranted && playerProfile.payment.pendingClaims[orderId]) {
+                    delete playerProfile.payment.pendingClaims[orderId];
+                }
                 paymentVerificationState = 'verified';
                 paymentVerificationNotice = localize({ zh: '该订单奖励已发放，无需重复领取。', en: 'Rewards for this order have already been granted.' });
                 refreshPaymentVerificationState();
@@ -2035,11 +2073,19 @@
             });
 
             paymentVerificationState = 'verified';
-            paymentVerificationNotice = localize({ zh: '链上校验成功，奖励已发放。', en: 'On-chain verification succeeded and rewards were granted.' });
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete playerProfile.payment.pendingClaims[orderId];
+                paymentVerificationNotice = localize({ zh: '链上校验成功，奖励已发放。', en: 'On-chain verification succeeded and rewards were granted.' });
+                saveState();
+            } catch (claimError) {
+                paymentVerificationNotice = localize({
+                    zh: '链上校验成功，奖励已到账；后台发奖记录将在稍后自动同步。',
+                    en: 'On-chain verification succeeded and rewards were granted. Backend sync will retry automatically.'
+                });
+                console.warn('Runner payment claim sync queued.', { orderId, claimError });
+            }
             refreshPaymentVerificationState();
-
-            claimBackendPayment(orderId, txid).catch(() => {
-            });
         } catch (error) {
             paymentVerificationState = 'idle';
             paymentVerificationNotice = '';
