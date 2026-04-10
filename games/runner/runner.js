@@ -13,7 +13,7 @@
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
     const NEWBIE_ASSIST_SPAWN_MIN = 0.36;
     const TAP_DEDUP_MS = 320;
-    const RUN_ENTRY_FREE_TOTAL_RUNS = 2;
+    const RUN_ENTRY_FREE_DAILY_RUNS = 2;
     const RUN_ENTRY_BASE_GOLD = 120;
     const RUN_ENTRY_RUN_STEP = 6;
     const RUN_ENTRY_STEP_GOLD = 22;
@@ -561,6 +561,7 @@
         dailyStats: {
             key: '',
             runs: 0,
+            entryStarts: 0,
             distance: 0,
             bestDistance: 0,
             bestCombo: 0,
@@ -742,6 +743,7 @@
         return {
             key: dayKey,
             runs: 0,
+            entryStarts: 0,
             distance: 0,
             bestDistance: 0,
             bestCombo: 0,
@@ -813,7 +815,7 @@
             changed = true;
         }
 
-        ['runs', 'distance', 'bestDistance', 'bestCombo', 'bestScore', 'cleanDistance', 'overclocks'].forEach((key) => {
+        ['runs', 'entryStarts', 'distance', 'bestDistance', 'bestCombo', 'bestScore', 'cleanDistance', 'overclocks'].forEach((key) => {
             const raw = Number(playerProfile.dailyStats[key]);
             const normalized = Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : 0;
             if (playerProfile.dailyStats[key] !== normalized) {
@@ -1128,10 +1130,11 @@
         return upkeep;
     }
 
-    function getBaseRunEntryCost() {
-        if ((playerProfile.totalRuns || 0) < RUN_ENTRY_FREE_TOTAL_RUNS) {
-            return 0;
-        }
+    function getRunEntryBaseBreakdown() {
+        ensureDailyProgressState();
+        const dailyEntryStarts = Math.max(0, Number(playerProfile.dailyStats.entryStarts || 0));
+        const dailyFreeLeft = Math.max(0, RUN_ENTRY_FREE_DAILY_RUNS - dailyEntryStarts);
+        const freeByDaily = dailyFreeLeft > 0;
         const runProgressCost = Math.min(
             RUN_ENTRY_MAX_STEP_GOLD,
             Math.floor((playerProfile.totalRuns || 0) / RUN_ENTRY_RUN_STEP) * RUN_ENTRY_STEP_GOLD
@@ -1140,34 +1143,118 @@
             RUN_ENTRY_MAX_DISTANCE_GOLD,
             Math.floor((playerProfile.bestDistance || 0) / RUN_ENTRY_DISTANCE_STEP) * RUN_ENTRY_DISTANCE_STEP_GOLD
         );
-        return RUN_ENTRY_BASE_GOLD + runProgressCost + distanceProgressCost + getRunLoadoutUpkeepCost();
+        const loadoutUpkeepCost = getRunLoadoutUpkeepCost();
+        return {
+            dailyEntryStarts,
+            dailyFreeLeft,
+            freeByDaily,
+            baseFee: RUN_ENTRY_BASE_GOLD,
+            runProgressCost,
+            distanceProgressCost,
+            loadoutUpkeepCost,
+            baseCost: freeByDaily ? 0 : RUN_ENTRY_BASE_GOLD + runProgressCost + distanceProgressCost + loadoutUpkeepCost
+        };
+    }
+
+    function getBaseRunEntryCost() {
+        return getRunEntryBaseBreakdown().baseCost;
     }
 
     function getRunEntryCostState() {
-        const baseCost = getBaseRunEntryCost();
+        const baseBreakdown = getRunEntryBaseBreakdown();
+        const baseCost = baseBreakdown.baseCost;
         const sponsorUnlocked = !!playerProfile.payment.passUnlocked;
         const discountRate = sponsorUnlocked ? RUN_ENTRY_PASS_DISCOUNT : 1;
         const discountedCost = baseCost > 0
             ? Math.max(60, Math.round(baseCost * discountRate))
             : 0;
         const freeRuns = Math.max(0, Number(playerProfile.boosts.freeRuns || 0));
-        const freeByNewbie = baseCost <= 0;
+        const sponsorDiscountAmount = Math.max(0, baseCost - discountedCost);
+        const freeByDaily = baseBreakdown.freeByDaily;
         return {
+            ...baseBreakdown,
             baseCost,
             discountedCost,
-            effectiveCost: freeByNewbie || freeRuns > 0 ? 0 : discountedCost,
+            effectiveCost: freeByDaily || freeRuns > 0 ? 0 : discountedCost,
             freeRuns,
-            freeByNewbie,
+            freeByDaily,
             sponsorUnlocked,
-            discountActive: sponsorUnlocked && discountedCost < baseCost
+            discountActive: sponsorUnlocked && discountedCost < baseCost,
+            sponsorDiscountAmount
         };
     }
 
+    function getRunEntryBreakdownItems(state = getRunEntryCostState()) {
+        const items = [
+            localize({
+                zh: `今日免费 ${formatNumber(state.dailyFreeLeft)}/${RUN_ENTRY_FREE_DAILY_RUNS}`,
+                en: `Daily free ${formatNumber(state.dailyFreeLeft)}/${RUN_ENTRY_FREE_DAILY_RUNS}`
+            })
+        ];
+
+        if (state.freeRuns > 0) {
+            items.push(localize({
+                zh: `疾跑通行证 ${formatNumber(state.freeRuns)} 张`,
+                en: `Rush passes ${formatNumber(state.freeRuns)}`
+            }));
+        }
+
+        if (state.freeByDaily) {
+            items.push(localize({
+                zh: '今日前两次开跑免费，次日零点刷新',
+                en: 'First two runs are free each day and reset at local midnight'
+            }));
+            return items;
+        }
+
+        items.push(localize({
+            zh: `基础门票 ${formatNumber(state.baseFee)}`,
+            en: `Base fee ${formatNumber(state.baseFee)}`
+        }));
+
+        if (state.runProgressCost > 0) {
+            items.push(localize({
+                zh: `局数加价 +${formatNumber(state.runProgressCost)}`,
+                en: `Run scaling +${formatNumber(state.runProgressCost)}`
+            }));
+        }
+        if (state.distanceProgressCost > 0) {
+            items.push(localize({
+                zh: `里程加价 +${formatNumber(state.distanceProgressCost)}`,
+                en: `Distance scaling +${formatNumber(state.distanceProgressCost)}`
+            }));
+        }
+        if (state.loadoutUpkeepCost > 0) {
+            items.push(localize({
+                zh: `装配维护 +${formatNumber(state.loadoutUpkeepCost)}`,
+                en: `Loadout upkeep +${formatNumber(state.loadoutUpkeepCost)}`
+            }));
+        }
+        if (state.discountActive && state.sponsorDiscountAmount > 0) {
+            items.push(localize({
+                zh: `赞助减免 -${formatNumber(state.sponsorDiscountAmount)}`,
+                en: `Sponsor discount -${formatNumber(state.sponsorDiscountAmount)}`
+            }));
+        }
+
+        items.push(state.freeRuns > 0
+            ? localize({
+                zh: `本局将用通行证抵扣 ${formatNumber(state.discountedCost)} 金币`,
+                en: `This run uses a pass to cover ${formatNumber(state.discountedCost)} gold`
+            })
+            : localize({
+                zh: `本局实付 ${formatNumber(state.effectiveCost)} 金币`,
+                en: `This run pays ${formatNumber(state.effectiveCost)} gold`
+            }));
+
+        return items;
+    }
+
     function getRunEntryLabel(state = getRunEntryCostState()) {
-        if (state.freeByNewbie) {
+        if (state.freeByDaily) {
             return localize({
-                zh: `前 ${RUN_ENTRY_FREE_TOTAL_RUNS} 局免费开跑`,
-                en: `First ${RUN_ENTRY_FREE_TOTAL_RUNS} runs are free`
+                zh: `今日免费开跑剩余 ${formatNumber(state.dailyFreeLeft)} 次`,
+                en: `${formatNumber(state.dailyFreeLeft)} daily free starts left`
             });
         }
         if (state.freeRuns > 0) {
@@ -1184,8 +1271,8 @@
 
     function getRunEntryButtonLabel(baseText) {
         const state = getRunEntryCostState();
-        if (state.freeByNewbie) {
-            return `${baseText} · ${localize({ zh: '免费', en: 'Free' })}`;
+        if (state.freeByDaily) {
+            return `${baseText} · ${localize({ zh: `今日免费 ${formatNumber(state.dailyFreeLeft)} 次`, en: `${formatNumber(state.dailyFreeLeft)} daily free` })}`;
         }
         if (state.freeRuns > 0) {
             return `${baseText} · ${localize({ zh: `免票 x${formatNumber(state.freeRuns)}`, en: `Pass x${formatNumber(state.freeRuns)}` })}`;
@@ -1203,21 +1290,27 @@
     }
 
     function consumeRunEntryCost() {
+        ensureDailyProgressState();
         const state = getRunEntryCostState();
-        if (state.freeByNewbie) {
+        const recordRunEntryStart = () => {
+            playerProfile.dailyStats.entryStarts = Math.max(0, Number(playerProfile.dailyStats.entryStarts || 0)) + 1;
+            saveState();
+        };
+        if (state.freeByDaily) {
+            recordRunEntryStart();
             return {
                 ok: true,
                 cost: 0,
                 usedVoucher: false,
                 note: localize({
-                    zh: `新手前 ${RUN_ENTRY_FREE_TOTAL_RUNS} 局免入场费`,
-                    en: `Early newbie runs waive the entry fee`
+                    zh: `今日前 ${RUN_ENTRY_FREE_DAILY_RUNS} 局免入场费`,
+                    en: `Today's first ${RUN_ENTRY_FREE_DAILY_RUNS} runs waive the entry fee`
                 })
             };
         }
         if (state.freeRuns > 0) {
             playerProfile.boosts.freeRuns = Math.max(0, (playerProfile.boosts.freeRuns || 0) - 1);
-            saveState();
+            recordRunEntryStart();
             return {
                 ok: true,
                 cost: 0,
@@ -1240,7 +1333,7 @@
             };
         }
         playerProfile.gold -= state.effectiveCost;
-        saveState();
+        recordRunEntryStart();
         return {
             ok: true,
             cost: state.effectiveCost,
@@ -2893,6 +2986,7 @@
         const liveBoosts = boostEntries.filter((entry) => game.activeBoosts.includes(entry.key));
         const runEntryState = getRunEntryCostState();
         const runEntryLabel = getRunEntryLabel(runEntryState);
+        const runEntryBreakdown = getRunEntryBreakdownItems(runEntryState);
         const sponsorEntryTag = runEntryState.discountActive
             ? localize({ zh: `赞助折扣 -${Math.round((1 - RUN_ENTRY_PASS_DISCOUNT) * 100)}%`, en: `Sponsor discount -${Math.round((1 - RUN_ENTRY_PASS_DISCOUNT) * 100)}%` })
             : localize({ zh: '未开通赞助折扣', en: 'No sponsor discount yet' });
@@ -2919,6 +3013,9 @@
                         <span class="pill ${runEntryState.effectiveCost > 0 ? 'hot' : 'good'}">${runEntryLabel}</span>
                         <span class="pill ${runEntryState.discountActive ? 'good' : ''}">${sponsorEntryTag}</span>
                         <span class="pill">${t('touchHint')}</span>
+                    </div>
+                    <div class="reward-row">
+                        ${runEntryBreakdown.map((item) => `<span class="reward-pill">${item}</span>`).join('')}
                     </div>
                 </article>
 
@@ -5084,27 +5181,35 @@
             ctx.shadowBlur = 0;
         });
 
+        const playerX = getRunnerLaneCenter(roadMetrics, game.x, compactScene ? 0.92 : 0.9);
+        const playerY = height * (compactScene ? 0.84 : 0.82) - game.y * height * 0.22 + (game.slideTimer > 0 ? 18 : 0);
+        const bodyW = compactScene ? 38 : 34;
+        const bodyH = game.slideTimer > 0 ? (compactScene ? 30 : 28) : (compactScene ? 56 : 52);
+        const pickupBurstSafeTop = playerY - bodyH * (compactScene ? 1.18 : 1.08) - (compactScene ? 18 : 14);
+
         game.pickupBursts.forEach((burst) => {
             const { x, y, size } = projectObject({ lane: burst.lane, z: burst.z }, width, height, compactScene, roadMetrics);
             const progress = 1 - (burst.life / burst.duration);
-            const rise = 18 + progress * (22 + size * 0.26);
+            const rise = (compactScene ? 32 : 24) + progress * (24 + size * (compactScene ? 0.32 : 0.28));
             const burstScale = 0.12 + progress * 0.11;
             const alpha = Math.max(0, Math.min(1, 1 - progress * 1.05));
             const glowColor = burst.type === 'coin' ? '255,214,107' : '87,229,255';
+            const burstOrbY = Math.min(y - rise * 0.18, pickupBurstSafeTop + bodyH * 0.48);
+            const burstTextY = Math.min(y - rise - size * 0.36, pickupBurstSafeTop);
 
             ctx.save();
             ctx.globalAlpha = alpha;
             ctx.strokeStyle = `rgba(${glowColor},0.82)`;
             ctx.lineWidth = Math.max(2, size * 0.05);
             ctx.beginPath();
-            ctx.arc(x, y - rise * 0.18, size * burstScale, 0, Math.PI * 2);
+            ctx.arc(x, burstOrbY, size * burstScale, 0, Math.PI * 2);
             ctx.stroke();
 
             for (let index = 0; index < 4; index += 1) {
                 const angle = (Math.PI * 2 * index) / 4 + progress * 1.6;
                 const radius = size * (0.12 + progress * 0.18);
                 const particleX = x + Math.cos(angle) * radius;
-                const particleY = y - rise * 0.18 + Math.sin(angle) * radius * 0.55;
+                const particleY = burstOrbY + Math.sin(angle) * radius * 0.55;
                 ctx.fillStyle = `rgba(${glowColor},0.9)`;
                 ctx.beginPath();
                 ctx.arc(particleX, particleY, Math.max(1.5, size * 0.032), 0, Math.PI * 2);
@@ -5115,14 +5220,9 @@
             ctx.font = `800 ${Math.max(12, size * 0.18)}px Inter`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(burst.label, x, y - rise - size * 0.24);
+            ctx.fillText(burst.label, x, burstTextY);
             ctx.restore();
         });
-
-        const playerX = getRunnerLaneCenter(roadMetrics, game.x, compactScene ? 0.92 : 0.9);
-        const playerY = height * (compactScene ? 0.84 : 0.82) - game.y * height * 0.22 + (game.slideTimer > 0 ? 18 : 0);
-        const bodyW = compactScene ? 38 : 34;
-        const bodyH = game.slideTimer > 0 ? (compactScene ? 30 : 28) : (compactScene ? 56 : 52);
         ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.24)';
         ctx.beginPath();
