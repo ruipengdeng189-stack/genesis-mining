@@ -443,14 +443,50 @@
         { id: 'gold', label: { zh: '本局金币收益 +22%', en: 'Gold gain this run +22%' }, hint: { zh: '战利回收', en: 'Salvage Boost' }, apply: (battle) => { battle.modifiers.gold *= 1.22; } },
         { id: 'shield', label: { zh: '核心立即获得额外护盾', en: 'Gain instant shield' }, hint: { zh: '护盾加厚', en: 'Shield Boost' }, apply: (battle) => { battle.shield = Math.min(getCoreShieldCap() * 1.45, battle.shield + 70 + getResearchLevel('fortify') * 10); } },
         { id: 'freeze', label: { zh: '炮台命中附带 12% 冰缓', en: '12% slow chance on hit' }, hint: { zh: '冰缓扩散', en: 'Freeze Spread' }, apply: (battle) => { battle.modifiers.freezeChance += 0.12; } },
-        { id: 'splash', label: { zh: '炮台追加 20% 溅射伤害', en: '20% splash damage added' }, hint: { zh: '爆裂链式', en: 'Splash Chain' }, apply: (battle) => { battle.modifiers.splashBonus += 0.2; } }
+        { id: 'splash', label: { zh: '炮台追加 20% 溅射伤害', en: '20% splash damage added' }, hint: { zh: '爆裂链式', en: 'Splash Chain' }, apply: (battle) => { battle.modifiers.splashBonus += 0.2; } },
+        { id: 'repair', label: { zh: '核心修复 +28 并补盾', en: 'Repair core +28 and shield' }, hint: { zh: '稳住防线', en: 'Stabilize Core' }, apply: (battle) => { battle.coreHp = Math.min(getCoreMaxHp(), battle.coreHp + 28 + getResearchLevel('fortify') * 4); battle.shield = Math.min(getCoreShieldCap() * 1.7, battle.shield + 38 + getResearchLevel('fortify') * 6); } },
+        { id: 'skillReset', label: { zh: '技能冷却 -8 秒', en: 'Skill cooldown -8s' }, hint: { zh: '技能回路', en: 'Skill Loop' }, apply: (battle) => { battle.skillCooldown = Math.max(0, battle.skillCooldown - 8); battle.laneSkillGlow = SKILL_READY_GLOW_MS; } },
+        { id: 'bossBreak', label: { zh: '精英 / Boss 伤害 +35%', en: 'Elite/Boss damage +35%' }, hint: { zh: '重压克制', en: 'Pressure Breaker' }, apply: (battle) => { battle.modifiers.eliteDamage *= 1.35; } },
+        { id: 'coreFlow', label: { zh: '能核掉落 +45%', en: 'Core drops +45%' }, hint: { zh: '能核回流', en: 'Core Flow' }, apply: (battle) => { battle.modifiers.coreGain *= 1.45; } }
     ];
 
     const SHOP_ITEMS = [
-        { id: 'daily', type: 'daily' },
-        { id: 'goldCrate', type: 'gold', priceGold: 920 },
-        { id: 'coreCrate', type: 'core', priceCore: 34 },
-        { id: 'premium', type: 'premium' }
+        {
+            id: 'goldCrate',
+            priceType: 'gold',
+            basePrice: 920,
+            kicker: { zh: '920 G', en: '920 G' },
+            slot: { zh: '成长碎片', en: 'Growth Fragments' },
+            title: { zh: '蓝图补给箱', en: 'Blueprint Crate' },
+            desc: { zh: '金币向基础资源箱，偏向霜冻 / 火箭 / 链击的中期成长。', en: 'A gold sink for mid-game fragment growth focused on Frost, Rocket, and Chain.' }
+        },
+        {
+            id: 'forgeCrate',
+            priceType: 'gold',
+            basePrice: 2480,
+            kicker: { zh: '2480 G', en: '2480 G' },
+            slot: { zh: '推进军械', en: 'Push Arsenal' },
+            title: { zh: '前线军械箱', en: 'Frontline Arsenal' },
+            desc: { zh: '为卡章节准备的高阶金币箱，会补充能核、赛季经验和高压章节常用碎片。', en: 'A heavier gold sink for chapter walls with cores, Season XP, and higher-tier fragments.' }
+        },
+        {
+            id: 'coreCrate',
+            priceType: 'core',
+            basePrice: 34,
+            kicker: { zh: '34 C', en: '34 C' },
+            slot: { zh: '稀有箱', en: 'Rare Box' },
+            title: { zh: '高能中继箱', en: 'High-Energy Relay' },
+            desc: { zh: '能核向补给箱，主要补连锁 / 轨炮碎片，并带回一部分金币与赛季经验。', en: 'A core sink that feeds Chain and Rail growth while refunding some gold and Season XP.' }
+        },
+        {
+            id: 'relayCrate',
+            priceType: 'core',
+            basePrice: 72,
+            kicker: { zh: '72 C', en: '72 C' },
+            slot: { zh: '后期核心', en: 'Late Core' },
+            title: { zh: '矩阵中枢箱', en: 'Matrix Nexus Crate' },
+            desc: { zh: '偏后期的高阶能核箱，专门提高赛季推进与轨炮 / 链击收集效率。', en: 'A late-game core sink built to speed up Season progress and Rail/Chain collection.' }
+        }
     ];
 
     const DEFENSE_PAYMENT_OFFERS = [
@@ -785,6 +821,8 @@
                 damage: 1,
                 attackSpeed: 1,
                 gold: 1,
+                eliteDamage: 1,
+                coreGain: 1,
                 freezeChance: 0,
                 splashBonus: 0
             },
@@ -821,6 +859,7 @@
             towerLevels: { pulse: 1, laser: 1, frost: 0, rocket: 0, harvest: 1, chain: 0, rail: 0 },
             towerFragments: { pulse: 20, laser: 20, frost: 18, rocket: 22, harvest: 20, chain: 14, rail: 6 },
             researches: { attack: 0, cadence: 0, fortify: 0, salvage: 0, relay: 0 },
+            shopPurchases: {},
             missionClaimed: [],
             seasonClaimed: [],
             dailySupplyAt: 0,
@@ -848,6 +887,7 @@
                 towerLevels: { ...base.towerLevels, ...(parsed?.towerLevels || {}) },
                 towerFragments: { ...base.towerFragments, ...(parsed?.towerFragments || {}) },
                 researches: { ...base.researches, ...(parsed?.researches || {}) },
+                shopPurchases: { ...base.shopPurchases, ...(parsed?.shopPurchases || {}) },
                 missionClaimed: Array.isArray(parsed?.missionClaimed) ? parsed.missionClaimed : [],
                 seasonClaimed: Array.isArray(parsed?.seasonClaimed) ? parsed.seasonClaimed : [],
                 stats: { ...base.stats, ...(parsed?.stats || {}) },
@@ -1368,8 +1408,7 @@
                 ${renderDailyCard()}
             </div>
             <div class="shop-grid">
-                ${renderGoldShopCard()}
-                ${renderCoreShopCard()}
+                ${SHOP_ITEMS.map((offer) => renderShopOfferCard(offer)).join('')}
                 ${DEFENSE_PAYMENT_OFFERS.map((offer) => renderPaymentOfferCard(offer)).join('')}
             </div>
         `;
@@ -1377,6 +1416,8 @@
 
     function renderDailyCard() {
         const ready = isDailySupplyReady();
+        const supplyReward = getDailySupplyReward();
+        const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const remaining = ready ? '' : formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt));
         return `
             <article class="shop-card ${ready ? 'mission-card claimable' : ''}">
@@ -1388,7 +1429,10 @@
                     <div class="card-number">Free</div>
                 </div>
                 <div class="card-copy">${t('shopFreeDesc')}</div>
-                <div class="reward-row">${renderRewardChips({ gold: 360, cores: 10, fragments: { pulse: 10, laser: 10 } })}</div>
+                <div class="reward-row">
+                    <span class="mini-chip">${sponsorUnlocked ? getLocalized({ zh: '赞助加成已生效', en: 'Sponsor boost active' }) : getLocalized({ zh: '首充可升级每日补给', en: 'Top-up unlocks daily boost' })}</span>
+                </div>
+                <div class="reward-row">${renderRewardChips(supplyReward)}</div>
                 <div class="card-actions">
                     <button class="primary-btn" type="button" data-action="claimDaily" data-value="daily" ${ready ? '' : 'disabled'}>${ready ? t('shopClaim') : `${t('shopSoldOut')} · ${remaining}`}</button>
                 </div>
@@ -1429,6 +1473,152 @@
                 <div class="reward-row">${renderRewardChips({ gold: 280, fragments: { chain: 12, rail: 8 } })}</div>
                 <div class="card-actions">
                     <button class="primary-btn" type="button" data-action="buyShop" data-value="coreCrate" ${state.save.cores >= 34 ? '' : 'disabled'}>${t('shopBuy')}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function getDefenseProgressTier() {
+        return Math.max(1, (state.save.bestChapterIndex || 0) + 1);
+    }
+
+    function getShopOfferById(id) {
+        return SHOP_ITEMS.find((offer) => offer.id === id) || null;
+    }
+
+    function getShopOfferPurchaseCount(id) {
+        return Math.max(0, Number(state.save.shopPurchases?.[id]) || 0);
+    }
+
+    function getShopOfferCost(id) {
+        const offer = getShopOfferById(id);
+        if (!offer) return 0;
+        const count = getShopOfferPurchaseCount(id);
+        const repeatGrowth = offer.priceType === 'gold' ? 0.22 : 0.18;
+        const milestoneGrowth = offer.priceType === 'gold' ? 0.08 : 0.06;
+        return Math.round(offer.basePrice * (1 + count * repeatGrowth + Math.floor(count / 3) * milestoneGrowth));
+    }
+
+    function canAffordShopOffer(offerOrId) {
+        const offer = typeof offerOrId === 'string' ? getShopOfferById(offerOrId) : offerOrId;
+        if (!offer) return false;
+        const cost = getShopOfferCost(offer.id);
+        return offer.priceType === 'gold' ? state.save.gold >= cost : state.save.cores >= cost;
+    }
+
+    function getDailySupplyReward() {
+        const tier = getDefenseProgressTier();
+        const sponsorUnlocked = !!state.save.payment.passUnlocked;
+        const reward = {
+            gold: 360 + tier * 120 + Math.max(0, tier - 4) * 70,
+            cores: 10 + tier * 2 + Math.max(0, tier - 6),
+            fragments: {
+                pulse: Math.max(6, 11 - Math.floor(tier / 2)),
+                laser: Math.max(6, 11 - Math.floor(tier / 2))
+            }
+        };
+        if (tier >= 3) {
+            reward.fragments.frost = 5 + Math.floor(tier * 0.85);
+            reward.fragments.rocket = 5 + Math.floor(tier * 0.85);
+        }
+        if (tier >= 5) reward.fragments.chain = 4 + Math.floor(tier * 0.75);
+        if (tier >= 7) reward.fragments.rail = 2 + Math.floor((tier - 6) * 1.5);
+        if (sponsorUnlocked) {
+            reward.gold += 280 + tier * 70;
+            reward.cores += 6 + Math.floor(tier * 1.2);
+            reward.seasonXp = 40 + tier * 12;
+            reward.fragments.chain = (reward.fragments.chain || 0) + 4;
+            if (tier >= 6) reward.fragments.rail = (reward.fragments.rail || 0) + 3;
+        }
+        return reward;
+    }
+
+    function getShopOfferPreview(id) {
+        const tier = getDefenseProgressTier();
+        const count = getShopOfferPurchaseCount(id);
+        const intensity = tier + Math.floor(count / 2);
+        switch (id) {
+            case 'goldCrate':
+                return {
+                    gold: 110 + intensity * 18,
+                    fragments: {
+                        frost: 9 + tier + Math.floor(count * 0.4),
+                        rocket: 9 + tier + Math.floor(count * 0.4),
+                        chain: 4 + Math.floor(tier / 2) + Math.floor(count * 0.25)
+                    }
+                };
+            case 'forgeCrate':
+                return {
+                    cores: 12 + tier * 2 + Math.floor(count * 0.6),
+                    seasonXp: 30 + tier * 10 + count * 4,
+                    fragments: {
+                        rocket: 8 + tier + Math.floor(count * 0.4),
+                        chain: 6 + Math.floor(tier * 0.9) + Math.floor(count * 0.3),
+                        rail: tier >= 4 ? 3 + Math.floor((tier - 3) * 0.8) + Math.floor(count * 0.2) : 0
+                    }
+                };
+            case 'coreCrate':
+                return {
+                    gold: 260 + intensity * 52,
+                    seasonXp: 18 + tier * 7 + count * 3,
+                    fragments: {
+                        chain: 10 + tier + Math.floor(count * 0.5),
+                        rail: 6 + Math.floor(tier * 0.75) + Math.floor(count * 0.35)
+                    }
+                };
+            case 'relayCrate':
+                return {
+                    gold: 520 + intensity * 84,
+                    seasonXp: 46 + tier * 12 + count * 5,
+                    fragments: {
+                        rocket: 6 + Math.floor(tier * 0.8) + Math.floor(count * 0.25),
+                        chain: 12 + tier + Math.floor(count * 0.6),
+                        rail: 9 + Math.floor(tier * 0.9) + Math.floor(count * 0.45)
+                    }
+                };
+            default:
+                return {};
+        }
+    }
+
+    function buildShopOfferReward(id) {
+        const preview = getShopOfferPreview(id);
+        const reward = {};
+        if (preview.gold) reward.gold = preview.gold + randomInt(24, Math.max(36, Math.round(preview.gold * 0.08)));
+        if (preview.cores) reward.cores = preview.cores + randomInt(1, Math.max(2, Math.round(preview.cores * 0.15)));
+        if (preview.seasonXp) reward.seasonXp = preview.seasonXp + randomInt(4, Math.max(8, Math.round(preview.seasonXp * 0.12)));
+        if (preview.fragments) {
+            reward.fragments = {};
+            Object.entries(preview.fragments).forEach(([towerId, amount]) => {
+                if (amount > 0) reward.fragments[towerId] = amount + randomInt(0, Math.max(1, Math.round(amount * 0.22)));
+            });
+        }
+        return reward;
+    }
+
+    function renderShopOfferCard(offer) {
+        const cost = getShopOfferCost(offer.id);
+        const canAfford = canAffordShopOffer(offer);
+        const purchases = getShopOfferPurchaseCount(offer.id);
+        const preview = getShopOfferPreview(offer.id);
+        const priceSuffix = offer.priceType === 'gold' ? 'G' : 'C';
+        return `
+            <article class="shop-card ${canAfford ? 'mission-card claimable' : ''}">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${formatCompact(cost)} ${priceSuffix}</div>
+                        <div class="card-title">${getLocalized(offer.title)}</div>
+                    </div>
+                    <div class="card-number">${getLocalized(offer.slot)}</div>
+                </div>
+                <div class="card-copy">${getLocalized(offer.desc)}</div>
+                <div class="reward-row">
+                    <span class="mini-chip">${getLocalized({ zh: `已购买 ${purchases} 次`, en: `${purchases} bought` })}</span>
+                    <span class="mini-chip">${offer.priceType === 'gold' ? getLocalized({ zh: '金币消耗点', en: 'Gold sink' }) : getLocalized({ zh: '能核消耗点', en: 'Core sink' })}</span>
+                </div>
+                <div class="reward-row">${renderRewardChips(preview)}</div>
+                <div class="card-actions">
+                    <button class="primary-btn" type="button" data-action="buyShop" data-value="${offer.id}" ${canAfford ? '' : 'disabled'}>${t('shopBuy')} · ${formatCompact(cost)} ${priceSuffix}</button>
                 </div>
             </article>
         `;
@@ -1593,7 +1783,9 @@
         if (reward.cores) chips.push(`<span class="mini-chip">${formatCompact(reward.cores)} C</span>`);
         if (reward.seasonXp) chips.push(`<span class="mini-chip">${formatCompact(reward.seasonXp)} ${getLocalized({ zh: '赛季经验', en: 'Season XP' })}</span>`);
         if (reward.fragments) {
-            Object.entries(reward.fragments).forEach(([towerId, amount]) => chips.push(`<span class="mini-chip">${towerLabel(towerId)} +${formatCompact(amount)}</span>`));
+            Object.entries(reward.fragments).forEach(([towerId, amount]) => {
+                if ((Number(amount) || 0) > 0) chips.push(`<span class="mini-chip">${towerLabel(towerId)} +${formatCompact(amount)}</span>`);
+            });
         }
         return chips.join('');
     }
@@ -1912,8 +2104,9 @@
 
     function applyDamage(enemy, amount, towerId, noGoldBonus) {
         if (!enemy) return;
-        enemy.hp -= amount;
-        state.battle.runStats.damage += amount;
+        const finalAmount = amount * ((enemy.elite || enemy.boss) ? state.battle.modifiers.eliteDamage : 1);
+        enemy.hp -= finalAmount;
+        state.battle.runStats.damage += finalAmount;
         if (enemy.hp <= 0) rewardEnemyKill(enemy, towerId, noGoldBonus);
     }
 
@@ -1925,8 +2118,9 @@
         const salvageBonus = 1 + getResearchLevel('salvage') * 0.1;
         let gold = Math.round(enemy.rewardGold * salvageBonus * state.battle.modifiers.gold);
         if (!noGoldBonus && towerId === 'harvest') gold += Math.round(enemy.rewardGold * TOWERS.harvest.goldBonus * salvageBonus);
+        const coreGain = Math.max(1, Math.ceil(enemy.rewardCore * state.battle.modifiers.coreGain));
         state.save.gold += gold;
-        state.save.cores += enemy.rewardCore;
+        state.save.cores += coreGain;
     }
 
     function cleanupDeadEnemies() {
@@ -2049,24 +2243,27 @@
     function claimDailySupply() {
         if (!isDailySupplyReady()) return;
         state.save.dailySupplyAt = Date.now();
-        grantReward({ gold: 360, cores: 10, fragments: { pulse: 10, laser: 10 } });
+        grantReward(getDailySupplyReward());
         saveProgress();
         showToast(t('toastDailySupply'));
         renderAll();
     }
 
     function buyShopItem(id) {
-        if (id === 'goldCrate') {
-            if (state.save.gold < 920) return showToast(t('toastNotEnoughGold'));
-            state.save.gold -= 920;
-            grantReward({ gold: 120, fragments: { frost: 8 + randomInt(0, 4), rocket: 8 + randomInt(0, 4), chain: 4 + randomInt(0, 3) } });
-        } else if (id === 'coreCrate') {
-            if (state.save.cores < 34) return showToast(t('toastNotEnoughCore'));
-            state.save.cores -= 34;
-            grantReward({ gold: 280, fragments: { chain: 10 + randomInt(0, 4), rail: 6 + randomInt(0, 3) } });
+        const offer = getShopOfferById(id);
+        if (!offer) return;
+        const cost = getShopOfferCost(id);
+        if (offer.priceType === 'gold') {
+            if (state.save.gold < cost) return showToast(t('toastNotEnoughGold'));
+            state.save.gold -= cost;
+        } else if (offer.priceType === 'core') {
+            if (state.save.cores < cost) return showToast(t('toastNotEnoughCore'));
+            state.save.cores -= cost;
         } else {
             return;
         }
+        grantReward(buildShopOfferReward(id));
+        state.save.shopPurchases[id] = getShopOfferPurchaseCount(id) + 1;
         saveProgress();
         showToast(t('toastShopBought'));
         renderAll();
@@ -2143,7 +2340,10 @@
 
     function getResearchCost(researchId) {
         const research = RESEARCH[researchId];
-        return research.baseCost + research.stepCost * getResearchLevel(researchId);
+        const level = getResearchLevel(researchId);
+        const softRamp = Math.max(0, level - 2) * research.stepCost * 0.12;
+        const lateRamp = Math.max(0, level - 5) * research.stepCost * 0.18;
+        return Math.round(research.baseCost + research.stepCost * level + softRamp + lateRamp);
     }
 
     function getResearchLevel(researchId) {
@@ -2160,7 +2360,10 @@
     function getTowerUpgradeCost(towerId) {
         const tower = TOWERS[towerId];
         const level = getTowerLevel(towerId);
-        return Math.round(tower.upgradeGold * (1 + (level - 1) * 0.42));
+        const baseCost = tower.upgradeGold * (1 + (level - 1) * 0.42);
+        const midRamp = level >= 4 ? tower.upgradeGold * (level - 3) * 0.14 : 0;
+        const lateRamp = level >= 6 ? tower.upgradeGold * (level - 5) * 0.18 : 0;
+        return Math.round(baseCost + midRamp + lateRamp);
     }
 
     function getUnlockNeed(towerId) {
@@ -2230,7 +2433,7 @@
     function hasResearchRedDot() { return Object.keys(RESEARCH).some((id) => canUpgradeResearch(id)); }
     function hasMissionRedDot() { return MISSIONS.some((mission) => !state.save.missionClaimed.includes(mission.id) && mission.metric(state.save) >= mission.target); }
     function hasSeasonRedDot() { return SEASON_NODES.some((node) => isSeasonClaimable(node.id)) || SPONSOR_SEASON_NODES.some((node) => isSponsorSeasonClaimable(node.id)); }
-    function hasShopRedDot() { return isDailySupplyReady(); }
+    function hasShopRedDot() { return isDailySupplyReady() || SHOP_ITEMS.some((offer) => canAffordShopOffer(offer)); }
     function showToast(message) { if (!message) return; ui.toast.textContent = message; ui.toast.classList.add('show'); clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2200); }
     function showOverlay(node) { node.classList.remove('is-hidden'); }
     function hideOverlay(node) { node.classList.add('is-hidden'); }
