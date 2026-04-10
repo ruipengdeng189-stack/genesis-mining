@@ -3272,8 +3272,8 @@ a {
 
     .runner-main.is-run-tab .canvas-wrap,
     .runner-main.is-run-tab #runnerCanvas {
-        height: clamp(272px, 37dvh, 360px);
-        min-height: clamp(272px, 37dvh, 360px);
+        height: clamp(288px, 40dvh, 388px);
+        min-height: clamp(288px, 40dvh, 388px);
     }
 
     .runner-main.is-run-tab .object-legend {
@@ -3345,8 +3345,8 @@ a {
 
     .runner-main.is-run-tab .canvas-wrap,
     .runner-main.is-run-tab #runnerCanvas {
-        height: clamp(304px, 42dvh, 392px);
-        min-height: clamp(304px, 42dvh, 392px);
+        height: clamp(326px, 46dvh, 430px);
+        min-height: clamp(326px, 46dvh, 430px);
     }
 
     .runner-main.is-run-tab .run-control-dock {
@@ -3427,8 +3427,8 @@ a {
 
     .runner-main.is-run-tab .canvas-wrap,
     .runner-main.is-run-tab #runnerCanvas {
-        height: clamp(330px, 46dvh, 430px);
-        min-height: clamp(330px, 46dvh, 430px);
+        height: clamp(356px, 52dvh, 488px);
+        min-height: clamp(356px, 52dvh, 488px);
     }
 
     .runner-main.is-run-tab .run-control-dock {

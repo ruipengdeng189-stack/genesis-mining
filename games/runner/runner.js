@@ -4427,11 +4427,29 @@
         return clamp((y - height * 0.18) / (height * 0.82), 0, 1);
     }
 
+    function getRoadProfile(width) {
+        const compactScene = width <= 680;
+        return compactScene
+            ? {
+                farLeftRatio: 0.33,
+                nearLeftRatio: 0.075,
+                farRightRatio: 0.67,
+                nearRightRatio: 0.925
+            }
+            : {
+                farLeftRatio: 0.36,
+                nearLeftRatio: 0.11,
+                farRightRatio: 0.64,
+                nearRightRatio: 0.89
+            };
+    }
+
     function getRoadEdges(width, roadProgress) {
         const clampedProgress = clamp(roadProgress, 0, 1);
+        const profile = getRoadProfile(width);
         return {
-            left: width * (0.38 + (0.14 - 0.38) * clampedProgress),
-            right: width * (0.62 + (0.86 - 0.62) * clampedProgress)
+            left: width * (profile.farLeftRatio + (profile.nearLeftRatio - profile.farLeftRatio) * clampedProgress),
+            right: width * (profile.farRightRatio + (profile.nearRightRatio - profile.farRightRatio) * clampedProgress)
         };
     }
 
@@ -4461,6 +4479,11 @@
         const rect = dom.canvas.getBoundingClientRect();
         const width = dom.canvas.width / dpr;
         const height = dom.canvas.height / dpr;
+        const compactScene = width <= 680;
+        const roadFar = getRoadEdges(width, 0);
+        const roadNear = getRoadEdges(width, 1);
+        const roadNearWidth = roadNear.right - roadNear.left;
+        const roadFarCenter = (roadFar.left + roadFar.right) / 2;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -4483,7 +4506,7 @@
             ctx.fill();
         }
 
-        for (let side = 0; side < 2; side += 1) {
+        for (let side = 0; side < (compactScene ? 1 : 2); side += 1) {
             for (let tower = 0; tower < 6; tower += 1) {
                 const depth = 1 - tower / 6;
                 const towerHeight = 36 + depth * 110;
@@ -4513,10 +4536,10 @@
         ctx.restore();
 
         ctx.beginPath();
-        ctx.moveTo(width * 0.14, height);
-        ctx.lineTo(width * 0.38, height * 0.18);
-        ctx.lineTo(width * 0.62, height * 0.18);
-        ctx.lineTo(width * 0.86, height);
+        ctx.moveTo(roadNear.left, height);
+        ctx.lineTo(roadFar.left, height * 0.18);
+        ctx.lineTo(roadFar.right, height * 0.18);
+        ctx.lineTo(roadNear.right, height);
         ctx.closePath();
         const roadGradient = ctx.createLinearGradient(0, height * 0.18, 0, height);
         roadGradient.addColorStop(0, 'rgba(18,28,54,0.6)');
@@ -4527,15 +4550,16 @@
         for (let streak = 0; streak < 14; streak += 1) {
             const offset = ((game.distance * (2.4 + streak * 0.08)) + streak * 26) % height;
             const alpha = 0.03 + (game.overclockActive > 0 ? 0.035 : 0);
+            const laneGlowOffset = roadNearWidth * (0.15 + streak * 0.018);
             ctx.strokeStyle = `rgba(87,229,255,${alpha})`;
             ctx.lineWidth = 1 + (streak % 3 === 0 ? 1 : 0);
             ctx.beginPath();
-            ctx.moveTo(width * 0.28 + streak * 6, height - offset);
-            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
+            ctx.moveTo(roadNear.left + laneGlowOffset, height - offset);
+            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(width * 0.72 - streak * 6, height - offset);
-            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
+            ctx.moveTo(roadNear.right - laneGlowOffset, height - offset);
+            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
             ctx.stroke();
         }
 
@@ -4684,6 +4708,30 @@
         ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width - 18, 50);
         ctx.textAlign = 'left';
 
+        if (compactScene) {
+            const topHudHeight = liveBoostLabels.length ? 88 : 64;
+            const leftHudWidth = Math.min(width * 0.58, 280);
+            ctx.fillStyle = 'rgba(3,6,13,0.84)';
+            ctx.fillRect(0, 0, leftHudWidth, topHudHeight);
+            ctx.fillStyle = 'rgba(3,6,13,0.98)';
+            ctx.fillRect(width * 0.7, 0, width * 0.3, 70);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '600 14px Inter';
+            ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
+            ctx.fillStyle = 'rgba(142,166,191,0.95)';
+            ctx.fillText(playerProfile.lang === 'en' ? `Revives ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
+            if (liveBoostLabels.length) {
+                ctx.fillStyle = 'rgba(89,255,155,0.95)';
+                ctx.fillText(liveBoostLabels.join(' / '), 18, 72);
+            }
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(159,233,255,0.94)';
+            ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width * 0.5, 28);
+            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+            ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width * 0.5, 50);
+            ctx.textAlign = 'left';
+        }
+
         if (!rect.width || !rect.height) {
             resizeCanvas();
         }
@@ -4694,6 +4742,11 @@
         const rect = dom.canvas.getBoundingClientRect();
         const width = dom.canvas.width / dpr;
         const height = dom.canvas.height / dpr;
+        const compactScene = width <= 680;
+        const roadFar = getRoadEdges(width, 0);
+        const roadNear = getRoadEdges(width, 1);
+        const roadNearWidth = roadNear.right - roadNear.left;
+        const roadFarCenter = (roadFar.left + roadFar.right) / 2;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -4716,7 +4769,7 @@
             ctx.fill();
         }
 
-        for (let side = 0; side < 2; side += 1) {
+        for (let side = 0; side < (compactScene ? 1 : 2); side += 1) {
             for (let tower = 0; tower < 6; tower += 1) {
                 const depth = 1 - tower / 6;
                 const towerHeight = 36 + depth * 110;
@@ -4746,10 +4799,10 @@
         ctx.restore();
 
         ctx.beginPath();
-        ctx.moveTo(width * 0.14, height);
-        ctx.lineTo(width * 0.38, height * 0.18);
-        ctx.lineTo(width * 0.62, height * 0.18);
-        ctx.lineTo(width * 0.86, height);
+        ctx.moveTo(roadNear.left, height);
+        ctx.lineTo(roadFar.left, height * 0.18);
+        ctx.lineTo(roadFar.right, height * 0.18);
+        ctx.lineTo(roadNear.right, height);
         ctx.closePath();
         const roadGradient = ctx.createLinearGradient(0, height * 0.18, 0, height);
         roadGradient.addColorStop(0, 'rgba(18,28,54,0.6)');
@@ -4760,15 +4813,16 @@
         for (let streak = 0; streak < 14; streak += 1) {
             const offset = ((game.distance * (2.4 + streak * 0.08)) + streak * 26) % height;
             const alpha = 0.03 + (game.overclockActive > 0 ? 0.035 : 0);
+            const laneGlowOffset = roadNearWidth * (0.15 + streak * 0.018);
             ctx.strokeStyle = `rgba(87,229,255,${alpha})`;
             ctx.lineWidth = 1 + (streak % 3 === 0 ? 1 : 0);
             ctx.beginPath();
-            ctx.moveTo(width * 0.28 + streak * 6, height - offset);
-            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
+            ctx.moveTo(roadNear.left + laneGlowOffset, height - offset);
+            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(width * 0.72 - streak * 6, height - offset);
-            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
+            ctx.moveTo(roadNear.right - laneGlowOffset, height - offset);
+            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
             ctx.stroke();
         }
 
@@ -4952,6 +5006,30 @@
         ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
         ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width - 18, 50);
         ctx.textAlign = 'left';
+
+        if (compactScene) {
+            const topHudHeight = liveBoostLabels.length ? 88 : 64;
+            const leftHudWidth = Math.min(width * 0.58, 280);
+            ctx.fillStyle = 'rgba(3,6,13,0.84)';
+            ctx.fillRect(0, 0, leftHudWidth, topHudHeight);
+            ctx.fillStyle = 'rgba(3,6,13,0.98)';
+            ctx.fillRect(width * 0.7, 0, width * 0.3, 70);
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '600 14px Inter';
+            ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
+            ctx.fillStyle = 'rgba(142,166,191,0.95)';
+            ctx.fillText(playerProfile.lang === 'en' ? `Revives ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
+            if (liveBoostLabels.length) {
+                ctx.fillStyle = 'rgba(89,255,155,0.95)';
+                ctx.fillText(liveBoostLabels.join(' / '), 18, 72);
+            }
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(159,233,255,0.94)';
+            ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width * 0.5, 28);
+            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+            ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width * 0.5, 50);
+            ctx.textAlign = 'left';
+        }
 
         if (!rect.width || !rect.height) {
             resizeCanvas();
