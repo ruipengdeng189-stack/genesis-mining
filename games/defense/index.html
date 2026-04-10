@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>创世防线 / Genesis Defense</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/games/defense/defense.css">
+</head>
+<body data-defense-tab="defend">
+    <div class="defense-bg" aria-hidden="true"></div>
+    <div class="defense-shell">
+        <header class="topbar">
+            <div class="topbar-row">
+                <a class="ghost-btn" href="/" data-i18n="backHub">返回大厅</a>
+                <div class="topbar-actions">
+                    <button class="ghost-btn icon-btn" id="soundToggle" type="button">SFX ON</button>
+                    <button class="ghost-btn icon-btn" id="langToggle" type="button">EN</button>
+                </div>
+            </div>
+            <div class="hero-card">
+                <div class="hero-copy">
+                    <div class="eyebrow" data-i18n="heroEyebrow">TRI-LANE DEFENSE LIVE</div>
+                    <h1 data-i18n="heroTitle">创世防线</h1>
+                    <p data-i18n="heroSubtitle">三路塔防 · 波次强化 · 核心守卫</p>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span data-i18n="goldLabel">金币</span>
+                        <strong id="goldValue">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="coreLabel">能核</span>
+                        <strong id="coreValue">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="fragmentLabel">碎片</span>
+                        <strong id="fragmentValue">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="seasonLabel">赛季</span>
+                        <strong id="seasonLevelValue">Lv.1</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="ratingLabel">战力</span>
+                        <strong id="ratingValue">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span data-i18n="bestStageLabel">最高章节</span>
+                        <strong id="bestStageValue">1-1</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="defense-main">
+            <section class="stage-card" id="stageCard">
+                <div class="stage-hud">
+                    <div class="hud-chip">
+                        <span data-i18n="chapterLabel">章节</span>
+                        <strong id="chapterValue">1-1</strong>
+                    </div>
+                    <div class="hud-chip">
+                        <span data-i18n="waveLabel">波次</span>
+                        <strong id="waveValue">0 / 6</strong>
+                    </div>
+                    <div class="hud-chip">
+                        <span data-i18n="coreHpLabel">核心</span>
+                        <strong id="coreHpValue">100 / 100</strong>
+                    </div>
+                    <div class="hud-chip">
+                        <span data-i18n="threatLabel">威胁</span>
+                        <strong id="threatValue">稳定</strong>
+                    </div>
+                </div>
+
+                <div class="battlefield-wrap" id="battlefieldWrap">
+                    <canvas id="battlefieldCanvas" width="720" height="1040" aria-label="Genesis Defense battlefield"></canvas>
+
+                    <div class="overlay-panel" id="startOverlay">
+                        <div class="overlay-card">
+                            <div class="overlay-kicker" data-i18n="startKicker">CORE DEFENSE</div>
+                            <h2 data-i18n="startTitle">部署防线</h2>
+                            <p id="startDescription">为三条通道装配炮台并守住创世核心，击退 6 波敌潮后获得金币、能核与蓝图碎片。</p>
+                            <div class="overlay-meta" id="startMeta"></div>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="startRunBtn" type="button" data-i18n="startRun">开始防守</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overlay-panel is-hidden" id="upgradeOverlay">
+                        <div class="overlay-card compact">
+                            <div class="overlay-kicker" data-i18n="upgradeKicker">WAVE UPGRADE</div>
+                            <h2 data-i18n="upgradeTitle">选择一项强化</h2>
+                            <p data-i18n="upgradeSubtitle">每波结束后可获得 1 次临时增益，尽量围绕当前炮台阵容做组合。</p>
+                            <div class="choice-grid" id="upgradeChoiceGrid"></div>
+                        </div>
+                    </div>
+
+                    <div class="overlay-panel is-hidden" id="pauseOverlay">
+                        <div class="overlay-card compact">
+                            <div class="overlay-kicker" data-i18n="pauseKicker">DEFENSE PAUSED</div>
+                            <h2 data-i18n="pauseTitle">战局已暂停</h2>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="resumeBtn" type="button" data-i18n="resumeRun">继续防守</button>
+                                <button class="ghost-btn" id="quitRunBtn" type="button" data-i18n="quitRun">结束本局</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overlay-panel is-hidden" id="resultOverlay">
+                        <div class="overlay-card">
+                            <div class="overlay-kicker" id="resultKicker">RUN COMPLETE</div>
+                            <h2 id="resultTitle">防线结算</h2>
+                            <div class="result-grid">
+                                <div>
+                                    <span data-i18n="goldGainLabel">金币收益</span>
+                                    <strong id="resultGold">0</strong>
+                                </div>
+                                <div>
+                                    <span data-i18n="coreGainLabel">能核收益</span>
+                                    <strong id="resultCore">0</strong>
+                                </div>
+                                <div>
+                                    <span data-i18n="seasonGainLabel">赛季经验</span>
+                                    <strong id="resultSeason">0</strong>
+                                </div>
+                                <div>
+                                    <span data-i18n="chapterProgressLabel">章节进度</span>
+                                    <strong id="resultProgress">1-1</strong>
+                                </div>
+                            </div>
+                            <div class="reward-list" id="resultFragments"></div>
+                            <div class="result-meta" id="resultMeta"></div>
+                            <div class="overlay-actions">
+                                <button class="primary-btn" id="restartRunBtn" type="button" data-i18n="restartRun">再守一局</button>
+                                <button class="ghost-btn" id="nextChapterBtn" type="button" data-i18n="nextChapter">挑战下一章</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lane-strip" id="laneStrip"></div>
+
+                <div class="action-row">
+                    <button class="ghost-btn wide-btn" id="skillBtn" type="button">EMP 脉冲</button>
+                    <button class="ghost-btn wide-btn" id="loadoutShortcutBtn" type="button" data-i18n="loadoutShortcut">前往装配</button>
+                    <button class="ghost-btn wide-btn" id="pauseBtn" type="button" data-i18n="pauseBtn">暂停</button>
+                </div>
+
+                <div class="battle-note" id="battleNote">优先确认三路炮台配置，再开局迎战敌潮。</div>
+            </section>
+
+            <section class="panel-card" id="panelCard">
+                <div class="panel-content" id="panelContent"></div>
+            </section>
+        </main>
+
+        <nav class="app-tab-bar" id="tabBar" aria-label="Defense tabs">
+            <button class="tab-btn is-active" data-tab="defend" type="button">
+                <span data-i18n="tabDefend">防线</span>
+                <i class="tab-dot" data-tab-dot="defend"></i>
+            </button>
+            <button class="tab-btn" data-tab="loadout" type="button">
+                <span data-i18n="tabLoadout">装配</span>
+                <i class="tab-dot" data-tab-dot="loadout"></i>
+            </button>
+            <button class="tab-btn" data-tab="research" type="button">
+                <span data-i18n="tabResearch">研究</span>
+                <i class="tab-dot" data-tab-dot="research"></i>
+            </button>
+            <button class="tab-btn" data-tab="missions" type="button">
+                <span data-i18n="tabMissions">任务</span>
+                <i class="tab-dot" data-tab-dot="missions"></i>
+            </button>
+            <button class="tab-btn" data-tab="season" type="button">
+                <span data-i18n="tabSeason">赛季</span>
+                <i class="tab-dot" data-tab-dot="season"></i>
+            </button>
+            <button class="tab-btn" data-tab="shop" type="button">
+                <span data-i18n="tabShop">商店</span>
+                <i class="tab-dot" data-tab-dot="shop"></i>
+            </button>
+        </nav>
+    </div>
+
+    <div class="defense-payment-modal is-hidden" id="defensePaymentModal">
+        <div class="defense-payment-card">
+            <div class="defense-payment-head">
+                <div>
+                    <div class="overlay-kicker">VERIFIED TOP-UP</div>
+                    <h2 id="defensePaymentTitle">防线充值中心</h2>
+                    <p id="defensePaymentDesc">创建链上订单，使用 OKX Wallet 完成 TRC20-USDT 支付，再粘贴 txid 校验并发放奖励。</p>
+                </div>
+                <button class="ghost-btn icon-btn" id="defensePaymentCloseBtn" type="button" aria-label="Close payment">×</button>
+            </div>
+            <div class="defense-payment-offer-grid" id="defensePaymentOfferGrid"></div>
+            <div class="defense-payment-order-card">
+                <div class="defense-payment-order-top">
+                    <div>
+                        <div class="defense-payment-amount" id="defensePaymentAmount">--</div>
+                        <div class="defense-payment-meta" id="defensePaymentMeta">TRON (TRC20) · OKX Wallet</div>
+                    </div>
+                    <div class="defense-payment-order-line">
+                        <span id="defensePaymentOrderLabel">订单号</span>
+                        <strong id="defensePaymentOrderId">--</strong>
+                    </div>
+                </div>
+                <div class="defense-payment-order-grid">
+                    <div class="defense-payment-stat">
+                        <span id="defensePaymentExactLabel">精确金额</span>
+                        <strong id="defensePaymentExactAmount">--</strong>
+                    </div>
+                    <div class="defense-payment-stat">
+                        <span id="defensePaymentExpiryLabel">剩余时间</span>
+                        <strong id="defensePaymentExpiry">--:--</strong>
+                    </div>
+                </div>
+                <div class="defense-payment-address-block">
+                    <span class="mini-label" id="defensePaymentAddressLabel">收款地址</span>
+                    <div class="defense-payment-address" id="defensePaymentWallet">--</div>
+                </div>
+                <div class="defense-payment-copy-row">
+                    <button class="ghost-btn wide-btn" id="defensePaymentCopyAddressBtn" type="button">复制地址</button>
+                    <button class="ghost-btn wide-btn" id="defensePaymentCopyAmountBtn" type="button">复制精确金额</button>
+                </div>
+                <div class="defense-payment-field">
+                    <label class="mini-label" for="defensePaymentTxidInput" id="defensePaymentTxidLabel">粘贴 OKX Wallet 的 txid</label>
+                    <input class="defense-payment-input" id="defensePaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="请输入或粘贴链上 txid">
+                    <p class="defense-payment-hint" id="defensePaymentTxidHint">只有金额、地址和有效时间窗口全部匹配的订单才能通过校验。</p>
+                </div>
+                <div class="defense-payment-status" id="defensePaymentStatus">先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。</div>
+                <div class="defense-payment-actions">
+                    <button class="primary-btn wide-btn" id="defensePaymentVerifyBtn" type="button">校验 TXID</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/games/defense/defense.js"></script>
+</body>
+</html>

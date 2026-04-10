@@ -171,39 +171,39 @@
                       "zh":  "\u5854\u9632",
                       "en":  "Tower Defense"
                   },
-        "id":  "void-defense",
+        "id":  "defense",
         "tags":  [
                      {
-                         "zh":  "\u5854\u9632",
-                         "en":  "Defense"
+                         "zh":  "\u4e09\u8def\u5854\u9632",
+                         "en":  "Three Lanes"
                      },
                      {
-                         "zh":  "\u6570\u503c\u6d88\u8017",
-                         "en":  "Heavy Sink"
+                         "zh":  "\u6ce2\u6b21\u5f3a\u5316",
+                         "en":  "Wave Upgrades"
                      },
                      {
-                         "zh":  "\u540e\u671f\u5361\u70b9",
-                         "en":  "Late Wall"
+                         "zh":  "\u4e2d\u540e\u671f\u6210\u957f",
+                         "en":  "Mid-Late Growth"
                      }
                  ],
         "subtitle":  {
-                         "zh":  "\u6838\u5fc3\u5854\u9632\u751f\u5b58",
-                         "en":  "Core Tower Survival"
+                         "zh":  "\u4e09\u8def\u9632\u5b88 + \u7814\u7a76\u6210\u957f",
+                         "en":  "Tri-Lane Defense + Research Growth"
                      },
         "description":  {
-                            "zh":  "\u9002\u5408\u627f\u8f7d\u5927\u91cf\u6570\u503c\u6d88\u8017\uff0c\u53ef\u7ed1\u5b9a\u7814\u7a76\u5ba4\u3001\u5e38\u9a7b\u52a0\u6210\u3001\u6ce2\u6b21\u5956\u52b1\u4e0e\u540e\u671f\u5361\u70b9\u3002",
-                            "en":  "Great for heavy sinks, lab linkage, permanent boosts, wave rewards, and late-game walls."
+                            "zh":  "\u5df2\u5f00\u653e\u7684\u9632\u7ebf\u9996\u7248\uff0c\u5305\u542b 3 \u8def\u9632\u5b88\u3001\u6ce2\u6b21\u5f3a\u5316\u3001\u88c5\u914d\u3001\u7814\u7a76\u3001\u4efb\u52a1\u3001\u8d5b\u5b63\u4e0e\u8865\u7ed9\u5546\u5e97\u3002",
+                            "en":  "A live first defense build with 3-lane battles, wave upgrades, loadout, research, missions, season rewards, and a supply shop."
                         },
-        "icon":  "VD",
-        "href":  "/games/coming-soon/?id=void-defense",
+        "icon":  "GD",
+        "href":  "/games/defense/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u5df2\u5f00\u653e",
+                      "en":  "Live"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
-                      "zh":  "\u865a\u7a7a\u9632\u7ebf",
-                      "en":  "Void Defense"
+                      "zh":  "\u521b\u4e16\u9632\u7ebf",
+                      "en":  "Genesis Defense"
                   }
     },
     {
