@@ -4242,13 +4242,33 @@
     }
 
     function isCompactRunnerViewport(width) {
-        if (Number.isFinite(width) && width <= 680) {
+        const widthCandidates = [];
+        if (Number.isFinite(width) && width > 0) {
+            widthCandidates.push(width);
+        }
+        const visualWidth = Number(window.visualViewport?.width);
+        if (Number.isFinite(visualWidth) && visualWidth > 0) {
+            widthCandidates.push(visualWidth);
+        }
+        const innerWidth = Number(window.innerWidth);
+        if (Number.isFinite(innerWidth) && innerWidth > 0) {
+            widthCandidates.push(innerWidth);
+        }
+        const effectiveWidth = widthCandidates.length ? Math.min(...widthCandidates) : 0;
+        if (effectiveWidth && effectiveWidth <= 820) {
             return true;
         }
         if (typeof window.matchMedia === 'function') {
-            return window.matchMedia('(max-width: 820px)').matches;
+            if (window.matchMedia('(max-width: 820px)').matches) {
+                return true;
+            }
+            if (window.matchMedia('(pointer: coarse) and (max-width: 1024px)').matches) {
+                return true;
+            }
         }
-        return (window.innerWidth || 0) <= 820;
+        return effectiveWidth > 0
+            ? effectiveWidth <= 1024 && ((navigator.maxTouchPoints || 0) > 0)
+            : (window.innerWidth || 0) <= 820;
     }
 
     function projectObjectLegacy(obj, width, height, compactScene = isCompactRunnerViewport(width)) {
@@ -4533,10 +4553,10 @@
     }
 
     function getRunnerRoadMetrics(width, compactScene = isCompactRunnerViewport(width)) {
-        const bottomLeft = width * (compactScene ? 0.04 : 0.14);
-        const bottomRight = width * (compactScene ? 0.96 : 0.86);
-        const topLeft = width * (compactScene ? 0.32 : 0.38);
-        const topRight = width * (compactScene ? 0.68 : 0.62);
+        const bottomLeft = width * (compactScene ? 0.03 : 0.14);
+        const bottomRight = width * (compactScene ? 0.97 : 0.86);
+        const topLeft = width * (compactScene ? 0.29 : 0.38);
+        const topRight = width * (compactScene ? 0.71 : 0.62);
         const bottomWidth = bottomRight - bottomLeft;
         const topWidth = topRight - topLeft;
         return {
@@ -4596,10 +4616,10 @@
     }
 
     function renderScene() {
-        const dpr = window.devicePixelRatio || 1;
         const rect = dom.canvas.getBoundingClientRect();
-        const width = dom.canvas.width / dpr;
-        const height = dom.canvas.height / dpr;
+        const renderScale = Number(dom.canvas.dataset.renderScale) || Math.min(2, window.devicePixelRatio || 1);
+        const width = Math.max(320, rect.width || dom.canvas.clientWidth || (dom.canvas.width / renderScale) || 0);
+        const height = Math.max(340, rect.height || dom.canvas.clientHeight || (dom.canvas.height / renderScale) || 0);
         const compactScene = isCompactRunnerViewport(rect.width || width);
         const roadMetrics = getRunnerRoadMetrics(width, compactScene);
         const sceneHorizon = height * (compactScene ? 0.15 : 0.18);
@@ -4625,20 +4645,22 @@
             ctx.fill();
         }
 
-        for (let side = 0; side < 2; side += 1) {
-            const towerCount = compactScene ? 3 : 6;
-            for (let tower = 0; tower < towerCount; tower += 1) {
-                const depth = 1 - tower / Math.max(1, towerCount);
-                const towerHeight = 34 + depth * (compactScene ? 88 : 110);
-                const towerWidth = 12 + depth * 18;
-                const x = side === 0
-                    ? width * (compactScene ? 0.006 : 0.08) + tower * (compactScene ? 14 : 18)
-                    : width * (compactScene ? 0.994 : 0.92) - tower * (compactScene ? 14 : 18) - towerWidth;
-                const y = height * (compactScene ? 0.18 : 0.26) + tower * (compactScene ? 34 : 26);
-                ctx.fillStyle = `rgba(${side === 0 ? '87,229,255' : '164,107,255'}, ${0.08 + depth * 0.18})`;
-                ctx.fillRect(x, y, towerWidth, towerHeight);
-                ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                ctx.fillRect(x + towerWidth * 0.18, y + 10, towerWidth * 0.2, towerHeight - 20);
+        if (!compactScene) {
+            for (let side = 0; side < 2; side += 1) {
+                const towerCount = 6;
+                for (let tower = 0; tower < towerCount; tower += 1) {
+                    const depth = 1 - tower / Math.max(1, towerCount);
+                    const towerHeight = 34 + depth * 110;
+                    const towerWidth = 12 + depth * 18;
+                    const x = side === 0
+                        ? width * 0.08 + tower * 18
+                        : width * 0.92 - tower * 18 - towerWidth;
+                    const y = height * 0.26 + tower * 26;
+                    ctx.fillStyle = `rgba(${side === 0 ? '87,229,255' : '164,107,255'}, ${0.08 + depth * 0.18})`;
+                    ctx.fillRect(x, y, towerWidth, towerHeight);
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.fillRect(x + towerWidth * 0.18, y + 10, towerWidth * 0.2, towerHeight - 20);
+                }
             }
         }
 
@@ -4861,6 +4883,7 @@
         const height = Math.max(340, Math.floor(rect.height));
         dom.canvas.width = Math.floor(width * dpr);
         dom.canvas.height = Math.floor(height * dpr);
+        dom.canvas.dataset.renderScale = String(dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         renderScene();
     }
@@ -4961,6 +4984,7 @@
         if (!hasTouch) {
             return;
         }
+        let lastTouchEndAt = 0;
 
         const preventViewportZoom = (event) => {
             if (event.cancelable) {
@@ -4978,6 +5002,13 @@
             if (event.touches.length > 1) {
                 preventViewportZoom(event);
             }
+        }, { passive: false });
+        document.addEventListener('touchend', (event) => {
+            const now = Date.now();
+            if (now - lastTouchEndAt < 320) {
+                preventViewportZoom(event);
+            }
+            lastTouchEndAt = now;
         }, { passive: false });
     }
 
