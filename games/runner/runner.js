@@ -4251,7 +4251,7 @@
         return (window.innerWidth || 0) <= 820;
     }
 
-    function projectObject(obj, width, height, compactScene = isCompactRunnerViewport(width)) {
+    function projectObjectLegacy(obj, width, height, compactScene = isCompactRunnerViewport(width)) {
         const perspective = Math.max(0.04, 1 - obj.z / 150);
         const roadHalf = compactScene
             ? 72 + perspective * width * 0.38
@@ -4263,7 +4263,7 @@
         return { x, y, size, perspective };
     }
 
-    function renderScene() {
+    function renderSceneLegacy() {
         const dpr = window.devicePixelRatio || 1;
         const rect = dom.canvas.getBoundingClientRect();
         const width = dom.canvas.width / dpr;
@@ -4514,6 +4514,328 @@
             ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
             ctx.fillStyle = 'rgba(142,166,191,0.95)';
             ctx.fillText(playerProfile.lang === 'en' ? `Revives ${MAX_REVIVES - game.reviveCount}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
+            if (liveBoostLabels.length) {
+                ctx.fillStyle = 'rgba(89,255,155,0.95)';
+                ctx.fillText(liveBoostLabels.join(' · '), 18, 72);
+            }
+
+            ctx.textAlign = 'right';
+            ctx.fillStyle = 'rgba(159,233,255,0.94)';
+            ctx.fillText(speedLabel, width - 18, 28);
+            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+            ctx.fillText(statusLabel, width - 18, 50);
+            ctx.textAlign = 'left';
+        }
+
+        if (!rect.width || !rect.height) {
+            resizeCanvas();
+        }
+    }
+
+    function getRunnerRoadMetrics(width, compactScene = isCompactRunnerViewport(width)) {
+        const bottomLeft = width * (compactScene ? 0.04 : 0.14);
+        const bottomRight = width * (compactScene ? 0.96 : 0.86);
+        const topLeft = width * (compactScene ? 0.32 : 0.38);
+        const topRight = width * (compactScene ? 0.68 : 0.62);
+        const bottomWidth = bottomRight - bottomLeft;
+        const topWidth = topRight - topLeft;
+        return {
+            bottomLeft,
+            bottomRight,
+            topLeft,
+            topRight,
+            bottomWidth,
+            topWidth,
+            dividers: [1, 2].map((step) => ({
+                bottom: bottomLeft + bottomWidth * (step / 3),
+                top: topLeft + topWidth * (step / 3)
+            }))
+        };
+    }
+
+    function getRunnerRoadLaneBounds(metrics, perspective) {
+        const left = metrics.topLeft + (metrics.bottomLeft - metrics.topLeft) * perspective;
+        const right = metrics.topRight + (metrics.bottomRight - metrics.topRight) * perspective;
+        const laneWidth = (right - left) / 3;
+        return { left, right, laneWidth };
+    }
+
+    function getRunnerLaneCenter(metrics, lane, perspective) {
+        const laneValue = Math.max(0, Math.min(2, Number(lane) || 0));
+        const bounds = getRunnerRoadLaneBounds(metrics, perspective);
+        return bounds.left + bounds.laneWidth * (laneValue + 0.5);
+    }
+
+    function drawRunnerChevron(x, y, size, direction) {
+        const sign = direction === 'up' ? -1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.18, y - sign * size * 0.04);
+        ctx.lineTo(x, y + sign * size * 0.12);
+        ctx.lineTo(x + size * 0.18, y - sign * size * 0.04);
+        ctx.stroke();
+    }
+
+    function drawRunnerBolt(x, y, size) {
+        ctx.beginPath();
+        ctx.moveTo(x - size * 0.1, y - size * 0.18);
+        ctx.lineTo(x + size * 0.02, y - size * 0.04);
+        ctx.lineTo(x - size * 0.03, y - size * 0.04);
+        ctx.lineTo(x + size * 0.1, y + size * 0.18);
+        ctx.lineTo(x - size * 0.02, y + size * 0.03);
+        ctx.lineTo(x + size * 0.03, y + size * 0.03);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function projectObject(obj, width, height, compactScene = isCompactRunnerViewport(width), roadMetrics = getRunnerRoadMetrics(width, compactScene)) {
+        const perspective = Math.max(0.04, 1 - obj.z / 150);
+        const x = getRunnerLaneCenter(roadMetrics, obj.lane, perspective);
+        const y = height * (compactScene ? 0.1 : 0.12) + perspective * height * (compactScene ? 0.8 : 0.78);
+        const size = 18 + perspective * (compactScene ? 68 : 64);
+        return { x, y, size, perspective };
+    }
+
+    function renderScene() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = dom.canvas.getBoundingClientRect();
+        const width = dom.canvas.width / dpr;
+        const height = dom.canvas.height / dpr;
+        const compactScene = isCompactRunnerViewport(rect.width || width);
+        const roadMetrics = getRunnerRoadMetrics(width, compactScene);
+        const sceneHorizon = height * (compactScene ? 0.15 : 0.18);
+
+        ctx.clearRect(0, 0, width, height);
+
+        const flashAlpha = game.flashTimer > 0 ? 0.16 + game.flashTimer * 0.2 : 0;
+        const sky = ctx.createLinearGradient(0, 0, 0, height);
+        sky.addColorStop(0, '#09152d');
+        sky.addColorStop(0.55, '#0a1020');
+        sky.addColorStop(1, '#03060d');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, height);
+
+        const starCount = 26;
+        for (let index = 0; index < starCount; index += 1) {
+            const px = ((index * 97) + Math.floor(game.distance * 0.9)) % (width + 80) - 40;
+            const py = 36 + ((index * 53) % Math.floor(height * 0.34));
+            const radius = (index % 4 === 0 ? 1.8 : 1.1) + (game.overclockActive > 0 ? 0.3 : 0);
+            ctx.fillStyle = `rgba(159, 233, 255, ${0.16 + (index % 5) * 0.04})`;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        for (let side = 0; side < 2; side += 1) {
+            const towerCount = compactScene ? 3 : 6;
+            for (let tower = 0; tower < towerCount; tower += 1) {
+                const depth = 1 - tower / Math.max(1, towerCount);
+                const towerHeight = 34 + depth * (compactScene ? 88 : 110);
+                const towerWidth = 12 + depth * 18;
+                const x = side === 0
+                    ? width * (compactScene ? 0.006 : 0.08) + tower * (compactScene ? 14 : 18)
+                    : width * (compactScene ? 0.994 : 0.92) - tower * (compactScene ? 14 : 18) - towerWidth;
+                const y = height * (compactScene ? 0.18 : 0.26) + tower * (compactScene ? 34 : 26);
+                ctx.fillStyle = `rgba(${side === 0 ? '87,229,255' : '164,107,255'}, ${0.08 + depth * 0.18})`;
+                ctx.fillRect(x, y, towerWidth, towerHeight);
+                ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                ctx.fillRect(x + towerWidth * 0.18, y + 10, towerWidth * 0.2, towerHeight - 20);
+            }
+        }
+
+        ctx.save();
+        ctx.translate(width / 2, height * (compactScene ? 0.5 : 0.52));
+        ctx.strokeStyle = 'rgba(87,229,255,0.12)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 12; i += 1) {
+            const y = i * 24;
+            ctx.beginPath();
+            ctx.moveTo(-width * (compactScene ? 0.48 : 0.44) + i * (compactScene ? 6 : 8), y);
+            ctx.lineTo(width * (compactScene ? 0.48 : 0.44) - i * (compactScene ? 6 : 8), y);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.moveTo(roadMetrics.bottomLeft, height);
+        ctx.lineTo(roadMetrics.topLeft, sceneHorizon);
+        ctx.lineTo(roadMetrics.topRight, sceneHorizon);
+        ctx.lineTo(roadMetrics.bottomRight, height);
+        ctx.closePath();
+        const roadGradient = ctx.createLinearGradient(0, sceneHorizon, 0, height);
+        roadGradient.addColorStop(0, 'rgba(18,28,54,0.6)');
+        roadGradient.addColorStop(1, 'rgba(9,13,24,0.96)');
+        ctx.fillStyle = roadGradient;
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(87,229,255,0.16)';
+        ctx.lineWidth = compactScene ? 2 : 2.4;
+        ctx.beginPath();
+        ctx.moveTo(roadMetrics.bottomLeft, height);
+        ctx.lineTo(roadMetrics.topLeft, sceneHorizon);
+        ctx.moveTo(roadMetrics.bottomRight, height);
+        ctx.lineTo(roadMetrics.topRight, sceneHorizon);
+        ctx.stroke();
+
+        for (let streak = 0; streak < 14; streak += 1) {
+            const offset = ((game.distance * (2.4 + streak * 0.08)) + streak * 26) % height;
+            const alpha = 0.03 + (game.overclockActive > 0 ? 0.035 : 0);
+            ctx.strokeStyle = `rgba(87,229,255,${alpha})`;
+            ctx.lineWidth = 1 + (streak % 3 === 0 ? 1 : 0);
+            ctx.beginPath();
+            ctx.moveTo(roadMetrics.bottomLeft + roadMetrics.bottomWidth * 0.12 + streak * (compactScene ? 7 : 6), height - offset);
+            ctx.lineTo(width * 0.5, sceneHorizon + offset * 0.08);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(roadMetrics.bottomRight - roadMetrics.bottomWidth * 0.12 - streak * (compactScene ? 7 : 6), height - offset);
+            ctx.lineTo(width * 0.5, sceneHorizon + offset * 0.08);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'rgba(96,212,255,0.4)';
+        ctx.lineWidth = compactScene ? 2.6 : 3;
+        roadMetrics.dividers.forEach((divider) => {
+            ctx.beginPath();
+            ctx.moveTo(divider.bottom, height);
+            ctx.lineTo(divider.top, sceneHorizon);
+            ctx.stroke();
+        });
+
+        const sortedObjects = [...game.objects].sort((a, b) => b.z - a.z);
+        sortedObjects.forEach((obj) => {
+            const { x, y, size } = projectObject(obj, width, height, compactScene, roadMetrics);
+            if (obj.type === 'coin') {
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = 'rgba(255,214,107,0.46)';
+                ctx.fillStyle = '#ffd66b';
+                ctx.beginPath();
+                ctx.arc(x, y, size * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(14, 20, 32, 0.92)';
+                ctx.font = `700 ${Math.max(10, size * 0.18)}px Inter`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('+', x, y);
+            } else if (obj.type === 'energy') {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(87,229,255,0.44)';
+                ctx.fillStyle = '#57e5ff';
+                ctx.beginPath();
+                ctx.moveTo(x, y - size * 0.28);
+                ctx.lineTo(x + size * 0.18, y);
+                ctx.lineTo(x, y + size * 0.28);
+                ctx.lineTo(x - size * 0.18, y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = 'rgba(14, 20, 32, 0.96)';
+                drawRunnerBolt(x, y, size * 0.56);
+            } else {
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = obj.type === 'wall' ? 'rgba(255,106,136,0.38)' : obj.type === 'hurdle' ? 'rgba(255,149,79,0.32)' : 'rgba(157,134,255,0.36)';
+                ctx.fillStyle = obj.type === 'wall' ? '#ff5f7f' : obj.type === 'hurdle' ? '#ff954f' : '#9d86ff';
+                const w = obj.type === 'gate' ? size * 0.94 : size * 0.64;
+                const h = obj.type === 'hurdle' ? size * 0.28 : size * 0.74;
+                const top = obj.type === 'gate' ? y - size * 0.7 : y - h;
+                ctx.fillRect(x - w / 2, top, w, h);
+                ctx.strokeStyle = 'rgba(255,255,255,0.78)';
+                ctx.lineWidth = Math.max(1.5, size * 0.035);
+                ctx.strokeRect(x - w / 2, top, w, h);
+                if (obj.type === 'gate') {
+                    ctx.clearRect(x - w * 0.28, y - size * 0.3, w * 0.56, size * 0.3);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.88)';
+                    ctx.lineWidth = Math.max(2, size * 0.05);
+                    drawRunnerChevron(x, top + h * 0.24, size * 0.8, 'down');
+                } else if (obj.type === 'hurdle') {
+                    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                    ctx.lineWidth = Math.max(2, size * 0.05);
+                    drawRunnerChevron(x, top - Math.max(10, size * 0.16), size * 0.72, 'up');
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                    ctx.fillRect(x - 2, top + h * 0.22, 4, Math.max(10, h * 0.3));
+                    ctx.beginPath();
+                    ctx.arc(x, top + h * 0.64, 2.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.shadowBlur = 0;
+        });
+
+        const playerX = getRunnerLaneCenter(roadMetrics, game.x, compactScene ? 0.92 : 0.9);
+        const playerY = height * (compactScene ? 0.84 : 0.82) - game.y * height * 0.22 + (game.slideTimer > 0 ? 18 : 0);
+        const bodyW = compactScene ? 38 : 34;
+        const bodyH = game.slideTimer > 0 ? (compactScene ? 30 : 28) : (compactScene ? 56 : 52);
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.24)';
+        ctx.beginPath();
+        ctx.ellipse(playerX, height * 0.88, 28, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.save();
+        ctx.shadowBlur = game.shieldTimer > 0 ? 28 : 16;
+        ctx.shadowColor = game.shieldTimer > 0 ? '#9fe9ff' : '#57e5ff';
+        if (game.overclockActive > 0) {
+            ctx.fillStyle = 'rgba(87,229,255,0.16)';
+            ctx.beginPath();
+            ctx.moveTo(playerX, playerY - bodyH * 0.3);
+            ctx.lineTo(playerX - 44, playerY + 26);
+            ctx.lineTo(playerX + 44, playerY + 26);
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.fillStyle = game.overclockActive > 0 ? '#ffffff' : '#57e5ff';
+        ctx.fillRect(playerX - bodyW / 2, playerY - bodyH, bodyW, bodyH);
+        ctx.fillStyle = '#a46bff';
+        ctx.fillRect(playerX - bodyW * 0.34, playerY - bodyH - 16, bodyW * 0.68, 14);
+        if (game.shieldTimer > 0) {
+            ctx.strokeStyle = 'rgba(159,233,255,0.84)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(playerX, playerY - bodyH * 0.58, 34, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        if (flashAlpha > 0) {
+            ctx.fillStyle = `rgba(255,255,255,${Math.min(0.24, flashAlpha)})`;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        const liveBoostLabels = [];
+        if (game.runGoldMultiplier > 1 || game.runSeasonXpMultiplier > 1) {
+            liveBoostLabels.push(playerProfile.lang === 'en' ? 'SETTLEMENT x1.25' : '结算 x1.25');
+        }
+        if (game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0) {
+            liveBoostLabels.push(playerProfile.lang === 'en' ? 'FREE REVIVE READY' : '免费复活待命');
+        }
+        const speedLabel = `${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`;
+        const statusLabel = game.overclockActive > 0
+            ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中')
+            : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定');
+
+        if (compactScene) {
+            const hudWidth = Math.min(width * 0.7, 272);
+            const hudLeft = (width - hudWidth) / 2;
+            ctx.fillStyle = 'rgba(4,10,22,0.6)';
+            ctx.fillRect(hudLeft, 12, hudWidth, 42);
+            ctx.strokeStyle = 'rgba(96,212,255,0.18)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(hudLeft, 12, hudWidth, 42);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(159,233,255,0.96)';
+            ctx.font = '700 13px Inter';
+            ctx.fillText(speedLabel, width / 2, 29);
+            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+            ctx.font = '600 11px Inter';
+            ctx.fillText(statusLabel, width / 2, 45);
+            ctx.textAlign = 'left';
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '600 14px Inter';
+            ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
+            ctx.fillStyle = 'rgba(142,166,191,0.95)';
+            ctx.fillText(playerProfile.lang === 'en' ? `Revives ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
             if (liveBoostLabels.length) {
                 ctx.fillStyle = 'rgba(89,255,155,0.95)';
                 ctx.fillText(liveBoostLabels.join(' · '), 18, 72);

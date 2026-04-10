@@ -42,8 +42,13 @@ body {
     overscroll-behavior-x: none;
 }
 
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
 body {
     position: relative;
+    -webkit-touch-callout: none;
 }
 
 body.modal-open {
@@ -64,7 +69,8 @@ body.runner-playing {
 }
 
 button,
-a {
+a,
+canvas {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -674,6 +680,8 @@ a {
     border-radius: 16px;
     transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, background 0.15s ease;
     touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .primary-btn:active,
