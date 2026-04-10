@@ -607,7 +607,8 @@
         hitless: true,
         timeAt500: null,
         message: '',
-        newbieAssist: false
+        newbieAssist: false,
+        pickupBursts: []
     };
 
     function t(key) {
@@ -1098,6 +1099,14 @@
         return meetsUnlock(def) && (unlock.gold || 0) <= playerProfile.gold;
     }
 
+    function isFreeCost(cost = {}) {
+        return (cost.gold || 0) <= 0 && (cost.core || 0) <= 0;
+    }
+
+    function canClaimFreeUnlock(def) {
+        return meetsUnlock(def) && isFreeCost(def.unlock || {});
+    }
+
     function getMissionState(mission) {
         const current = mission.current();
         const complete = current >= mission.target;
@@ -1472,7 +1481,7 @@
         if (cost.core) {
             labels.push(localize({ zh: `消耗能核 ${formatNumber(cost.core)}`, en: `Costs ${formatNumber(cost.core)} cores` }));
         }
-        if (!labels.length) {
+        if (!labels.length || isFreeCost(cost)) {
             labels.push(localize({ zh: '免费领取', en: 'Free claim' }));
         }
         return labels.map((text) => `<span class="shop-pill">${text}</span>`).join('');
@@ -1494,6 +1503,16 @@
         return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
             const remaining = getRemainingShopStock(offer.id);
             return remaining > 0 && canAffordCost(offer.cost);
+        }).length;
+    }
+
+    function getShopFreeClaimCount() {
+        if (ensureDailyShopState()) {
+            saveState();
+        }
+        return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
+            const remaining = getRemainingShopStock(offer.id);
+            return remaining > 0 && isFreeCost(offer.cost);
         }).length;
     }
 
@@ -1531,7 +1550,7 @@
             zh: `${localize(offer.title)} 已入库`,
             en: `${localize(offer.title)} added`
         }));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function getSelectedPaymentOffer() {
@@ -1979,7 +1998,7 @@
             zh: `充值成功：${localize(offer.name)} 奖励已到账`,
             en: `Top-up complete: ${localize(offer.name)} rewards granted`
         }));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
         return true;
     }
 
@@ -2501,6 +2520,16 @@
 
     function switchTab(tab, syncHash = true) {
         if (!['run', 'loadout', 'missions', 'season', 'shop'].includes(tab)) return;
+        if (tab === activeTab) {
+            if (syncHash && window.location.hash !== `#${activeTab}`) {
+                window.location.hash = activeTab;
+            }
+            updateTabBadges();
+            if (activeTab === 'run') {
+                requestAnimationFrame(resizeCanvas);
+            }
+            return;
+        }
         if (tab !== 'run' && game.running && !game.paused && !game.awaitingRevive) {
             pauseRun();
         }
@@ -2509,25 +2538,26 @@
             window.location.hash = activeTab;
         }
         renderPanel();
-        renderTabLayout();
+        renderTabLayout({ resetPanelScroll: true });
     }
 
-    function renderTabLayout() {
+    function renderTabLayout(options = {}) {
+        const resetPanelScroll = !!options.resetPanelScroll;
         document.body.dataset.runnerTab = activeTab;
         dom.runnerMain?.classList.toggle('is-run-tab', activeTab === 'run');
         dom.runnerMain?.classList.toggle('is-content-tab', activeTab !== 'run');
         dom.stageCard?.classList.toggle('is-tab-hidden', activeTab !== 'run');
         updateRuntimeBodyState();
-        if (dom.panelContent) {
+        if (resetPanelScroll && dom.panelContent) {
             dom.panelContent.scrollTop = 0;
         }
         requestAnimationFrame(resizeCanvas);
     }
 
     function getLoadoutAlertCount() {
-        const runners = RUNNERS.filter((item) => !isUnlocked('runners', item) && canPurchaseUnlock(item)).length;
-        const skills = ACTIVE_SKILLS.filter((item) => !isUnlocked('skills', item) && canPurchaseUnlock(item)).length;
-        const passives = PASSIVES.filter((item) => !isUnlocked('passives', item) && canPurchaseUnlock(item)).length;
+        const runners = RUNNERS.filter((item) => !isUnlocked('runners', item) && canClaimFreeUnlock(item)).length;
+        const skills = ACTIVE_SKILLS.filter((item) => !isUnlocked('skills', item) && canClaimFreeUnlock(item)).length;
+        const passives = PASSIVES.filter((item) => !isUnlocked('passives', item) && canClaimFreeUnlock(item)).length;
         return runners + skills + passives;
     }
 
@@ -2535,7 +2565,7 @@
         const missionCount = getClaimableMissionCount();
         const loadoutCount = getLoadoutAlertCount();
         const seasonCount = getClaimableSeasonRewardCount() + getClaimableSeasonSponsorRewardCount() + getClaimableRankRewardCount();
-        const shopCount = getShopAlertCount() + (!playerProfile.payment.passUnlocked ? 1 : 0);
+        const shopCount = getShopFreeClaimCount();
         Array.from(dom.tabBar.querySelectorAll('.tab-btn')).forEach((button) => {
             const tab = button.dataset.tab;
             const count = tab === 'missions'
@@ -2611,7 +2641,7 @@
                 en: `Reward claimed. Mission board advanced to Chapter ${advancedChapter}`
             })
             : t('missionClaimed'));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function claimSeasonReward(level) {
@@ -2623,7 +2653,7 @@
         saveState();
         playSfx('reward');
         showToast(localize({ zh: `已领取 Lv.${level} 赛季奖励`, en: `Claimed season reward Lv.${level}` }));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function claimSeasonSponsorReward(level) {
@@ -2635,7 +2665,7 @@
         saveState();
         playSfx('promote');
         showToast(localize({ zh: `已领取 Lv.${level} 赞助轨道奖励`, en: `Claimed sponsor reward Lv.${level}` }));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function claimRankReward(id) {
@@ -2647,7 +2677,7 @@
         saveState();
         playSfx('promote');
         showToast(localize({ zh: `已领取冲榜奖励：${localize(reward.title)}`, en: `Ladder reward claimed: ${localize(reward.title)}` }));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function unlockEntry(category, id) {
@@ -2663,7 +2693,7 @@
         saveState();
         playSfx('reward');
         showToast(t('unlocked'));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function equipEntry(type, id) {
@@ -2673,7 +2703,7 @@
         saveState();
         playSfx('move');
         showToast(t('equipped'));
-        renderAll();
+        renderAll({ preservePanelScroll: true });
     }
 
     function renderRunTab() {
@@ -3430,7 +3460,7 @@
 
                 ${FUNCTIONAL_SHOP_OFFERS.map((offer) => {
                     const remaining = getRemainingShopStock(offer.id);
-                    const freeClaim = (offer.cost.gold || 0) === 0 && (offer.cost.core || 0) === 0;
+                    const freeClaim = isFreeCost(offer.cost);
                     const actionable = remaining > 0 && canAffordCost(offer.cost);
                     const buttonLabel = remaining <= 0
                         ? t('shopSoldOut')
@@ -3466,16 +3496,24 @@
         `;
     }
 
-    function renderPanel() {
-        const htmlByTab = {
-            run: renderRunTab(),
-            loadout: renderLoadoutTab(),
-            missions: renderMissionsTab(),
-            season: renderSeasonTab(),
-            shop: renderShopTab()
-        };
-        dom.panelContent.innerHTML = htmlByTab[activeTab] || htmlByTab.run;
+    function renderPanel(options = {}) {
+        const preserveScroll = !!options.preserveScroll;
+        const previousScrollTop = preserveScroll && dom.panelContent ? dom.panelContent.scrollTop : 0;
+        const html = activeTab === 'loadout'
+            ? renderLoadoutTab()
+            : activeTab === 'missions'
+                ? renderMissionsTab()
+                : activeTab === 'season'
+                    ? renderSeasonTab()
+                    : activeTab === 'shop'
+                        ? renderShopTab()
+                        : renderRunTab();
+        dom.panelContent.innerHTML = html;
         updateTabBadges();
+        if (preserveScroll && dom.panelContent) {
+            const maxScrollTop = Math.max(0, dom.panelContent.scrollHeight - dom.panelContent.clientHeight);
+            dom.panelContent.scrollTop = Math.min(previousScrollTop, maxScrollTop);
+        }
     }
 
     function applyI18n() {
@@ -3583,7 +3621,8 @@
         document.body.classList.toggle('runner-playing', activeTab === 'run' && game.running);
     }
 
-    function renderAll() {
+    function renderAll(options = {}) {
+        const preservePanelScroll = !!options.preservePanelScroll;
         let shouldSave = false;
         if (ensureMissionBoardState()) {
             shouldSave = true;
@@ -3602,7 +3641,7 @@
         updateReviveOverlayCopy();
         renderSummary();
         renderHud();
-        renderPanel();
+        renderPanel({ preserveScroll: preservePanelScroll });
         renderPaymentOfferGrid();
         renderResultOverlayCard();
         renderPaymentOrderUI();
@@ -3800,6 +3839,7 @@
         game.timeAt500 = null;
         game.message = '';
         game.newbieAssist = playerProfile.totalRuns === 0;
+        game.pickupBursts = [];
         renderHud();
     }
 
@@ -3833,11 +3873,15 @@
     }
 
     function startRun() {
+        if (activeTab !== 'run') {
+            activeTab = 'run';
+        }
+        renderTabLayout();
+        resizeCanvas();
         resetRunState();
         applyRunBoosts();
         resetResultOverlayScroll();
         hideOverlays();
-        dom.stageCard?.scrollIntoView({ block: 'start', behavior: 'auto' });
         game.running = true;
         renderAll();
         playSfx('start');
@@ -4106,6 +4150,23 @@
         }
     }
 
+    function spawnPickupBurst(type, obj) {
+        const label = type === 'coin'
+            ? localize({ zh: '+1 金币', en: '+1 Gold' })
+            : localize({ zh: '+1 能量', en: '+1 Energy' });
+        game.pickupBursts.push({
+            type,
+            lane: obj.lane,
+            z: Math.max(10, obj.z),
+            label,
+            life: 0.68,
+            duration: 0.68
+        });
+        if (game.pickupBursts.length > 10) {
+            game.pickupBursts.splice(0, game.pickupBursts.length - 10);
+        }
+    }
+
     function handleCollision(obj) {
         const passive = getPassive(playerProfile.loadout.passive);
         const sameLane = obj.lane === game.lane;
@@ -4118,11 +4179,13 @@
                 game.score += 35 + game.combo * 2;
                 game.overclock = Math.min(100, game.overclock + 1.5);
                 playSfx('coin');
+                spawnPickupBurst('coin', obj);
             } else {
                 game.coreRun += 1;
                 game.score += 50;
                 game.overclock = Math.min(100, game.overclock + 8);
                 playSfx('energy');
+                spawnPickupBurst('energy', obj);
             }
             obj.remove = true;
             return;
@@ -4221,7 +4284,7 @@
                 ? tuning.obstacleApproachMultiplier
                 : 1;
             obj.z -= game.speedCurrent * dt * 3.8 * approachMultiplier;
-            if (obj.type === 'coin' && passive.id === 'magnet' && Math.abs(obj.lane - game.lane) <= 1 && obj.z < 32) {
+            if ((obj.type === 'coin' || obj.type === 'energy') && passive.id === 'magnet' && Math.abs(obj.lane - game.lane) <= 1 && obj.z < 32) {
                 obj.lane = game.lane;
             }
             if (obj.z <= 9) {
@@ -4229,6 +4292,11 @@
             }
         });
         game.objects = game.objects.filter((obj) => !obj.remove && obj.z > -10);
+        game.pickupBursts = game.pickupBursts.filter((burst) => {
+            burst.life = Math.max(0, burst.life - dt);
+            burst.z = Math.max(6, burst.z - game.speedCurrent * dt * 1.25);
+            return burst.life > 0;
+        });
 
         if (passive.id === 'resonance' && game.combo >= 12) {
             game.overclock = Math.min(100, game.overclock + dt * 4.5);
@@ -4782,6 +4850,41 @@
                 }
             }
             ctx.shadowBlur = 0;
+        });
+
+        game.pickupBursts.forEach((burst) => {
+            const { x, y, size } = projectObject({ lane: burst.lane, z: burst.z }, width, height, compactScene, roadMetrics);
+            const progress = 1 - (burst.life / burst.duration);
+            const rise = 18 + progress * (22 + size * 0.26);
+            const burstScale = 0.12 + progress * 0.11;
+            const alpha = Math.max(0, Math.min(1, 1 - progress * 1.05));
+            const glowColor = burst.type === 'coin' ? '255,214,107' : '87,229,255';
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = `rgba(${glowColor},0.82)`;
+            ctx.lineWidth = Math.max(2, size * 0.05);
+            ctx.beginPath();
+            ctx.arc(x, y - rise * 0.18, size * burstScale, 0, Math.PI * 2);
+            ctx.stroke();
+
+            for (let index = 0; index < 4; index += 1) {
+                const angle = (Math.PI * 2 * index) / 4 + progress * 1.6;
+                const radius = size * (0.12 + progress * 0.18);
+                const particleX = x + Math.cos(angle) * radius;
+                const particleY = y - rise * 0.18 + Math.sin(angle) * radius * 0.55;
+                ctx.fillStyle = `rgba(${glowColor},0.9)`;
+                ctx.beginPath();
+                ctx.arc(particleX, particleY, Math.max(1.5, size * 0.032), 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = `rgba(255,255,255,${0.98 * alpha})`;
+            ctx.font = `800 ${Math.max(12, size * 0.18)}px Inter`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(burst.label, x, y - rise - size * 0.24);
+            ctx.restore();
         });
 
         const playerX = getRunnerLaneCenter(roadMetrics, game.x, compactScene ? 0.92 : 0.9);
