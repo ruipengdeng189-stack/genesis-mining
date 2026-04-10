@@ -7,7 +7,7 @@
     const SEASON_LENGTH_MS = 14 * 24 * 60 * 60 * 1000;
     const PAYMENT_API_BASE = '/api';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
-    const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 6;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
     const NEWBIE_ASSIST_DISTANCE = 900;
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
@@ -15,128 +15,126 @@
 
     const TEXT = {
         zh: {
-            backHub: '杩斿洖澶у巺',
-            runnerEyebrow: '楂橀€熻窇閰锋寮忕増',
-            runnerTitle: '鍒涗笘鐤捐窇',
-            runnerSubtitle: '涓夎溅閬?路 闇撹櫣闂伩 路 鐖藉揩鍐叉',
-            goldLabel: '閲戝竵',
-            coreLabel: '鑳芥牳',
-            bestLabel: '鏈€浣宠窛绂?,
-            distanceLabel: '璺濈',
-            scoreLabel: '绉垎',
-            comboLabel: '杩炲嚮',
+            backHub: '返回大厅',
+            runnerEyebrow: '高速跑酷正式版',
+            runnerTitle: '创世疾跑',
+            runnerSubtitle: '三车道 · 霓虹闪避 · 爽快冲榜',
+            goldLabel: '金币',
+            coreLabel: '能核',
+            bestLabel: '最佳距离',
+            distanceLabel: '距离',
+            scoreLabel: '积分',
+            comboLabel: '连击',
             startKicker: 'NEON RUSH',
-            startTitle: '鍑嗗鍐插埡',
-            startDesc: '宸﹀彸鍒囬亾锛屼笂婊戣烦璺冿紝涓嬫粦婊戦摬锛屽敖鍙兘鍚冩弧閲戝竵涓庤兘閲忋€?,
-            startRun: '寮€濮嬭窇閰?,
-            pauseTitle: '宸叉殏鍋?,
-            resumeRun: '缁х画',
-            endRun: '缁撴潫鏈眬',
+            startTitle: '准备冲刺',
+            startDesc: '左右切道，上滑跳跃，下滑滑铲，尽可能吃满金币与能量。',
+            startRun: '开始跑酷',
+            pauseTitle: '已暂停',
+            resumeRun: '继续',
+            endRun: '结束本局',
             reviveKicker: 'SECOND CHANCE',
-            reviveTitle: '鏄惁绔嬪嵆澶嶆椿锛?,
-            reviveDesc: '澶嶆椿浠呮秷鑰楄兘鏍搞€傛瘡灞€鏈€澶氬娲?2 娆★紝鍏呭€煎鍔辫鍓嶅線鍟嗗簵楠岃瘉棰嗗彇銆?,
-            reviveBtn: '娑堣€?20 鑳芥牳澶嶆椿',
-            skipRevive: '鐩存帴缁撶畻',
+            reviveTitle: '是否立即复活？',
+            reviveDesc: '复活仅消耗能核。每局最多复活 2 次，充值奖励请前往商店验证领取。',
+            reviveBtn: '消耗 20 能核复活',
+            skipRevive: '直接结算',
             resultKicker: 'RUN COMPLETE',
-            resultTitle: '鏈眬缁撶畻',
-            resultClose: '鍏抽棴',
-            goldGainLabel: '閲戝竵鏀剁泭',
-            coreGainLabel: '鑳芥牳鏀剁泭',
-            restartRun: '鍐嶆潵涓€灞€',
-            overclockLabel: '瓒呴',
-            skillLabel: '鎶€鑳藉喎鍗?,
-            leftBtn: '宸︾Щ',
-            jumpBtn: '璺宠穬',
-            rightBtn: '鍙崇Щ',
-            slideBtn: '婊戦摬',
-            skillBtn: '閲婃斁鎶€鑳?,
-            overclockBtn: '瓒呴鍐插埡',
-            pauseBtn: '鏆傚仠',
-            tabRun: '璺戦叿',
-            tabLoadout: '瑁呴厤',
-            tabMissions: '浠诲姟',
-            tabSeason: '璧涘',
-            tabShop: '鍟嗗簵',
-            pausedToast: '宸叉殏鍋滄湰灞€',
-            resumedToast: '缁х画鍐插埡',
-            overclockReady: '瓒呴宸插厖婊?,
-            overclockActive: '杩涘叆瓒呴鍐插埡',
-            overclockNeed: '瓒呴鑳介噺涓嶈冻',
-            skillShield: '鎶ょ浘灞曞紑',
-            skillDash: '鐩镐綅鍐插埡鍚姩',
-            skillCooling: '鎶€鑳藉喎鍗翠腑',
-            notEnoughGold: '閲戝竵涓嶈冻',
-            notEnoughCore: '鑳芥牳涓嶈冻锛屾棤娉曞娲?,
-            revived: '澶嶆椿鎴愬姛锛岀户缁啿姒?,
-            missionClaimed: '浠诲姟濂栧姳宸查鍙?,
-            equipped: '宸插垏鎹㈣閰?,
-            unlocked: '瑙ｉ攣鎴愬姛',
-            topupShopInfo: '鎵€鏈夊厖鍊肩ぜ鍖呴兘浼氬湪閾句笂鏍￠獙鎴愬姛鍚庡嵆鏃跺彂濂栵紝骞跺悓姝ヨВ閿佽禐鍔╄建閬撱€?,
-            runPanelTitle: '浠婃棩璧涢亾',
-            runPanelDesc: '鐭眬鐖芥劅浼樺厛锛屾牳蹇冩槸鈥滃啀鏉ヤ竴鎶娾€濈殑楂橀€熷惊鐜€?,
-            runBriefEyebrow: '璧涢亾绠€鎶?,
-            runBriefBtn: '鏌ョ湅璇︽儏',
-            runEvent1: '闇撹櫣椋庢毚',
-            runEvent1Desc: '闅滅鍒锋柊鏇村揩锛屼絾鑳介噺鑳跺泭鍑虹幇鐜囨彁鍗囥€?,
-            runEvent2: '杩炲嚮璇曠偧',
-            runEvent2Desc: '淇濇寔 20 杩炲嚮鍚庯紝閲戝竵寰楀垎鍔犳垚澶у箙鎻愰珮銆?,
-            runEvent3: '璧涘鑴夊啿',
-            runEvent3Desc: '姣忚窇婊?800m 棰濆鑾峰緱璧涘缁忛獙涓庡啿姒滃垎銆?,
-            legendCoin: '閲戝竵濂栧姳',
-            legendEnergy: '鑳介噺濂栧姳',
-            legendWall: '绾㈣壊鍗遍櫓澧?,
-            legendGuide: '鈫戣烦鏍?路 鈫撴粦闂?,
-            newbieAssistBadge: '鏂版墜淇濇姢',
-            newbieAssistHint: '棣栧眬鍓?900m 闅滅鍑忛€熷苟鏀剧紦鍒锋柊锛屽厛鐔熸倝璺宠穬鍜屾粦閾茶妭濂忋€?,
-            newbieAssistToast: '鏂版墜淇濇姢宸插紑鍚細鍓?900m 闅滅鏇存參銆佹洿鏄撹瀵?,
-            controlsTitle: '鎿嶄綔鎻愮ず',
-            controlsDesc: '鎵嬫満鏀寔宸﹀彸鐐瑰嚮鍒囬亾銆佷笂婊戣烦璺冦€佷笅婊戞粦閾诧紱妗岄潰涔熸敮鎸佹柟鍚戦敭涓庣┖鏍笺€?,
-            statCurrentRunner: '褰撳墠瑙掕壊',
-            statCurrentSkill: '涓诲姩鎶€鑳?,
-            statCurrentPassive: '琚姩鑺墖',
-            loadoutTitle: '瑁呴厤閰嶇疆',
-            loadoutDesc: '瑙掕壊璐熻矗鎵嬫劅宸紓锛屾妧鑳借礋璐ｅ叧閿€嗚浆锛岃鍔ㄨ姱鐗囧喅瀹氶暱鏈熷吇鎴愭柟鍚戙€?,
-            runnerTagStarter: '鍒濆鍙敤',
-            runnerTagUnlock: '杈炬垚鏉′欢瑙ｉ攣',
-            runnerEquip: '瑁呭',
-            runnerUnlock: '瑙ｉ攣',
-            runnerEquipped: '宸茶澶?,
-            skillSection: '鎶€鑳芥ā鍧?,
-            passiveSection: '琚姩鑺墖',
-            missionsTitle: '浠诲姟涓績',
-            missionsDesc: '鐢ㄤ换鍔℃媺璧风煭鏈熺洰鏍囦笌鍥炴祦鑺傚銆?,
-            missionClaim: '棰嗗彇濂栧姳',
-            missionDone: '宸插畬鎴?,
-            missionLocked: '鏈畬鎴?,
-            seasonTitle: '璧涘杞ㄩ亾',
-            seasonDesc: '璧涘绛夌骇鍥寸粫娲昏穬灞€鏁般€侀噷绋嬪拰鍐叉琛ㄧ幇鎴愰暱銆?,
-            seasonLevel: '璧涘绛夌骇',
-            seasonXp: '璧涘缁忛獙',
-            seasonNext: '璺濈涓嬩竴绾?,
-            shopTitle: '琛ョ粰鍟嗗簵',
-            shopDesc: '浣跨敤娓告垙鍐呰祫婧愭崲鍗虫椂澧炵泭锛岀洿鎺ュ己鍖栨帴涓嬫潵鍑犲眬璺戦叿銆?,
-            shopPreview: '浠呴瑙?,
-            shopHot: '楂樿浆鍖?,
-            shopValue: '楂樹环鍊?,
-            shopClaim: '鍏嶈垂棰嗗彇',
-            shopBuy: '绔嬪嵆璐拱',
-            shopSoldOut: '浠婃棩鍞絼',
-            shopUnavailable: '璧勬簮涓嶈冻',
-            freeReviveUsed: '宸蹭娇鐢ㄥ厤璐瑰娲伙紝缁х画鍐叉',
-            freeReviveReady: '鏈眬宸叉惡甯﹀厤璐瑰娲?,
-            bestToast: '鍒锋柊鏈€浣宠窛绂?,
-            runReadyToast: '璧涢亾宸插姞杞斤紝鍑嗗璧疯窇',
-            hitWall: '鎾炲嚮闅滅锛屽啿鍒轰腑鏂?,
-            seasonReward: '璧涘濂栧姳',
-            rankTitle: '鍐叉璇勭骇',
-            rankDesc: '璺濈銆佽繛鍑诲拰鏃犱激琛ㄧ幇涓€璧峰喅瀹氳窇閰疯瘎鍒嗐€?,
-            touchHint: '鐐瑰嚮宸﹀彸鍒囬亾 路 涓婃粦璺宠穬 路 涓嬫粦婊戦摬'
+            resultTitle: '本局结算',
+            resultClose: '关闭',
+            goldGainLabel: '金币收益',
+            coreGainLabel: '能核收益',
+            restartRun: '再来一局',
+            overclockLabel: '超频',
+            skillLabel: '技能冷却',
+            leftBtn: '左移',
+            jumpBtn: '跳跃',
+            rightBtn: '右移',
+            slideBtn: '滑铲',
+            skillBtn: '释放技能',
+            overclockBtn: '超频冲刺',
+            pauseBtn: '暂停',
+            tabRun: '跑酷',
+            tabLoadout: '装配',
+            tabMissions: '任务',
+            tabSeason: '赛季',
+            tabShop: '商店',
+            pausedToast: '已暂停本局',
+            resumedToast: '继续冲刺',
+            overclockReady: '超频已充满',
+            overclockActive: '进入超频冲刺',
+            overclockNeed: '超频能量不足',
+            skillShield: '护盾展开',
+            skillDash: '相位冲刺启动',
+            skillCooling: '技能冷却中',
+            notEnoughGold: '金币不足',
+            notEnoughCore: '能核不足，无法复活',
+            revived: '复活成功，继续冲榜',
+            missionClaimed: '任务奖励已领取',
+            equipped: '已切换装配',
+            unlocked: '解锁成功',
+            topupShopInfo: '所有充值礼包都会在链上校验成功后即时发奖，并同步解锁赞助轨道。',
+            runPanelTitle: '今日赛道',
+            runPanelDesc: '短局爽感优先，核心是“再来一把”的高速循环。',
+            runEvent1: '霓虹风暴',
+            runEvent1Desc: '障碍刷新更快，但能量胶囊出现率提升。',
+            runEvent2: '连击试炼',
+            runEvent2Desc: '保持 20 连击后，金币得分加成大幅提高。',
+            runEvent3: '赛季脉冲',
+            runEvent3Desc: '每跑满 800m 额外获得赛季经验与冲榜分。',
+            legendCoin: '金币奖励',
+            legendEnergy: '能量奖励',
+            legendWall: '红色危险墙',
+            legendGuide: '↑跳栏 · ↓滑门',
+            newbieAssistBadge: '新手保护',
+            newbieAssistHint: '首局前 900m 障碍减速并放缓刷新，先熟悉跳跃和滑铲节奏。',
+            newbieAssistToast: '新手保护已开启：前 900m 障碍更慢、更易观察',
+            controlsTitle: '操作提示',
+            controlsDesc: '手机支持左右点击切道、上滑跳跃、下滑滑铲；桌面也支持方向键与空格。',
+            statCurrentRunner: '当前角色',
+            statCurrentSkill: '主动技能',
+            statCurrentPassive: '被动芯片',
+            loadoutTitle: '装配配置',
+            loadoutDesc: '角色负责手感差异，技能负责关键逆转，被动芯片决定长期养成方向。',
+            runnerTagStarter: '初始可用',
+            runnerTagUnlock: '达成条件解锁',
+            runnerEquip: '装备',
+            runnerUnlock: '解锁',
+            runnerEquipped: '已装备',
+            skillSection: '技能模块',
+            passiveSection: '被动芯片',
+            missionsTitle: '任务中心',
+            missionsDesc: '用任务拉起短期目标与回流节奏。',
+            missionClaim: '领取奖励',
+            missionDone: '已完成',
+            missionLocked: '未完成',
+            seasonTitle: '赛季轨道',
+            seasonDesc: '赛季等级围绕活跃局数、里程和冲榜表现成长。',
+            seasonLevel: '赛季等级',
+            seasonXp: '赛季经验',
+            seasonNext: '距离下一级',
+            shopTitle: '补给商店',
+            shopDesc: '使用游戏内资源换即时增益，直接强化接下来几局跑酷。',
+            shopPreview: '仅预览',
+            shopHot: '高转化',
+            shopValue: '高价值',
+            shopClaim: '免费领取',
+            shopBuy: '立即购买',
+            shopSoldOut: '今日售罄',
+            shopUnavailable: '资源不足',
+            freeReviveUsed: '已使用免费复活，继续冲榜',
+            freeReviveReady: '本局已携带免费复活',
+            bestToast: '刷新最佳距离',
+            runReadyToast: '赛道已加载，准备起跑',
+            hitWall: '撞击障碍，冲刺中断',
+            seasonReward: '赛季奖励',
+            rankTitle: '冲榜评级',
+            rankDesc: '距离、连击和无伤表现一起决定跑酷评分。',
+            touchHint: '点击左右切道 · 上滑跳跃 · 下滑滑铲'
         },
         en: {
             backHub: 'Back To Hub',
             runnerEyebrow: 'Full Runner Release',
             runnerTitle: 'Genesis Rush',
-            runnerSubtitle: '3 Lanes 路 Neon Dodges 路 Rank Pressure',
+            runnerSubtitle: '3 Lanes · Neon Dodges · Rank Pressure',
             goldLabel: 'Gold',
             coreLabel: 'Cores',
             bestLabel: 'Best Distance',
@@ -192,8 +190,6 @@
             topupShopInfo: 'Verified top-up packs grant rewards instantly after on-chain confirmation and also unlock the sponsor track.',
             runPanelTitle: 'Today\'s Track',
             runPanelDesc: 'Short-run excitement first, designed around a fast one-more-run loop.',
-            runBriefEyebrow: 'Run Brief',
-            runBriefBtn: 'View Details',
             runEvent1: 'Neon Storm',
             runEvent1Desc: 'Faster obstacle pacing, but more energy capsules spawn.',
             runEvent2: 'Combo Trial',
@@ -203,7 +199,7 @@
             legendCoin: 'Coin Reward',
             legendEnergy: 'Energy Reward',
             legendWall: 'Red Crash Wall',
-            legendGuide: '鈫?Jump 路 鈫?Slide',
+            legendGuide: '↑ Jump · ↓ Slide',
             newbieAssistBadge: 'NEWBIE',
             newbieAssistHint: 'Before 900m in your first run, obstacles move slower and spawn more gently.',
             newbieAssistToast: 'Newbie assist active: early obstacles are slower and easier to read',
@@ -248,7 +244,7 @@
             seasonReward: 'Season rewards',
             rankTitle: 'Rank Rating',
             rankDesc: 'Distance, combo and clean dodges together define your run rating.',
-            touchHint: 'Tap left/right to lane swap 路 swipe up jump 路 swipe down slide'
+            touchHint: 'Tap left/right to lane swap · swipe up jump · swipe down slide'
         }
     };
 
@@ -256,65 +252,58 @@
         {
             id: 'flash',
             accent: '#57e5ff',
-            title: { zh: '闇撹櫣鐤惧奖', en: 'Neon Flash' },
-            desc: { zh: '鍩虹鍨嬮珮閫熻鑹诧紝杞悜鐏垫晱锛岄€傚悎浣滀负榛樿涓婃墜鏈轰綋銆?, en: 'Balanced starter runner with responsive lane changes.' },
+            title: { zh: '霓虹疾影', en: 'Neon Flash' },
+            desc: { zh: '基础型高速角色，转向灵敏，适合作为默认上手机体。', en: 'Balanced starter runner with responsive lane changes.' },
             unlock: { type: 'default', value: 0 },
-            stats: { speed: 1, combo: 1, control: 1.1 },
-            upgradeScale: 1
+            stats: { speed: 1, combo: 1, control: 1.1 }
         },
         {
             id: 'volt',
             accent: '#ffd66b',
-            title: { zh: '鐢靛姬绌挎鑰?, en: 'Arc Volt' },
-            desc: { zh: '鍋忓悜閲戝竵鏀剁泭涓庤兘閲忓惊鐜紝閫傚悎杩芥眰璧勬簮鐨勪腑鏈熻鑹层€?, en: 'Better gold flow and overclock gain for mid-game farming.' },
-            unlock: { type: 'bestDistance', value: 900, gold: 3600, core: 0 },
-            stats: { speed: 1.06, combo: 1, control: 1 },
-            upgradeScale: 1.08
+            title: { zh: '电弧穿梭者', en: 'Arc Volt' },
+            desc: { zh: '偏向金币收益与能量循环，适合追求资源的中期角色。', en: 'Better gold flow and overclock gain for mid-game farming.' },
+            unlock: { type: 'bestDistance', value: 900, gold: 1400 },
+            stats: { speed: 1.06, combo: 1, control: 1 }
         },
         {
             id: 'prism',
             accent: '#a46bff',
-            title: { zh: '妫遍暅瑁傜┖鑰?, en: 'Prism Splitter' },
-            desc: { zh: '楂橀闄╅珮鏀剁泭锛屽啿姒滃垎涓庤繛鍑绘垚闀挎洿寮恒€?, en: 'High-risk, high-reward runner built for ladder score pushes.' },
-            unlock: { type: 'totalRuns', value: 8, gold: 7600, core: 18 },
-            stats: { speed: 1.08, combo: 1.15, control: 0.96 },
-            upgradeScale: 1.18
+            title: { zh: '棱镜裂空者', en: 'Prism Splitter' },
+            desc: { zh: '高风险高收益，冲榜分与连击成长更强。', en: 'High-risk, high-reward runner built for ladder score pushes.' },
+            unlock: { type: 'totalRuns', value: 6, gold: 2600 },
+            stats: { speed: 1.08, combo: 1.15, control: 0.96 }
         }
     ];
 
     const ACTIVE_SKILLS = [
         {
             id: 'shield',
-            title: { zh: '鍋忔尟鎶ょ浘', en: 'Polar Shield' },
-            desc: { zh: '鑾峰緱 3 绉掓姢鐩撅紝鎸′綇涓€娆¤嚧鍛芥挒鍑汇€?, en: 'Gain a 3-second shield that blocks one fatal hit.' },
+            title: { zh: '偏振护盾', en: 'Polar Shield' },
+            desc: { zh: '获得 3 秒护盾，挡住一次致命撞击。', en: 'Gain a 3-second shield that blocks one fatal hit.' },
             unlock: { type: 'default', value: 0 },
-            cooldown: 14,
-            upgradeScale: 1
+            cooldown: 14
         },
         {
             id: 'dash',
-            title: { zh: '鐩镐綅鍐插埡', en: 'Phase Dash' },
-            desc: { zh: '绔嬪埢娓呴櫎鍓嶆柟杩戣窛绂婚殰纰嶅苟琛ュ厖瓒呴銆?, en: 'Clear nearby obstacles instantly and fill overclock.' },
-            unlock: { type: 'seasonLevel', value: 3, gold: 4200, core: 12 },
-            cooldown: 12,
-            upgradeScale: 1.12
+            title: { zh: '相位冲刺', en: 'Phase Dash' },
+            desc: { zh: '立刻清除前方近距离障碍并补充超频。', en: 'Clear nearby obstacles instantly and fill overclock.' },
+            unlock: { type: 'seasonLevel', value: 3, gold: 1600 },
+            cooldown: 12
         }
     ];
 
     const PASSIVES = [
         {
             id: 'magnet',
-            title: { zh: '纾佹毚鐗靛紩', en: 'Magnet Pull' },
-            desc: { zh: '鍚搁檮鐩搁偦杞﹂亾鐨勯噾甯佷笌鑳介噺銆?, en: 'Attract coins and energy from adjacent lanes.' },
-            unlock: { type: 'default', value: 0 },
-            upgradeScale: 1
+            title: { zh: '磁暴牵引', en: 'Magnet Pull' },
+            desc: { zh: '吸附相邻车道的金币与能量。', en: 'Attract coins and energy from adjacent lanes.' },
+            unlock: { type: 'default', value: 0 }
         },
         {
             id: 'resonance',
-            title: { zh: '璋愭尟鍥炶矾', en: 'Resonance Loop' },
-            desc: { zh: '楂樿繛鍑绘椂瓒呴澧為暱鏇村揩锛岄€傚悎鍐叉銆?, en: 'Boost overclock gain at high combo for ladder pushes.' },
-            unlock: { type: 'totalDistance', value: 3000, gold: 5400, core: 16 },
-            upgradeScale: 1.15
+            title: { zh: '谐振回路', en: 'Resonance Loop' },
+            desc: { zh: '高连击时超频增长更快，适合冲榜。', en: 'Boost overclock gain at high combo for ladder pushes.' },
+            unlock: { type: 'totalDistance', value: 3000, gold: 2000 }
         }
     ];
 
@@ -323,77 +312,65 @@
             id: 'starter',
             price: 1.0,
             accent: '#57e5ff',
-            badge: { zh: '棣栧厖鎺ㄨ崘', en: 'Starter' },
-            name: { zh: '璧疯窇琛ョ粰', en: 'Recovery Pack' },
-            desc: { zh: '琛ヨ冻鍓嶆湡閲戝竵銆佽兘鏍镐笌棣栬疆澧炵泭锛岄€傚悎蹇€熸妸鑺傚璺戣捣鏉ャ€?, en: 'A steady first top-up that stabilizes gold, cores, and your first boost cycle.' },
-            reward: { gold: 4000, core: 40, xp: 180, starterOverclockRuns: 2, settlementBoostRuns: 1, label: { zh: '鍙洿鎺ユ姇鍏ユ案涔呭崌绾?, en: 'Feeds permanent upgrades' } }
+            badge: { zh: '首充推荐', en: 'Starter' },
+            name: { zh: '起跑补给', en: 'Recovery Pack' },
+            desc: { zh: '补足前期金币、能核与首轮增益，适合快速把节奏跑起来。', en: 'A steady first top-up that stabilizes gold, cores, and your first boost cycle.' },
+            reward: { gold: 4000, core: 40, xp: 180, starterOverclockRuns: 2, settlementBoostRuns: 1 }
         },
         {
             id: 'accelerator',
             price: 2.99,
             accent: '#ff8fe8',
-            badge: { zh: '楂樻€т环姣?, en: 'Value' },
-            name: { zh: '瓒呴鎺ㄨ繘鍖?, en: 'Hyper Pack' },
-            desc: { zh: '鎻愰珮涓湡璧勬簮涓庤秴棰戝惊鐜紝璁╄窇灞€鏇村鏄撹繘鍏ョ埥鐐广€?, en: 'Builds a stronger mid-game loop with more resources and faster overclock pacing.' },
-            reward: { gold: 12000, core: 120, xp: 460, starterOverclockRuns: 4, settlementBoostRuns: 3, freeRevives: 1, label: { zh: '閫傚悎瑙ｉ攣骞跺崌绾ф妧鑳?, en: 'Great for unlocks and skill upgrades' } }
+            badge: { zh: '高性价比', en: 'Value' },
+            name: { zh: '超频推进包', en: 'Hyper Pack' },
+            desc: { zh: '提高中期资源与超频循环，让跑局更容易进入爽点。', en: 'Builds a stronger mid-game loop with more resources and faster overclock pacing.' },
+            reward: { gold: 12000, core: 120, xp: 460, starterOverclockRuns: 4, settlementBoostRuns: 3, freeRevives: 1 }
         },
         {
             id: 'rush',
             price: 3.99,
             accent: '#ffb168',
-            badge: { zh: '鍐叉鍖?, en: 'Rush' },
-            name: { zh: '鍐叉鑴夊啿鍖?, en: 'Rank Surge Pack' },
-            desc: { zh: '鍋忓悜楂樺垎杩藉嚮锛岃ˉ瓒抽珮鍘嬭窇娉曢渶瑕佺殑閲戝竵銆佺粡楠屼笌瀹归敊銆?, en: 'A ladder-focused bundle that supports high-score attempts with safer retries.' },
-            reward: { gold: 20000, core: 180, xp: 720, starterOverclockRuns: 3, settlementBoostRuns: 5, freeRevives: 2, label: { zh: '涓湡寮哄害璺冭縼鍖?, en: 'Mid-game power spike' } }
+            badge: { zh: '冲榜包', en: 'Rush' },
+            name: { zh: '冲榜脉冲包', en: 'Rank Surge Pack' },
+            desc: { zh: '偏向高分追击，补足高压跑法需要的金币、经验与容错。', en: 'A ladder-focused bundle that supports high-score attempts with safer retries.' },
+            reward: { gold: 20000, core: 180, xp: 720, starterOverclockRuns: 3, settlementBoostRuns: 5, freeRevives: 2 }
         },
         {
             id: 'sovereign',
             price: 5.99,
             accent: '#ffe27b',
-            badge: { zh: '缁熸不鍖?, en: 'Core' },
-            name: { zh: '缁熸不鍗忓畾', en: 'Dominance Pack' },
-            desc: { zh: '涓€鍙ｆ皵鎶珮鍚庢湡鍏绘垚寮哄害锛屽悓鏃惰В閿佹湰璧涘璧炲姪杞ㄩ亾銆?, en: 'A stronger late-loop injection that also makes the sponsor lane feel meaningful.' },
-            reward: { gold: 42000, core: 320, xp: 1180, starterOverclockRuns: 5, settlementBoostRuns: 8, freeRevives: 3, label: { zh: '鍚庢湡姘镐箙鍏绘垚琛ョ粰', en: 'Late-loop permanent growth' } }
+            badge: { zh: '统治包', en: 'Core' },
+            name: { zh: '统治协定', en: 'Dominance Pack' },
+            desc: { zh: '一口气抬高后期养成强度，同时解锁本赛季赞助轨道。', en: 'A stronger late-loop injection that also makes the sponsor lane feel meaningful.' },
+            reward: { gold: 42000, core: 320, xp: 1180, starterOverclockRuns: 5, settlementBoostRuns: 8, freeRevives: 3 }
         },
         {
             id: 'nexus',
             price: 9.99,
             accent: '#7dffb3',
-            badge: { zh: '鍚庢湡鏍稿績', en: 'Endgame' },
-            name: { zh: '鏍稿績鏋㈢航鍖?, en: 'T4 Nexus Pack' },
-            desc: { zh: '閫傚悎鍐茶禌瀛ｅ悗娈典笌瀹堟锛屽偍澶囪冻澶熻鐩栧杞珮鍘嬪皾璇曘€?, en: 'Designed for deep-season defense and multiple high-pressure scoring attempts.' },
-            reward: { gold: 78000, core: 520, xp: 1800, starterOverclockRuns: 8, settlementBoostRuns: 12, freeRevives: 5, label: { zh: '缁堢洏瑁呴厤鍩瑰吇涓诲姏鍖?, en: 'Endgame build funding' } }
+            badge: { zh: '后期核心', en: 'Endgame' },
+            name: { zh: '核心枢纽包', en: 'T4 Nexus Pack' },
+            desc: { zh: '适合冲赛季后段与守榜，储备足够覆盖多轮高压尝试。', en: 'Designed for deep-season defense and multiple high-pressure scoring attempts.' },
+            reward: { gold: 78000, core: 520, xp: 1800, starterOverclockRuns: 8, settlementBoostRuns: 12, freeRevives: 5 }
         },
         {
             id: 'throne',
             price: 12.99,
             accent: '#89c9ff',
-            badge: { zh: '鐜嬪骇绾?, en: 'Summit' },
-            name: { zh: '鐜嬪骇鍗忚', en: 'Throne Protocol' },
-            desc: { zh: '椤剁骇绀煎寘锛岃鐩栧啿姒溿€佽禌瀛ｃ€佺画鑸笁鏉′富绾匡紝鐩存帴杩涘叆鍚庢湡鎺ㄨ繘鑺傚銆?, en: 'A top-end bundle that powers ladder, season, and sustain all at once.' },
-            reward: { gold: 120000, core: 780, xp: 2600, starterOverclockRuns: 12, settlementBoostRuns: 18, freeRevives: 8, label: { zh: '婊￠厤鍐叉鎺ㄨ繘鍖?, en: 'Max-build ladder push' } }
+            badge: { zh: '王座级', en: 'Summit' },
+            name: { zh: '王座协议', en: 'Throne Protocol' },
+            desc: { zh: '顶级礼包，覆盖冲榜、赛季、续航三条主线，直接进入后期推进节奏。', en: 'A top-end bundle that powers ladder, season, and sustain all at once.' },
+            reward: { gold: 120000, core: 780, xp: 2600, starterOverclockRuns: 12, settlementBoostRuns: 18, freeRevives: 8 }
         }
     ];
-
-    const LOADOUT_UPGRADE_CAPS = {
-        runners: 10,
-        skills: 8,
-        passives: 8
-    };
-
-    const LOADOUT_UPGRADE_COSTS = {
-        runners: { goldBase: 900, goldStep: 520, coreBase: 0, coreStep: 0 },
-        skills: { goldBase: 700, goldStep: 420, coreBase: 8, coreStep: 3 },
-        passives: { goldBase: 640, goldStep: 380, coreBase: 6, coreStep: 3 }
-    };
 
     const FUNCTIONAL_SHOP_OFFERS = [
         {
             id: 'daily-cache',
             accent: '#57e5ff',
             stock: 1,
-            title: { zh: '姣忔棩琛ョ粰绠?, en: 'Daily Supply Cache' },
-            desc: { zh: '姣忓ぉ鍙厤璐归鍙栦竴娆★紝缁欎綘绋冲畾鐨勫紑灞€璧勬簮銆?, en: 'Free once per day to keep your session loop moving.' },
+            title: { zh: '每日补给箱', en: 'Daily Supply Cache' },
+            desc: { zh: '每天可免费领取一次，给你稳定的开局资源。', en: 'Free once per day to keep your session loop moving.' },
             cost: { gold: 0, core: 0 },
             reward: { gold: 520, core: 4 }
         },
@@ -401,8 +378,8 @@
             id: 'core-crate',
             accent: '#ffd66b',
             stock: 2,
-            title: { zh: '鑳芥牳琛ュ厖鍖?, en: 'Core Refill Crate' },
-            desc: { zh: '鐢ㄩ噾甯佹崲鍙栨洿澶氳兘鏍革紝闄嶄綆澶嶆椿鍜屾妧鑳借瘯閿欏帇鍔涖€?, en: 'Convert gold into cores so revives and retries feel less punishing.' },
+            title: { zh: '能核补充包', en: 'Core Refill Crate' },
+            desc: { zh: '用金币换取更多能核，降低复活和技能试错压力。', en: 'Convert gold into cores so revives and retries feel less punishing.' },
             cost: { gold: 1600, core: 0 },
             reward: { gold: 0, core: 14 }
         },
@@ -410,8 +387,8 @@
             id: 'battery-pack',
             accent: '#a46bff',
             stock: 2,
-            title: { zh: '瓒呴鐢垫睜缁?, en: 'Overclock Battery Pack' },
-            desc: { zh: '鎺ヤ笅鏉?3 灞€寮€灞€鑷甫棰濆瓒呴鑳介噺锛屾洿瀹规槗杩涘叆鐖界偣銆?, en: 'Your next 3 runs start with bonus overclock charge for a faster excitement curve.' },
+            title: { zh: '超频电池组', en: 'Overclock Battery Pack' },
+            desc: { zh: '接下来 3 局开局自带额外超频能量，更容易进入爽点。', en: 'Your next 3 runs start with bonus overclock charge for a faster excitement curve.' },
             cost: { gold: 0, core: 10 },
             reward: { starterOverclockRuns: 3 }
         },
@@ -419,8 +396,8 @@
             id: 'summit-contract',
             accent: '#59ff9b',
             stock: 1,
-            title: { zh: '鍐叉璧炲姪鍚堝悓', en: 'Summit Sponsor Contract' },
-            desc: { zh: '鎺ヤ笅鏉?3 灞€棰濆鎻愰珮缁撶畻閲戝竵涓庤禌瀛ｇ粡楠岋紝骞堕檮甯?1 娆″厤璐瑰娲汇€?, en: 'Boost the next 3 runs with extra settlement gold, season XP, and 1 free revive.' },
+            title: { zh: '冲榜赞助合同', en: 'Summit Sponsor Contract' },
+            desc: { zh: '接下来 3 局额外提高结算金币与赛季经验，并附带 1 次免费复活。', en: 'Boost the next 3 runs with extra settlement gold, season XP, and 1 free revive.' },
             cost: { gold: 2600, core: 8 },
             reward: { settlementBoostRuns: 3, freeRevives: 1 }
         }
@@ -454,9 +431,6 @@
         newbieAssistHint: document.getElementById('newbieAssistHint'),
         overclockBar: document.getElementById('overclockBar'),
         skillBar: document.getElementById('skillBar'),
-        runBriefBtn: document.getElementById('runBriefBtn'),
-        runBriefHeadline: document.getElementById('runBriefHeadline'),
-        runBriefMeta: document.getElementById('runBriefMeta'),
         panelContent: document.getElementById('panelContent'),
         tabBar: document.getElementById('tabBar'),
         soundToggle: document.getElementById('soundToggle'),
@@ -523,13 +497,6 @@
     let paymentVerificationNotice = '';
     let paymentOrderNonce = 0;
     let paymentOrderRequestPromise = null;
-    const panelScrollState = {
-        run: 0,
-        loadout: 0,
-        missions: 0,
-        season: 0,
-        shop: 0
-    };
 
     const baseState = {
         lang: localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh',
@@ -565,7 +532,6 @@
             totalSpent: 0,
             passUnlocked: false,
             claimedOrders: {},
-            pendingClaims: {},
             premiumSeasonClaims: {},
             verifiedTxids: []
         },
@@ -574,7 +540,6 @@
             skill: 'shield',
             passive: 'magnet'
         },
-        upgrades: buildDefaultUpgradeState(),
         unlocked: {
             runners: ['flash'],
             skills: ['shield'],
@@ -641,8 +606,7 @@
         hitless: true,
         timeAt500: null,
         message: '',
-        newbieAssist: false,
-        pickupBursts: []
+        newbieAssist: false
     };
 
     function t(key) {
@@ -653,180 +617,6 @@
         return JSON.parse(JSON.stringify(value));
     }
 
-    function clamp(value, min, max) {
-        return Math.min(max, Math.max(min, value));
-    }
-
-    function buildDefaultUpgradeState() {
-        return {
-            runners: Object.fromEntries(RUNNERS.map((runner) => [runner.id, runner.unlock?.type === 'default' ? 1 : 0])),
-            skills: Object.fromEntries(ACTIVE_SKILLS.map((skill) => [skill.id, skill.unlock?.type === 'default' ? 1 : 0])),
-            passives: Object.fromEntries(PASSIVES.map((passive) => [passive.id, passive.unlock?.type === 'default' ? 1 : 0]))
-        };
-    }
-
-    function getUpgradeCollectionKey(category) {
-        if (category === 'runner' || category === 'runners') return 'runners';
-        if (category === 'skill' || category === 'skills') return 'skills';
-        return 'passives';
-    }
-
-    function getUpgradeDefs(category) {
-        const resolved = getUpgradeCollectionKey(category);
-        if (resolved === 'runners') return RUNNERS;
-        if (resolved === 'skills') return ACTIVE_SKILLS;
-        return PASSIVES;
-    }
-
-    function getUpgradeCap(category) {
-        return LOADOUT_UPGRADE_CAPS[getUpgradeCollectionKey(category)] || 1;
-    }
-
-    function normalizeUpgradeState(rawUpgrades = {}, unlockedState = {}) {
-        const defaults = buildDefaultUpgradeState();
-        const normalized = {
-            runners: {},
-            skills: {},
-            passives: {}
-        };
-
-        Object.keys(defaults).forEach((category) => {
-            const unlockedSet = new Set((unlockedState[category] || []));
-            Object.keys(defaults[category]).forEach((id) => {
-                const rawLevel = Number(rawUpgrades?.[category]?.[id]);
-                const fallbackLevel = defaults[category][id];
-                let level = Number.isFinite(rawLevel) ? Math.floor(rawLevel) : fallbackLevel;
-                if (unlockedSet.has(id)) {
-                    level = Math.max(1, level);
-                } else {
-                    level = 0;
-                }
-                normalized[category][id] = clamp(level, 0, getUpgradeCap(category));
-            });
-        });
-
-        return normalized;
-    }
-
-    function getEntryLevel(category, id) {
-        const resolved = getUpgradeCollectionKey(category);
-        return Math.max(0, Math.floor(playerProfile.upgrades?.[resolved]?.[id] || 0));
-    }
-
-    function getUpgradeScale(def) {
-        return Number(def?.upgradeScale) || 1;
-    }
-
-    function getUpgradeCost(category, def, currentLevel = getEntryLevel(category, def.id)) {
-        const resolved = getUpgradeCollectionKey(category);
-        const cap = getUpgradeCap(resolved);
-        if (!def || currentLevel <= 0 || currentLevel >= cap) return null;
-        const config = LOADOUT_UPGRADE_COSTS[resolved];
-        const tier = Math.max(0, currentLevel - 1);
-        const scale = getUpgradeScale(def);
-        const gold = Math.round((config.goldBase + tier * config.goldStep) * scale / 10) * 10;
-        const core = Math.round((config.coreBase + tier * config.coreStep) * scale);
-        return {
-            gold: Math.max(0, gold),
-            core: Math.max(0, core)
-        };
-    }
-
-    function canUpgradeEntry(category, def) {
-        const cost = getUpgradeCost(category, def);
-        return !!cost && canAffordCost(cost);
-    }
-
-    function getRunnerStats(runner, level = getEntryLevel('runners', runner.id)) {
-        const growth = Math.max(0, level - 1);
-        const scale = getUpgradeScale(runner);
-        return {
-            speed: Number((runner.stats.speed + growth * 0.018 * scale).toFixed(3)),
-            combo: Number((runner.stats.combo + growth * 0.02 * scale).toFixed(3)),
-            control: Number((runner.stats.control + growth * 0.016 * scale).toFixed(3))
-        };
-    }
-
-    function getSkillRuntime(skill, level = getEntryLevel('skills', skill.id)) {
-        const growth = Math.max(0, level - 1);
-        const scale = getUpgradeScale(skill);
-        const cooldown = Math.max(7.2, skill.cooldown - growth * 0.45 * scale);
-        if (skill.id === 'shield') {
-            return {
-                cooldown: Number(cooldown.toFixed(2)),
-                shieldDuration: Number((3 + growth * 0.24 * scale).toFixed(2))
-            };
-        }
-        return {
-            cooldown: Number(cooldown.toFixed(2)),
-            clearDistance: Number((28 + growth * 2.2 * scale).toFixed(1)),
-            overclockGain: Number((35 + growth * 4 * scale).toFixed(1))
-        };
-    }
-
-    function getPassiveRuntime(passive, level = getEntryLevel('passives', passive.id)) {
-        const growth = Math.max(0, level - 1);
-        const scale = getUpgradeScale(passive);
-        if (passive.id === 'magnet') {
-            return {
-                laneReach: growth >= 4 ? 2 : 1,
-                pickupZ: Number((32 + growth * 2.3 * scale).toFixed(1)),
-                coinYieldBonus: Number((growth * 0.05 * scale).toFixed(2))
-            };
-        }
-        return {
-            comboThreshold: Math.max(7, 12 - Math.floor(growth / 2)),
-            overclockPerSecond: Number((4.5 + growth * 0.55 * scale).toFixed(2))
-        };
-    }
-
-    function getUnlockCost(def) {
-        const unlock = def?.unlock || {};
-        return {
-            gold: unlock.gold || 0,
-            core: unlock.core || 0
-        };
-    }
-
-    function formatUnlockCostText(unlock = {}) {
-        const parts = [];
-        if (unlock.gold) {
-            parts.push(playerProfile.lang === 'en' ? `${formatNumber(unlock.gold)} gold` : `${formatNumber(unlock.gold)} 閲戝竵`);
-        }
-        if (unlock.core) {
-            parts.push(playerProfile.lang === 'en' ? `${formatNumber(unlock.core)} cores` : `${formatNumber(unlock.core)} 鑳芥牳`);
-        }
-        return parts.length ? ` + ${parts.join(' + ')}` : '';
-    }
-
-    function renderCompactCostPills(cost = {}, className = 'pill') {
-        const labels = [];
-        if (cost.gold) {
-            labels.push(playerProfile.lang === 'en' ? `${formatNumber(cost.gold)} gold` : `${formatNumber(cost.gold)} 閲戝竵`);
-        }
-        if (cost.core) {
-            labels.push(playerProfile.lang === 'en' ? `${formatNumber(cost.core)} cores` : `${formatNumber(cost.core)} 鑳芥牳`);
-        }
-        if (!labels.length) {
-            labels.push(playerProfile.lang === 'en' ? 'Free' : '鍏嶈垂');
-        }
-        return labels.map((text) => `<span class="${className}">${text}</span>`).join('');
-    }
-
-    function getTotalUpgradeInvestment() {
-        return ['runners', 'skills', 'passives'].reduce((sum, category) => {
-            return sum + getUpgradeDefs(category).reduce((innerSum, def) => innerSum + Math.max(0, getEntryLevel(category, def.id) - 1), 0);
-        }, 0);
-    }
-
-    function getAffordableUpgradeCount() {
-        return ['runners', 'skills', 'passives'].reduce((sum, category) => {
-            return sum + getUpgradeDefs(category).filter((def) => {
-                return isUnlocked(category, def) && !!getUpgradeCost(category, def);
-            }).filter((def) => canUpgradeEntry(category, def)).length;
-        }, 0);
-    }
-
     function loadState() {
         try {
             const raw = localStorage.getItem(SAVE_KEY);
@@ -835,17 +625,15 @@
                 return deepClone(baseState);
             }
             const parsed = JSON.parse(raw);
-            const unlockedState = {
-                runners: Array.from(new Set([...(baseState.unlocked.runners || []), ...((parsed.unlocked && parsed.unlocked.runners) || [])])),
-                skills: Array.from(new Set([...(baseState.unlocked.skills || []), ...((parsed.unlocked && parsed.unlocked.skills) || [])])),
-                passives: Array.from(new Set([...(baseState.unlocked.passives || []), ...((parsed.unlocked && parsed.unlocked.passives) || [])]))
-            };
             return {
                 ...deepClone(baseState),
                 ...parsed,
                 loadout: { ...deepClone(baseState.loadout), ...(parsed.loadout || {}) },
-                upgrades: normalizeUpgradeState(parsed.upgrades, unlockedState),
-                unlocked: unlockedState,
+                unlocked: {
+                    runners: Array.from(new Set([...(baseState.unlocked.runners || []), ...((parsed.unlocked && parsed.unlocked.runners) || [])])),
+                    skills: Array.from(new Set([...(baseState.unlocked.skills || []), ...((parsed.unlocked && parsed.unlocked.skills) || [])])),
+                    passives: Array.from(new Set([...(baseState.unlocked.passives || []), ...((parsed.unlocked && parsed.unlocked.passives) || [])]))
+                },
                 seasonClaims: { ...(parsed.seasonClaims || {}) },
                 rankClaims: { ...(parsed.rankClaims || {}) },
                 missionBoard: { ...deepClone(baseState.missionBoard), ...(parsed.missionBoard || {}) },
@@ -859,7 +647,6 @@
                     ...deepClone(baseState.payment),
                     ...(parsed.payment || {}),
                     claimedOrders: { ...deepClone(baseState.payment.claimedOrders), ...((parsed.payment && parsed.payment.claimedOrders) || {}) },
-                    pendingClaims: { ...deepClone(baseState.payment.pendingClaims), ...((parsed.payment && parsed.payment.pendingClaims) || {}) },
                     premiumSeasonClaims: { ...deepClone(baseState.payment.premiumSeasonClaims), ...((parsed.payment && parsed.payment.premiumSeasonClaims) || {}) },
                     verifiedTxids: Array.isArray(parsed.payment && parsed.payment.verifiedTxids)
                         ? Array.from(new Set((parsed.payment && parsed.payment.verifiedTxids) || [])).slice(0, 100)
@@ -914,10 +701,10 @@
     function missionTierLabel(tier) {
         const tierMap = {
             zh: {
-                basic: '鍩虹浠诲姟',
-                combo: '杩炲嚮浠诲姟',
-                elite: '绮捐嫳浠诲姟',
-                timed: '闄愭椂浠诲姟'
+                basic: '基础任务',
+                combo: '连击任务',
+                elite: '精英任务',
+                timed: '限时任务'
             },
             en: {
                 basic: 'Basic',
@@ -1047,9 +834,9 @@
             {
                 key: 'runs',
                 tier: 'timed',
-                title: { zh: '鏃ュ父鑴夊啿锛氱儹鏈哄眬鏁?, en: 'Daily Pulse: Startup Runs' },
+                title: { zh: '日常脉冲：热机局数', en: 'Daily Pulse: Startup Runs' },
                 desc: {
-                    zh: `浠婃棩瀹屾垚 ${formatNumber(3 + pulseScale)} 灞€璺戦叿銆俙,
+                    zh: `今日完成 ${formatNumber(3 + pulseScale)} 局跑酷。`,
                     en: `Finish ${formatNumber(3 + pulseScale)} runs today.`
                 },
                 current: () => Math.min(playerProfile.dailyStats.runs || 0, 3 + pulseScale),
@@ -1059,9 +846,9 @@
             {
                 key: 'distance',
                 tier: 'timed',
-                title: { zh: '鏃ュ父鑴夊啿锛氶噷绋嬫媺婊?, en: 'Daily Pulse: Distance Feed' },
+                title: { zh: '日常脉冲：里程拉满', en: 'Daily Pulse: Distance Feed' },
                 desc: {
-                    zh: `浠婃棩绱璺戝埌 ${formatNumber(1800 + pulseScale * 420)}m銆俙,
+                    zh: `今日累计跑到 ${formatNumber(1800 + pulseScale * 420)}m。`,
                     en: `Reach ${formatNumber(1800 + pulseScale * 420)}m total distance today.`
                 },
                 current: () => Math.min(playerProfile.dailyStats.distance || 0, 1800 + pulseScale * 420),
@@ -1071,9 +858,9 @@
             {
                 key: 'combo',
                 tier: 'combo',
-                title: { zh: '鏃ュ父鑴夊啿锛氳繛鍑绘墜鎰?, en: 'Daily Pulse: Combo Feel' },
+                title: { zh: '日常脉冲：连击手感', en: 'Daily Pulse: Combo Feel' },
                 desc: {
-                    zh: `浠婃棩杈炬垚 ${formatNumber(18 + pulseScale * 4)} 杩炲嚮銆俙,
+                    zh: `今日达成 ${formatNumber(18 + pulseScale * 4)} 连击。`,
                     en: `Reach combo ${formatNumber(18 + pulseScale * 4)} today.`
                 },
                 current: () => Math.min(playerProfile.dailyStats.bestCombo || 0, 18 + pulseScale * 4),
@@ -1083,9 +870,9 @@
             {
                 key: 'score',
                 tier: 'basic',
-                title: { zh: '鏃ュ父鑴夊啿锛氶珮鍒嗘牎鍑?, en: 'Daily Pulse: Score Calibration' },
+                title: { zh: '日常脉冲：高分校准', en: 'Daily Pulse: Score Calibration' },
                 desc: {
-                    zh: `浠婃棩鍗曞眬绉垎杈惧埌 ${formatNumber(1500 + pulseScale * 320)}銆俙,
+                    zh: `今日单局积分达到 ${formatNumber(1500 + pulseScale * 320)}。`,
                     en: `Hit ${formatNumber(1500 + pulseScale * 320)} score in a run today.`
                 },
                 current: () => Math.min(playerProfile.dailyStats.bestScore || 0, 1500 + pulseScale * 320),
@@ -1095,9 +882,9 @@
             {
                 key: 'clean',
                 tier: 'elite',
-                title: { zh: '鏃ュ父鑴夊啿锛氭棤浼ゆ帹杩?, en: 'Daily Pulse: Clean Routing' },
+                title: { zh: '日常脉冲：无伤推进', en: 'Daily Pulse: Clean Routing' },
                 desc: {
-                    zh: `浠婃棩鏃犵鎾炶窇鍒?${formatNumber(900 + pulseScale * 180)}m銆俙,
+                    zh: `今日无碰撞跑到 ${formatNumber(900 + pulseScale * 180)}m。`,
                     en: `Reach ${formatNumber(900 + pulseScale * 180)}m in a clean run today.`
                 },
                 current: () => Math.min(playerProfile.dailyStats.cleanDistance || 0, 900 + pulseScale * 180),
@@ -1107,9 +894,9 @@
             {
                 key: 'overclock',
                 tier: 'combo',
-                title: { zh: '鏃ュ父鑴夊啿锛氳秴棰戝洖璺?, en: 'Daily Pulse: Overclock Loop' },
+                title: { zh: '日常脉冲：超频回路', en: 'Daily Pulse: Overclock Loop' },
                 desc: {
-                    zh: `浠婃棩瑙﹀彂 ${formatNumber(2 + Math.floor(pulseScale / 2))} 娆¤秴棰戙€俙,
+                    zh: `今日触发 ${formatNumber(2 + Math.floor(pulseScale / 2))} 次超频。`,
                     en: `Trigger overclock ${formatNumber(2 + Math.floor(pulseScale / 2))} times today.`
                 },
                 current: () => Math.min(playerProfile.dailyStats.overclocks || 0, 2 + Math.floor(pulseScale / 2)),
@@ -1132,9 +919,9 @@
                 id: `chapter_${chapter}_distance`,
                 section: 'core',
                 tier: 'basic',
-                title: { zh: '绔犺妭涓荤嚎锛氳窛绂绘帹杩?, en: 'Chapter Contract: Distance Push' },
+                title: { zh: '章节主线：距离推进', en: 'Chapter Contract: Distance Push' },
                 desc: {
-                    zh: `鍗曞眬璺戝埌 ${formatNumber(600 + stage * 250)}m銆俙,
+                    zh: `单局跑到 ${formatNumber(600 + stage * 250)}m。`,
                     en: `Reach ${formatNumber(600 + stage * 250)}m in a single run.`
                 },
                 current: () => Math.min(Math.max(Math.floor(game.distance), playerProfile.bestDistance), 600 + stage * 250),
@@ -1145,9 +932,9 @@
                 id: `chapter_${chapter}_runs`,
                 section: 'core',
                 tier: 'basic',
-                title: { zh: '绔犺妭涓荤嚎锛氭寔缁儹鏈?, en: 'Chapter Contract: Heat Loop' },
+                title: { zh: '章节主线：持续热机', en: 'Chapter Contract: Heat Loop' },
                 desc: {
-                    zh: `绱瀹屾垚 ${formatNumber(4 + stage * 2)} 灞€璺戦叿銆俙,
+                    zh: `累计完成 ${formatNumber(4 + stage * 2)} 局跑酷。`,
                     en: `Finish ${formatNumber(4 + stage * 2)} total runs.`
                 },
                 current: () => Math.min(playerProfile.totalRuns, 4 + stage * 2),
@@ -1158,9 +945,9 @@
                 id: `chapter_${chapter}_combo`,
                 section: 'core',
                 tier: 'combo',
-                title: { zh: '绔犺妭涓荤嚎锛氳繛鍑昏妭濂?, en: 'Chapter Contract: Combo Rhythm' },
+                title: { zh: '章节主线：连击节奏', en: 'Chapter Contract: Combo Rhythm' },
                 desc: {
-                    zh: `杈炬垚 ${formatNumber(18 + stage * 4)} 杩炲嚮銆俙,
+                    zh: `达成 ${formatNumber(18 + stage * 4)} 连击。`,
                     en: `Reach combo ${formatNumber(18 + stage * 4)}.`
                 },
                 current: () => Math.min(Math.max(game.maxCombo, playerProfile.stats.longestCombo), 18 + stage * 4),
@@ -1171,9 +958,9 @@
                 id: `chapter_${chapter}_score`,
                 section: 'core',
                 tier: 'basic',
-                title: { zh: '绔犺妭涓荤嚎锛氶珮鍒嗙ǔ瀹?, en: 'Chapter Contract: Score Stability' },
+                title: { zh: '章节主线：高分稳定', en: 'Chapter Contract: Score Stability' },
                 desc: {
-                    zh: `鍗曞眬绉垎杈惧埌 ${formatNumber(1000 + stage * 320)}銆俙,
+                    zh: `单局积分达到 ${formatNumber(1000 + stage * 320)}。`,
                     en: `Hit ${formatNumber(1000 + stage * 320)} score in a run.`
                 },
                 current: () => Math.min(Math.max(Math.floor(game.score), playerProfile.bestScore), 1000 + stage * 320),
@@ -1189,9 +976,9 @@
                     id: `chapter_${chapter}_total_distance`,
                     section: 'elite',
                     tier: 'elite',
-                    title: { zh: '绮捐嫳鍚堢害锛氭€婚噷绋嬬Н鍘?, en: 'Elite Contract: Distance Stack' },
+                    title: { zh: '精英合约：总里程积压', en: 'Elite Contract: Distance Stack' },
                     desc: {
-                        zh: `绱鎬婚噷绋嬭揪鍒?${formatNumber(3200 + (chapter - 2) * 1800)}m銆俙,
+                        zh: `累计总里程达到 ${formatNumber(3200 + (chapter - 2) * 1800)}m。`,
                         en: `Reach ${formatNumber(3200 + (chapter - 2) * 1800)}m total distance.`
                     },
                     current: () => Math.min(playerProfile.totalDistance, 3200 + (chapter - 2) * 1800),
@@ -1202,9 +989,9 @@
                     id: `chapter_${chapter}_clean_distance`,
                     section: 'elite',
                     tier: 'elite',
-                    title: { zh: '绮捐嫳鍚堢害锛氭棤浼ゆ帹杩?, en: 'Elite Contract: Clean Velocity' },
+                    title: { zh: '精英合约：无伤推进', en: 'Elite Contract: Clean Velocity' },
                     desc: {
-                        zh: `鏃犵鎾炶窇鍒?${formatNumber(950 + (chapter - 2) * 220)}m銆俙,
+                        zh: `无碰撞跑到 ${formatNumber(950 + (chapter - 2) * 220)}m。`,
                         en: `Reach ${formatNumber(950 + (chapter - 2) * 220)}m with a clean run.`
                     },
                     current: () => Math.min(playerProfile.stats.bestCleanDistance || 0, 950 + (chapter - 2) * 220),
@@ -1219,9 +1006,9 @@
                 id: `chapter_${chapter}_rank`,
                 section: 'elite',
                 tier: 'elite',
-                title: { zh: '绮捐嫳鍚堢害锛氬啿姒滆瘎绾?, en: 'Elite Contract: Ladder Rating' },
+                title: { zh: '精英合约：冲榜评级', en: 'Elite Contract: Ladder Rating' },
                 desc: {
-                    zh: `璺戦叿璇勫垎杈惧埌 ${formatNumber(1100 + (chapter - 4) * 260)}銆俙,
+                    zh: `跑酷评分达到 ${formatNumber(1100 + (chapter - 4) * 260)}。`,
                     en: `Reach ${formatNumber(1100 + (chapter - 4) * 260)} run rating.`
                 },
                 current: () => Math.min(getRunnerRankScore(), 1100 + (chapter - 4) * 260),
@@ -1298,36 +1085,16 @@
             if (unlock.type === 'seasonLevel') return `Season Lv.${unlock.value} + ${unlock.gold || 0} gold`;
             if (unlock.type === 'totalDistance') return `Total ${unlock.value}m + ${unlock.gold || 0} gold`;
         }
-        if (unlock.type === 'bestDistance') return `鏈€浣宠窛绂?${unlock.value}m + ${unlock.gold || 0} 閲戝竵`;
-        if (unlock.type === 'totalRuns') return `绱 ${unlock.value} 灞€ + ${unlock.gold || 0} 閲戝竵`;
-        if (unlock.type === 'seasonLevel') return `璧涘 ${unlock.value} 绾?+ ${unlock.gold || 0} 閲戝竵`;
-        if (unlock.type === 'totalDistance') return `鎬婚噷绋?${unlock.value}m + ${unlock.gold || 0} 閲戝竵`;
+        if (unlock.type === 'bestDistance') return `最佳距离 ${unlock.value}m + ${unlock.gold || 0} 金币`;
+        if (unlock.type === 'totalRuns') return `累计 ${unlock.value} 局 + ${unlock.gold || 0} 金币`;
+        if (unlock.type === 'seasonLevel') return `赛季 ${unlock.value} 级 + ${unlock.gold || 0} 金币`;
+        if (unlock.type === 'totalDistance') return `总里程 ${unlock.value}m + ${unlock.gold || 0} 金币`;
         return t('runnerTagUnlock');
     }
 
     function canPurchaseUnlock(def) {
         const unlock = def.unlock || {};
         return meetsUnlock(def) && (unlock.gold || 0) <= playerProfile.gold;
-    }
-
-    function unlockConditionText(def) {
-        const unlock = def.unlock || { type: 'default', value: 0 };
-        if (unlock.type === 'default') return t('runnerTagStarter');
-        if (playerProfile.lang === 'en') {
-            if (unlock.type === 'bestDistance') return `Best ${unlock.value}m${formatUnlockCostText(unlock)}`;
-            if (unlock.type === 'totalRuns') return `${unlock.value} runs${formatUnlockCostText(unlock)}`;
-            if (unlock.type === 'seasonLevel') return `Season Lv.${unlock.value}${formatUnlockCostText(unlock)}`;
-            if (unlock.type === 'totalDistance') return `Total ${unlock.value}m${formatUnlockCostText(unlock)}`;
-        }
-        if (unlock.type === 'bestDistance') return `鏈€浣宠窛绂?${unlock.value}m${formatUnlockCostText(unlock)}`;
-        if (unlock.type === 'totalRuns') return `绱 ${unlock.value} 灞€${formatUnlockCostText(unlock)}`;
-        if (unlock.type === 'seasonLevel') return `璧涘 ${unlock.value} 绾?{formatUnlockCostText(unlock)}`;
-        if (unlock.type === 'totalDistance') return `鎬婚噷绋?${unlock.value}m${formatUnlockCostText(unlock)}`;
-        return t('runnerTagUnlock');
-    }
-
-    function canPurchaseUnlock(def) {
-        return meetsUnlock(def) && canAffordCost(getUnlockCost(def));
     }
 
     function getMissionState(mission) {
@@ -1344,156 +1111,145 @@
         }).length;
     }
 
-    function getTrueShopClaimCount() {
-        if (ensureDailyShopState()) {
-            saveState();
-        }
-        return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
-            const remaining = getRemainingShopStock(offer.id);
-            const isFreeClaim = (offer.cost?.gold || 0) <= 0 && (offer.cost?.core || 0) <= 0;
-            return remaining > 0 && isFreeClaim;
-        }).length;
-    }
-
     function getSeasonRewards() {
         return [
             {
                 level: 2,
                 free: {
-                    title: { zh: '鍚▼琛ョ粰', en: 'Kickoff Supply' },
-                    desc: { zh: '缁欏紑瀛ｅ墠鍑犲眬琛ヤ竴娉㈤噾甯佷笌鑳芥牳锛屽厛鎶婅妭濂忚窇璧锋潵銆?, en: 'A small early-season injection to stabilize your first few runs.' },
+                    title: { zh: '启程补给', en: 'Kickoff Supply' },
+                    desc: { zh: '给开季前几局补一波金币与能核，先把节奏跑起来。', en: 'A small early-season injection to stabilize your first few runs.' },
                     gold: 900,
                     core: 6
                 },
                 premium: {
-                    title: { zh: '璧炲姪鍚▼绀?, en: 'Sponsor Kickoff' },
-                    desc: { zh: '瑙ｉ攣璧炲姪杞ㄩ亾鍚庯紝璧涘鍓嶆灏辫兘棰濆鎷垮埌璧勬簮涓庤捣璺戝姞閫熴€?, en: 'The sponsor lane starts paying immediately with resources and faster run starts.' },
+                    title: { zh: '赞助启程礼', en: 'Sponsor Kickoff' },
+                    desc: { zh: '解锁赞助轨道后，赛季前段就能额外拿到资源与起跑加速。', en: 'The sponsor lane starts paying immediately with resources and faster run starts.' },
                     gold: 1200,
                     core: 8,
                     xp: 60,
                     starterOverclockRuns: 1,
-                    label: { zh: '闄愬畾灏捐抗 路 宸插叆搴?, en: 'Season trail 路 stored' }
+                    label: { zh: '限定尾迹 · 已入库', en: 'Season trail · stored' }
                 }
             },
             {
                 level: 4,
                 free: {
-                    title: { zh: '涓缁埅', en: 'Mid-Run Reserve' },
-                    desc: { zh: '鎻愰珮涓瀹归敊锛岄€傚悎缁х画鍐叉洿闀胯窛绂汇€?, en: 'More fuel for extending mid-length runs with less friction.' },
+                    title: { zh: '中段续航', en: 'Mid-Run Reserve' },
+                    desc: { zh: '提高中段容错，适合继续冲更长距离。', en: 'More fuel for extending mid-length runs with less friction.' },
                     gold: 1400,
                     core: 10
                 },
                 premium: {
-                    title: { zh: '鎶ょ浘璧炲姪琛ョ粰', en: 'Shield Sponsor Cache' },
-                    desc: { zh: '鎻愰珮涓瀹归敊锛岀粰楂樺帇璺戞硶琛ヤ竴灞傚厤璐瑰娲讳笌鑳芥牳銆?, en: 'Adds more retry safety with extra cores and a free revive for tougher runs.' },
+                    title: { zh: '护盾赞助补给', en: 'Shield Sponsor Cache' },
+                    desc: { zh: '提高中段容错，给高压跑法补一层免费复活与能核。', en: 'Adds more retry safety with extra cores and a free revive for tougher runs.' },
                     core: 14,
                     freeRevives: 1,
-                    label: { zh: '鎶ょ浘鎹㈣偆 路 宸茶褰?, en: 'Shield skin 路 archived' }
+                    label: { zh: '护盾换肤 · 已记录', en: 'Shield skin · archived' }
                 }
             },
             {
                 level: 6,
                 free: {
-                    title: { zh: '鍐叉鐜伴噾娴?, en: 'Ladder Cashflow' },
-                    desc: { zh: '寮€濮嬪吋椤鹃噾甯佹粴闆悆涓庣户缁紑灞€鐨勮祫鏈€?, en: 'Adds a stronger gold spike so the ladder loop can keep rolling.' },
+                    title: { zh: '冲榜现金流', en: 'Ladder Cashflow' },
+                    desc: { zh: '开始兼顾金币滚雪球与继续开局的资本。', en: 'Adds a stronger gold spike so the ladder loop can keep rolling.' },
                     gold: 2200,
                     core: 14
                 },
                 premium: {
-                    title: { zh: '璧涘妗嗕綋绀?, en: 'Season Frame Cache' },
-                    desc: { zh: '杩欎竴妗ｅ紑濮嬬粰鍑烘洿寮虹殑鍐叉缁埅锛岄€傚悎鎸佺画鎷夐珮璇勫垎銆?, en: 'From here the sponsor lane shifts toward longer ladder pressure and steadier scoring.' },
+                    title: { zh: '赛季框体礼', en: 'Season Frame Cache' },
+                    desc: { zh: '这一档开始给出更强的冲榜续航，适合持续拉高评分。', en: 'From here the sponsor lane shifts toward longer ladder pressure and steadier scoring.' },
                     gold: 2400,
                     core: 10,
                     settlementBoostRuns: 2,
-                    label: { zh: '璧涘澶村儚妗?路 宸茶褰?, en: 'Season frame 路 archived' }
+                    label: { zh: '赛季头像框 · 已记录', en: 'Season frame · archived' }
                 }
             },
             {
                 level: 8,
                 free: {
-                    title: { zh: '楂樺帇琛ヤ粨', en: 'Pressure Refill' },
-                    desc: { zh: '鏇撮€傚悎杩涘叆楂橀毦鑺傚鍚庣殑杩炵画灏濊瘯銆?, en: 'Meant for the point where attempts get hotter and more frequent.' },
+                    title: { zh: '高压补仓', en: 'Pressure Refill' },
+                    desc: { zh: '更适合进入高难节奏后的连续尝试。', en: 'Meant for the point where attempts get hotter and more frequent.' },
                     gold: 3200,
                     core: 22
                 },
                 premium: {
-                    title: { zh: '浠诲姟澧炲箙鍗?, en: 'Mission Boost Card' },
-                    desc: { zh: '鍚屾琛ュ己浠诲姟鎺ㄨ繘銆佽捣璺戠垎鍙戝拰缁撶畻鏁堢巼锛岄€傚悎涓悗鏈熷啿绔犺妭銆?, en: 'Supports chapter pushing with better starts, stronger settlements, and smoother mission flow.' },
+                    title: { zh: '任务增幅卡', en: 'Mission Boost Card' },
+                    desc: { zh: '同步补强任务推进、起跑爆发和结算效率，适合中后期冲章节。', en: 'Supports chapter pushing with better starts, stronger settlements, and smoother mission flow.' },
                     gold: 3200,
                     xp: 120,
                     starterOverclockRuns: 2,
                     settlementBoostRuns: 1,
-                    label: { zh: '浠诲姟鍔犻€熸潈闄?, en: 'Mission boost access' }
+                    label: { zh: '任务加速权限', en: 'Mission boost access' }
                 }
             },
             {
                 level: 10,
                 free: {
-                    title: { zh: '鍐插埡鑳芥牳绠?, en: 'Core Surge Box' },
-                    desc: { zh: '缁欏悗缁娲汇€佹妧鑳借瘯閿欍€佹瀬闄愬啿姒滅暀鍑虹┖闂淬€?, en: 'Creates breathing room for revives, skill retries, and harder pushes.' },
+                    title: { zh: '冲刺能核箱', en: 'Core Surge Box' },
+                    desc: { zh: '给后续复活、技能试错、极限冲榜留出空间。', en: 'Creates breathing room for revives, skill retries, and harder pushes.' },
                     gold: 4200,
                     core: 30
                 },
                 premium: {
-                    title: { zh: '鐢靛姬鍐插埡绀?, en: 'Arc Sprint Cache' },
-                    desc: { zh: '鍚庢湡瀹归敊鍘嬪姏寮€濮嬩笂鏉ワ紝杩欎竴妗ｉ噸鐐硅ˉ鍏嶈垂澶嶆椿鍜屾牳蹇冭祫婧愩€?, en: 'Late-season attempts get sharper, so this tier leans into retry safety and core resources.' },
+                    title: { zh: '电弧冲刺礼', en: 'Arc Sprint Cache' },
+                    desc: { zh: '后期容错压力开始上来，这一档重点补免费复活和核心资源。', en: 'Late-season attempts get sharper, so this tier leans into retry safety and core resources.' },
                     gold: 4200,
                     core: 24,
                     freeRevives: 1,
-                    label: { zh: '楂橀樁鎷栧熬 路 宸插叆搴?, en: 'Arc trail 路 stored' }
+                    label: { zh: '高阶拖尾 · 已入库', en: 'Arc trail · stored' }
                 }
             },
             {
                 level: 12,
                 free: {
-                    title: { zh: '鍚庢湡鍌ㄥ', en: 'Late Reserve' },
-                    desc: { zh: '鎶婂悗鏈熸瘡娆″紑璺戠殑璧勬簮鐒﹁檻鍐嶅線涓嬪帇涓€灞傘€?, en: 'Softens late-game resource pressure so repeat runs stay attractive.' },
+                    title: { zh: '后期储备', en: 'Late Reserve' },
+                    desc: { zh: '把后期每次开跑的资源焦虑再往下压一层。', en: 'Softens late-game resource pressure so repeat runs stay attractive.' },
                     gold: 5600,
                     core: 40
                 },
                 premium: {
-                    title: { zh: '鍟嗗簵鏉冮檺绁?, en: 'Store Access Ticket' },
-                    desc: { zh: '鎶婁腑鍚庢湡鐨勫晢搴楄ˉ缁欓摼鎷夐暱锛岃浣犳洿鏁㈣繛缁噸寮€璇曟洿楂樺垎銆?, en: 'Expands your mid-to-late shop loop so repeated high-score attempts feel sustainable.' },
+                    title: { zh: '商店权限票', en: 'Store Access Ticket' },
+                    desc: { zh: '把中后期的商店补给链拉长，让你更敢连续重开试更高分。', en: 'Expands your mid-to-late shop loop so repeated high-score attempts feel sustainable.' },
                     gold: 6200,
                     core: 28,
                     settlementBoostRuns: 2,
-                    label: { zh: '鍟嗗簵鏉冪泭宸叉縺娲?, en: 'Store perk activated' }
+                    label: { zh: '商店权益已激活', en: 'Store perk activated' }
                 }
             },
             {
                 level: 14,
                 free: {
-                    title: { zh: '姒滈鎺ㄨ繘鍣?, en: 'Summit Push' },
-                    desc: { zh: '鏇村己閲戝竵鍖咃紝鏂逛究鍐插墠鍑犲悕鏃舵寔缁噸寮€銆?, en: 'A heavier gold drop built for repeated attempts near the summit.' },
+                    title: { zh: '榜首推进器', en: 'Summit Push' },
+                    desc: { zh: '更强金币包，方便冲前几名时持续重开。', en: 'A heavier gold drop built for repeated attempts near the summit.' },
                     gold: 7600,
                     core: 52
                 },
                 premium: {
-                    title: { zh: '鐜嬪骇鍐叉绀?, en: 'Summit Prestige Cache' },
-                    desc: { zh: '涓磋繎姒滈鏃讹紝杩欎竴妗ｄ細鏄庢樉鎻愰珮寮€灞€閫熷害涓庡閿欏偍澶囥€?, en: 'Near the summit, this tier pushes both early tempo and late-run safety much harder.' },
+                    title: { zh: '王座冲榜礼', en: 'Summit Prestige Cache' },
+                    desc: { zh: '临近榜首时，这一档会明显提高开局速度与容错储备。', en: 'Near the summit, this tier pushes both early tempo and late-run safety much harder.' },
                     gold: 8400,
                     core: 36,
                     starterOverclockRuns: 2,
                     freeRevives: 1,
-                    label: { zh: '鑽ｈ獕濮挎€?路 宸茶В閿?, en: 'Prestige pose 路 unlocked' }
+                    label: { zh: '荣誉姿态 · 已解锁', en: 'Prestige pose · unlocked' }
                 }
             },
             {
                 level: 16,
                 free: {
-                    title: { zh: '璧涘缁堝眬琛ョ粰', en: 'Season End Cache' },
-                    desc: { zh: '鏈€鍚庝竴娈佃祫婧愬洖棣堬紝璁╅珮娲昏穬鐜╁鏈夋槑纭敹灏剧洰鏍囥€?, en: 'A stronger end-of-track payout for players who stay active deep into the season.' },
+                    title: { zh: '赛季终局补给', en: 'Season End Cache' },
+                    desc: { zh: '最后一段资源回馈，让高活跃玩家有明确收尾目标。', en: 'A stronger end-of-track payout for players who stay active deep into the season.' },
                     gold: 9800,
                     core: 66
                 },
                 premium: {
-                    title: { zh: '璧涘鐜嬪骇绀?, en: 'Season Throne Cache' },
-                    desc: { zh: '璧涘灏炬鐨勫ぇ棰濆洖棣堬紝涓撻棬鏈嶅姟浜庡啿姒滃畧姒滀笌楂橀閲嶅紑銆?, en: 'A heavy end-of-season sponsor payout built for summit chasing and defense.' },
+                    title: { zh: '赛季王座礼', en: 'Season Throne Cache' },
+                    desc: { zh: '赛季尾段的大额回馈，专门服务于冲榜守榜与高频重开。', en: 'A heavy end-of-season sponsor payout built for summit chasing and defense.' },
                     gold: 12000,
                     core: 48,
                     settlementBoostRuns: 3,
                     freeRevives: 2,
-                    label: { zh: '闄愬畾璺戣€呯毊鑲?路 宸插瓨妗?, en: 'Season skin 路 archived' }
+                    label: { zh: '限定跑者皮肤 · 已存档', en: 'Season skin · archived' }
                 }
             }
         ];
@@ -1504,9 +1260,9 @@
             {
                 id: 'rank_520',
                 score: 520,
-                title: { zh: '鐧介摱鍚皝濂栧姳', en: 'Silver Gate Cache' },
+                title: { zh: '白银启封奖励', en: 'Silver Gate Cache' },
                 desc: {
-                    zh: '绗竴娆℃妸璇勫垎鎺ㄥ埌鐧介摱绾垮悗锛岀珛鍒荤粰涓€娉㈢户缁啿鍒嗙殑璧疯窇璧勬簮銆?,
+                    zh: '第一次把评分推到白银线后，立刻给一波继续冲分的起跑资源。',
                     en: 'Your first push into Silver should immediately fund a few stronger follow-up runs.'
                 },
                 reward: { gold: 1200, core: 10, starterOverclockRuns: 1 }
@@ -1514,9 +1270,9 @@
             {
                 id: 'rank_1180',
                 score: 1180,
-                title: { zh: '榛勯噾杩藉嚮濂栧姳', en: 'Gold Chase Cache' },
+                title: { zh: '黄金追击奖励', en: 'Gold Chase Cache' },
                 desc: {
-                    zh: '鍒颁簡榛勯噾浠ュ悗锛屽紑濮嬮渶瑕佹洿绋崇殑涓眬鑺傚锛屽洜姝よˉ涓€灞傜粨绠楀鐩娿€?,
+                    zh: '到了黄金以后，开始需要更稳的中局节奏，因此补一层结算增益。',
                     en: 'Gold asks for more stable mid-run rhythm, so the reward shifts toward settlement power.'
                 },
                 reward: { gold: 2600, core: 16, settlementBoostRuns: 1 }
@@ -1524,9 +1280,9 @@
             {
                 id: 'rank_2060',
                 score: 2060,
-                title: { zh: '鐧介噾绐佺牬濂栧姳', en: 'Platinum Break Cache' },
+                title: { zh: '白金突破奖励', en: 'Platinum Break Cache' },
                 desc: {
-                    zh: '鐧介噾寮€濮嬪閿欐洿閲嶈锛屽姞鍏ヤ竴娆″厤璐瑰娲绘潵鏀寔鏋侀檺灏濊瘯銆?,
+                    zh: '白金开始容错更重要，加入一次免费复活来支持极限尝试。',
                     en: 'At Platinum, retry tolerance matters more, so this one adds a free revive.'
                 },
                 reward: { gold: 4200, core: 24, freeRevives: 1 }
@@ -1534,9 +1290,9 @@
             {
                 id: 'rank_3320',
                 score: 3320,
-                title: { zh: '閽荤煶绋冲帇濂栧姳', en: 'Diamond Pressure Cache' },
+                title: { zh: '钻石稳压奖励', en: 'Diamond Pressure Cache' },
                 desc: {
-                    zh: '閽荤煶娈甸渶瑕佹寔缁畧鑺傚锛屽洜姝ゅ悓鏃惰ˉ璧疯窇鐖嗗彂鍜岀粨绠楁敹鐩娿€?,
+                    zh: '钻石段需要持续守节奏，因此同时补起跑爆发和结算收益。',
                     en: 'Diamond asks you to sustain pressure, so this reward supports both starts and settlements.'
                 },
                 reward: { gold: 6800, core: 36, starterOverclockRuns: 1, settlementBoostRuns: 2 }
@@ -1544,9 +1300,9 @@
             {
                 id: 'rank_4980',
                 score: 4980,
-                title: { zh: '浼犺灏侀《濂栧姳', en: 'Legend Summit Cache' },
+                title: { zh: '传说封顶奖励', en: 'Legend Summit Cache' },
                 desc: {
-                    zh: '浼犺娈垫槸姒滃崟鑽ｈ獕闂ㄦ锛屽鍔变細鏄庢樉鏇村帤锛岀敤鏉ユ敮鎾戝悗缁畧姒溿€?,
+                    zh: '传说段是榜单荣誉门槛，奖励会明显更厚，用来支撑后续守榜。',
                     en: 'Legend is where prestige starts to matter, so the payout is noticeably heavier for ladder defense.'
                 },
                 reward: { gold: 9800, core: 52, freeRevives: 2, settlementBoostRuns: 2 }
@@ -1554,9 +1310,9 @@
             {
                 id: 'rank_6200',
                 score: 6200,
-                title: { zh: '璧涘瓒呰浇濂栧姳', en: 'Season Overdrive Cache' },
+                title: { zh: '赛季超载奖励', en: 'Season Overdrive Cache' },
                 desc: {
-                    zh: '瓒呰繃浼犺绾垮悗锛岀户缁粰涓€妗ｉ《娈靛啿鍒哄鍔憋紝淇濇寔鍚庢湡鐩爣涓嶇┖銆?,
+                    zh: '超过传说线后，继续给一档顶段冲刺奖励，保持后期目标不空。',
                     en: 'Past the Legend line, a final overdrive cache keeps late-season aspiration alive.'
                 },
                 reward: { gold: 13600, core: 72, starterOverclockRuns: 2, settlementBoostRuns: 3, freeRevives: 2 }
@@ -1670,13 +1426,13 @@
     function formatBoostRewardText(key, value = 0) {
         const amount = formatNumber(value);
         if (key === 'starterOverclockRuns') {
-            return localize({ zh: `瓒呴寮€灞€ x${amount}`, en: `Boosted starts x${amount}` });
+            return localize({ zh: `超频开局 x${amount}`, en: `Boosted starts x${amount}` });
         }
         if (key === 'settlementBoostRuns') {
-            return localize({ zh: `缁撶畻澧炵泭 x${amount}`, en: `Settlement boost x${amount}` });
+            return localize({ zh: `结算增益 x${amount}`, en: `Settlement boost x${amount}` });
         }
         if (key === 'freeRevives') {
-            return localize({ zh: `鍏嶈垂澶嶆椿 x${amount}`, en: `Free revives x${amount}` });
+            return localize({ zh: `免费复活 x${amount}`, en: `Free revives x${amount}` });
         }
         return amount;
     }
@@ -1686,22 +1442,22 @@
             {
                 key: 'starterOverclockRuns',
                 accent: '#a46bff',
-                title: localize({ zh: '璧疯窇瓒呴', en: 'Starter Overclock' }),
-                desc: localize({ zh: '姣忔娑堣€?1 灞€锛屽紑灞€棰濆鎼哄甫 28% 瓒呴鑳介噺锛屾洿蹇繘鍏ョ埥鐐广€?, en: 'Consumes 1 charge per run and starts you with +28% overclock.' }),
+                title: localize({ zh: '起跑超频', en: 'Starter Overclock' }),
+                desc: localize({ zh: '每次消耗 1 局，开局额外携带 28% 超频能量，更快进入爽点。', en: 'Consumes 1 charge per run and starts you with +28% overclock.' }),
                 count: playerProfile.boosts.starterOverclockRuns || 0
             },
             {
                 key: 'settlementBoostRuns',
                 accent: '#59ff9b',
-                title: localize({ zh: '缁撶畻澧炵泭', en: 'Settlement Boost' }),
-                desc: localize({ zh: '姣忔娑堣€?1 灞€锛岀粨绠楅噾甯佷笌璧涘缁忛獙鍚屾椂鎻愬崌鑷?1.25 鍊嶃€?, en: 'Consumes 1 charge per run and boosts settlement gold plus season XP to x1.25.' }),
+                title: localize({ zh: '结算增益', en: 'Settlement Boost' }),
+                desc: localize({ zh: '每次消耗 1 局，结算金币与赛季经验同时提升至 1.25 倍。', en: 'Consumes 1 charge per run and boosts settlement gold plus season XP to x1.25.' }),
                 count: playerProfile.boosts.settlementBoostRuns || 0
             },
             {
                 key: 'freeRevives',
                 accent: '#57e5ff',
-                title: localize({ zh: '鍏嶈垂澶嶆椿', en: 'Free Revive' }),
-                desc: localize({ zh: '淇濈暀鍒扮湡姝ｅけ璇椂鎵嶆秷鑰楋紝涓嶄細鍦ㄥ紑灞€鐧界櫧娴垂銆?, en: 'Stays stored until a real revive is used, so the charge is never wasted on run start.' }),
+                title: localize({ zh: '免费复活', en: 'Free Revive' }),
+                desc: localize({ zh: '保留到真正失误时才消耗，不会在开局白白浪费。', en: 'Stays stored until a real revive is used, so the charge is never wasted on run start.' }),
                 count: playerProfile.boosts.freeRevives || 0
             }
         ];
@@ -1710,13 +1466,13 @@
     function renderCostPills(cost = {}) {
         const labels = [];
         if (cost.gold) {
-            labels.push(localize({ zh: `娑堣€楅噾甯?${formatNumber(cost.gold)}`, en: `Costs ${formatNumber(cost.gold)} gold` }));
+            labels.push(localize({ zh: `消耗金币 ${formatNumber(cost.gold)}`, en: `Costs ${formatNumber(cost.gold)} gold` }));
         }
         if (cost.core) {
-            labels.push(localize({ zh: `娑堣€楄兘鏍?${formatNumber(cost.core)}`, en: `Costs ${formatNumber(cost.core)} cores` }));
+            labels.push(localize({ zh: `消耗能核 ${formatNumber(cost.core)}`, en: `Costs ${formatNumber(cost.core)} cores` }));
         }
         if (!labels.length) {
-            labels.push(localize({ zh: '鍏嶈垂棰嗗彇', en: 'Free claim' }));
+            labels.push(localize({ zh: '免费领取', en: 'Free claim' }));
         }
         return labels.map((text) => `<span class="shop-pill">${text}</span>`).join('');
     }
@@ -1731,7 +1487,13 @@
     }
 
     function getShopAlertCount() {
-        return getTrueShopClaimCount();
+        if (ensureDailyShopState()) {
+            saveState();
+        }
+        return FUNCTIONAL_SHOP_OFFERS.filter((offer) => {
+            const remaining = getRemainingShopStock(offer.id);
+            return remaining > 0 && canAffordCost(offer.cost);
+        }).length;
     }
 
     function purchaseShopOffer(id) {
@@ -1753,7 +1515,7 @@
             const needCore = (offer.cost.core || 0) > playerProfile.core;
             if (needGold && needCore) showToast(t('shopUnavailable'));
             else if (needGold) showToast(t('notEnoughGold'));
-            else showToast(playerProfile.lang === 'en' ? 'Not enough cores' : '鑳芥牳涓嶈冻');
+            else showToast(t('notEnoughCore'));
             return;
         }
 
@@ -1765,7 +1527,7 @@
         saveState();
         playSfx('reward');
         showToast(localize({
-            zh: `${localize(offer.title)} 宸插叆搴揱,
+            zh: `${localize(offer.title)} 已入库`,
             en: `${localize(offer.title)} added`
         }));
         renderAll();
@@ -1789,43 +1551,43 @@
         const lower = text.toLowerCase();
 
         if (!text) {
-            return localize({ zh: '鏀粯鏍￠獙澶辫触锛岃绋嶅悗閲嶈瘯銆?, en: 'Payment verification failed. Please try again.' });
+            return localize({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
         }
         if (lower.includes('txid not found')) {
-            return localize({ zh: '鏈湪 TRON 涓荤綉鎵惧埌璇?txid锛岃纭宸蹭笂閾俱€?, en: 'This txid was not found on TRON mainnet yet.' });
+            return localize({ zh: '未在 TRON 主网找到该 txid，请确认已上链。', en: 'This txid was not found on TRON mainnet yet.' });
         }
         if (lower.includes('not confirmed yet')) {
-            return localize({ zh: '浜ゆ槗杩樻湭纭锛岃绋嶅悗鍐嶆鏍￠獙銆?, en: 'This transfer is not confirmed yet. Try again shortly.' });
+            return localize({ zh: '交易还未确认，请稍后再次校验。', en: 'This transfer is not confirmed yet. Try again shortly.' });
         }
         if (lower.includes('execution failed')) {
-            return localize({ zh: '閾句笂浜ゆ槗鎵ц澶辫触锛屾棤娉曞彂濂栥€?, en: 'The on-chain transaction failed, so rewards cannot be granted.' });
+            return localize({ zh: '链上交易执行失败，无法发奖。', en: 'The on-chain transaction failed, so rewards cannot be granted.' });
         }
         if (lower.includes('not a trc20 contract transfer')) {
-            return localize({ zh: '璇ヤ氦鏄撲笉鏄?TRC20 杞处銆?, en: 'This transaction is not a TRC20 transfer.' });
+            return localize({ zh: '该交易不是 TRC20 转账。', en: 'This transaction is not a TRC20 transfer.' });
         }
         if (lower.includes('not trc20 usdt')) {
-            return localize({ zh: '璇ヤ氦鏄撲笉鏄?TRC20-USDT 杞处銆?, en: 'This transaction is not a TRC20-USDT payment.' });
+            return localize({ zh: '该交易不是 TRC20-USDT 转账。', en: 'This transaction is not a TRC20-USDT payment.' });
         }
         if (lower.includes('recipient address')) {
-            return localize({ zh: '鏀舵鍦板潃涓嶅尮閰嶏紝璇风‘璁や綘杞叆鐨勬槸褰撳墠璁㈠崟鍦板潃銆?, en: 'Recipient address mismatch. Please send to the address shown in the current order.' });
+            return localize({ zh: '收款地址不匹配，请确认你转入的是当前订单地址。', en: 'Recipient address mismatch. Please send to the address shown in the current order.' });
         }
         if (lower.includes('amount mismatch')) {
-            return localize({ zh: '鏀粯閲戦涓庡綋鍓嶈鍗曠殑绮剧‘閲戦涓嶄竴鑷淬€?, en: 'The payment amount does not match the current exact order amount.' });
+            return localize({ zh: '支付金额与当前订单的精确金额不一致。', en: 'The payment amount does not match the current exact order amount.' });
         }
         if (lower.includes('before this order was created')) {
-            return localize({ zh: '璇ヤ氦鏄撴棭浜庤鍗曞垱寤烘椂闂达紝涓嶈兘鐢ㄤ簬褰撳墠璁㈠崟銆?, en: 'This transfer happened before the order was created and cannot be used.' });
+            return localize({ zh: '该交易早于订单创建时间，不能用于当前订单。', en: 'This transfer happened before the order was created and cannot be used.' });
         }
         if (lower.includes('after the order expired') || lower.includes('order expired')) {
-            return localize({ zh: '璁㈠崟宸茶繃鏈燂紝璇烽噸鏂板垱寤鸿鍗曞悗鍐嶆敮浠樸€?, en: 'This order has expired. Create a new order before paying again.' });
+            return localize({ zh: '订单已过期，请重新创建订单后再支付。', en: 'This order has expired. Create a new order before paying again.' });
         }
         if (lower.includes('already been used by another order') || lower.includes('another txid')) {
-            return localize({ zh: '璇?txid 宸茶鍏朵粬璁㈠崟浣跨敤銆?, en: 'This txid has already been used by another order.' });
+            return localize({ zh: '该 txid 已被其他订单使用。', en: 'This txid has already been used by another order.' });
         }
         if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) {
-            return localize({ zh: '璁㈠崟鍒涘缓澶辫触锛岃閲嶆柊閫夋嫨绀煎寘銆?, en: 'Failed to create the payment order. Please select the pack again.' });
+            return localize({ zh: '订单创建失败，请重新选择礼包。', en: 'Failed to create the payment order. Please select the pack again.' });
         }
         if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) {
-            return localize({ zh: '鏀粯鎺ュ彛鏆傛椂涓嶅彲鐢紝璇风◢鍚庡啀璇曘€?, en: 'The payment service is temporarily unavailable. Please try again later.' });
+            return localize({ zh: '支付接口暂时不可用，请稍后再试。', en: 'The payment service is temporarily unavailable. Please try again later.' });
         }
         return text;
     }
@@ -1890,37 +1652,6 @@
         return `${Number(value || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)} USDT`;
     }
 
-    async function flushPendingPaymentClaims({ silent = true } = {}) {
-        const pendingClaims = playerProfile.payment.pendingClaims || {};
-        const pendingEntries = Object.entries(pendingClaims);
-
-        if (!pendingEntries.length) {
-            return 0;
-        }
-
-        let syncedCount = 0;
-
-        for (const [orderId, txid] of pendingEntries) {
-            if (!orderId || !txid) {
-                delete pendingClaims[orderId];
-                continue;
-            }
-
-            try {
-                await claimBackendPayment(orderId, txid);
-                delete pendingClaims[orderId];
-                syncedCount += 1;
-            } catch (error) {
-                if (!silent) {
-                    console.warn('Runner payment claim sync failed.', { orderId, error });
-                }
-            }
-        }
-
-        saveState();
-        return syncedCount;
-    }
-
     function isPaymentOrderExpired(order = currentPaymentOrder) {
         return !order || Number(order.expiresAt || 0) <= Date.now();
     }
@@ -1982,36 +1713,36 @@
         const offer = getSelectedPaymentOffer();
         const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
         if (dom.paymentTitle) {
-            dom.paymentTitle.textContent = playerProfile.lang === 'en' ? 'Runner Top-Up Center' : '璺戦叿鍏呭€间腑蹇?;
+            dom.paymentTitle.textContent = playerProfile.lang === 'en' ? 'Runner Top-Up Center' : '跑酷充值中心';
         }
         if (dom.paymentDesc) {
             dom.paymentDesc.textContent = playerProfile.lang === 'en'
                 ? 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.'
-                : '鍏堝垱寤洪摼涓婅鍗曪紝鍐嶅幓 OKX Wallet 鏀粯绮剧‘閲戦锛屾渶鍚庣矘璐?txid 鏍￠獙骞跺彂鏀惧鍔便€?;
+                : '先创建链上订单，再去 OKX Wallet 支付精确金额，最后粘贴 txid 校验并发放奖励。';
         }
-        if (dom.paymentOrderLabel) dom.paymentOrderLabel.textContent = playerProfile.lang === 'en' ? 'Order ID' : '璁㈠崟鍙?;
-        if (dom.paymentExactLabel) dom.paymentExactLabel.textContent = playerProfile.lang === 'en' ? 'Exact Amount' : '绮剧‘閲戦';
-        if (dom.paymentExpiryLabel) dom.paymentExpiryLabel.textContent = playerProfile.lang === 'en' ? 'Expires In' : '鍓╀綑鏃堕棿';
-        if (dom.paymentAddressLabel) dom.paymentAddressLabel.textContent = playerProfile.lang === 'en' ? 'Receiving Address' : '鏀舵鍦板潃';
-        if (dom.paymentTxidLabel) dom.paymentTxidLabel.textContent = playerProfile.lang === 'en' ? 'Paste OKX Wallet txid' : '绮樿创 OKX Wallet 鐨?txid';
+        if (dom.paymentOrderLabel) dom.paymentOrderLabel.textContent = playerProfile.lang === 'en' ? 'Order ID' : '订单号';
+        if (dom.paymentExactLabel) dom.paymentExactLabel.textContent = playerProfile.lang === 'en' ? 'Exact Amount' : '精确金额';
+        if (dom.paymentExpiryLabel) dom.paymentExpiryLabel.textContent = playerProfile.lang === 'en' ? 'Expires In' : '剩余时间';
+        if (dom.paymentAddressLabel) dom.paymentAddressLabel.textContent = playerProfile.lang === 'en' ? 'Receiving Address' : '收款地址';
+        if (dom.paymentTxidLabel) dom.paymentTxidLabel.textContent = playerProfile.lang === 'en' ? 'Paste OKX Wallet txid' : '粘贴 OKX Wallet 的 txid';
         if (dom.paymentTxidInput) {
             dom.paymentTxidInput.placeholder = playerProfile.lang === 'en'
                 ? 'Paste the on-chain txid from OKX Wallet'
-                : '璇疯緭鍏ユ垨绮樿创 OKX Wallet 鐨勯摼涓?txid';
+                : '请输入或粘贴 OKX Wallet 的链上 txid';
         }
         if (dom.paymentTxidHint) {
             dom.paymentTxidHint.textContent = playerProfile.lang === 'en'
                 ? 'Only payments that match the exact amount, recipient address, and valid time window can pass verification.'
-                : '鍙湁閲戦銆佹敹娆惧湴鍧€鍜屾湁鏁堟椂闂寸獥鍙ｅ叏閮ㄥ尮閰嶇殑璁㈠崟锛屾墠鑳介€氳繃鏍￠獙銆?;
+                : '只有金额、收款地址和有效时间窗口全部匹配的订单，才能通过校验。';
         }
-        if (dom.paymentCopyAddressBtn) dom.paymentCopyAddressBtn.textContent = playerProfile.lang === 'en' ? 'Copy Address' : '澶嶅埗鍦板潃';
-        if (dom.paymentCopyAmountBtn) dom.paymentCopyAmountBtn.textContent = playerProfile.lang === 'en' ? 'Copy Exact Amount' : '澶嶅埗绮剧‘閲戦';
-        if (dom.paymentVerifyBtn) dom.paymentVerifyBtn.textContent = playerProfile.lang === 'en' ? 'Verify TXID' : '鏍￠獙 TXID';
+        if (dom.paymentCopyAddressBtn) dom.paymentCopyAddressBtn.textContent = playerProfile.lang === 'en' ? 'Copy Address' : '复制地址';
+        if (dom.paymentCopyAmountBtn) dom.paymentCopyAmountBtn.textContent = playerProfile.lang === 'en' ? 'Copy Exact Amount' : '复制精确金额';
+        if (dom.paymentVerifyBtn) dom.paymentVerifyBtn.textContent = playerProfile.lang === 'en' ? 'Verify TXID' : '校验 TXID';
         if (dom.paymentAmount) dom.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `$${offer.price.toFixed(2)} USDT`;
         if (dom.paymentMeta) {
             dom.paymentMeta.textContent = playerProfile.lang === 'en'
-                ? `OKX Wallet 路 ${order?.network || 'TRON (TRC20)'} 路 ${localize(offer.name)}`
-                : `OKX 閽卞寘 路 ${order?.network || 'TRON (TRC20)'} 路 ${localize(offer.name)}`;
+                ? `OKX Wallet · ${order?.network || 'TRON (TRC20)'} · ${localize(offer.name)}`
+                : `OKX 钱包 · ${order?.network || 'TRON (TRC20)'} · ${localize(offer.name)}`;
         }
         if (dom.paymentOrderId) dom.paymentOrderId.textContent = order ? order.id : '--';
         if (dom.paymentExactAmount) dom.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
@@ -2032,7 +1763,7 @@
         dom.paymentStatus.classList.remove('is-error', 'is-success');
 
         if (paymentVerificationState === 'creating') {
-            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'Creating on-chain order鈥? : '姝ｅ湪鍒涘缓閾句笂璁㈠崟鈥?;
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'Creating on-chain order…' : '正在创建链上订单…';
             dom.paymentVerifyBtn.disabled = true;
             dom.paymentCopyAddressBtn.disabled = true;
             dom.paymentCopyAmountBtn.disabled = true;
@@ -2040,7 +1771,7 @@
         }
 
         if (paymentVerificationState === 'verifying') {
-            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'Verifying payment on-chain鈥? : '姝ｅ湪閾句笂鏍￠獙鏀粯鈥?;
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'Verifying payment on-chain…' : '正在链上校验支付…';
             dom.paymentVerifyBtn.disabled = true;
             dom.paymentCopyAddressBtn.disabled = true;
             dom.paymentCopyAmountBtn.disabled = true;
@@ -2051,14 +1782,14 @@
         dom.paymentCopyAmountBtn.disabled = false;
 
         if (paymentVerificationState === 'verified') {
-            dom.paymentStatus.textContent = paymentVerificationNotice || (playerProfile.lang === 'en' ? 'Payment verified and reward granted.' : '鏀粯宸叉牎楠岄€氳繃锛屽鍔卞凡鍙戞斁銆?);
+            dom.paymentStatus.textContent = paymentVerificationNotice || (playerProfile.lang === 'en' ? 'Payment verified and reward granted.' : '支付已校验通过，奖励已发放。');
             dom.paymentStatus.classList.add('is-success');
             dom.paymentVerifyBtn.disabled = true;
             return;
         }
 
         if (orderExpired) {
-            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'This order has expired. Select the pack again to create a fresh order.' : '褰撳墠璁㈠崟宸茶繃鏈燂紝璇烽噸鏂伴€夋嫨绀煎寘鍒涘缓鏂拌鍗曘€?;
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'This order has expired. Select the pack again to create a fresh order.' : '当前订单已过期，请重新选择礼包创建新订单。';
             dom.paymentStatus.classList.add('is-error');
             dom.paymentVerifyBtn.disabled = true;
             return;
@@ -2072,7 +1803,7 @@
         }
 
         if (txid && !txidValid) {
-            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'TXID format looks invalid. Please paste the 64-character on-chain txid.' : 'TXID 鏍煎紡涓嶆纭紝璇风矘璐?64 浣嶉摼涓?txid銆?;
+            dom.paymentStatus.textContent = playerProfile.lang === 'en' ? 'TXID format looks invalid. Please paste the 64-character on-chain txid.' : 'TXID 格式不正确，请粘贴 64 位链上 txid。';
             dom.paymentStatus.classList.add('is-error');
             dom.paymentVerifyBtn.disabled = true;
             return;
@@ -2080,7 +1811,7 @@
 
         dom.paymentStatus.textContent = paymentVerificationNotice || (playerProfile.lang === 'en'
             ? 'Create an order, complete the payment in OKX Wallet, then paste the txid here.'
-            : '鍏堝垱寤鸿鍗曪紝鍐嶅幓 OKX Wallet 瀹屾垚鏀粯锛屾渶鍚庢妸 txid 绮樿创鍒拌繖閲屾牎楠屻€?);
+            : '先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。');
         dom.paymentVerifyBtn.disabled = !txidValid || !currentPaymentOrder;
     }
 
@@ -2139,7 +1870,7 @@
                     currentPaymentOrder = null;
                     paymentVerificationState = 'idle';
                     paymentVerificationNotice = '';
-                    paymentVerificationError = error?.message || localize({ zh: '璁㈠崟鍒涘缓澶辫触锛岃绋嶅悗閲嶈瘯銆?, en: 'Failed to create order. Please try again.' });
+                    paymentVerificationError = error?.message || localize({ zh: '订单创建失败，请稍后重试。', en: 'Failed to create order. Please try again.' });
                     renderPaymentOrderUI();
                     refreshPaymentVerificationState();
                 }
@@ -2172,7 +1903,6 @@
         if (offerId) {
             selectedPaymentOfferId = offerId;
         }
-        flushPendingPaymentClaims().catch(() => {});
         renderPaymentOfferGrid();
         resetPaymentVerificationState(true);
         renderPaymentOrderUI();
@@ -2203,8 +1933,8 @@
         const copied = await copyTextToClipboard(wallet);
         paymentVerificationError = '';
         paymentVerificationNotice = copied
-            ? localize({ zh: '鏀舵鍦板潃宸插鍒躲€?, en: 'Receiving address copied.' })
-            : localize({ zh: '鑷姩澶嶅埗涓嶅彲鐢紝璇锋墜鍔ㄥ鍒跺湴鍧€銆?, en: 'Automatic copy is unavailable. Please copy the address manually.' });
+            ? localize({ zh: '收款地址已复制。', en: 'Receiving address copied.' })
+            : localize({ zh: '自动复制不可用，请手动复制地址。', en: 'Automatic copy is unavailable. Please copy the address manually.' });
         paymentVerificationState = 'idle';
         refreshPaymentVerificationState();
     }
@@ -2221,8 +1951,8 @@
         const copied = await copyTextToClipboard(Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS));
         paymentVerificationError = '';
         paymentVerificationNotice = copied
-            ? localize({ zh: '绮剧‘閲戦宸插鍒躲€?, en: 'Exact amount copied.' })
-            : localize({ zh: '鑷姩澶嶅埗涓嶅彲鐢紝璇锋墜鍔ㄥ鍒剁簿纭噾棰濄€?, en: 'Automatic copy is unavailable. Please copy the exact amount manually.' });
+            ? localize({ zh: '精确金额已复制。', en: 'Exact amount copied.' })
+            : localize({ zh: '自动复制不可用，请手动复制精确金额。', en: 'Automatic copy is unavailable. Please copy the exact amount manually.' });
         paymentVerificationState = 'idle';
         refreshPaymentVerificationState();
     }
@@ -2241,12 +1971,11 @@
         playerProfile.payment.totalSpent = Math.round((Number(playerProfile.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
         playerProfile.payment.passUnlocked = true;
         playerProfile.payment.claimedOrders[orderId] = true;
-        playerProfile.payment.pendingClaims[orderId] = txid;
         playerProfile.payment.verifiedTxids = [txid, ...(playerProfile.payment.verifiedTxids || []).filter((item) => item !== txid)].slice(0, 100);
         saveState();
         playSfx('promote');
         showToast(localize({
-            zh: `鍏呭€兼垚鍔燂細${localize(offer.name)} 濂栧姳宸插埌璐,
+            zh: `充值成功：${localize(offer.name)} 奖励已到账`,
             en: `Top-up complete: ${localize(offer.name)} rewards granted`
         }));
         renderAll();
@@ -2260,21 +1989,21 @@
 
         const txid = getNormalizedPaymentTxid();
         if (!PAYMENT_TXID_REGEX.test(txid)) {
-            paymentVerificationError = localize({ zh: 'TXID 鏍煎紡涓嶆纭紝璇锋鏌ュ悗閲嶆柊杈撳叆銆?, en: 'Invalid TXID format. Please check and try again.' });
+            paymentVerificationError = localize({ zh: 'TXID 格式不正确，请检查后重新输入。', en: 'Invalid TXID format. Please check and try again.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
         if ((playerProfile.payment.verifiedTxids || []).includes(txid)) {
-            paymentVerificationError = localize({ zh: '璇?txid 宸茬粡浣跨敤杩囷紝涓嶈兘閲嶅鍙戝銆?, en: 'This TXID has already been used and cannot grant rewards again.' });
+            paymentVerificationError = localize({ zh: '该 txid 已经使用过，不能重复发奖。', en: 'This TXID has already been used and cannot grant rewards again.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
         if (!currentPaymentOrder || isPaymentOrderExpired(currentPaymentOrder)) {
-            paymentVerificationError = localize({ zh: '褰撳墠璁㈠崟宸茶繃鏈燂紝璇烽噸鏂板垱寤鸿鍗曘€?, en: 'The current order has expired. Please create a new one.' });
+            paymentVerificationError = localize({ zh: '当前订单已过期，请重新创建订单。', en: 'The current order has expired. Please create a new one.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
@@ -2292,11 +2021,8 @@
             const resolvedOfferId = String(orderPayload?.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
 
             if (orderPayload?.rewardGranted || playerProfile.payment.claimedOrders[orderId]) {
-                if (orderPayload?.rewardGranted && playerProfile.payment.pendingClaims[orderId]) {
-                    delete playerProfile.payment.pendingClaims[orderId];
-                }
                 paymentVerificationState = 'verified';
-                paymentVerificationNotice = localize({ zh: '璇ヨ鍗曞鍔卞凡鍙戞斁锛屾棤闇€閲嶅棰嗗彇銆?, en: 'Rewards for this order have already been granted.' });
+                paymentVerificationNotice = localize({ zh: '该订单奖励已发放，无需重复领取。', en: 'Rewards for this order have already been granted.' });
                 refreshPaymentVerificationState();
                 saveState();
                 return;
@@ -2309,23 +2035,15 @@
             });
 
             paymentVerificationState = 'verified';
-            try {
-                await claimBackendPayment(orderId, txid);
-                delete playerProfile.payment.pendingClaims[orderId];
-                paymentVerificationNotice = localize({ zh: '閾句笂鏍￠獙鎴愬姛锛屽鍔卞凡鍙戞斁銆?, en: 'On-chain verification succeeded and rewards were granted.' });
-                saveState();
-            } catch (claimError) {
-                paymentVerificationNotice = localize({
-                    zh: '閾句笂鏍￠獙鎴愬姛锛屽鍔卞凡鍒拌处锛涘悗鍙板彂濂栬褰曞皢鍦ㄧ◢鍚庤嚜鍔ㄥ悓姝ャ€?,
-                    en: 'On-chain verification succeeded and rewards were granted. Backend sync will retry automatically.'
-                });
-                console.warn('Runner payment claim sync queued.', { orderId, claimError });
-            }
+            paymentVerificationNotice = localize({ zh: '链上校验成功，奖励已发放。', en: 'On-chain verification succeeded and rewards were granted.' });
             refreshPaymentVerificationState();
+
+            claimBackendPayment(orderId, txid).catch(() => {
+            });
         } catch (error) {
             paymentVerificationState = 'idle';
             paymentVerificationNotice = '';
-            paymentVerificationError = error?.message || localize({ zh: '鏀粯鏍￠獙澶辫触锛岃绋嶅悗閲嶈瘯銆?, en: 'Payment verification failed. Please try again.' });
+            paymentVerificationError = error?.message || localize({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
             refreshPaymentVerificationState();
         }
     }
@@ -2344,54 +2062,54 @@
                 id: 'bronze',
                 min: 0,
                 color: '#8fe6ff',
-                title: { zh: '闇撹櫣闈掗摐', en: 'Neon Bronze' },
-                short: { zh: '闈掗摐', en: 'Bronze' },
-                desc: { zh: '鍒氬畬鎴愪笂鎵嬮樁娈碉紝閲嶇偣鏄妸鍒囬亾鍜岃繛鍑昏妭濂忕ǔ瀹氫笅鏉ャ€?, en: 'Past the onboarding phase. Focus on stable lane reads and clean combo timing.' },
+                title: { zh: '霓虹青铜', en: 'Neon Bronze' },
+                short: { zh: '青铜', en: 'Bronze' },
+                desc: { zh: '刚完成上手阶段，重点是把切道和连击节奏稳定下来。', en: 'Past the onboarding phase. Focus on stable lane reads and clean combo timing.' },
                 settlement: { gold: 1800, core: 10 }
             },
             {
                 id: 'silver',
                 min: 520,
                 color: '#d9f6ff',
-                title: { zh: '鐤惧奖鐧介摱', en: 'Velocity Silver' },
-                short: { zh: '鐧介摱', en: 'Silver' },
-                desc: { zh: '寮€濮嬪叿澶囪繛缁啿鍒鸿兘鍔涳紝鑺傚鍜岃祫婧愬惊鐜繘鍏ユ鍙嶉銆?, en: 'The run loop starts compounding and resource flow becomes smoother.' },
+                title: { zh: '疾影白银', en: 'Velocity Silver' },
+                short: { zh: '白银', en: 'Silver' },
+                desc: { zh: '开始具备连续冲刺能力，节奏和资源循环进入正反馈。', en: 'The run loop starts compounding and resource flow becomes smoother.' },
                 settlement: { gold: 3200, core: 16 }
             },
             {
                 id: 'gold',
                 min: 1180,
                 color: '#ffd66b',
-                title: { zh: '鑴夊啿榛勯噾', en: 'Pulse Gold' },
-                short: { zh: '榛勯噾', en: 'Gold' },
-                desc: { zh: '宸茬粡鏄彲闈犵殑鍐叉灞傦紝杩炲嚮鍜屾棤浼よ〃鐜颁細鏄庢樉鏀惧ぇ浠峰€笺€?, en: 'A reliable ladder tier where combo and clean routing amplify sharply.' },
+                title: { zh: '脉冲黄金', en: 'Pulse Gold' },
+                short: { zh: '黄金', en: 'Gold' },
+                desc: { zh: '已经是可靠的冲榜层，连击和无伤表现会明显放大价值。', en: 'A reliable ladder tier where combo and clean routing amplify sharply.' },
                 settlement: { gold: 5200, core: 28 }
             },
             {
                 id: 'platinum',
                 min: 2050,
                 color: '#88ffe9',
-                title: { zh: '寮у厜閾傞噾', en: 'Arc Platinum' },
-                short: { zh: '閾傞噾', en: 'Platinum' },
-                desc: { zh: '杩涘叆楂樺帇娈典綅锛屽紑濮嬫嫾绋冲畾楂樺垎涓庢洿灏戝け璇€?, en: 'High-pressure tier where consistency and cleaner execution matter more.' },
+                title: { zh: '弧光铂金', en: 'Arc Platinum' },
+                short: { zh: '铂金', en: 'Platinum' },
+                desc: { zh: '进入高压段位，开始拼稳定高分与更少失误。', en: 'High-pressure tier where consistency and cleaner execution matter more.' },
                 settlement: { gold: 8200, core: 42 }
             },
             {
                 id: 'diamond',
                 min: 3300,
                 color: '#b89cff',
-                title: { zh: '瑁傞殭閽荤煶', en: 'Rift Diamond' },
-                short: { zh: '閽荤煶', en: 'Diamond' },
-                desc: { zh: '鍏峰鏄庢樉鑽ｈ獕鎰熺殑楂樻浣嶏紝閫傚悎璧涘灏惧０鍙戝姏鍐插埡銆?, en: 'A prestige tier with visible status and stronger late-season push value.' },
+                title: { zh: '裂隙钻石', en: 'Rift Diamond' },
+                short: { zh: '钻石', en: 'Diamond' },
+                desc: { zh: '具备明显荣誉感的高段位，适合赛季尾声发力冲刺。', en: 'A prestige tier with visible status and stronger late-season push value.' },
                 settlement: { gold: 12800, core: 62 }
             },
             {
                 id: 'apex',
                 min: 5100,
                 color: '#ff8dc7',
-                title: { zh: '鍒涗笘宸呭嘲', en: 'Genesis Apex' },
-                short: { zh: '宸呭嘲', en: 'Apex' },
-                desc: { zh: '褰撳墠璧涘椤舵锛岄噸蹇冧粠鏅嬪崌杞负瀹堟涓庡埛鏇撮珮鑽ｈ獕銆?, en: 'Current seasonal cap. The goal shifts from promotion to defending status.' },
+                title: { zh: '创世巅峰', en: 'Genesis Apex' },
+                short: { zh: '巅峰', en: 'Apex' },
+                desc: { zh: '当前赛季顶段，重心从晋升转为守榜与刷更高荣誉。', en: 'Current seasonal cap. The goal shifts from promotion to defending status.' },
                 settlement: { gold: 18600, core: 90 }
             }
         ];
@@ -2446,7 +2164,7 @@
             <div class="modal-rule-row ${tier.id === divisionInfo.tier.id ? 'is-current' : ''}" style="--tier-color:${tier.color};">
                 <div class="modal-rule-tier">
                     <strong>${localize(tier.title)}</strong>
-                    <span>${playerProfile.lang === 'en' ? `${formatNumber(tier.min)}+ rating` : `${formatNumber(tier.min)}+ 娈典綅鍒哷}</span>
+                    <span>${playerProfile.lang === 'en' ? `${formatNumber(tier.min)}+ rating` : `${formatNumber(tier.min)}+ 段位分`}</span>
                 </div>
                 <div class="modal-rule-values">
                     <span>${t('goldLabel')} +${formatNumber(tier.settlement.gold)}</span>
@@ -2456,55 +2174,55 @@
         `).join('');
 
         return {
-            kicker: playerProfile.lang === 'en' ? 'SEASON MANUAL' : '璧涘璇存槑',
-            title: playerProfile.lang === 'en' ? 'How division, settlement and activity fit together' : '娈典綅銆佺粨绠椾笌娲昏穬濡備綍鑱斿姩',
+            kicker: playerProfile.lang === 'en' ? 'SEASON MANUAL' : '赛季说明',
+            title: playerProfile.lang === 'en' ? 'How division, settlement and activity fit together' : '段位、结算与活跃如何联动',
             desc: playerProfile.lang === 'en'
                 ? 'A clear explanation of what to chase this season and why it matters.'
-                : '鎶婃湰璧涘瑕佽拷浠€涔堛€佷负浠€涔堣杩姐€佺粨绠楁€庝箞绠楋紝涓€娆¤娓呮銆?,
+                : '把本赛季要追什么、为什么要追、结算怎么算，一次讲清楚。',
             body: `
                 <div class="modal-info-grid">
                     <article class="modal-info-card featured">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT ESTIMATE' : '褰撳墠棰勪及'}</div>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT ESTIMATE' : '当前预估'}</div>
                         <h3>${localize(divisionInfo.tier.title)}</h3>
                         <strong>${formatNumber(settlementPreview.totalGold)} ${t('goldLabel')} / ${formatNumber(settlementPreview.totalCore)} ${t('coreLabel')}</strong>
                         <p>${playerProfile.lang === 'en'
                             ? 'Current estimate = highest division reward reached this season + steady season level bonus.'
-                            : '褰撳墠棰勪及 = 鏈禌瀛ｈ揪鍒扮殑鏈€楂樻浣嶅鍔?+ 璧涘绛夌骇鎻愪緵鐨勭ǔ瀹氭椿璺冨姞鎴愩€?}</p>
+                            : '当前预估 = 本赛季达到的最高段位奖励 + 赛季等级提供的稳定活跃加成。'}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'SETTLEMENT RULE' : '缁撶畻瑙勫垯'}</div>
-                        <h3>${playerProfile.lang === 'en' ? 'Highest division wins' : '鎸夋湰璧涘鏈€楂樻浣嶇粨绠?}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'SETTLEMENT RULE' : '结算规则'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Highest division wins' : '按本赛季最高段位结算'}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? 'Once a higher division is reached, the seasonal settlement estimate upgrades accordingly.'
-                            : '鍙浣犲湪鏈禌瀛ｅ啿鍒版洿楂樻浣嶏紝璧涘缁撶畻棰勪及灏变細鍚屾鍗囩骇锛屼笉闇€瑕佷竴鐩村仠鐣欏湪璇ユ浣嶃€?}</p>
+                            : '只要你在本赛季冲到更高段位，赛季结算预估就会同步升级，不需要一直停留在该段位。'}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'ACTIVITY BONUS' : '娲昏穬鍔犳垚'}</div>
-                        <h3>${playerProfile.lang === 'en' ? `Season Lv.${seasonLevel}` : `璧涘 Lv.${seasonLevel}`}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'ACTIVITY BONUS' : '活跃加成'}</div>
+                        <h3>${playerProfile.lang === 'en' ? `Season Lv.${seasonLevel}` : `赛季 Lv.${seasonLevel}`}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? `Current activity bonus contributes ${formatNumber(settlementPreview.levelBonusGold)} gold and ${formatNumber(settlementPreview.levelBonusCore)} cores.`
-                            : `褰撳墠娲昏穬鍔犳垚棰濆鎻愪緵 ${formatNumber(settlementPreview.levelBonusGold)} 閲戝竵涓?${formatNumber(settlementPreview.levelBonusCore)} 鑳芥牳銆俙}</p>
+                            : `当前活跃加成额外提供 ${formatNumber(settlementPreview.levelBonusGold)} 金币与 ${formatNumber(settlementPreview.levelBonusCore)} 能核。`}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CLIMB TIP' : '鍐插垎寤鸿'}</div>
-                        <h3>${playerProfile.lang === 'en' ? 'Distance is not enough by itself' : '鍙爢璺濈杩樹笉澶?}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CLIMB TIP' : '冲分建议'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Distance is not enough by itself' : '只堆距离还不够'}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? 'Combo length and clean runs weigh heavily in rating. Stable routing beats random risks.'
-                            : '娈典綅鍒嗕笉鍙湅璺濈锛岃繛鍑诲拰鏃犱激琛ㄧ幇鏉冮噸涔熷緢楂樸€傜ǔ瀹氳窇娉曟瘮涔辫祵鏇村鏄撳啿娈点€?}</p>
+                            : '段位分不只看距离，连击和无伤表现权重也很高。稳定跑法比乱赌更容易冲段。'}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'LADDER BOUNTY' : '鍐叉璧忛噾'}</div>
-                        <h3>${playerProfile.lang === 'en' ? 'Rating breakpoints also pay immediate rewards' : '鍏抽敭璇勫垎妗ｈ繕浼氶澶栧彂鍗虫椂濂栧姳'}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'LADDER BOUNTY' : '冲榜赏金'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Rating breakpoints also pay immediate rewards' : '关键评分档还会额外发即时奖励'}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? 'Besides season level rewards, rating milestones now grant gold, cores, and stored boosts that can be claimed immediately.'
-                            : '闄や簡璧涘绛夌骇濂栧姳澶栵紝璺戦叿璇勫垎杈惧埌鍏抽敭妗ｄ綅鍚庯紝涔熶細绔嬪嵆寮€鏀鹃噾甯併€佽兘鏍稿拰澧炵泭鍌ㄥ濂栧姳銆?}</p>
+                            : '除了赛季等级奖励外，跑酷评分达到关键档位后，也会立即开放金币、能核和增益储备奖励。'}</p>
                     </article>
                 </div>
                 <div class="modal-rule-list">
                     <div class="modal-rule-head">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'DIVISION PAYOUT TABLE' : '娈典綅缁撶畻琛?}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Every tier has a visible reward jump' : '姣忔。娈典綅閮藉搴旀竻鏅扮殑缁撶畻鎻愬崌'}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'DIVISION PAYOUT TABLE' : '段位结算表'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Every tier has a visible reward jump' : '每档段位都对应清晰的结算提升'}</h3>
                         </div>
                     </div>
                     <div class="modal-rule-grid">${divisionRows}</div>
@@ -2523,86 +2241,75 @@
         const pulseScale = Math.max(0, Math.floor((chapter - 1) / 2));
 
         return {
-            kicker: playerProfile.lang === 'en' ? 'MISSION MANUAL' : '浠诲姟鎵嬪唽',
-            title: playerProfile.lang === 'en' ? 'Layered mission board rules' : '鍒嗗眰浠诲姟鏉胯鍒?,
+            kicker: playerProfile.lang === 'en' ? 'MISSION MANUAL' : '任务手册',
+            title: playerProfile.lang === 'en' ? 'Layered mission board rules' : '分层任务板规则',
             desc: playerProfile.lang === 'en'
                 ? 'Explains how chapter contracts, daily pulse missions, and elite objectives work together.'
-                : '鎶婄珷鑺備换鍔°€佹瘡鏃ヨ剦鍐插拰绮捐嫳鍚堢害鐨勬帹杩涘叧绯讳竴娆¤娓呮銆?,
+                : '把章节任务、每日脉冲和精英合约的推进关系一次讲清楚。',
             body: `
                 <div class="modal-info-grid">
                     <article class="modal-info-card featured">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT BOARD' : '褰撳墠浠诲姟鏉?}</div>
-                        <h3>${playerProfile.lang === 'en' ? `Chapter ${chapter}` : `绗?${chapter} 绔燻}</h3>
-                        <strong>${playerProfile.lang === 'en' ? `${chapterClaimed}/${chapterContracts.length} chapter contracts claimed` : `宸查鍙?${chapterClaimed} / ${chapterContracts.length} 涓珷鑺傚悎绾}</strong>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'CURRENT BOARD' : '当前任务板'}</div>
+                        <h3>${playerProfile.lang === 'en' ? `Chapter ${chapter}` : `第 ${chapter} 章`}</h3>
+                        <strong>${playerProfile.lang === 'en' ? `${chapterClaimed}/${chapterContracts.length} chapter contracts claimed` : `已领取 ${chapterClaimed} / ${chapterContracts.length} 个章节合约`}</strong>
                         <p>${playerProfile.lang === 'en'
                             ? 'Claim every core and elite contract on the current board to unlock the next chapter immediately.'
-                            : '褰撳墠绔犺妭鐨勪富绾夸换鍔′笌绮捐嫳鍚堢害鍏ㄩ儴棰嗗彇鍚庯紝浼氱珛鍗宠В閿佷笅涓€绔犮€?}</p>
+                            : '当前章节的主线任务与精英合约全部领取后，会立即解锁下一章。'}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DAILY PULSE' : '姣忔棩鑴夊啿'}</div>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DAILY PULSE' : '每日脉冲'}</div>
                         <h3>${localize(pulseMission.title)}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? `One rotating daily objective refreshes every local midnight. Current progress: ${formatNumber(pulseState.current)} / ${formatNumber(pulseMission.target)}.`
-                            : `姣忓ぉ鏈湴闆剁偣鍒锋柊 1 涓剦鍐蹭换鍔°€傚綋鍓嶈繘搴︼細${formatNumber(pulseState.current)} / ${formatNumber(pulseMission.target)}銆俙}</p>
+                            : `每天本地零点刷新 1 个脉冲任务。当前进度：${formatNumber(pulseState.current)} / ${formatNumber(pulseMission.target)}。`}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE CONTRACTS' : '绮捐嫳鍚堢害'}</div>
-                        <h3>${playerProfile.lang === 'en' ? 'Unlock from Chapter 2 onward' : '浠庣 2 绔犲紑濮嬪紑鏀?}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE CONTRACTS' : '精英合约'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Unlock from Chapter 2 onward' : '从第 2 章开始开放'}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? 'Elite objectives focus on total distance, clean routing, and later even ladder rating to keep late-game pressure meaningful.'
-                            : '绮捐嫳鍚堢害浼氭妸鎬婚噷绋嬨€佹棤浼よ〃鐜帮紝浠ュ強鍚庣画鐨勫啿姒滆瘎鍒嗛兘鎷夎繘浠诲姟浣撶郴锛屼繚璇佸悗鏈熶粛鏈夎拷閫愬帇鍔涖€?}</p>
+                            : '精英合约会把总里程、无伤表现，以及后续的冲榜评分都拉进任务体系，保证后期仍有追逐压力。'}</p>
                     </article>
                     <article class="modal-info-card">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'SCALING' : '闅惧害鎴愰暱'}</div>
-                        <h3>${playerProfile.lang === 'en' ? 'Targets rise with your chapter' : '鐩爣浼氶殢绔犺妭鎶崌'}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'SCALING' : '难度成长'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Targets rise with your chapter' : '目标会随章节抬升'}</h3>
                         <p>${playerProfile.lang === 'en'
                             ? `Daily targets scale every 2 chapters. Current pulse intensity tier: +${pulseScale}.`
-                            : `姣忔棩浠诲姟姣?2 绔犳彁鍗囦竴妗ｅ己搴︺€傚綋鍓嶈剦鍐插己搴︽。浣嶏細+${pulseScale}銆俙}</p>
+                            : `每日任务每 2 章提升一档强度。当前脉冲强度档位：+${pulseScale}。`}</p>
                     </article>
                 </div>
                 <div class="modal-rule-list">
                     <div class="modal-rule-head">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOARD FLOW' : '浠诲姟鏉挎祦绋?}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'The board is split into three layers' : '浠诲姟鏉垮垎涓轰笁灞傛帹杩?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOARD FLOW' : '任务板流程'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'The board is split into three layers' : '任务板分为三层推进'}</h3>
                         </div>
                     </div>
                     <div class="modal-rule-grid">
                         <article class="modal-info-card">
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'CORE' : '涓荤嚎'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Distance 路 Runs 路 Combo 路 Score' : '璺濈 路 灞€鏁?路 杩炲嚮 路 鍒嗘暟'}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'CORE' : '主线'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Distance · Runs · Combo · Score' : '距离 · 局数 · 连击 · 分数'}</h3>
                             <p>${playerProfile.lang === 'en'
                                 ? 'These are the backbone contracts of every chapter and are always required for advancement.'
-                                : '杩欐槸姣忎竴绔犻兘浼氬嚭鐜扮殑鏍稿績鍚堢害锛屼篃鏄帹杩涚珷鑺傜殑鍒氭€ф潯浠躲€?}</p>
+                                : '这是每一章都会出现的核心合约，也是推进章节的刚性条件。'}</p>
                         </article>
                         <article class="modal-info-card">
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE' : '绮捐嫳'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Total distance 路 Clean run 路 Ladder score' : '鎬婚噷绋?路 鏃犱激 路 鍐叉璇勫垎'}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE' : '精英'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Total distance · Clean run · Ladder score' : '总里程 · 无伤 · 冲榜评分'}</h3>
                             <p>${playerProfile.lang === 'en'
                                 ? 'Elite objectives inject stronger mid and late-game pressure and reward better resources.'
-                                : '绮捐嫳鍚堢害涓撻棬璐熻矗涓悗鏈熷帇鍔涗笌鏇村帤鐨勮祫婧愬洖鎶ャ€?}</p>
+                                : '精英合约专门负责中后期压力与更厚的资源回报。'}</p>
                         </article>
                         <article class="modal-info-card">
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'PULSE' : '鑴夊啿'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'One daily rotating objective' : '姣忓ぉ 1 涓疆鎹㈢洰鏍?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'PULSE' : '脉冲'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'One daily rotating objective' : '每天 1 个轮换目标'}</h3>
                             <p>${playerProfile.lang === 'en'
                                 ? 'Pulse missions are optional for chapter progression, but they accelerate gold, cores, and season XP noticeably.'
-                                : '鑴夊啿浠诲姟涓嶅己鍒舵帹杩涚珷鑺傦紝浣嗚兘鏄捐憲琛ュ厖閲戝竵銆佽兘鏍镐笌璧涘缁忛獙銆?}</p>
+                                : '脉冲任务不强制推进章节，但能显著补充金币、能核与赛季经验。'}</p>
                         </article>
                     </div>
                 </div>
             `
-        };
-    }
-
-    function renderRunBriefModal() {
-        return {
-            kicker: playerProfile.lang === 'en' ? 'RUN BRIEF' : '璧涢亾绠€鎶?,
-            title: playerProfile.lang === 'en' ? 'Track, boosts, and ladder overview' : '璧涢亾銆佸鐩婁笌姒滃崟鎬昏',
-            desc: playerProfile.lang === 'en'
-                ? 'Keep the main run screen clean, and open this panel whenever you want the full track briefing.'
-                : '鎶婅窇閰蜂富鐣岄潰鐣欑粰鎿嶄綔锛屾妸浠婃棩璧涢亾銆佸鐩娿€佹浣嶄笌姒滃崟鎯呮姤闆嗕腑鍒拌繖閲屾煡鐪嬨€?,
-            body: `<div class="run-brief-modal-body">${renderRunTab()}</div>`
         };
     }
 
@@ -2629,12 +2336,12 @@
 
             entries.push({
                 rank,
-                name: isPlayer ? localize({ zh: '浣?, en: 'YOU' }) : rivalNames[(rank * 3 + playerRank) % rivalNames.length],
+                name: isPlayer ? localize({ zh: '你', en: 'YOU' }) : rivalNames[(rank * 3 + playerRank) % rivalNames.length],
                 note: isPlayer
-                    ? localize({ zh: '褰撳墠涓汉娈典綅浼扮畻', en: 'Estimated current ladder slot' })
+                    ? localize({ zh: '当前个人段位估算', en: 'Estimated current ladder slot' })
                     : rank < playerRank
-                        ? localize({ zh: '鍓嶆柟绔炰簤鑰?, en: 'Target ahead' })
-                        : localize({ zh: '鍚庢柟杩借刀鑰?, en: 'Pressure behind' }),
+                        ? localize({ zh: '前方竞争者', en: 'Target ahead' })
+                        : localize({ zh: '后方追赶者', en: 'Pressure behind' }),
                 score,
                 isPlayer
             });
@@ -2651,11 +2358,11 @@
         const settlement = getSeasonSettlementPreview(divisionInfo);
         const progressText = divisionInfo.nextTier
             ? localize({
-                zh: `璺?${localize(divisionInfo.nextTier.title)} 杩樺樊 ${formatNumber(divisionInfo.pointsToNext)} 鍒哷,
+                zh: `距 ${localize(divisionInfo.nextTier.title)} 还差 ${formatNumber(divisionInfo.pointsToNext)} 分`,
                 en: `${formatNumber(divisionInfo.pointsToNext)} rating to ${localize(divisionInfo.nextTier.title)}`
             })
             : localize({
-                zh: '宸插埌杈炬湰璧涘褰撳墠鏈€楂樻浣嶏紝閲嶇偣杞负瀹堟涓庡埛鏇撮珮璇勫垎銆?,
+                zh: '已到达本赛季当前最高段位，重点转为守榜与刷更高评分。',
                 en: 'You are at the seasonal cap. The next goal is defending it with higher-rated runs.'
             });
 
@@ -2663,7 +2370,7 @@
             <article class="event-card division-card" style="--tier-color:${divisionInfo.tier.color};">
                 <div class="card-title-row">
                     <div>
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DIVISION STATUS' : '娈典綅鐘舵€?}</div>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DIVISION STATUS' : '段位状态'}</div>
                         <h3>${localize(divisionInfo.tier.title)}</h3>
                     </div>
                     <span class="pill hot">${formatNumber(divisionInfo.score)}</span>
@@ -2677,9 +2384,9 @@
                 </div>
                 <div class="progress-track division-track"><i style="width:${divisionInfo.progressPct}%"></i></div>
                 <div class="reward-row">
-                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Expected settle' : '棰勮缁撶畻'} ${formatNumber(settlement.totalGold)} ${t('goldLabel')}</span>
-                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Settle cores' : '缁撶畻鑳芥牳'} ${formatNumber(settlement.totalCore)}</span>
-                    <span class="reward-pill">${divisionInfo.nextTier ? localize(divisionInfo.nextTier.title) : localize({ zh: '璧涘椤舵', en: 'Season Cap' })}</span>
+                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Expected settle' : '预计结算'} ${formatNumber(settlement.totalGold)} ${t('goldLabel')}</span>
+                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Settle cores' : '结算能核'} ${formatNumber(settlement.totalCore)}</span>
+                    <span class="reward-pill">${divisionInfo.nextTier ? localize(divisionInfo.nextTier.title) : localize({ zh: '赛季顶段', en: 'Season Cap' })}</span>
                 </div>
             </article>
         `;
@@ -2688,13 +2395,13 @@
     function renderRewardPills(reward, className = 'reward-pill') {
         const labels = [];
         if (reward.gold) {
-            labels.push(localize({ zh: `閲戝竵 +${formatNumber(reward.gold)}`, en: `Gold +${formatNumber(reward.gold)}` }));
+            labels.push(localize({ zh: `金币 +${formatNumber(reward.gold)}`, en: `Gold +${formatNumber(reward.gold)}` }));
         }
         if (reward.core) {
-            labels.push(localize({ zh: `鑳芥牳 +${formatNumber(reward.core)}`, en: `Cores +${formatNumber(reward.core)}` }));
+            labels.push(localize({ zh: `能核 +${formatNumber(reward.core)}`, en: `Cores +${formatNumber(reward.core)}` }));
         }
         if (reward.xp) {
-            labels.push(localize({ zh: `璧涘缁忛獙 +${formatNumber(reward.xp)}`, en: `Season XP +${formatNumber(reward.xp)}` }));
+            labels.push(localize({ zh: `赛季经验 +${formatNumber(reward.xp)}`, en: `Season XP +${formatNumber(reward.xp)}` }));
         }
         if (reward.starterOverclockRuns) {
             labels.push(formatBoostRewardText('starterOverclockRuns', reward.starterOverclockRuns));
@@ -2711,22 +2418,6 @@
         return labels.map((text) => `<span class="${className}">${text}</span>`).join('');
     }
 
-    function showRewardToast(title, reward = {}, note = '') {
-        if (!dom.toast) return;
-        const rewardsHtml = renderRewardPills(reward).trim();
-        dom.toast.classList.add('is-visible', 'is-reward');
-        dom.toast.innerHTML = `
-            <div class="toast-title">${title}</div>
-            ${note ? `<div class="toast-note">${note}</div>` : ''}
-            ${rewardsHtml ? `<div class="toast-rewards">${rewardsHtml}</div>` : ''}
-        `;
-        window.clearTimeout(toastTimer);
-        toastTimer = window.setTimeout(() => {
-            dom.toast.classList.remove('is-visible', 'is-reward');
-            dom.toast.textContent = '';
-        }, 2200);
-    }
-
     function renderResultOverlayCard() {
         if (!lastResult || !dom.resultRankPanel) return;
         const { divisionInfo, promoted, promotionText, settlementPreview } = lastResult;
@@ -2734,11 +2425,11 @@
             ? promotionText
             : divisionInfo.nextTier
                 ? localize({
-                    zh: `璺?${localize(divisionInfo.nextTier.title)} 杩樺樊 ${formatNumber(divisionInfo.pointsToNext)} 娈典綅鍒哷,
+                    zh: `距 ${localize(divisionInfo.nextTier.title)} 还差 ${formatNumber(divisionInfo.pointsToNext)} 段位分`,
                     en: `${formatNumber(divisionInfo.pointsToNext)} rating to ${localize(divisionInfo.nextTier.title)}`
                 })
                 : localize({
-                    zh: '宸蹭繚鎸佹湰璧涘褰撳墠椤舵锛屾帴涓嬫潵灏辨槸缁х画鎷夐珮鑽ｈ獕鍒嗐€?,
+                    zh: '已保持本赛季当前顶段，接下来就是继续拉高荣誉分。',
                     en: 'You are already sitting at the current seasonal cap.'
                 });
 
@@ -2746,18 +2437,18 @@
             <div class="result-rank-card ${promoted ? 'is-promoted' : ''}" style="--tier-color:${divisionInfo.tier.color};">
                 ${promoted ? `
                     <div class="promotion-banner">
-                        <div class="overlay-kicker">${playerProfile.lang === 'en' ? 'DIVISION PROMOTION' : '娈典綅鏅嬪崌'}</div>
+                        <div class="overlay-kicker">${playerProfile.lang === 'en' ? 'DIVISION PROMOTION' : '段位晋升'}</div>
                         <h3>${localize(divisionInfo.tier.title)}</h3>
                         <p>${promotionText}</p>
                     </div>
                 ` : ''}
                 <div class="result-rank-head">
                     <div>
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DIVISION RESULT' : '娈典綅鍙嶉'}</div>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'DIVISION RESULT' : '段位反馈'}</div>
                         <h3>${localize(divisionInfo.tier.title)}</h3>
                     </div>
                     <span class="pill ${promoted ? 'hot' : 'good'}">${promoted
-                        ? localize({ zh: '鏅嬪崌鎴愬姛', en: 'Promoted' })
+                        ? localize({ zh: '晋升成功', en: 'Promoted' })
                         : localize(divisionInfo.tier.short)}</span>
                 </div>
                 <div class="result-rank-desc">
@@ -2766,14 +2457,14 @@
                 </div>
                 <div class="progress-track division-track"><i style="width:${divisionInfo.progressPct}%"></i></div>
                 <div class="reward-row">
-                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Rating' : '娈典綅鍒?} ${formatNumber(divisionInfo.score)}</span>
-                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Settle Gold' : '缁撶畻閲戝竵'} ${formatNumber(settlementPreview.totalGold)}</span>
-                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Settle Cores' : '缁撶畻鑳芥牳'} ${formatNumber(settlementPreview.totalCore)}</span>
+                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Rating' : '段位分'} ${formatNumber(divisionInfo.score)}</span>
+                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Settle Gold' : '结算金币'} ${formatNumber(settlementPreview.totalGold)}</span>
+                    <span class="reward-pill">${playerProfile.lang === 'en' ? 'Settle Cores' : '结算能核'} ${formatNumber(settlementPreview.totalCore)}</span>
                 </div>
                 <div class="promotion-actions">
-                    <button class="ghost-btn wide-btn" type="button" data-open-modal="season-rules">${playerProfile.lang === 'en' ? 'View Season Rules' : '鏌ョ湅璧涘瑙勫垯'}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-open-modal="season-rules">${playerProfile.lang === 'en' ? 'View Season Rules' : '查看赛季规则'}</button>
                     ${promoted
-                        ? `<button class="primary-btn wide-btn" type="button" data-open-tab="season">${playerProfile.lang === 'en' ? 'Open Season Panel' : '鎵撳紑璧涘闈㈡澘'}</button>`
+                        ? `<button class="primary-btn wide-btn" type="button" data-open-tab="season">${playerProfile.lang === 'en' ? 'Open Season Panel' : '打开赛季面板'}</button>`
                         : ''}
                 </div>
             </div>
@@ -2787,8 +2478,6 @@
             content = renderSeasonRulesModal();
         } else if (kind === 'mission-rules') {
             content = renderMissionRulesModal();
-        } else if (kind === 'run-brief') {
-            content = renderRunBriefModal();
         }
         if (!content) return;
         activeInfoModal = kind;
@@ -2811,9 +2500,6 @@
 
     function switchTab(tab, syncHash = true) {
         if (!['run', 'loadout', 'missions', 'season', 'shop'].includes(tab)) return;
-        if (dom.panelContent) {
-            panelScrollState[activeTab] = dom.panelContent.scrollTop || 0;
-        }
         if (tab !== 'run' && game.running && !game.paused && !game.awaitingRevive) {
             pauseRun();
         }
@@ -2821,36 +2507,34 @@
         if (syncHash) {
             window.location.hash = activeTab;
         }
-        renderPanel({ preserveScroll: true });
-        renderTabLayout({ preserveScroll: true });
+        renderPanel();
+        renderTabLayout();
     }
 
-    function renderTabLayout({ preserveScroll = true } = {}) {
+    function renderTabLayout() {
         document.body.dataset.runnerTab = activeTab;
         dom.runnerMain?.classList.toggle('is-run-tab', activeTab === 'run');
         dom.runnerMain?.classList.toggle('is-content-tab', activeTab !== 'run');
         dom.stageCard?.classList.toggle('is-tab-hidden', activeTab !== 'run');
         updateRuntimeBodyState();
         if (dom.panelContent) {
-            const nextScroll = preserveScroll ? (panelScrollState[activeTab] || 0) : 0;
-            requestAnimationFrame(() => {
-                if (dom.panelContent) {
-                    dom.panelContent.scrollTop = nextScroll;
-                }
-            });
+            dom.panelContent.scrollTop = 0;
         }
         requestAnimationFrame(resizeCanvas);
     }
 
     function getLoadoutAlertCount() {
-        return 0;
+        const runners = RUNNERS.filter((item) => !isUnlocked('runners', item) && canPurchaseUnlock(item)).length;
+        const skills = ACTIVE_SKILLS.filter((item) => !isUnlocked('skills', item) && canPurchaseUnlock(item)).length;
+        const passives = PASSIVES.filter((item) => !isUnlocked('passives', item) && canPurchaseUnlock(item)).length;
+        return runners + skills + passives;
     }
 
     function updateTabBadges() {
         const missionCount = getClaimableMissionCount();
         const loadoutCount = getLoadoutAlertCount();
         const seasonCount = getClaimableSeasonRewardCount() + getClaimableSeasonSponsorRewardCount() + getClaimableRankRewardCount();
-        const shopCount = getTrueShopClaimCount();
+        const shopCount = getShopAlertCount() + (!playerProfile.payment.passUnlocked ? 1 : 0);
         Array.from(dom.tabBar.querySelectorAll('.tab-btn')).forEach((button) => {
             const tab = button.dataset.tab;
             const count = tab === 'missions'
@@ -2874,7 +2558,7 @@
     }
 
     function formatTimeMs(ms) {
-        if (!ms) return playerProfile.lang === 'en' ? 'N/A' : '鏈揪鎴?;
+        if (!ms) return playerProfile.lang === 'en' ? 'N/A' : '未达成';
         const totalSeconds = Math.floor(ms / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
@@ -2884,18 +2568,18 @@
 
     function getRunGrade(distance, combo, hitless) {
         const value = distance + (combo * 34) + (hitless ? 280 : 0);
-        if (value >= 2200) return { grade: 'S', color: '#ffd66b', text: playerProfile.lang === 'en' ? 'Perfect arc pressure. This run can contest the ladder.' : '鏋侀檺鍘嬫琛ㄧ幇锛岃繖涓€灞€宸茬粡鍏峰鍐叉鍚噾閲忋€? };
-        if (value >= 1500) return { grade: 'A', color: '#57e5ff', text: playerProfile.lang === 'en' ? 'Strong rhythm and clean routing. Very stable for repeat runs.' : '鑺傚绋冲畾銆佽矾绾垮共鍑€锛屾槸寰堟垚鐔熺殑涓€娆″啿鍒恒€? };
-        if (value >= 900) return { grade: 'B', color: '#9fe9ff', text: playerProfile.lang === 'en' ? 'Solid growth run with room to push combo harder.' : '鏄竴灞€涓嶉敊鐨勬垚闀胯窇锛屼絾杩炲嚮鍜岃翰閬胯繕鑳界户缁帇姒ㄣ€? };
-        if (value >= 450) return { grade: 'C', color: '#ffb56b', text: playerProfile.lang === 'en' ? 'Warm-up level. Focus on lane reads and better timing.' : '鐑韩灞€姘村钩锛屽厛鎶婅璺拰璺虫粦鑺傚鍐嶇ǔ涓€鐐广€? };
-        return { grade: 'D', color: '#ff7d9b', text: playerProfile.lang === 'en' ? 'Early break. Try safer lane changes and save revive value.' : '寮€灞€鏂。杈冩棭锛屽缓璁厛绋冲垏閬撳苟淇濈暀澶嶆椿瀹归敊銆? };
+        if (value >= 2200) return { grade: 'S', color: '#ffd66b', text: playerProfile.lang === 'en' ? 'Perfect arc pressure. This run can contest the ladder.' : '极限压榜表现，这一局已经具备冲榜含金量。' };
+        if (value >= 1500) return { grade: 'A', color: '#57e5ff', text: playerProfile.lang === 'en' ? 'Strong rhythm and clean routing. Very stable for repeat runs.' : '节奏稳定、路线干净，是很成熟的一次冲刺。' };
+        if (value >= 900) return { grade: 'B', color: '#9fe9ff', text: playerProfile.lang === 'en' ? 'Solid growth run with room to push combo harder.' : '是一局不错的成长跑，但连击和躲避还能继续压榨。' };
+        if (value >= 450) return { grade: 'C', color: '#ffb56b', text: playerProfile.lang === 'en' ? 'Warm-up level. Focus on lane reads and better timing.' : '热身局水平，先把读路和跳滑节奏再稳一点。' };
+        return { grade: 'D', color: '#ff7d9b', text: playerProfile.lang === 'en' ? 'Early break. Try safer lane changes and save revive value.' : '开局断档较早，建议先稳切道并保留复活容错。' };
     }
 
     function renderStatBars(runner) {
         const rows = [
-            { label: playerProfile.lang === 'en' ? 'Speed' : '閫熷害', value: runner.stats.speed, max: 1.2 },
-            { label: playerProfile.lang === 'en' ? 'Combo' : '杩炲嚮', value: runner.stats.combo, max: 1.2 },
-            { label: playerProfile.lang === 'en' ? 'Control' : '鎿嶆帶', value: runner.stats.control, max: 1.2 }
+            { label: playerProfile.lang === 'en' ? 'Speed' : '速度', value: runner.stats.speed, max: 1.2 },
+            { label: playerProfile.lang === 'en' ? 'Combo' : '连击', value: runner.stats.combo, max: 1.2 },
+            { label: playerProfile.lang === 'en' ? 'Control' : '操控', value: runner.stats.control, max: 1.2 }
         ];
         return `
             <div class="stat-bars">
@@ -2920,17 +2604,13 @@
         const advancedChapter = mission.section === 'pulse' ? 0 : maybeAdvanceMissionChapter();
         saveState();
         playSfx(advancedChapter ? 'promote' : 'reward');
-        showRewardToast(
-            advancedChapter
-                ? localize({
-                    zh: `浠诲姟濂栧姳宸查鍙?路 宸叉帹杩涘埌绗?${advancedChapter} 绔燻,
-                    en: `Mission reward claimed 路 advanced to Chapter ${advancedChapter}`
-                })
-                : t('missionClaimed'),
-            mission.reward,
-            localize(mission.title)
-        );
-        renderAll({ preservePanelScroll: true });
+        showToast(advancedChapter
+            ? localize({
+                zh: `奖励已领取，任务板升级至第 ${advancedChapter} 章`,
+                en: `Reward claimed. Mission board advanced to Chapter ${advancedChapter}`
+            })
+            : t('missionClaimed'));
+        renderAll();
     }
 
     function claimSeasonReward(level) {
@@ -2941,12 +2621,8 @@
         applyRewardBundle(reward.free);
         saveState();
         playSfx('reward');
-        showRewardToast(
-            localize({ zh: `宸查鍙?Lv.${level} 璧涘濂栧姳`, en: `Claimed season reward Lv.${level}` }),
-            reward.free,
-            localize(reward.free.title)
-        );
-        renderAll({ preservePanelScroll: true });
+        showToast(localize({ zh: `已领取 Lv.${level} 赛季奖励`, en: `Claimed season reward Lv.${level}` }));
+        renderAll();
     }
 
     function claimSeasonSponsorReward(level) {
@@ -2957,12 +2633,8 @@
         applyRewardBundle(reward.premium);
         saveState();
         playSfx('promote');
-        showRewardToast(
-            localize({ zh: `宸查鍙?Lv.${level} 璧炲姪杞ㄩ亾濂栧姳`, en: `Claimed sponsor reward Lv.${level}` }),
-            reward.premium,
-            localize(reward.premium.title)
-        );
-        renderAll({ preservePanelScroll: true });
+        showToast(localize({ zh: `已领取 Lv.${level} 赞助轨道奖励`, en: `Claimed sponsor reward Lv.${level}` }));
+        renderAll();
     }
 
     function claimRankReward(id) {
@@ -2973,12 +2645,8 @@
         applyRewardBundle(reward.reward);
         saveState();
         playSfx('promote');
-        showRewardToast(
-            localize({ zh: `宸查鍙栧啿姒滃鍔盽, en: 'Ladder reward claimed' }),
-            reward.reward,
-            localize(reward.title)
-        );
-        renderAll({ preservePanelScroll: true });
+        showToast(localize({ zh: `已领取冲榜奖励：${localize(reward.title)}`, en: `Ladder reward claimed: ${localize(reward.title)}` }));
+        renderAll();
     }
 
     function unlockEntry(category, id) {
@@ -3007,75 +2675,8 @@
         renderAll();
     }
 
-    function unlockEntry(category, id) {
-        const resolved = getUpgradeCollectionKey(category);
-        const list = getUpgradeDefs(resolved);
-        const entry = list.find((item) => item.id === id);
-        if (!entry || isUnlocked(resolved, entry)) return;
-        if (!meetsUnlock(entry)) {
-            showToast(unlockConditionText(entry));
-            return;
-        }
-        if (!canPurchaseUnlock(entry)) {
-            const cost = getUnlockCost(entry);
-            const needGold = (cost.gold || 0) > playerProfile.gold;
-            const needCore = (cost.core || 0) > playerProfile.core;
-            if (needGold && needCore) showToast(playerProfile.lang === 'en' ? 'Not enough gold and cores' : '閲戝竵涓庤兘鏍镐笉瓒?);
-            else if (needGold) showToast(t('notEnoughGold'));
-            else showToast(playerProfile.lang === 'en' ? 'Not enough cores' : '鑳芥牳涓嶈冻');
-            return;
-        }
-        const cost = getUnlockCost(entry);
-        playerProfile.gold -= cost.gold || 0;
-        playerProfile.core -= cost.core || 0;
-        playerProfile.unlocked[resolved].push(id);
-        playerProfile.upgrades[resolved][id] = Math.max(1, playerProfile.upgrades[resolved][id] || 0);
-        saveState();
-        playSfx('reward');
-        showToast(playerProfile.lang === 'en' ? `${localize(entry.title)} unlocked` : `${localize(entry.title)} 宸茶В閿乣);
-        renderAll({ preservePanelScroll: true });
-    }
-
-    function equipEntry(type, id) {
-        if (type === 'runner' && playerProfile.unlocked.runners.includes(id)) playerProfile.loadout.runner = id;
-        if (type === 'skill' && playerProfile.unlocked.skills.includes(id)) playerProfile.loadout.skill = id;
-        if (type === 'passive' && playerProfile.unlocked.passives.includes(id)) playerProfile.loadout.passive = id;
-        saveState();
-        playSfx('move');
-        showToast(t('equipped'));
-        renderAll({ preservePanelScroll: true });
-    }
-
-    function upgradeEntry(category, id) {
-        const resolved = getUpgradeCollectionKey(category);
-        const def = getUpgradeDefs(resolved).find((item) => item.id === id);
-        if (!def || !isUnlocked(resolved, def)) return;
-        const level = getEntryLevel(resolved, id);
-        const cost = getUpgradeCost(resolved, def, level);
-        if (!cost) {
-            showToast(playerProfile.lang === 'en' ? 'Already at max level' : '宸茶揪鍒版弧绾?);
-            return;
-        }
-        const needGold = (cost.gold || 0) > playerProfile.gold;
-        const needCore = (cost.core || 0) > playerProfile.core;
-        if (needGold || needCore) {
-            if (needGold && needCore) showToast(playerProfile.lang === 'en' ? 'Not enough gold and cores' : '閲戝竵涓庤兘鏍镐笉瓒?);
-            else if (needGold) showToast(t('notEnoughGold'));
-            else showToast(playerProfile.lang === 'en' ? 'Not enough cores' : '鑳芥牳涓嶈冻');
-            return;
-        }
-        playerProfile.gold -= cost.gold || 0;
-        playerProfile.core -= cost.core || 0;
-        playerProfile.upgrades[resolved][id] = level + 1;
-        saveState();
-        playSfx('reward');
-        showToast(playerProfile.lang === 'en' ? `${localize(def.title)} upgraded to Lv.${level + 1}` : `${localize(def.title)} 鍗囪嚦 Lv.${level + 1}`);
-        renderAll({ preservePanelScroll: true });
-    }
-
     function renderRunTab() {
         const runner = getRunner(playerProfile.loadout.runner);
-        const runnerStats = getRunnerStats(runner);
         const skill = getSkill(playerProfile.loadout.skill);
         const passive = getPassive(playerProfile.loadout.passive);
         const rankScore = getRunnerRankScore();
@@ -3113,25 +2714,25 @@
                 <article class="event-card boost-card">
                     <div class="card-title-row">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'RUN BOOSTS' : '杩愯澧炵泭'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Turn stored resources into stronger next runs' : '鎶婂偍澶囪祫婧愮洿鎺ヨ浆鎴愭帴涓嬫潵鍑犲眬鐨勭埥鐐?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'RUN BOOSTS' : '运行增益'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Turn stored resources into stronger next runs' : '把储备资源直接转成接下来几局的爽点'}</h3>
                         </div>
-                        <span class="pill ${readyBoostCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${readyBoostCount} armed` : `宸插鎴?${readyBoostCount}`}</span>
+                        <span class="pill ${readyBoostCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${readyBoostCount} armed` : `已备战 ${readyBoostCount}`}</span>
                     </div>
                     <p>${playerProfile.lang === 'en'
                         ? 'Supply-shop boosts now affect real gameplay: faster overclock starts, stronger settlement, and safer revive flow.'
-                        : '琛ョ粰鍟嗗簵閲岀殑澧炵泭宸茬粡浼氱湡瀹炰綔鐢ㄥ埌璺戝眬閲岋細鏇村揩寮€鐖姐€佹洿寮虹粨绠椼€佷互鍙婃洿绋崇殑澶嶆椿瀹归敊銆?}</p>
+                        : '补给商店里的增益已经会真实作用到跑局里：更快开爽、更强结算、以及更稳的复活容错。'}</p>
                     <div class="reward-row">
                         ${liveBoosts.length
-                            ? liveBoosts.map((entry) => `<span class="reward-pill">${playerProfile.lang === 'en' ? 'Live Now' : '鏈眬鐢熸晥'} 路 ${entry.title}</span>`).join('')
-                            : `<span class="reward-pill">${playerProfile.lang === 'en' ? 'No temporary boost is active this run' : '褰撳墠娌℃湁鐢熸晥涓殑涓存椂澧炵泭'}</span>`}
+                            ? liveBoosts.map((entry) => `<span class="reward-pill">${playerProfile.lang === 'en' ? 'Live Now' : '本局生效'} · ${entry.title}</span>`).join('')
+                            : `<span class="reward-pill">${playerProfile.lang === 'en' ? 'No temporary boost is active this run' : '当前没有生效中的临时增益'}</span>`}
                     </div>
                     <div class="boost-list">
                         ${boostEntries.map((entry) => `
                             <div class="boost-row ${entry.count > 0 || game.activeBoosts.includes(entry.key) ? 'is-live' : ''}" style="--boost-accent:${entry.accent};">
                                 <div class="card-title-row">
                                     <div>
-                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'RESERVE' : '鍌ㄥ'}</div>
+                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'RESERVE' : '储备'}</div>
                                         <h3>${entry.title}</h3>
                                     </div>
                                     <span class="pill ${entry.count > 0 || game.activeBoosts.includes(entry.key) ? 'good' : ''}">${formatBoostRewardText(entry.key, entry.count)}</span>
@@ -3146,15 +2747,15 @@
                     <div class="card-title-row">
                         <div>
                             <div class="eyebrow">${t('runEvent1')}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Track Pressure Feed' : '璧涢亾鍘嬪姏鎯呮姤'}</h3>
+                            <h3>${playerProfile.lang === 'en' ? 'Track Pressure Feed' : '赛道压力情报'}</h3>
                         </div>
-                        <span class="pill hot">x${runnerStats.speed.toFixed(2)}</span>
+                        <span class="pill hot">x${runner.stats.speed.toFixed(2)}</span>
                     </div>
                     <p>${t('runEvent1Desc')}</p>
                     <div class="tag-row">
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Fastest 500m' : '500m 鏈€蹇?} ${fastest500}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Best Clean' : '鏃犱激鏈€浣?} ${bestClean}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Overclock Uses' : '绱瓒呴'} ${formatNumber(playerProfile.stats.overclockUses || 0)}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Fastest 500m' : '500m 最快'} ${fastest500}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Best Clean' : '无伤最佳'} ${bestClean}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Overclock Uses' : '累计超频'} ${formatNumber(playerProfile.stats.overclockUses || 0)}</span>
                     </div>
                 </article>
 
@@ -3168,9 +2769,9 @@
                     </div>
                     <p>${t('rankDesc')}</p>
                     <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Best Combo' : '鏈€楂樿繛鍑?} ${formatNumber(playerProfile.stats.longestCombo)}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Perfect Runs' : '鏃犱激灞€鏁?} ${formatNumber(playerProfile.stats.perfectRuns)}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Total Runs' : '绱灞€鏁?} ${formatNumber(playerProfile.totalRuns)}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Best Combo' : '最高连击'} ${formatNumber(playerProfile.stats.longestCombo)}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Perfect Runs' : '无伤局数'} ${formatNumber(playerProfile.stats.perfectRuns)}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Total Runs' : '累计局数'} ${formatNumber(playerProfile.totalRuns)}</span>
                     </div>
                 </article>
 
@@ -3179,20 +2780,20 @@
                 <article class="event-card leaderboard-card">
                     <div class="card-title-row">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'LIVE LADDER' : '鍗虫椂姒滃帇'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Nearest Rivals' : '杩戣韩瀵规墜'}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'LIVE LADDER' : '即时榜压'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Nearest Rivals' : '近身对手'}</h3>
                         </div>
                         <span class="pill hot">#${leaderboard.playerRank}</span>
                     </div>
                     <p>${leaderboard.playerRank === 1
-                        ? localize({ zh: '浣犲凡缁忔殏鏃剁珯鍦ㄦ棣栵紝鎺ヤ笅鏉ユ洿閲嶈鐨勬槸瀹堜綇浼樺娍涓庣户缁埛楂樿瘎鍒嗐€?, en: 'You are temporarily holding rank #1. The next job is defending it with cleaner, higher-rated runs.' })
-                        : localize({ zh: '姒滃崟涓嶅彧鐪嬭窛绂伙紝杩樹細鏀惧ぇ杩炲嚮涓庢棤浼よ〃鐜般€傝秺绋筹紝鍐叉瓒婂揩銆?, en: 'The ladder amplifies combo and clean runs as well as distance. Stable routing climbs faster.' })}</p>
+                        ? localize({ zh: '你已经暂时站在榜首，接下来更重要的是守住优势与继续刷高评分。', en: 'You are temporarily holding rank #1. The next job is defending it with cleaner, higher-rated runs.' })
+                        : localize({ zh: '榜单不只看距离，还会放大连击与无伤表现。越稳，冲榜越快。', en: 'The ladder amplifies combo and clean runs as well as distance. Stable routing climbs faster.' })}</p>
                     <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Run Rating' : '璺戦叿璇勫垎'} ${formatNumber(rankScore)}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Run Rating' : '跑酷评分'} ${formatNumber(rankScore)}</span>
                         <span class="reward-pill">${leaderboard.playerRank === 1
-                            ? localize({ zh: '浣犲凡鍗犳嵁姒滈', en: 'You own the summit' })
-                            : localize({ zh: `璺濅笂涓€鍚?${formatNumber(leaderboard.nextGap)}`, en: `Gap to next ${formatNumber(leaderboard.nextGap)}` })}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Tip: keep combo above 20' : '寤鸿锛氳繛鍑诲敖閲忎繚鎸?20 浠ヤ笂'}</span>
+                            ? localize({ zh: '你已占据榜首', en: 'You own the summit' })
+                            : localize({ zh: `距上一名 ${formatNumber(leaderboard.nextGap)}`, en: `Gap to next ${formatNumber(leaderboard.nextGap)}` })}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? 'Tip: keep combo above 20' : '建议：连击尽量保持 20 以上'}</span>
                     </div>
                     <div class="leaderboard-list">
                         ${leaderboard.entries.map((entry) => `
@@ -3254,8 +2855,8 @@
                     <p>${localize(runner.desc)}</p>
                     <div class="runner-meta">
                         <span class="pill">${unlockConditionText(runner)}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Combo' : '杩炲嚮'} x${runner.stats.combo.toFixed(2)}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Control' : '鎿嶆帶'} x${runner.stats.control.toFixed(2)}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Combo' : '连击'} x${runner.stats.combo.toFixed(2)}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Control' : '操控'} x${runner.stats.control.toFixed(2)}</span>
                     </div>
                     ${renderLoadoutActionButton('runner', runner.id, owned, equipped)}
                 </article>
@@ -3316,205 +2917,13 @@
                         <div class="runner-avatar" style="background:linear-gradient(135deg, ${equippedRunner.accent}33, rgba(164,107,255,0.22));"></div>
                         <div>
                             <h3>${localize(equippedRunner.title)}</h3>
-                            <p>${playerProfile.lang === 'en' ? 'Current active loadout with runner, skill and passive synced.' : '褰撳墠鐢熸晥涓殑璺戣€呫€佷富鍔ㄦ妧鑳戒笌琚姩鑺墖缁勫悎銆?}</p>
+                            <p>${playerProfile.lang === 'en' ? 'Current active loadout with runner, skill and passive synced.' : '当前生效中的跑者、主动技能与被动芯片组合。'}</p>
                         </div>
                     </div>
                     ${renderStatBars(equippedRunner)}
                     <div class="panel-meta-row">
                         <span class="pill">${t('statCurrentSkill')}: ${localize(equippedSkill.title)}</span>
                         <span class="pill">${t('statCurrentPassive')}: ${localize(equippedPassive.title)}</span>
-                    </div>
-                </article>
-                ${runnerCards}
-                ${skillCards}
-                ${passiveCards}
-            </div>
-        `;
-    }
-
-    function renderStatBars(runner) {
-        const stats = getRunnerStats(runner);
-        const rows = [
-            { label: playerProfile.lang === 'en' ? 'Speed' : '閫熷害', value: stats.speed, max: 1.36 },
-            { label: playerProfile.lang === 'en' ? 'Combo' : '杩炲嚮', value: stats.combo, max: 1.42 },
-            { label: playerProfile.lang === 'en' ? 'Control' : '鎿嶆帶', value: stats.control, max: 1.36 }
-        ];
-        return `
-            <div class="stat-bars">
-                ${rows.map((row) => `
-                    <div class="stat-bar">
-                        <span class="mini-label">${row.label}</span>
-                        <div class="stat-bar-track"><i style="width:${Math.max(14, Math.min(100, (row.value / row.max) * 100))}%"></i></div>
-                        <strong class="mono">${row.value.toFixed(2)}</strong>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
-
-    function getLoadoutSpecPillLabels(type, def, level = 1) {
-        if (type === 'runner') {
-            const stats = getRunnerStats(def, level);
-            return [
-                `SPD x${stats.speed.toFixed(2)}`,
-                `${playerProfile.lang === 'en' ? 'Combo' : '杩炲嚮'} x${stats.combo.toFixed(2)}`,
-                `${playerProfile.lang === 'en' ? 'Control' : '鎿嶆帶'} x${stats.control.toFixed(2)}`
-            ];
-        }
-        if (type === 'skill') {
-            const runtime = getSkillRuntime(def, level);
-            if (def.id === 'shield') {
-                return [
-                    playerProfile.lang === 'en' ? `Shield ${runtime.shieldDuration.toFixed(1)}s` : `鎶ょ浘 ${runtime.shieldDuration.toFixed(1)}s`,
-                    `CD ${runtime.cooldown.toFixed(1)}s`
-                ];
-            }
-            return [
-                playerProfile.lang === 'en' ? `Clear ${runtime.clearDistance.toFixed(0)}m` : `娓呴殰 ${runtime.clearDistance.toFixed(0)}m`,
-                playerProfile.lang === 'en' ? `Overclock +${runtime.overclockGain.toFixed(0)}` : `瓒呴 +${runtime.overclockGain.toFixed(0)}`,
-                `CD ${runtime.cooldown.toFixed(1)}s`
-            ];
-        }
-        const runtime = getPassiveRuntime(def, level);
-        if (def.id === 'magnet') {
-            return [
-                playerProfile.lang === 'en' ? `Pull 卤${runtime.laneReach} lane` : `鍚搁檮 卤${runtime.laneReach} 杞﹂亾`,
-                playerProfile.lang === 'en' ? `Pickup ${runtime.pickupZ.toFixed(0)}m` : `鍚搁檮 ${runtime.pickupZ.toFixed(0)}m`,
-                playerProfile.lang === 'en' ? `Gold +${Math.round(runtime.coinYieldBonus * 100)}%` : `閲戝竵 +${Math.round(runtime.coinYieldBonus * 100)}%`
-            ];
-        }
-        return [
-            playerProfile.lang === 'en' ? `Combo 鈮?{runtime.comboThreshold}` : `杩炲嚮 鈮?{runtime.comboThreshold}`,
-            playerProfile.lang === 'en' ? `Overclock +${runtime.overclockPerSecond.toFixed(1)}/s` : `瓒呴 +${runtime.overclockPerSecond.toFixed(1)}/绉抈
-        ];
-    }
-
-    function renderLoadoutSpecPills(type, def, level = 1) {
-        return getLoadoutSpecPillLabels(type, def, level).map((label) => `<span class="pill">${label}</span>`).join('');
-    }
-
-    function renderLoadoutUpgradeMeta(type, def, owned) {
-        const category = getUpgradeCollectionKey(type);
-        const level = owned ? getEntryLevel(category, def.id) : 1;
-        const cap = getUpgradeCap(category);
-        const upgradeCost = owned ? getUpgradeCost(category, def, level) : null;
-        return `
-            <div class="runner-meta loadout-upgrade-meta">
-                ${owned
-                    ? `<span class="pill good">Lv.${level}/${cap}</span>${upgradeCost ? renderCompactCostPills(upgradeCost) : `<span class="pill good">MAX</span>`}`
-                    : `<span class="pill">${unlockConditionText(def)}</span>`}
-            </div>
-            <div class="runner-meta loadout-spec-row">
-                ${renderLoadoutSpecPills(type, def, level)}
-            </div>
-        `;
-    }
-
-    function renderLoadoutActionButton(type, id, owned, equipped) {
-        const category = getUpgradeCollectionKey(type);
-        const def = getUpgradeDefs(category).find((item) => item.id === id);
-        if (!owned) {
-            return `<button class="ghost-btn loadout-action-btn loadout-unlock-btn wide-btn" data-unlock="${category}" data-id="${id}" type="button">${t('runnerUnlock')}</button>`;
-        }
-        const level = getEntryLevel(category, id);
-        const upgradeCost = getUpgradeCost(category, def, level);
-        const canUpgrade = !!upgradeCost && canUpgradeEntry(category, def);
-        return `
-            <div class="loadout-action-grid">
-                ${equipped
-                    ? `<button class="ghost-btn loadout-action-btn loadout-equipped-btn" type="button" disabled>${t('runnerEquipped')}</button>`
-                    : `<button class="primary-btn loadout-action-btn loadout-equip-btn" data-equip="${type}" data-id="${id}" type="button">${t('runnerEquip')}</button>`}
-                ${upgradeCost
-                    ? `<button class="${canUpgrade ? 'primary-btn' : 'ghost-btn'} loadout-action-btn loadout-upgrade-btn ${canUpgrade ? 'is-ready' : ''}" data-upgrade-loadout="${category}" data-id="${id}" type="button">${playerProfile.lang === 'en' ? `Upgrade Lv.${level + 1}` : `鍗囩骇 Lv.${level + 1}`}</button>`
-                    : `<button class="ghost-btn loadout-action-btn loadout-maxed-btn" type="button" disabled>MAX</button>`}
-            </div>
-        `;
-    }
-
-    function renderLoadoutTab() {
-        const equippedRunner = getRunner(playerProfile.loadout.runner);
-        const equippedSkill = getSkill(playerProfile.loadout.skill);
-        const equippedPassive = getPassive(playerProfile.loadout.passive);
-        const runnerCards = RUNNERS.map((runner) => {
-            const owned = isUnlocked('runners', runner);
-            const equipped = playerProfile.loadout.runner === runner.id;
-            const runnerStats = getRunnerStats(runner, owned ? getEntryLevel('runners', runner.id) : 1);
-            return `
-                <article class="runner-card loadout-card ${equipped ? 'is-active' : ''}">
-                    <div class="card-title-row">
-                        <div>
-                            <div class="eyebrow">${owned ? (equipped ? (playerProfile.lang === 'en' ? 'ACTIVE RUNNER' : '褰撳墠瑙掕壊') : (playerProfile.lang === 'en' ? 'OWNED RUNNER' : '宸茶В閿佽鑹?)) : t('runnerTagUnlock')}</div>
-                            <h3>${localize(runner.title)}</h3>
-                        </div>
-                        <span class="pill" style="color:${runner.accent};border-color:${runner.accent}55;">SPD x${runnerStats.speed.toFixed(2)}</span>
-                    </div>
-                    <p>${localize(runner.desc)}</p>
-                    ${renderLoadoutUpgradeMeta('runner', runner, owned)}
-                    ${renderLoadoutActionButton('runner', runner.id, owned, equipped)}
-                </article>
-            `;
-        }).join('');
-
-        const skillCards = ACTIVE_SKILLS.map((skill) => {
-            const owned = isUnlocked('skills', skill);
-            const equipped = playerProfile.loadout.skill === skill.id;
-            return `
-                <article class="runner-card loadout-card ${equipped ? 'is-active' : ''}">
-                    <div class="card-title-row">
-                        <div>
-                            <div class="eyebrow">${owned ? (equipped ? (playerProfile.lang === 'en' ? 'ACTIVE SKILL' : '褰撳墠鎶€鑳?) : t('skillSection')) : t('runnerTagUnlock')}</div>
-                            <h3>${localize(skill.title)}</h3>
-                        </div>
-                    </div>
-                    <p>${localize(skill.desc)}</p>
-                    ${renderLoadoutUpgradeMeta('skill', skill, owned)}
-                    ${renderLoadoutActionButton('skill', skill.id, owned, equipped)}
-                </article>
-            `;
-        }).join('');
-
-        const passiveCards = PASSIVES.map((passive) => {
-            const owned = isUnlocked('passives', passive);
-            const equipped = playerProfile.loadout.passive === passive.id;
-            return `
-                <article class="runner-card loadout-card ${equipped ? 'is-active' : ''}">
-                    <div class="card-title-row">
-                        <div>
-                            <div class="eyebrow">${owned ? (equipped ? (playerProfile.lang === 'en' ? 'ACTIVE CHIP' : '褰撳墠鑺墖') : t('passiveSection')) : t('runnerTagUnlock')}</div>
-                            <h3>${localize(passive.title)}</h3>
-                        </div>
-                    </div>
-                    <p>${localize(passive.desc)}</p>
-                    ${renderLoadoutUpgradeMeta('passive', passive, owned)}
-                    ${renderLoadoutActionButton('passive', passive.id, owned, equipped)}
-                </article>
-            `;
-        }).join('');
-
-        return `
-            <div class="card-grid loadout-grid">
-                <article class="stat-card showcase-card">
-                    <div class="panel-title-row">
-                        <div>
-                            <div class="eyebrow">${t('loadoutTitle')}</div>
-                            <h3>${t('loadoutDesc')}</h3>
-                        </div>
-                    </div>
-                    <div class="runner-showcase">
-                        <div class="runner-avatar" style="background:linear-gradient(135deg, ${equippedRunner.accent}33, rgba(164,107,255,0.22));"></div>
-                        <div>
-                            <h3>${localize(equippedRunner.title)}</h3>
-                            <p>${playerProfile.lang === 'en' ? 'Permanent upgrades now directly amplify your active runner, skill, and passive chip.' : '姘镐箙鍗囩骇浼氱洿鎺ユ斁澶у綋鍓嶇敓鏁堢殑瑙掕壊銆佷富鍔ㄦ妧鑳戒笌琚姩鑺墖銆?}</p>
-                        </div>
-                    </div>
-                    ${renderStatBars(equippedRunner)}
-                    <div class="panel-meta-row">
-                        <span class="pill">${t('statCurrentSkill')}: ${localize(equippedSkill.title)}</span>
-                        <span class="pill">${t('statCurrentPassive')}: ${localize(equippedPassive.title)}</span>
-                    </div>
-                    <div class="panel-meta-row">
-                        <span class="pill good">${playerProfile.lang === 'en' ? `Permanent +${formatNumber(getTotalUpgradeInvestment())} Lv` : `姘镐箙寮哄寲 +${formatNumber(getTotalUpgradeInvestment())} 绾}</span>
-                        <span class="pill ${getAffordableUpgradeCount() > 0 ? 'hot' : ''}">${playerProfile.lang === 'en' ? `${formatNumber(getAffordableUpgradeCount())} upgrades ready` : `${formatNumber(getAffordableUpgradeCount())} 椤瑰彲鍗囩骇`}</span>
                     </div>
                 </article>
                 ${runnerCards}
@@ -3541,7 +2950,7 @@
             const statusText = claimed
                 ? t('missionDone')
                 : complete
-                    ? localize({ zh: '鍙鍙?, en: 'Ready To Claim' })
+                    ? localize({ zh: '可领取', en: 'Ready To Claim' })
                     : t('missionLocked');
             return `
                 <article class="mission-card ${complete && !claimed ? 'is-claimable' : ''}">
@@ -3555,10 +2964,10 @@
                     <div class="panel-meta-row">
                         <span class="tier-pill ${mission.tier}">${missionTierLabel(mission.tier)}</span>
                         <span class="pill">${mission.section === 'pulse'
-                            ? localize({ zh: '姣忔棩杞崲', en: 'Daily Rotation' })
+                            ? localize({ zh: '每日轮换', en: 'Daily Rotation' })
                             : mission.section === 'elite'
-                                ? localize({ zh: '绔犺妭楂樺帇鐩爣', en: 'Chapter Pressure Goal' })
-                                : localize({ zh: `绗?${chapter} 绔犱富绾縛, en: `Chapter ${chapter} Core` })}</span>
+                                ? localize({ zh: '章节高压目标', en: 'Chapter Pressure Goal' })
+                                : localize({ zh: `第 ${chapter} 章主线`, en: `Chapter ${chapter} Core` })}</span>
                     </div>
                     <p>${localize(mission.desc)}</p>
                     <div class="progress-track"><i style="width:${progressPct}%"></i></div>
@@ -3578,33 +2987,33 @@
                             <div class="eyebrow">${t('missionsTitle')}</div>
                             <h3>${t('missionsDesc')}</h3>
                         </div>
-                        <button class="ghost-btn" type="button" data-open-modal="mission-rules">${playerProfile.lang === 'en' ? 'Rules' : '瑙勫垯'}</button>
+                        <button class="ghost-btn" type="button" data-open-modal="mission-rules">${playerProfile.lang === 'en' ? 'Rules' : '规则'}</button>
                     </div>
                     <div class="season-kpi-grid">
                         <div class="season-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Board Chapter' : '浠诲姟绔犺妭'}</span>
-                            <strong>${playerProfile.lang === 'en' ? `Chapter ${chapter}` : `绗?${chapter} 绔燻}</strong>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Board Chapter' : '任务章节'}</span>
+                            <strong>${playerProfile.lang === 'en' ? `Chapter ${chapter}` : `第 ${chapter} 章`}</strong>
                         </div>
                         <div class="season-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Ready Rewards' : '鍙濂栧姳'}</span>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Ready Rewards' : '可领奖励'}</span>
                             <strong>${formatNumber(claimableCount)}</strong>
                         </div>
                         <div class="season-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Daily Reset' : '鏃ュ父鍒锋柊'}</span>
-                            <strong id="missionDailyReset">${playerProfile.lang === 'en' ? 'Updating鈥? : '鏇存柊涓€?}</strong>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Daily Reset' : '日常刷新'}</span>
+                            <strong id="missionDailyReset">${playerProfile.lang === 'en' ? 'Updating…' : '更新中…'}</strong>
                         </div>
                     </div>
                     <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today runs ${formatNumber(dailyStats.runs)}` : `浠婃棩灞€鏁?${formatNumber(dailyStats.runs)}`}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today best combo ${formatNumber(dailyStats.bestCombo)}` : `浠婃棩鏈€楂樿繛鍑?${formatNumber(dailyStats.bestCombo)}`}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today clean ${formatNumber(dailyStats.cleanDistance)}m` : `浠婃棩鏃犱激 ${formatNumber(dailyStats.cleanDistance)}m`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today runs ${formatNumber(dailyStats.runs)}` : `今日局数 ${formatNumber(dailyStats.runs)}`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today best combo ${formatNumber(dailyStats.bestCombo)}` : `今日最高连击 ${formatNumber(dailyStats.bestCombo)}`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Today clean ${formatNumber(dailyStats.cleanDistance)}m` : `今日无伤 ${formatNumber(dailyStats.cleanDistance)}m`}</span>
                     </div>
                     <div class="panel-meta-row">
-                        <span class="pill hot">${playerProfile.lang === 'en' ? `Claimable ${claimableCount}` : `鍙鍙?${claimableCount}`}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? `Active ${missions.length}` : `杩涜涓?${missions.length}`}</span>
+                        <span class="pill hot">${playerProfile.lang === 'en' ? `Claimable ${claimableCount}` : `可领取 ${claimableCount}`}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? `Active ${missions.length}` : `进行中 ${missions.length}`}</span>
                         <span class="pill">${playerProfile.lang === 'en'
                             ? 'Claim all chapter contracts to unlock the next chapter'
-                            : '棰嗗彇瀹屽綋鍓嶇珷鑺傚悎绾﹀悗瑙ｉ攣涓嬩竴绔?}</span>
+                            : '领取完当前章节合约后解锁下一章'}</span>
                     </div>
                 </article>
                 ${claimableMissions.length
@@ -3612,14 +3021,14 @@
                         <article class="event-card shop-section-card">
                             <div class="card-title-row">
                                 <div>
-                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'READY NOW' : '绔嬪嵆鍙'}</div>
-                                    <h3>${playerProfile.lang === 'en' ? 'Claimable contracts are pinned first' : '鍙鍙栦换鍔″凡缃《鏄剧ず'}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'READY NOW' : '立即可领'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Claimable contracts are pinned first' : '可领取任务已置顶显示'}</h3>
                                 </div>
                                 <span class="pill hot">${formatNumber(claimableMissions.length)}</span>
                             </div>
                             <p>${playerProfile.lang === 'en'
                                 ? 'These rewards are already finished. Claim them first to unlock the next board faster.'
-                                : '杩欎簺濂栧姳宸茬粡杈炬垚锛屽厛棰嗘帀鍙互鏇村揩瑙ｉ攣涓嬩竴绔犮€?}</p>
+                                : '这些奖励已经达成，先领掉可以更快解锁下一章。'}</p>
                             <div class="reward-row">
                                 ${claimableMissions.slice(0, 4).map((mission) => `<span class="reward-pill">${localize(mission.title)}</span>`).join('')}
                             </div>
@@ -3632,8 +3041,8 @@
                         <article class="event-card shop-section-card">
                             <div class="card-title-row">
                                 <div>
-                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'DAILY PULSE' : '姣忔棩鑴夊啿'}</div>
-                                    <h3>${playerProfile.lang === 'en' ? 'One rotating daily mission keeps the session warm' : '杞崲鏃ュ父璐熻矗缁存寔姣忔棩娲昏穬鑺傚'}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'DAILY PULSE' : '每日脉冲'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'One rotating daily mission keeps the session warm' : '轮换日常负责维持每日活跃节奏'}</h3>
                                 </div>
                             </div>
                         </article>
@@ -3643,8 +3052,8 @@
                 <article class="event-card shop-section-card">
                     <div class="card-title-row">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'CORE CONTRACTS' : '绔犺妭涓荤嚎'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Distance, runs, combo, and score define chapter pacing' : '璺濈銆佸眬鏁般€佽繛鍑汇€佸垎鏁板叡鍚屽喅瀹氱珷鑺傛帹杩?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'CORE CONTRACTS' : '章节主线'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Distance, runs, combo, and score define chapter pacing' : '距离、局数、连击、分数共同决定章节推进'}</h3>
                         </div>
                     </div>
                 </article>
@@ -3654,8 +3063,8 @@
                         <article class="event-card shop-section-card">
                             <div class="card-title-row">
                                 <div>
-                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE CONTRACTS' : '绮捐嫳鍚堢害'}</div>
-                                    <h3>${playerProfile.lang === 'en' ? 'Mid / late-game pressure and bigger rewards live here' : '涓悗鏈熷帇鍔涗笌鏇村帤濂栧姳闆嗕腑鍦ㄨ繖閲?}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'ELITE CONTRACTS' : '精英合约'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Mid / late-game pressure and bigger rewards live here' : '中后期压力与更厚奖励集中在这里'}</h3>
                                 </div>
                             </div>
                         </article>
@@ -3691,7 +3100,7 @@
                 <div class="settlement-row ${isCurrent ? 'is-current' : ''}" style="--tier-color:${tier.color};">
                     <div class="settlement-tier">
                         <strong>${localize(tier.title)}</strong>
-                        <span>${playerProfile.lang === 'en' ? `${formatNumber(tier.min)}+ rating` : `${formatNumber(tier.min)}+ 娈典綅鍒哷}</span>
+                        <span>${playerProfile.lang === 'en' ? `${formatNumber(tier.min)}+ rating` : `${formatNumber(tier.min)}+ 段位分`}</span>
                     </div>
                     <div class="settlement-values">
                         <span>${t('goldLabel')} +${formatNumber(tier.settlement.gold)}</span>
@@ -3713,27 +3122,27 @@
                         <span class="reward-pill">${t('seasonLevel')} Lv.${level}</span>
                         <span class="reward-pill">${t('seasonXp')} ${formatNumber(playerProfile.seasonXp)}</span>
                         <span class="reward-pill">${t('seasonNext')} ${formatNumber(next)} XP</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Claimable ${formatNumber(totalClaimableCount)}` : `鍙鍙?${formatNumber(totalClaimableCount)}`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `Claimable ${formatNumber(totalClaimableCount)}` : `可领取 ${formatNumber(totalClaimableCount)}`}</span>
                     </div>
                     <div class="panel-meta-row">
-                        <span class="pill hot" id="seasonCountdown">${playerProfile.lang === 'en' ? `Ends In ${countdown}` : `璧涘鍓╀綑 ${countdown}`}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Free + Sponsor dual track' : '鍏嶈垂 + 璧炲姪鍙岃建'}</span>
-                        <span class="pill ${rankClaimableCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `Ladder rewards ${formatNumber(rankClaimableCount)} ready` : `鍐叉濂栧姳寰呴 ${formatNumber(rankClaimableCount)}`}</span>
+                        <span class="pill hot" id="seasonCountdown">${playerProfile.lang === 'en' ? `Ends In ${countdown}` : `赛季剩余 ${countdown}`}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Free + Sponsor dual track' : '免费 + 赞助双轨'}</span>
+                        <span class="pill ${rankClaimableCount > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `Ladder rewards ${formatNumber(rankClaimableCount)} ready` : `冲榜奖励待领 ${formatNumber(rankClaimableCount)}`}</span>
                     </div>
                     <div class="season-banner">
-                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'Season Pulse' : '璧涘鑴夊啿'}</div>
-                        <h3>${playerProfile.lang === 'en' ? 'Short sessions feed the pass, missions and ladder together.' : '鐭眬娲昏穬浼氬悓鏃跺杺鍏婚€氳璇併€佷换鍔′笌鍐叉鑺傚銆?}</h3>
+                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'Season Pulse' : '赛季脉冲'}</div>
+                        <h3>${playerProfile.lang === 'en' ? 'Short sessions feed the pass, missions and ladder together.' : '短局活跃会同时喂养通行证、任务与冲榜节奏。'}</h3>
                         <div class="season-kpi-grid">
                             <div class="season-kpi">
-                                <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Distance' : '鏈€浣宠窛绂?}</span>
+                                <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Distance' : '最佳距离'}</span>
                                 <strong>${formatDistance(playerProfile.bestDistance)}</strong>
                             </div>
                             <div class="season-kpi">
-                                <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Score' : '鏈€浣崇Н鍒?}</span>
+                                <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Score' : '最佳积分'}</span>
                                 <strong>${formatNumber(playerProfile.bestScore)}</strong>
                             </div>
                             <div class="season-kpi">
-                                <span class="mini-label">${playerProfile.lang === 'en' ? 'Total Distance' : '鎬婚噷绋?}</span>
+                                <span class="mini-label">${playerProfile.lang === 'en' ? 'Total Distance' : '总里程'}</span>
                                 <strong>${formatDistance(playerProfile.totalDistance)}</strong>
                             </div>
                         </div>
@@ -3743,24 +3152,24 @@
                         <section class="season-lane">
                             <div class="season-lane-head">
                                 <div>
-                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'FREE TRACK' : '鍏嶈垂杞ㄩ亾'}</div>
-                                    <h3>${playerProfile.lang === 'en' ? 'Claim practical resources as soon as levels unlock.' : '绛夌骇涓€鍒板氨鑳介鍙栵紝涓绘墦瀹炵敤璧勬簮琛ョ粰銆?}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'FREE TRACK' : '免费轨道'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Claim practical resources as soon as levels unlock.' : '等级一到就能领取，主打实用资源补给。'}</h3>
                                 </div>
-                                <span class="pill good">${playerProfile.lang === 'en' ? `${claimableCount} ready` : `${claimableCount} 涓緟棰哷}</span>
+                                <span class="pill good">${playerProfile.lang === 'en' ? `${claimableCount} ready` : `${claimableCount} 个待领`}</span>
                             </div>
                             <div class="season-node-row">
                                 ${rewards.map((reward) => {
                                     const state = getSeasonRewardState(reward.level);
                                     const buttonLabel = state.claimed
-                                        ? localize({ zh: '宸查鍙?, en: 'Claimed' })
+                                        ? localize({ zh: '已领取', en: 'Claimed' })
                                         : state.claimable
-                                            ? localize({ zh: '棰嗗彇鍏嶈垂濂栧姳', en: 'Claim Free Reward' })
-                                            : localize({ zh: `Lv.${reward.level} 瑙ｉ攣`, en: `Unlock at Lv.${reward.level}` });
+                                            ? localize({ zh: '领取免费奖励', en: 'Claim Free Reward' })
+                                            : localize({ zh: `Lv.${reward.level} 解锁`, en: `Unlock at Lv.${reward.level}` });
                                     const statusLabel = state.claimed
-                                        ? localize({ zh: '宸插畬鎴?, en: 'Done' })
+                                        ? localize({ zh: '已完成', en: 'Done' })
                                         : state.claimable
-                                            ? localize({ zh: '鍙鍙?, en: 'Ready' })
-                                            : localize({ zh: '鏈В閿?, en: 'Locked' });
+                                            ? localize({ zh: '可领取', en: 'Ready' })
+                                            : localize({ zh: '未解锁', en: 'Locked' });
                                     return `
                                         <article class="season-node ${state.claimable ? 'is-claimable' : ''} ${state.claimed ? 'is-claimed' : ''}">
                                             <div class="season-node-top">
@@ -3781,34 +3190,34 @@
                         <section class="season-lane">
                             <div class="season-lane-head">
                                 <div>
-                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'SPONSOR TRACK' : '璧炲姪杞ㄩ亾'}</div>
-                                    <h3>${playerProfile.lang === 'en' ? 'Verified top-up unlocks a second reward lane with stronger seasonal payoffs.' : '瀹屾垚閾句笂鏍￠獙鍚庯紝寮€鍚浜屾潯鏇村亸涓悗鏈熶环鍊肩殑璧涘濂栧姳杞ㄩ亾銆?}</h3>
+                                    <div class="eyebrow">${playerProfile.lang === 'en' ? 'SPONSOR TRACK' : '赞助轨道'}</div>
+                                    <h3>${playerProfile.lang === 'en' ? 'Verified top-up unlocks a second reward lane with stronger seasonal payoffs.' : '完成链上校验后，开启第二条更偏中后期价值的赛季奖励轨道。'}</h3>
                                 </div>
                                 <span class="pill ${sponsorUnlocked ? 'good' : ''}">${sponsorUnlocked
-                                    ? (playerProfile.lang === 'en' ? `${formatNumber(sponsorClaimableCount)} ready` : `寰呴 ${formatNumber(sponsorClaimableCount)}`)
-                                    : (playerProfile.lang === 'en' ? 'Locked by top-up' : '鍏呭€煎悗瑙ｉ攣')}</span>
+                                    ? (playerProfile.lang === 'en' ? `${formatNumber(sponsorClaimableCount)} ready` : `待领 ${formatNumber(sponsorClaimableCount)}`)
+                                    : (playerProfile.lang === 'en' ? 'Locked by top-up' : '充值后解锁')}</span>
                             </div>
                             <div class="season-node-row">
                                 ${rewards.map((reward) => {
                                     const state = getSeasonSponsorRewardState(reward.level);
                                     const buttonLabel = !state.passUnlocked
-                                        ? localize({ zh: '鍓嶅線鍟嗗簵瑙ｉ攣', en: 'Unlock In Shop' })
+                                        ? localize({ zh: '前往商店解锁', en: 'Unlock In Shop' })
                                         : state.claimed
-                                            ? localize({ zh: '宸查鍙?, en: 'Claimed' })
+                                            ? localize({ zh: '已领取', en: 'Claimed' })
                                             : state.claimable
-                                                ? localize({ zh: '棰嗗彇璧炲姪濂栧姳', en: 'Claim Sponsor Reward' })
-                                                : localize({ zh: `Lv.${reward.level} 瑙ｉ攣`, en: `Unlock at Lv.${reward.level}` });
+                                                ? localize({ zh: '领取赞助奖励', en: 'Claim Sponsor Reward' })
+                                                : localize({ zh: `Lv.${reward.level} 解锁`, en: `Unlock at Lv.${reward.level}` });
                                     return `
                                         <article class="season-node is-premium ${state.unlocked ? 'is-unlocked' : ''} ${state.claimable ? 'is-claimable' : ''} ${state.claimed ? 'is-claimed' : ''}">
                                             <div class="season-node-top">
                                                 <span class="pill hot">Lv.${reward.level}</span>
                                                 <span class="pill ${state.claimable ? 'good' : ''}">${!state.passUnlocked
-                                                    ? localize({ zh: '鏈В閿?, en: 'Locked' })
+                                                    ? localize({ zh: '未解锁', en: 'Locked' })
                                                     : state.claimed
-                                                        ? localize({ zh: '宸插畬鎴?, en: 'Done' })
+                                                        ? localize({ zh: '已完成', en: 'Done' })
                                                         : state.claimable
-                                                            ? localize({ zh: '鍙鍙?, en: 'Ready' })
-                                                            : localize({ zh: '鎴愰暱涓?, en: 'Progressing' })}</span>
+                                                            ? localize({ zh: '可领取', en: 'Ready' })
+                                                            : localize({ zh: '成长中', en: 'Progressing' })}</span>
                                             </div>
                                             <div>
                                                 <h3>${localize(reward.premium.title)}</h3>
@@ -3833,29 +3242,29 @@
                 <article class="season-track settlement-card" style="--tier-color:${divisionInfo.tier.color};">
                     <div class="panel-title-row">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'LADDER BOUNTY' : '鍐叉璧忛噾'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Every major rating breakpoint now gives an instant chase reward.' : '姣忎釜鍏抽敭璇勫垎妗ｄ綅閮戒細缁欏嵆鏃跺彲棰嗙殑鍐叉鍥為銆?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'LADDER BOUNTY' : '冲榜赏金'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Every major rating breakpoint now gives an instant chase reward.' : '每个关键评分档位都会给即时可领的冲榜回馈。'}</h3>
                         </div>
                         <span class="pill hot">#${leaderboard.playerRank}</span>
                     </div>
                     <div class="settlement-highlight">
                         <div>
-                            <div class="mini-label">${playerProfile.lang === 'en' ? 'Current ladder status' : '褰撳墠鍐叉鐘舵€?}</div>
+                            <div class="mini-label">${playerProfile.lang === 'en' ? 'Current ladder status' : '当前冲榜状态'}</div>
                             <strong>${playerProfile.lang === 'en'
-                                ? `Rating ${formatNumber(rankScore)} 路 ${localize(divisionInfo.tier.title)}`
-                                : `璇勫垎 ${formatNumber(rankScore)} 路 ${localize(divisionInfo.tier.title)}`}</strong>
+                                ? `Rating ${formatNumber(rankScore)} · ${localize(divisionInfo.tier.title)}`
+                                : `评分 ${formatNumber(rankScore)} · ${localize(divisionInfo.tier.title)}`}</strong>
                             <p>${nextRankReward
                                 ? (playerProfile.lang === 'en'
                                     ? `${formatNumber(Math.max(0, nextRankReward.score - rankScore))} rating to ${localize(nextRankReward.title)}.`
-                                    : `璺濈 ${localize(nextRankReward.title)} 杩樺樊 ${formatNumber(Math.max(0, nextRankReward.score - rankScore))} 璇勫垎銆俙)
+                                    : `距离 ${localize(nextRankReward.title)} 还差 ${formatNumber(Math.max(0, nextRankReward.score - rankScore))} 评分。`)
                                 : (playerProfile.lang === 'en'
                                     ? 'All current ladder bounty tiers are already claimed. Keep defending the summit.'
-                                    : '褰撳墠鍐叉濂栧姳宸插叏閮ㄩ鍙栵紝鎺ヤ笅鏉ラ噸鐐硅浆涓哄畧姒滀笌鍒锋洿楂樿瘎鍒嗐€?)}</p>
+                                    : '当前冲榜奖励已全部领取，接下来重点转为守榜与刷更高评分。')}</p>
                         </div>
                         <div class="reward-row">
-                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Nearest rival gap ${formatNumber(leaderboard.nextGap)}` : `璺濅笂涓€鍚?${formatNumber(leaderboard.nextGap)}`}</span>
-                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Ready rewards ${formatNumber(rankClaimableCount)}` : `寰呴濂栧姳 ${formatNumber(rankClaimableCount)}`}</span>
-                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Best distance ${formatDistance(playerProfile.bestDistance)}` : `鏈€浣宠窛绂?${formatDistance(playerProfile.bestDistance)}`}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Nearest rival gap ${formatNumber(leaderboard.nextGap)}` : `距上一名 ${formatNumber(leaderboard.nextGap)}`}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Ready rewards ${formatNumber(rankClaimableCount)}` : `待领奖励 ${formatNumber(rankClaimableCount)}`}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? `Best distance ${formatDistance(playerProfile.bestDistance)}` : `最佳距离 ${formatDistance(playerProfile.bestDistance)}`}</span>
                         </div>
                     </div>
                     <div class="season-node-row">
@@ -3863,19 +3272,19 @@
                             const state = getRankRewardState(reward, rankScore);
                             const gap = Math.max(0, reward.score - rankScore);
                             const buttonLabel = state.claimed
-                                ? localize({ zh: '宸查鍙?, en: 'Claimed' })
+                                ? localize({ zh: '已领取', en: 'Claimed' })
                                 : state.claimable
-                                    ? localize({ zh: '棰嗗彇鍐叉濂栧姳', en: 'Claim Ladder Reward' })
-                                    : localize({ zh: `杩樺樊 ${formatNumber(gap)}`, en: `${formatNumber(gap)} to go` });
+                                    ? localize({ zh: '领取冲榜奖励', en: 'Claim Ladder Reward' })
+                                    : localize({ zh: `还差 ${formatNumber(gap)}`, en: `${formatNumber(gap)} to go` });
                             return `
                                 <article class="season-node ${state.claimable ? 'is-claimable' : ''} ${state.claimed ? 'is-claimed' : ''}">
                                     <div class="season-node-top">
                                         <span class="pill hot">${formatNumber(reward.score)}</span>
                                         <span class="pill ${state.claimable ? 'good' : ''}">${state.claimed
-                                            ? localize({ zh: '宸插畬鎴?, en: 'Done' })
+                                            ? localize({ zh: '已完成', en: 'Done' })
                                             : state.claimable
-                                                ? localize({ zh: '鍙鍙?, en: 'Ready' })
-                                                : localize({ zh: '鍐叉涓?, en: 'Climbing' })}</span>
+                                                ? localize({ zh: '可领取', en: 'Ready' })
+                                                : localize({ zh: '冲榜中', en: 'Climbing' })}</span>
                                     </div>
                                     <div>
                                         <h3>${localize(reward.title)}</h3>
@@ -3892,31 +3301,31 @@
                 <article class="season-track settlement-card" style="--tier-color:${divisionInfo.tier.color};">
                     <div class="panel-title-row">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'SEASON SETTLEMENT' : '璧涘缁撶畻'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Clear rules, clear target, clear motivation.' : '鎶婄粨绠楃洰鏍囪娓呮锛岀帺瀹舵墠鏇存効鎰忕户缁啿銆?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'SEASON SETTLEMENT' : '赛季结算'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Clear rules, clear target, clear motivation.' : '把结算目标讲清楚，玩家才更愿意继续冲。'}</h3>
                         </div>
                         <span class="pill hot">${localize(divisionInfo.tier.short)}</span>
                     </div>
                     <div class="settlement-highlight">
                         <div>
-                            <div class="mini-label">${playerProfile.lang === 'en' ? 'Current expected payout' : '褰撳墠棰勮缁撶畻'}</div>
+                            <div class="mini-label">${playerProfile.lang === 'en' ? 'Current expected payout' : '当前预计结算'}</div>
                             <strong>${formatNumber(settlementPreview.totalGold)} ${t('goldLabel')} / ${formatNumber(settlementPreview.totalCore)} ${t('coreLabel')}</strong>
                             <p>${playerProfile.lang === 'en'
                                 ? 'Final estimate = current highest division reward + season level activity bonus.'
-                                : '褰撳墠棰勪及 = 鏈禌瀛ｆ渶楂樻浣嶅鍔?+ 璧涘绛夌骇娲昏穬鍔犳垚銆?}</p>
+                                : '当前预估 = 本赛季最高段位奖励 + 赛季等级活跃加成。'}</p>
                         </div>
                         <div class="reward-row">
-                            <span class="reward-pill">${playerProfile.lang === 'en' ? 'Base reward' : '鍩虹濂栧姳'} ${formatNumber(settlementPreview.baseGold)} / ${formatNumber(settlementPreview.baseCore)}</span>
-                            <span class="reward-pill">${playerProfile.lang === 'en' ? 'Level bonus' : '绛夌骇鍔犳垚'} ${formatNumber(settlementPreview.levelBonusGold)} / ${formatNumber(settlementPreview.levelBonusCore)}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? 'Base reward' : '基础奖励'} ${formatNumber(settlementPreview.baseGold)} / ${formatNumber(settlementPreview.baseCore)}</span>
+                            <span class="reward-pill">${playerProfile.lang === 'en' ? 'Level bonus' : '等级加成'} ${formatNumber(settlementPreview.levelBonusGold)} / ${formatNumber(settlementPreview.levelBonusCore)}</span>
                         </div>
                     </div>
                     <div class="settlement-grid">${settlementRows}</div>
                     <div class="panel-meta-row">
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Settlement uses the highest division reached this season.' : '璧涘缁撶畻鎸夋湰璧涘杈惧埌鐨勬渶楂樻浣嶈绠椼€?}</span>
-                        <span class="pill">${playerProfile.lang === 'en' ? 'Season level adds a steady activity bonus.' : '璧涘绛夌骇浼氶澶栨彁渚涚ǔ瀹氭椿璺冨姞鎴愩€?}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Settlement uses the highest division reached this season.' : '赛季结算按本赛季达到的最高段位计算。'}</span>
+                        <span class="pill">${playerProfile.lang === 'en' ? 'Season level adds a steady activity bonus.' : '赛季等级会额外提供稳定活跃加成。'}</span>
                     </div>
                     <div class="promotion-actions">
-                        <button class="ghost-btn wide-btn" type="button" data-open-modal="season-rules">${playerProfile.lang === 'en' ? 'Read Full Season Rules' : '鏌ョ湅瀹屾暣璧涘瑙勫垯'}</button>
+                        <button class="ghost-btn wide-btn" type="button" data-open-modal="season-rules">${playerProfile.lang === 'en' ? 'Read Full Season Rules' : '查看完整赛季规则'}</button>
                     </div>
                 </article>
             </div>
@@ -3940,37 +3349,37 @@
                     <div class="panel-title-row">
                         <div>
                             <div class="eyebrow">${t('shopTitle')}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Verified top-up, sponsor track, and live supplies all converge here.' : '鐪熷疄鍏呭€笺€佽禐鍔╄建閬撳拰瀹炶琛ョ粰缁熶竴鏀跺彛鍒拌繖涓〉闈€?}</h3>
+                            <h3>${playerProfile.lang === 'en' ? 'Verified top-up, sponsor track, and live supplies all converge here.' : '真实充值、赞助轨道和实装补给统一收口到这个页面。'}</h3>
                         </div>
                     </div>
                     <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyOffers} live supply offers` : `瀹炶琛ョ粰 ${readyOffers} 椤筦}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyBoostCount} stored boost types` : `澧炵泭鍌ㄥ ${readyBoostCount} 绫籤}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyOffers} live supply offers` : `实装补给 ${readyOffers} 项`}</span>
+                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyBoostCount} stored boost types` : `增益储备 ${readyBoostCount} 类`}</span>
                         <span class="reward-pill">${t('topupShopInfo')}</span>
                     </div>
                     <div class="shop-kpi-grid">
                         <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Verified Top-Ups' : '宸叉牎楠屽厖鍊?}</span>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Verified Top-Ups' : '已校验充值'}</span>
                             <strong>${formatNumber(playerProfile.payment.purchaseCount || 0)}</strong>
                         </div>
                         <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Sponsor Track' : '璧炲姪杞ㄩ亾'}</span>
-                            <strong>${sponsorUnlocked ? (playerProfile.lang === 'en' ? 'Unlocked' : '宸茶В閿?) : (playerProfile.lang === 'en' ? 'Locked' : '鏈В閿?)}</strong>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Sponsor Track' : '赞助轨道'}</span>
+                            <strong>${sponsorUnlocked ? (playerProfile.lang === 'en' ? 'Unlocked' : '已解锁') : (playerProfile.lang === 'en' ? 'Locked' : '未解锁')}</strong>
                         </div>
                         <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Total Spent' : '绱鍏呭€?}</span>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Total Spent' : '累计充值'}</span>
                             <strong>$${totalSpentText}</strong>
                         </div>
                         <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Distance' : '鏈€浣宠窛绂?}</span>
+                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Best Distance' : '最佳距离'}</span>
                             <strong>${formatDistance(playerProfile.bestDistance)}</strong>
                         </div>
                     </div>
                     <div class="runner-payment-cta">
                         <span class="pill ${sponsorUnlocked ? 'good' : 'hot'}">${sponsorUnlocked
-                            ? (playerProfile.lang === 'en' ? 'Sponsor rewards are now claimable in Season' : '璧涘椤靛凡寮€鏀捐禐鍔╁鍔?)
-                            : (playerProfile.lang === 'en' ? 'Any verified top-up unlocks the sponsor track' : '浠绘剰涓€绗旀牎楠屾垚鍔熺殑鍏呭€奸兘浼氳В閿佽禐鍔╄建閬?)}</span>
-                        <button class="primary-btn" type="button" data-open-payment="starter">${playerProfile.lang === 'en' ? 'Open Top-Up' : '鎵撳紑鍏呭€?}</button>
+                            ? (playerProfile.lang === 'en' ? 'Sponsor rewards are now claimable in Season' : '赛季页已开放赞助奖励')
+                            : (playerProfile.lang === 'en' ? 'Any verified top-up unlocks the sponsor track' : '任意一笔校验成功的充值都会解锁赞助轨道')}</span>
+                        <button class="primary-btn" type="button" data-open-payment="starter">${playerProfile.lang === 'en' ? 'Open Top-Up' : '打开充值'}</button>
                     </div>
                 </article>
 
@@ -3985,21 +3394,21 @@
                         </div>
                         <p>${localize(offer.desc)}</p>
                         <div class="panel-meta-row">
-                            <span class="shop-price">${playerProfile.lang === 'en' ? 'On-chain verified' : '閾句笂鏍￠獙鍙戝'}</span>
-                            <span class="pill">${playerProfile.lang === 'en' ? 'OKX Wallet 路 TRON (TRC20)' : 'OKX 閽卞寘 路 TRON (TRC20)'}</span>
+                            <span class="shop-price">${playerProfile.lang === 'en' ? 'On-chain verified' : '链上校验发奖'}</span>
+                            <span class="pill">${playerProfile.lang === 'en' ? 'OKX Wallet · TRON (TRC20)' : 'OKX 钱包 · TRON (TRC20)'}</span>
                         </div>
                         <div class="shop-meta">
                             ${renderRewardPills(offer.reward, 'shop-pill')}
                         </div>
-                        <button class="primary-btn wide-btn" type="button" data-open-payment="${offer.id}">${playerProfile.lang === 'en' ? 'Create Order & Pay' : '鍒涘缓璁㈠崟骞舵敮浠?}</button>
+                        <button class="primary-btn wide-btn" type="button" data-open-payment="${offer.id}">${playerProfile.lang === 'en' ? 'Create Order & Pay' : '创建订单并支付'}</button>
                     </article>
                 `).join('')}
 
                 <article class="stat-card shop-section-card">
                     <div class="panel-title-row">
                         <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOOST RESERVE' : '澧炵泭浠撳簱'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Everything bought here feeds directly into the next sessions' : '杩欓噷涔板埌鐨勪笢瑗夸細鐩存帴鍠傜粰鍚庣画鍑犲眬锛屼笉鍐嶅彧鏄睍绀?}</h3>
+                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOOST RESERVE' : '增益仓库'}</div>
+                            <h3>${playerProfile.lang === 'en' ? 'Everything bought here feeds directly into the next sessions' : '这里买到的东西会直接喂给后续几局，不再只是展示'}</h3>
                         </div>
                     </div>
                     <div class="boost-list">
@@ -4007,7 +3416,7 @@
                             <div class="boost-row ${entry.count > 0 ? 'is-live' : ''}" style="--boost-accent:${entry.accent};">
                                 <div class="card-title-row">
                                     <div>
-                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'STORED' : '宸插偍澶?}</div>
+                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'STORED' : '已储备'}</div>
                                         <h3>${entry.title}</h3>
                                     </div>
                                     <span class="pill ${entry.count > 0 ? 'good' : ''}">${formatBoostRewardText(entry.key, entry.count)}</span>
@@ -4034,15 +3443,15 @@
                     <article class="shop-card functional ${actionable ? 'featured' : ''}" style="--shop-accent:${offer.accent};">
                         <div class="card-title-row">
                             <div>
-                                <div class="eyebrow">${playerProfile.lang === 'en' ? 'LIVE OFFER' : '瀹炶琛ョ粰'}</div>
+                                <div class="eyebrow">${playerProfile.lang === 'en' ? 'LIVE OFFER' : '实装补给'}</div>
                                 <h3>${localize(offer.title)}</h3>
                             </div>
-                            <span class="pill ${remaining > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${remaining}/${offer.stock} left` : `鍓╀綑 ${remaining}/${offer.stock}`}</span>
+                            <span class="pill ${remaining > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${remaining}/${offer.stock} left` : `剩余 ${remaining}/${offer.stock}`}</span>
                         </div>
                         <p>${localize(offer.desc)}</p>
                         <div class="panel-meta-row">
-                            <span class="shop-price">${freeClaim ? localize({ zh: 'FREE', en: 'FREE' }) : localize({ zh: '鍗虫椂鐢熸晥', en: 'Instant effect' })}</span>
-                            <span class="pill">${playerProfile.lang === 'en' ? 'Affects your next runs immediately' : '绔嬪嵆浣滅敤鍒版帴涓嬫潵鍑犲眬'}</span>
+                            <span class="shop-price">${freeClaim ? localize({ zh: 'FREE', en: 'FREE' }) : localize({ zh: '即时生效', en: 'Instant effect' })}</span>
+                            <span class="pill">${playerProfile.lang === 'en' ? 'Affects your next runs immediately' : '立即作用到接下来几局'}</span>
                         </div>
                         <div class="shop-meta">
                             ${renderCostPills(offer.cost)}
@@ -4056,145 +3465,7 @@
         `;
     }
 
-    function renderShopTab() {
-        if (ensureDailyShopState()) {
-            saveState();
-        }
-
-        const boostEntries = getBoostInventoryEntries();
-        const readyOffers = getShopAlertCount();
-        const readyBoostCount = boostEntries.filter((entry) => entry.count > 0).length;
-        const sponsorUnlocked = !!playerProfile.payment.passUnlocked;
-        const totalSpentText = Number(playerProfile.payment.totalSpent || 0).toFixed(2);
-        const permanentPower = getTotalUpgradeInvestment();
-        const affordableUpgrades = getAffordableUpgradeCount();
-
-        return `
-            <div class="card-grid">
-                <article class="stat-card showcase-card runner-payment-pass-card">
-                    <div class="panel-title-row">
-                        <div>
-                            <div class="eyebrow">${t('shopTitle')}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Verified top-ups now feed permanent loadout growth, sponsor rewards, and live supplies together.' : '鍏呭€煎鍔辩幇鍦ㄤ細鍚屾椂娴佸叆姘镐箙鍏绘垚銆佽禐鍔╄禌瀛ｅ拰鍗虫椂琛ョ粰銆?}</h3>
-                        </div>
-                    </div>
-                    <div class="reward-row">
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyOffers} live supply offers` : `鍗虫椂琛ョ粰 ${readyOffers} 椤筦}</span>
-                        <span class="reward-pill">${playerProfile.lang === 'en' ? `${readyBoostCount} stored boost types` : `宸插偍澶囧鐩?${readyBoostCount} 绫籤}</span>
-                        <span class="reward-pill ${affordableUpgrades > 0 ? 'hot' : ''}">${playerProfile.lang === 'en' ? `${affordableUpgrades} permanent upgrades ready` : `${affordableUpgrades} 椤规案涔呭崌绾у彲鐐筦}</span>
-                    </div>
-                    <div class="shop-kpi-grid">
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Verified Top-Ups' : '宸叉牎楠屽厖鍊?}</span>
-                            <strong>${formatNumber(playerProfile.payment.purchaseCount || 0)}</strong>
-                        </div>
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Sponsor Track' : '璧炲姪璧涢亾'}</span>
-                            <strong>${sponsorUnlocked ? (playerProfile.lang === 'en' ? 'Unlocked' : '宸茶В閿?) : (playerProfile.lang === 'en' ? 'Locked' : '鏈В閿?)}</strong>
-                        </div>
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Total Spent' : '绱鍏呭€?}</span>
-                            <strong>$${totalSpentText}</strong>
-                        </div>
-                        <div class="shop-kpi">
-                            <span class="mini-label">${playerProfile.lang === 'en' ? 'Permanent Power' : '姘镐箙寮哄寲'}</span>
-                            <strong>+${formatNumber(permanentPower)} Lv</strong>
-                        </div>
-                    </div>
-                    <div class="runner-payment-cta">
-                        <span class="pill ${sponsorUnlocked ? 'good' : 'hot'}">${sponsorUnlocked
-                            ? (playerProfile.lang === 'en' ? 'Sponsor rewards are live, and top-ups now push permanent upgrades immediately.' : '璧炲姪濂栧姳宸插紑鍚紝鍏呭€艰祫婧愪細绔嬪埢杞寲涓烘案涔呭崌绾с€?)
-                            : (playerProfile.lang === 'en' ? 'Any verified top-up unlocks the sponsor track and accelerates permanent upgrades.' : '浠绘剰涓€绗斿厖鍊奸兘浼氳В閿佽禐鍔╄禌閬擄紝骞跺姞閫熸案涔呭吇鎴愩€?)}</span>
-                        <button class="primary-btn" type="button" data-open-payment="starter">${playerProfile.lang === 'en' ? 'Open Top-Up' : '鎵撳紑鍏呭€?}</button>
-                    </div>
-                </article>
-
-                ${RUNNER_PAYMENT_OFFERS.map((offer) => `
-                    <article class="shop-card ${offer.id === 'accelerator' || offer.id === 'throne' ? 'featured' : ''}" style="--shop-accent:${offer.accent};">
-                        <div class="card-title-row">
-                            <div>
-                                <div class="eyebrow">${localize(offer.badge)}</div>
-                                <h3>${localize(offer.name)}</h3>
-                            </div>
-                            <span class="pill hot">$${offer.price.toFixed(2)}</span>
-                        </div>
-                        <p>${localize(offer.desc)}</p>
-                        <div class="panel-meta-row">
-                            <span class="shop-price">${playerProfile.lang === 'en' ? 'On-chain verified' : '閾句笂鏍￠獙鍙戝'}</span>
-                            <span class="pill">${playerProfile.lang === 'en' ? 'OKX Wallet 路 TRON (TRC20)' : 'OKX 閽卞寘 路 TRON (TRC20)'}</span>
-                        </div>
-                        <div class="shop-meta">
-                            ${renderRewardPills(offer.reward, 'shop-pill')}
-                        </div>
-                        <button class="primary-btn wide-btn" type="button" data-open-payment="${offer.id}">${playerProfile.lang === 'en' ? 'Create Order & Pay' : '鍒涘缓璁㈠崟骞舵敮浠?}</button>
-                    </article>
-                `).join('')}
-
-                <article class="stat-card shop-section-card">
-                    <div class="panel-title-row">
-                        <div>
-                            <div class="eyebrow">${playerProfile.lang === 'en' ? 'BOOST RESERVE' : '澧炵泭浠撳簱'}</div>
-                            <h3>${playerProfile.lang === 'en' ? 'Temporary boosts still matter, but permanent upgrades are now the main long-term sink.' : '涓存椂澧炵泭渚濇棫鏈夋晥锛屼絾闀挎湡鎴愰暱鐨勪富娑堣€楀凡缁忚浆鍚戞案涔呭崌绾с€?}</h3>
-                        </div>
-                    </div>
-                    <div class="boost-list">
-                        ${boostEntries.map((entry) => `
-                            <div class="boost-row ${entry.count > 0 ? 'is-live' : ''}" style="--boost-accent:${entry.accent};">
-                                <div class="card-title-row">
-                                    <div>
-                                        <div class="eyebrow">${playerProfile.lang === 'en' ? 'STORED' : '宸插偍澶?}</div>
-                                        <h3>${entry.title}</h3>
-                                    </div>
-                                    <span class="pill ${entry.count > 0 ? 'good' : ''}">${formatBoostRewardText(entry.key, entry.count)}</span>
-                                </div>
-                                <p>${entry.desc}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </article>
-
-                ${FUNCTIONAL_SHOP_OFFERS.map((offer) => {
-                    const remaining = getRemainingShopStock(offer.id);
-                    const freeClaim = (offer.cost.gold || 0) === 0 && (offer.cost.core || 0) === 0;
-                    const actionable = remaining > 0 && canAffordCost(offer.cost);
-                    const buttonLabel = remaining <= 0
-                        ? t('shopSoldOut')
-                        : freeClaim
-                            ? t('shopClaim')
-                            : actionable
-                                ? t('shopBuy')
-                                : t('shopUnavailable');
-
-                    return `
-                    <article class="shop-card functional ${actionable ? 'featured' : ''}" style="--shop-accent:${offer.accent};">
-                        <div class="card-title-row">
-                            <div>
-                                <div class="eyebrow">${playerProfile.lang === 'en' ? 'LIVE OFFER' : '鍗虫椂琛ョ粰'}</div>
-                                <h3>${localize(offer.title)}</h3>
-                            </div>
-                            <span class="pill ${remaining > 0 ? 'good' : ''}">${playerProfile.lang === 'en' ? `${remaining}/${offer.stock} left` : `鍓╀綑 ${remaining}/${offer.stock}`}</span>
-                        </div>
-                        <p>${localize(offer.desc)}</p>
-                        <div class="panel-meta-row">
-                            <span class="shop-price">${freeClaim ? localize({ zh: 'FREE', en: 'FREE' }) : localize({ zh: '鍗虫椂鐢熸晥', en: 'Instant effect' })}</span>
-                            <span class="pill">${playerProfile.lang === 'en' ? 'Affects your next runs immediately' : '绔嬪埢浣滅敤鍒版帴涓嬫潵鍑犲眬'}</span>
-                        </div>
-                        <div class="shop-meta">
-                            ${renderCostPills(offer.cost)}
-                            ${renderRewardPills(offer.reward, 'shop-pill')}
-                        </div>
-                        <button class="${actionable ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" ${actionable ? `data-buy-shop="${offer.id}"` : 'disabled'}>${buttonLabel}</button>
-                    </article>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    }
-
-    function renderPanel({ preserveScroll = false } = {}) {
-        const currentScroll = preserveScroll && dom.panelContent
-            ? (dom.panelContent.scrollTop || panelScrollState[activeTab] || 0)
-            : 0;
+    function renderPanel() {
         const htmlByTab = {
             run: renderRunTab(),
             loadout: renderLoadoutTab(),
@@ -4203,20 +3474,12 @@
             shop: renderShopTab()
         };
         dom.panelContent.innerHTML = htmlByTab[activeTab] || htmlByTab.run;
-        panelScrollState[activeTab] = currentScroll;
         updateTabBadges();
-        if (dom.panelContent) {
-            requestAnimationFrame(() => {
-                if (dom.panelContent) {
-                    dom.panelContent.scrollTop = panelScrollState[activeTab] || 0;
-                }
-            });
-        }
     }
 
     function applyI18n() {
         document.documentElement.lang = playerProfile.lang === 'en' ? 'en' : 'zh-CN';
-        document.title = playerProfile.lang === 'en' ? 'Genesis Rush' : '鍒涗笘鐤捐窇';
+        document.title = playerProfile.lang === 'en' ? 'Genesis Rush' : '创世疾跑';
         Array.from(document.querySelectorAll('[data-i18n]')).forEach((node) => {
             const key = node.dataset.i18n;
             node.textContent = t(key);
@@ -4230,25 +3493,6 @@
         dom.goldValue.textContent = formatNumber(playerProfile.gold);
         dom.coreValue.textContent = formatNumber(playerProfile.core);
         dom.bestDistanceValue.textContent = formatDistance(playerProfile.bestDistance);
-        renderRunBriefStrip();
-    }
-
-    function renderRunBriefStrip() {
-        if (!dom.runBriefHeadline || !dom.runBriefMeta) return;
-        const runner = getRunner(playerProfile.loadout.runner);
-        const skill = getSkill(playerProfile.loadout.skill);
-        const passive = getPassive(playerProfile.loadout.passive);
-        const rankScore = getRunnerRankScore();
-        const divisionInfo = getDivisionInfo(rankScore);
-        const leaderboard = getRunnerLeaderboard(rankScore);
-
-        dom.runBriefHeadline.textContent = playerProfile.lang === 'en'
-            ? `${localize(runner.title)} 路 ${localize(divisionInfo.tier.title)} 路 #${leaderboard.playerRank}`
-            : `${localize(runner.title)} 路 ${localize(divisionInfo.tier.title)} 路 鎺掑悕 #${leaderboard.playerRank}`;
-
-        dom.runBriefMeta.textContent = playerProfile.lang === 'en'
-            ? `${localize(skill.title)} / ${localize(passive.title)} 路 Open the full run brief for boosts, ladder, and track details.`
-            : `${localize(skill.title)} / ${localize(passive.title)} 路 鐐瑰嚮鏌ョ湅瀹屾暣璧涢亾绠€鎶ワ紝闆嗕腑娴忚澧炵泭銆佹鍗曚笌璧涢亾鎯呮姤銆俙;
     }
 
     function renderHud() {
@@ -4279,14 +3523,14 @@
                 goldMultiplier: 1.2,
                 xpMultiplier: 1.08,
                 coreFloor: 4,
-                rewardBias: 0.16,
-                trackSpeedMultiplier: 0.8,
-                obstacleApproachMultiplier: 0.68,
-                spawnRelax: 0.32,
-                spawnMin: 0.64,
-                rewardZBonus: 14,
-                obstacleZBonus: 30,
-                trailingRewardZBonus: 16
+                rewardBias: 0.12,
+                trackSpeedMultiplier: 0.88,
+                obstacleApproachMultiplier: NEWBIE_ASSIST_OBSTACLE_SPEED,
+                spawnRelax: 0.16,
+                spawnMin: NEWBIE_ASSIST_SPAWN_MIN,
+                rewardZBonus: 6,
+                obstacleZBonus: 16,
+                trailingRewardZBonus: 8
             };
         }
         if (totalRuns < 3) {
@@ -4294,14 +3538,14 @@
                 goldMultiplier: 1.12,
                 xpMultiplier: 1.04,
                 coreFloor: 3,
-                rewardBias: 0.1,
-                trackSpeedMultiplier: 0.88,
-                obstacleApproachMultiplier: 0.8,
-                spawnRelax: 0.22,
-                spawnMin: 0.48,
-                rewardZBonus: 8,
-                obstacleZBonus: 18,
-                trailingRewardZBonus: 10
+                rewardBias: 0.06,
+                trackSpeedMultiplier: 0.94,
+                obstacleApproachMultiplier: 0.88,
+                spawnRelax: 0.08,
+                spawnMin: 0.3,
+                rewardZBonus: 3,
+                obstacleZBonus: 8,
+                trailingRewardZBonus: 4
             };
         }
         if (totalRuns < 6) {
@@ -4309,14 +3553,14 @@
                 goldMultiplier: 1.05,
                 xpMultiplier: 1.02,
                 coreFloor: 2,
-                rewardBias: 0.05,
-                trackSpeedMultiplier: 0.94,
-                obstacleApproachMultiplier: 0.9,
-                spawnRelax: 0.14,
-                spawnMin: 0.38,
-                rewardZBonus: 4,
-                obstacleZBonus: 10,
-                trailingRewardZBonus: 5
+                rewardBias: 0.03,
+                trackSpeedMultiplier: 0.98,
+                obstacleApproachMultiplier: 0.95,
+                spawnRelax: 0.04,
+                spawnMin: 0.26,
+                rewardZBonus: 1,
+                obstacleZBonus: 4,
+                trailingRewardZBonus: 2
             };
         }
         return {
@@ -4326,8 +3570,8 @@
             rewardBias: 0,
             trackSpeedMultiplier: 1,
             obstacleApproachMultiplier: 1,
-            spawnRelax: 0.08,
-            spawnMin: 0.32,
+            spawnRelax: 0,
+            spawnMin: 0.24,
             rewardZBonus: 0,
             obstacleZBonus: 0,
             trailingRewardZBonus: 0
@@ -4338,10 +3582,7 @@
         document.body.classList.toggle('runner-playing', activeTab === 'run' && game.running);
     }
 
-    function renderAll({ preservePanelScroll = true } = {}) {
-        if (preservePanelScroll && dom.panelContent) {
-            panelScrollState[activeTab] = dom.panelContent.scrollTop || 0;
-        }
+    function renderAll() {
         let shouldSave = false;
         if (ensureMissionBoardState()) {
             shouldSave = true;
@@ -4356,11 +3597,11 @@
             saveState();
         }
         applyI18n();
-        renderTabLayout({ preserveScroll: preservePanelScroll });
+        renderTabLayout();
         updateReviveOverlayCopy();
         renderSummary();
         renderHud();
-        renderPanel({ preserveScroll: preservePanelScroll });
+        renderPanel();
         renderPaymentOfferGrid();
         renderResultOverlayCard();
         renderPaymentOrderUI();
@@ -4375,9 +3616,9 @@
         const descNode = dom.reviveOverlay.querySelector('[data-i18n="reviveDesc"]');
         if (!descNode) return;
         if (game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0) {
-            dom.reviveBtn.textContent = localize({ zh: '鍏嶈垂澶嶆椿', en: 'Free Revive' });
+            dom.reviveBtn.textContent = localize({ zh: '免费复活', en: 'Free Revive' });
             descNode.textContent = localize({
-                zh: '鏈眬宸叉惡甯?1 娆″厤璐瑰娲伙紝鏈鐐瑰嚮涓嶄細娑堣€楄兘鏍搞€?,
+                zh: '本局已携带 1 次免费复活，本次点击不会消耗能核。',
                 en: 'This run has 1 free revive armed, so this revive spends no cores.'
             });
             return;
@@ -4390,7 +3631,7 @@
         const node = document.getElementById('seasonCountdown');
         if (!node) return;
         const countdown = formatCountdown(getSeasonEndTime() - Date.now());
-        node.textContent = playerProfile.lang === 'en' ? `Ends In ${countdown}` : `璧涘鍓╀綑 ${countdown}`;
+        node.textContent = playerProfile.lang === 'en' ? `Ends In ${countdown}` : `赛季剩余 ${countdown}`;
     }
 
     function updateMissionCountdownUI() {
@@ -4406,18 +3647,16 @@
         const nextReset = new Date();
         nextReset.setHours(24, 0, 0, 0);
         const countdown = formatCountdown(nextReset.getTime() - Date.now());
-        node.textContent = playerProfile.lang === 'en' ? `Resets In ${countdown}` : `鍒锋柊鍓╀綑 ${countdown}`;
+        node.textContent = playerProfile.lang === 'en' ? `Resets In ${countdown}` : `刷新剩余 ${countdown}`;
     }
 
     function showToast(message) {
         if (!message) return;
-        dom.toast.classList.remove('is-reward');
         dom.toast.textContent = message;
         dom.toast.classList.add('is-visible');
         window.clearTimeout(toastTimer);
         toastTimer = window.setTimeout(() => {
             dom.toast.classList.remove('is-visible');
-            dom.toast.classList.remove('is-reward');
         }, 1700);
     }
 
@@ -4518,8 +3757,6 @@
     function resetRunState() {
         const runner = getRunner(playerProfile.loadout.runner);
         const skill = getSkill(playerProfile.loadout.skill);
-        const runnerStats = getRunnerStats(runner);
-        const skillRuntime = getSkillRuntime(skill);
         lastResult = null;
         dom.resultOverlay.classList.remove('is-promoted');
         dom.resultRankPanel.innerHTML = '';
@@ -4535,7 +3772,7 @@
         game.slideTimer = 0;
         game.shieldTimer = 0;
         game.skillCooldown = 0;
-        game.skillCooldownMax = skillRuntime.cooldown;
+        game.skillCooldownMax = skill.cooldown;
         game.overclock = 0;
         game.overclockActive = 0;
         game.runGoldMultiplier = 1;
@@ -4554,14 +3791,13 @@
         game.objects = [];
         game.spawnTimer = 0;
         game.elapsed = 0;
-        game.speedBase = 20 * runnerStats.speed;
+        game.speedBase = 20 * runner.stats.speed;
         game.speedCurrent = game.speedBase;
         game.lastTime = 0;
         game.flashTimer = 0;
         game.hitless = true;
         game.timeAt500 = null;
         game.message = '';
-        game.pickupBursts = [];
         game.newbieAssist = playerProfile.totalRuns === 0;
         renderHud();
     }
@@ -4627,15 +3863,12 @@
 
     function endRun(force = false) {
         const tuning = getRunTuningProfile();
-        const runner = getRunner(playerProfile.loadout.runner);
-        const runnerStats = getRunnerStats(runner);
         const previousDivision = getDivisionInfo(getRunnerRankScore());
         const previousBestDistance = playerProfile.bestDistance;
         const perfectRun = !force && game.reviveCount === 0 && game.dodgeRun >= 12;
         const runDistance = Math.floor(game.distance);
         const runScore = Math.floor(game.score);
-        const comboGoldFactor = 1 + Math.max(0, runnerStats.combo - 1) * 0.9;
-        const baseGoldGain = Math.max(120, Math.floor(game.distance * 0.42 + game.coinsRun * 9 + game.maxCombo * 14 * comboGoldFactor));
+        const baseGoldGain = Math.max(120, Math.floor(game.distance * 0.42 + game.coinsRun * 9 + game.maxCombo * 14));
         const goldGain = Math.max(baseGoldGain, Math.floor(baseGoldGain * game.runGoldMultiplier * tuning.goldMultiplier));
         const coreGain = Math.max(tuning.coreFloor, Math.floor(game.distance / 260) + game.coreRun);
         const baseSeasonXpGain = Math.max(12, Math.floor(game.distance / 60) + game.dodgeRun * 2);
@@ -4686,7 +3919,7 @@
         const promoted = divisionInfo.tierIndex > previousDivision.tierIndex;
         const promotionText = promoted
             ? localize({
-                zh: `鏅嬪崌鎴愬姛锛氬凡杩涘叆 ${localize(divisionInfo.tier.title)}銆俙,
+                zh: `晋升成功：已进入 ${localize(divisionInfo.tier.title)}。`,
                 en: `Promotion complete: ${localize(divisionInfo.tier.title)} unlocked.`
             })
             : '';
@@ -4727,21 +3960,21 @@
         dom.resultSummary.textContent = promoted ? promotionText : gradeInfo.text;
         dom.resultOverlay.classList.toggle('is-promoted', promoted);
         dom.resultMeta.innerHTML = [
-            playerProfile.lang === 'en' ? `Combo x${formatNumber(game.maxCombo)}` : `杩炲嚮 x${formatNumber(game.maxCombo)}`,
-            playerProfile.lang === 'en' ? `Dodges ${formatNumber(game.dodgeRun)}` : `闂伩 ${formatNumber(game.dodgeRun)}`,
-            playerProfile.lang === 'en' ? `Revives ${formatNumber(game.reviveCount)}` : `澶嶆椿 ${formatNumber(game.reviveCount)}`,
-            playerProfile.lang === 'en' ? `Season XP +${formatNumber(seasonXpGain)}` : `璧涘缁忛獙 +${formatNumber(seasonXpGain)}`,
-            game.runGoldMultiplier > 1 ? (playerProfile.lang === 'en' ? `Gold x${game.runGoldMultiplier.toFixed(2)}` : `閲戝竵鍊嶇巼 x${game.runGoldMultiplier.toFixed(2)}`) : '',
-            game.runSeasonXpMultiplier > 1 ? (playerProfile.lang === 'en' ? `XP x${game.runSeasonXpMultiplier.toFixed(2)}` : `缁忛獙鍊嶇巼 x${game.runSeasonXpMultiplier.toFixed(2)}`) : '',
+            playerProfile.lang === 'en' ? `Combo x${formatNumber(game.maxCombo)}` : `连击 x${formatNumber(game.maxCombo)}`,
+            playerProfile.lang === 'en' ? `Dodges ${formatNumber(game.dodgeRun)}` : `闪避 ${formatNumber(game.dodgeRun)}`,
+            playerProfile.lang === 'en' ? `Revives ${formatNumber(game.reviveCount)}` : `复活 ${formatNumber(game.reviveCount)}`,
+            playerProfile.lang === 'en' ? `Season XP +${formatNumber(seasonXpGain)}` : `赛季经验 +${formatNumber(seasonXpGain)}`,
+            game.runGoldMultiplier > 1 ? (playerProfile.lang === 'en' ? `Gold x${game.runGoldMultiplier.toFixed(2)}` : `金币倍率 x${game.runGoldMultiplier.toFixed(2)}`) : '',
+            game.runSeasonXpMultiplier > 1 ? (playerProfile.lang === 'en' ? `XP x${game.runSeasonXpMultiplier.toFixed(2)}` : `经验倍率 x${game.runSeasonXpMultiplier.toFixed(2)}`) : '',
             game.freeReviveConsumed ? t('freeReviveUsed') : '',
-            game.hitless ? (playerProfile.lang === 'en' ? 'Clean Run' : '鏃犱激瀹屾垚') : (playerProfile.lang === 'en' ? 'Damaged Run' : '鍙楁崯瀹屾垚')
+            game.hitless ? (playerProfile.lang === 'en' ? 'Clean Run' : '无伤完成') : (playerProfile.lang === 'en' ? 'Damaged Run' : '受损完成')
         ].filter(Boolean).map((text) => `<span class="reward-pill">${text}</span>`).join('');
         renderResultOverlayCard();
         resetResultOverlayScroll();
         setOverlay(dom.resultOverlay);
         playSfx(promoted ? 'promote' : 'reward');
         if (promoted) {
-            showToast(localize({ zh: `娈典綅鏅嬪崌锛?{localize(divisionInfo.tier.title)}`, en: `Promoted: ${localize(divisionInfo.tier.title)}` }));
+            showToast(localize({ zh: `段位晋升：${localize(divisionInfo.tier.title)}`, en: `Promoted: ${localize(divisionInfo.tier.title)}` }));
         } else if (Math.floor(game.distance) > previousBestDistance) {
             showToast(t('bestToast'));
         }
@@ -4811,17 +4044,16 @@
             return;
         }
         const skill = getSkill(playerProfile.loadout.skill);
-        const skillRuntime = getSkillRuntime(skill);
         if (skill.id === 'shield') {
-            game.shieldTimer = skillRuntime.shieldDuration;
+            game.shieldTimer = 3;
             showToast(t('skillShield'));
         } else if (skill.id === 'dash') {
-            game.objects = game.objects.filter((obj) => !(obj.type !== 'coin' && obj.type !== 'energy' && obj.z < skillRuntime.clearDistance && Math.abs(obj.lane - game.lane) <= 1));
-            game.overclock = Math.min(100, game.overclock + skillRuntime.overclockGain);
+            game.objects = game.objects.filter((obj) => !(obj.type !== 'coin' && obj.type !== 'energy' && obj.z < 28 && Math.abs(obj.lane - game.lane) <= 1));
+            game.overclock = Math.min(100, game.overclock + 35);
             game.flashTimer = 0.45;
             showToast(t('skillDash'));
         }
-        game.skillCooldown = skillRuntime.cooldown;
+        game.skillCooldown = skill.cooldown;
         playSfx('skill');
     }
 
@@ -4846,11 +4078,10 @@
         const tuning = getRunTuningProfile();
         const roll = Math.random();
         const lane = Math.floor(Math.random() * 3);
-        const earlyRunFactor = Math.max(0, 1 - (game.elapsed / 12));
         const rewardBaseZ = 132 + tuning.rewardZBonus;
-        const obstacleBaseZ = 132 + tuning.obstacleZBonus + (earlyRunFactor * 22);
-        const coinThreshold = 0.36 + tuning.rewardBias * 0.65 + earlyRunFactor * 0.08;
-        const energyThreshold = coinThreshold + 0.14 + tuning.rewardBias * 0.35 + earlyRunFactor * 0.03;
+        const obstacleBaseZ = 132 + tuning.obstacleZBonus;
+        const coinThreshold = 0.36 + tuning.rewardBias * 0.65;
+        const energyThreshold = coinThreshold + 0.14 + tuning.rewardBias * 0.35;
         if (roll < coinThreshold) {
             game.objects.push({ type: 'coin', lane, z: rewardBaseZ + Math.random() * 14, value: 1 });
             if (Math.random() < 0.45) {
@@ -4874,46 +4105,23 @@
         }
     }
 
-    function spawnPickupBurst(type, obj) {
-        const label = type === 'coin'
-            ? localize({ zh: '+1 閲戝竵', en: '+1 Gold' })
-            : localize({ zh: '+1 鑳芥牳', en: '+1 Core' });
-        game.pickupBursts.push({
-            type,
-            lane: obj.lane,
-            z: Math.max(10, obj.z),
-            label,
-            life: 0.68,
-            duration: 0.68
-        });
-        if (game.pickupBursts.length > 10) {
-            game.pickupBursts.splice(0, game.pickupBursts.length - 10);
-        }
-    }
-
     function handleCollision(obj) {
         const passive = getPassive(playerProfile.loadout.passive);
-        const passiveRuntime = getPassiveRuntime(passive);
-        const runner = getRunner(playerProfile.loadout.runner);
-        const runnerStats = getRunnerStats(runner);
         const sameLane = obj.lane === game.lane;
-        const nearLane = Math.abs(obj.lane - game.lane) <= passiveRuntime.laneReach;
+        const nearLane = Math.abs(obj.lane - game.lane) <= 1;
         const canMagnet = passive.id === 'magnet' && nearLane;
 
         if ((obj.type === 'coin' || obj.type === 'energy') && (sameLane || canMagnet)) {
             if (obj.type === 'coin') {
-                const coinValue = 1 + (passive.id === 'magnet' ? passiveRuntime.coinYieldBonus : 0);
-                game.coinsRun += coinValue;
-                game.score += 35 + game.combo * 2 * runnerStats.combo;
-                game.overclock = Math.min(100, game.overclock + 1.5 + Math.max(0, coinValue - 1) * 8);
+                game.coinsRun += 1;
+                game.score += 35 + game.combo * 2;
+                game.overclock = Math.min(100, game.overclock + 1.5);
                 playSfx('coin');
-                spawnPickupBurst('coin', obj);
             } else {
                 game.coreRun += 1;
-                game.score += 50 + Math.max(0, runnerStats.combo - 1) * 18;
+                game.score += 50;
                 game.overclock = Math.min(100, game.overclock + 8);
                 playSfx('energy');
-                spawnPickupBurst('energy', obj);
             }
             obj.remove = true;
             return;
@@ -4939,8 +4147,8 @@
             game.combo += 1;
             game.maxCombo = Math.max(game.maxCombo, game.combo);
             game.dodgeRun += 1;
-            game.score += 70 * game.combo * runnerStats.combo;
-            game.overclock = Math.min(100, game.overclock + 4 + Math.max(0, runnerStats.combo - 1) * 2);
+            game.score += 70 * game.combo;
+            game.overclock = Math.min(100, game.overclock + 4);
             obj.remove = true;
             playSfx('move');
             return;
@@ -4967,9 +4175,7 @@
     function updateGame(dt) {
         if (!game.running || game.paused || game.awaitingRevive) return;
         const runner = getRunner(playerProfile.loadout.runner);
-        const runnerStats = getRunnerStats(runner);
         const passive = getPassive(playerProfile.loadout.passive);
-        const passiveRuntime = getPassiveRuntime(passive);
         const tuning = getRunTuningProfile();
 
         game.elapsed += dt;
@@ -4985,17 +4191,15 @@
             game.overclock = Math.min(100, game.overclock + dt * 3.2);
         }
 
-        const warmupFactor = Math.min(1, game.elapsed / 14);
-        const distanceSpeedGain = Math.min(12, Math.max(0, game.distance - 240) / 260);
-        const baseTrackSpeed = (game.speedBase + distanceSpeedGain) * (0.78 + warmupFactor * 0.22);
-        game.speedCurrent = baseTrackSpeed * tuning.trackSpeedMultiplier + (game.overclockActive > 0 ? 10 : 0);
+        const baseTrackSpeed = game.speedBase + Math.min(14, game.distance / 130);
+        game.speedCurrent = baseTrackSpeed * tuning.trackSpeedMultiplier + (game.overclockActive > 0 ? 12 : 0);
         game.distance += game.speedCurrent * dt * 10;
-        game.score += game.speedCurrent * dt * 4 + game.combo * dt * 8 * runnerStats.combo;
+        game.score += game.speedCurrent * dt * 4 + game.combo * dt * 8;
         if (!game.timeAt500 && game.distance >= 500) {
             game.timeAt500 = Math.floor(game.elapsed * 1000);
         }
 
-        game.x += (game.targetLane - game.x) * Math.min(1, dt * 10 * runnerStats.control);
+        game.x += (game.targetLane - game.x) * Math.min(1, dt * 10 * runner.stats.control);
         game.lane = Math.round(game.x);
 
         game.vy -= dt * 4.8;
@@ -5007,7 +4211,7 @@
 
         if (game.spawnTimer <= 0) {
             spawnObject();
-            const baseSpawnTimer = Math.max(0.4, 1.06 - Math.min(0.52, Math.max(0, game.distance - 180) / 3600));
+            const baseSpawnTimer = Math.max(0.24, 0.82 - Math.min(0.48, game.distance / 2800));
             game.spawnTimer = Math.max(tuning.spawnMin, baseSpawnTimer + tuning.spawnRelax);
         }
 
@@ -5016,7 +4220,7 @@
                 ? tuning.obstacleApproachMultiplier
                 : 1;
             obj.z -= game.speedCurrent * dt * 3.8 * approachMultiplier;
-            if ((obj.type === 'coin' || obj.type === 'energy') && passive.id === 'magnet' && Math.abs(obj.lane - game.lane) <= passiveRuntime.laneReach && obj.z < passiveRuntime.pickupZ) {
+            if (obj.type === 'coin' && passive.id === 'magnet' && Math.abs(obj.lane - game.lane) <= 1 && obj.z < 32) {
                 obj.lane = game.lane;
             }
             if (obj.z <= 9) {
@@ -5024,14 +4228,9 @@
             }
         });
         game.objects = game.objects.filter((obj) => !obj.remove && obj.z > -10);
-        game.pickupBursts = game.pickupBursts.filter((burst) => {
-            burst.life = Math.max(0, burst.life - dt);
-            burst.z = Math.max(6, burst.z - game.speedCurrent * dt * 1.25);
-            return burst.life > 0;
-        });
 
-        if (passive.id === 'resonance' && game.combo >= passiveRuntime.comboThreshold) {
-            game.overclock = Math.min(100, game.overclock + dt * passiveRuntime.overclockPerSecond);
+        if (passive.id === 'resonance' && game.combo >= 12) {
+            game.overclock = Math.min(100, game.overclock + dt * 4.5);
         }
         if (game.overclock >= 100 && game.elapsed - Math.floor(game.elapsed) < dt) {
             showToast(t('overclockReady'));
@@ -5041,55 +4240,13 @@
         renderHud();
     }
 
-    function getRoadProgressFromY(y, height) {
-        return clamp((y - height * 0.18) / (height * 0.82), 0, 1);
-    }
-
-    function getRoadProfile(width) {
-        const compactScene = width <= 680;
-        return compactScene
-            ? {
-                farLeftRatio: 0.33,
-                nearLeftRatio: 0.075,
-                farRightRatio: 0.67,
-                nearRightRatio: 0.925
-            }
-            : {
-                farLeftRatio: 0.36,
-                nearLeftRatio: 0.11,
-                farRightRatio: 0.64,
-                nearRightRatio: 0.89
-            };
-    }
-
-    function getRoadEdges(width, roadProgress) {
-        const clampedProgress = clamp(roadProgress, 0, 1);
-        const profile = getRoadProfile(width);
-        return {
-            left: width * (profile.farLeftRatio + (profile.nearLeftRatio - profile.farLeftRatio) * clampedProgress),
-            right: width * (profile.farRightRatio + (profile.nearRightRatio - profile.farRightRatio) * clampedProgress)
-        };
-    }
-
-    function getLaneBoundaryX(boundaryIndex, width, roadProgress) {
-        const { left, right } = getRoadEdges(width, roadProgress);
-        const laneWidth = (right - left) / 3;
-        return left + laneWidth * boundaryIndex;
-    }
-
-    function getLaneCenterX(lane, width, roadProgress) {
-        const { left, right } = getRoadEdges(width, roadProgress);
-        const laneWidth = (right - left) / 3;
-        return left + laneWidth * (lane + 0.5);
-    }
-
     function projectObject(obj, width, height) {
         const perspective = Math.max(0.04, 1 - obj.z / 150);
+        const roadHalf = 60 + perspective * width * 0.32;
+        const x = width / 2 + (obj.lane - 1) * roadHalf * 0.72;
         const y = height * 0.12 + perspective * height * 0.78;
-        const roadProgress = getRoadProgressFromY(y, height);
-        const x = getLaneCenterX(obj.lane, width, roadProgress);
         const size = 18 + perspective * 64;
-        return { x, y, size, perspective, roadProgress };
+        return { x, y, size, perspective };
     }
 
     function renderScene() {
@@ -5097,11 +4254,6 @@
         const rect = dom.canvas.getBoundingClientRect();
         const width = dom.canvas.width / dpr;
         const height = dom.canvas.height / dpr;
-        const compactScene = width <= 680;
-        const roadFar = getRoadEdges(width, 0);
-        const roadNear = getRoadEdges(width, 1);
-        const roadNearWidth = roadNear.right - roadNear.left;
-        const roadFarCenter = (roadFar.left + roadFar.right) / 2;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -5154,10 +4306,10 @@
         ctx.restore();
 
         ctx.beginPath();
-        ctx.moveTo(roadNear.left, height);
-        ctx.lineTo(roadFar.left, height * 0.18);
-        ctx.lineTo(roadFar.right, height * 0.18);
-        ctx.lineTo(roadNear.right, height);
+        ctx.moveTo(width * 0.14, height);
+        ctx.lineTo(width * 0.38, height * 0.18);
+        ctx.lineTo(width * 0.62, height * 0.18);
+        ctx.lineTo(width * 0.86, height);
         ctx.closePath();
         const roadGradient = ctx.createLinearGradient(0, height * 0.18, 0, height);
         roadGradient.addColorStop(0, 'rgba(18,28,54,0.6)');
@@ -5168,30 +4320,32 @@
         for (let streak = 0; streak < 14; streak += 1) {
             const offset = ((game.distance * (2.4 + streak * 0.08)) + streak * 26) % height;
             const alpha = 0.03 + (game.overclockActive > 0 ? 0.035 : 0);
-            const laneGlowOffset = roadNearWidth * (0.15 + streak * 0.018);
             ctx.strokeStyle = `rgba(87,229,255,${alpha})`;
             ctx.lineWidth = 1 + (streak % 3 === 0 ? 1 : 0);
             ctx.beginPath();
-            ctx.moveTo(roadNear.left + laneGlowOffset, height - offset);
-            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
+            ctx.moveTo(width * 0.28 + streak * 6, height - offset);
+            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(roadNear.right - laneGlowOffset, height - offset);
-            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
+            ctx.moveTo(width * 0.72 - streak * 6, height - offset);
+            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
             ctx.stroke();
         }
 
-        for (let boundaryIndex = 0; boundaryIndex <= 3; boundaryIndex += 1) {
-            const topX = getLaneBoundaryX(boundaryIndex, width, 0);
-            const bottomX = getLaneBoundaryX(boundaryIndex, width, 1);
-            const isOuter = boundaryIndex === 0 || boundaryIndex === 3;
-            ctx.strokeStyle = isOuter ? 'rgba(96,212,255,0.32)' : 'rgba(96,212,255,0.42)';
-            ctx.lineWidth = isOuter ? 2.4 : 3;
-            ctx.beginPath();
-            ctx.moveTo(bottomX, height);
-            ctx.lineTo(topX, height * 0.18);
-            ctx.stroke();
-        }
+        ctx.strokeStyle = 'rgba(96,212,255,0.35)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(width * 0.5, height);
+        ctx.lineTo(width * 0.5, height * 0.18);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(width * 0.32, height);
+        ctx.lineTo(width * 0.46, height * 0.18);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(width * 0.68, height);
+        ctx.lineTo(width * 0.54, height * 0.18);
+        ctx.stroke();
 
         const sortedObjects = [...game.objects].sort((a, b) => b.z - a.z);
         sortedObjects.forEach((obj) => {
@@ -5226,7 +4380,7 @@
                 ctx.font = `700 ${Math.max(10, size * 0.18)}px Inter`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('鈿?, x, y + 1);
+                ctx.fillText('⚡', x, y + 1);
             } else {
                 ctx.shadowBlur = 18;
                 ctx.shadowColor = obj.type === 'wall' ? 'rgba(255,106,136,0.38)' : obj.type === 'hurdle' ? 'rgba(255,149,79,0.32)' : 'rgba(157,134,255,0.36)';
@@ -5244,13 +4398,13 @@
                     ctx.font = `800 ${Math.max(10, size * 0.16)}px Inter`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText('鈫?, x, top + h * 0.22);
+                    ctx.fillText('↓', x, top + h * 0.22);
                 } else if (obj.type === 'hurdle') {
                     ctx.fillStyle = 'rgba(255,255,255,0.9)';
                     ctx.font = `800 ${Math.max(10, size * 0.16)}px Inter`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillText('鈫?, x, top - Math.max(8, size * 0.14));
+                    ctx.fillText('↑', x, top - Math.max(8, size * 0.14));
                 } else {
                     ctx.fillStyle = 'rgba(255,255,255,0.92)';
                     ctx.font = `800 ${Math.max(10, size * 0.18)}px Inter`;
@@ -5304,310 +4458,9 @@
 
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.font = '600 14px Inter';
-        ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '鎵嬪娍鎴栨寜閽帶鍒?, 18, 28);
-        ctx.fillStyle = 'rgba(142,166,191,0.95)';
-        ctx.fillText(playerProfile.lang === 'en' ? `Revives ${MAX_REVIVES - game.reviveCount}/${MAX_REVIVES}` : `鍓╀綑澶嶆椿 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
-        const liveBoostLabels = [];
-        if (game.runGoldMultiplier > 1 || game.runSeasonXpMultiplier > 1) {
-            liveBoostLabels.push(playerProfile.lang === 'en' ? 'SETTLEMENT x1.25' : '缁撶畻 x1.25');
-        }
-        if (game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0) {
-            liveBoostLabels.push(playerProfile.lang === 'en' ? 'FREE REVIVE READY' : '鍏嶈垂澶嶆椿寰呭懡');
-        }
-        if (liveBoostLabels.length) {
-            ctx.fillStyle = 'rgba(89,255,155,0.95)';
-            ctx.fillText(liveBoostLabels.join(' 路 '), 18, 72);
-        }
-
-        if (!compactScene) {
-        if (!compactScene) {
-            ctx.textAlign = 'right';
-        ctx.fillStyle = 'rgba(159,233,255,0.94)';
-        ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width - 18, 28);
-        ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
-        ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '瓒呴婵€娲讳腑') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '璧涢亾绋冲畾'), width - 18, 50);
-        ctx.textAlign = 'left';
-        }
-
-        if (compactScene) {
-            const topHudHeight = liveBoostLabels.length ? 88 : 64;
-            const leftHudWidth = Math.min(width * 0.64, 300);
-            ctx.fillStyle = 'rgba(3,6,13,0.84)';
-            ctx.fillRect(0, 0, leftHudWidth, topHudHeight);
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = '600 14px Inter';
-            ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '鎵嬪娍鎴栨寜閽帶鍒?, 18, 28);
-            ctx.fillStyle = 'rgba(142,166,191,0.95)';
-            ctx.fillText(playerProfile.lang === 'en' ? `Revives ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}` : `鍓╀綑澶嶆椿 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
-            if (liveBoostLabels.length) {
-                ctx.fillStyle = 'rgba(89,255,155,0.95)';
-                ctx.fillText(liveBoostLabels.join(' / '), 18, 72);
-            }
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'rgba(159,233,255,0.94)';
-            ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width * 0.5, 28);
-            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
-            ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '瓒呴婵€娲讳腑') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '璧涢亾绋冲畾'), width * 0.5, 50);
-            ctx.textAlign = 'left';
-        }
-
-        if (!rect.width || !rect.height) {
-            resizeCanvas();
-        }
-    }
-
-    function renderSceneV2() {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = dom.canvas.getBoundingClientRect();
-        const width = dom.canvas.width / dpr;
-        const height = dom.canvas.height / dpr;
-        const compactScene = width <= 680;
-        const roadFar = getRoadEdges(width, 0);
-        const roadNear = getRoadEdges(width, 1);
-        const roadNearWidth = roadNear.right - roadNear.left;
-        const roadFarCenter = (roadFar.left + roadFar.right) / 2;
-
-        ctx.clearRect(0, 0, width, height);
-
-        const flashAlpha = game.flashTimer > 0 ? 0.16 + game.flashTimer * 0.2 : 0;
-        const sky = ctx.createLinearGradient(0, 0, 0, height);
-        sky.addColorStop(0, '#09152d');
-        sky.addColorStop(0.55, '#0a1020');
-        sky.addColorStop(1, '#03060d');
-        ctx.fillStyle = sky;
-        ctx.fillRect(0, 0, width, height);
-
-        const starCount = 26;
-        for (let index = 0; index < starCount; index += 1) {
-            const px = ((index * 97) + Math.floor(game.distance * 0.9)) % (width + 80) - 40;
-            const py = 36 + ((index * 53) % Math.floor(height * 0.34));
-            const radius = (index % 4 === 0 ? 1.8 : 1.1) + (game.overclockActive > 0 ? 0.3 : 0);
-            ctx.fillStyle = `rgba(159, 233, 255, ${0.16 + (index % 5) * 0.04})`;
-            ctx.beginPath();
-            ctx.arc(px, py, radius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        for (let side = 0; side < 2; side += 1) {
-            for (let tower = 0; tower < 6; tower += 1) {
-                const depth = 1 - tower / 6;
-                const towerHeight = 36 + depth * 110;
-                const towerWidth = 12 + depth * 18;
-                const towerX = side === 0
-                    ? width * 0.08 + tower * 18
-                    : width * 0.92 - tower * 18 - towerWidth;
-                const towerY = height * 0.26 + tower * 26;
-                ctx.fillStyle = `rgba(${side === 0 ? '87,229,255' : '164,107,255'}, ${0.08 + depth * 0.18})`;
-                ctx.fillRect(towerX, towerY, towerWidth, towerHeight);
-                ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                ctx.fillRect(towerX + towerWidth * 0.18, towerY + 10, towerWidth * 0.2, towerHeight - 20);
-            }
-        }
-
-        ctx.save();
-        ctx.translate(width / 2, height * 0.52);
-        ctx.strokeStyle = 'rgba(87,229,255,0.12)';
-        ctx.lineWidth = 1;
-        for (let index = 0; index < 12; index += 1) {
-            const gridY = index * 24;
-            ctx.beginPath();
-            ctx.moveTo(-width * 0.44 + index * 8, gridY);
-            ctx.lineTo(width * 0.44 - index * 8, gridY);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        ctx.beginPath();
-        ctx.moveTo(roadNear.left, height);
-        ctx.lineTo(roadFar.left, height * 0.18);
-        ctx.lineTo(roadFar.right, height * 0.18);
-        ctx.lineTo(roadNear.right, height);
-        ctx.closePath();
-        const roadGradient = ctx.createLinearGradient(0, height * 0.18, 0, height);
-        roadGradient.addColorStop(0, 'rgba(18,28,54,0.6)');
-        roadGradient.addColorStop(1, 'rgba(9,13,24,0.96)');
-        ctx.fillStyle = roadGradient;
-        ctx.fill();
-
-        for (let streak = 0; streak < 14; streak += 1) {
-            const offset = ((game.distance * (2.4 + streak * 0.08)) + streak * 26) % height;
-            const alpha = 0.03 + (game.overclockActive > 0 ? 0.035 : 0);
-            const laneGlowOffset = roadNearWidth * (0.15 + streak * 0.018);
-            ctx.strokeStyle = `rgba(87,229,255,${alpha})`;
-            ctx.lineWidth = 1 + (streak % 3 === 0 ? 1 : 0);
-            ctx.beginPath();
-            ctx.moveTo(roadNear.left + laneGlowOffset, height - offset);
-            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(roadNear.right - laneGlowOffset, height - offset);
-            ctx.lineTo(roadFarCenter, height * 0.18 + offset * 0.08);
-            ctx.stroke();
-        }
-
-        for (let boundaryIndex = 0; boundaryIndex <= 3; boundaryIndex += 1) {
-            const topX = getLaneBoundaryX(boundaryIndex, width, 0);
-            const bottomX = getLaneBoundaryX(boundaryIndex, width, 1);
-            const isOuter = boundaryIndex === 0 || boundaryIndex === 3;
-            ctx.strokeStyle = isOuter ? 'rgba(96,212,255,0.28)' : 'rgba(96,212,255,0.44)';
-            ctx.lineWidth = isOuter ? 2.2 : 3;
-            ctx.beginPath();
-            ctx.moveTo(bottomX, height);
-            ctx.lineTo(topX, height * 0.18);
-            ctx.stroke();
-        }
-
-        const sortedObjects = [...game.objects].sort((a, b) => b.z - a.z);
-        sortedObjects.forEach((obj) => {
-            const { x, y, size } = projectObject(obj, width, height);
-            if (obj.type === 'coin') {
-                ctx.shadowBlur = 18;
-                ctx.shadowColor = 'rgba(255,214,107,0.46)';
-                ctx.fillStyle = '#ffd66b';
-                ctx.beginPath();
-                ctx.arc(x, y, size * 0.22, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(14, 20, 32, 0.92)';
-                ctx.font = `700 ${Math.max(10, size * 0.18)}px Inter`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('+', x, y);
-            } else if (obj.type === 'energy') {
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = 'rgba(87,229,255,0.44)';
-                ctx.fillStyle = '#57e5ff';
-                ctx.beginPath();
-                ctx.moveTo(x, y - size * 0.28);
-                ctx.lineTo(x + size * 0.18, y);
-                ctx.lineTo(x, y + size * 0.28);
-                ctx.lineTo(x - size * 0.18, y);
-                ctx.closePath();
-                ctx.fill();
-                ctx.fillStyle = 'rgba(14, 20, 32, 0.96)';
-                ctx.font = `700 ${Math.max(10, size * 0.18)}px Inter`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('\u26A1', x, y + 1);
-            } else {
-                ctx.shadowBlur = 18;
-                ctx.shadowColor = obj.type === 'wall' ? 'rgba(255,106,136,0.38)' : obj.type === 'hurdle' ? 'rgba(255,149,79,0.32)' : 'rgba(157,134,255,0.36)';
-                ctx.fillStyle = obj.type === 'wall' ? '#ff5f7f' : obj.type === 'hurdle' ? '#ff954f' : '#9d86ff';
-                const objectWidth = obj.type === 'gate' ? size * 0.94 : size * 0.64;
-                const objectHeight = obj.type === 'hurdle' ? size * 0.28 : size * 0.74;
-                const top = obj.type === 'gate' ? y - size * 0.7 : y - objectHeight;
-                ctx.fillRect(x - objectWidth / 2, top, objectWidth, objectHeight);
-                ctx.strokeStyle = 'rgba(255,255,255,0.78)';
-                ctx.lineWidth = Math.max(1.5, size * 0.035);
-                ctx.strokeRect(x - objectWidth / 2, top, objectWidth, objectHeight);
-                if (obj.type === 'gate') {
-                    ctx.clearRect(x - objectWidth * 0.28, y - size * 0.3, objectWidth * 0.56, size * 0.3);
-                    ctx.fillStyle = 'rgba(255,255,255,0.88)';
-                    ctx.font = `800 ${Math.max(10, size * 0.16)}px Inter`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('\u2193', x, top + objectHeight * 0.22);
-                } else if (obj.type === 'hurdle') {
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.font = `800 ${Math.max(10, size * 0.16)}px Inter`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('\u2191', x, top - Math.max(8, size * 0.14));
-                } else {
-                    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-                    ctx.font = `800 ${Math.max(10, size * 0.18)}px Inter`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('!', x, top + objectHeight * 0.5);
-                }
-            }
-            ctx.shadowBlur = 0;
-        });
-
-        game.pickupBursts.forEach((burst) => {
-            const { x, y, size } = projectObject({ lane: burst.lane, z: burst.z }, width, height);
-            const progress = 1 - (burst.life / burst.duration);
-            const rise = 18 + progress * (22 + size * 0.26);
-            const burstScale = 0.12 + progress * 0.11;
-            const alpha = clamp(1 - progress * 1.05, 0, 1);
-            const glowColor = burst.type === 'coin' ? '255,214,107' : '87,229,255';
-
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = `rgba(${glowColor},0.82)`;
-            ctx.lineWidth = Math.max(2, size * 0.05);
-            ctx.beginPath();
-            ctx.arc(x, y - rise * 0.18, size * burstScale, 0, Math.PI * 2);
-            ctx.stroke();
-
-            for (let index = 0; index < 4; index += 1) {
-                const angle = (Math.PI * 2 * index) / 4 + progress * 1.6;
-                const radius = size * (0.12 + progress * 0.18);
-                const particleX = x + Math.cos(angle) * radius;
-                const particleY = y - rise * 0.18 + Math.sin(angle) * radius * 0.55;
-                ctx.fillStyle = `rgba(${glowColor},0.9)`;
-                ctx.beginPath();
-                ctx.arc(particleX, particleY, Math.max(1.5, size * 0.032), 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.fillStyle = `rgba(255,255,255,${0.98 * alpha})`;
-            ctx.font = `800 ${Math.max(12, size * 0.18)}px Inter`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(burst.label, x, y - rise - size * 0.24);
-            ctx.restore();
-        });
-
-        const playerLaneProgress = getRoadProgressFromY(height * 0.88, height);
-        const playerX = getLaneCenterX(game.x, width, playerLaneProgress);
-        const playerY = height * 0.82 - game.y * height * 0.22 + (game.slideTimer > 0 ? 18 : 0);
-        const bodyW = 34;
-        const bodyH = game.slideTimer > 0 ? 28 : 52;
-        ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.24)';
-        ctx.beginPath();
-        ctx.ellipse(playerX, height * 0.88, 28, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-        ctx.save();
-        ctx.shadowBlur = game.shieldTimer > 0 ? 28 : 16;
-        ctx.shadowColor = game.shieldTimer > 0 ? '#9fe9ff' : '#57e5ff';
-        if (game.overclockActive > 0) {
-            ctx.fillStyle = 'rgba(87,229,255,0.16)';
-            ctx.beginPath();
-            ctx.moveTo(playerX, playerY - bodyH * 0.3);
-            ctx.lineTo(playerX - 44, playerY + 26);
-            ctx.lineTo(playerX + 44, playerY + 26);
-            ctx.closePath();
-            ctx.fill();
-        }
-        ctx.fillStyle = game.overclockActive > 0 ? '#ffffff' : '#57e5ff';
-        ctx.fillRect(playerX - bodyW / 2, playerY - bodyH, bodyW, bodyH);
-        ctx.fillStyle = '#a46bff';
-        ctx.fillRect(playerX - bodyW * 0.34, playerY - bodyH - 16, bodyW * 0.68, 14);
-        if (game.shieldTimer > 0) {
-            ctx.strokeStyle = 'rgba(159,233,255,0.84)';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(playerX, playerY - bodyH * 0.58, 34, 0, Math.PI * 2);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        if (flashAlpha > 0) {
-            ctx.fillStyle = `rgba(255,255,255,${Math.min(0.24, flashAlpha)})`;
-            ctx.fillRect(0, 0, width, height);
-        }
-
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.font = '600 14px Inter';
         ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
         ctx.fillStyle = 'rgba(142,166,191,0.95)';
-        ctx.fillText(playerProfile.lang === 'en' ? `Revives ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
-
+        ctx.fillText(playerProfile.lang === 'en' ? `Revives ${MAX_REVIVES - game.reviveCount}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
         const liveBoostLabels = [];
         if (game.runGoldMultiplier > 1 || game.runSeasonXpMultiplier > 1) {
             liveBoostLabels.push(playerProfile.lang === 'en' ? 'SETTLEMENT x1.25' : '结算 x1.25');
@@ -5617,42 +4470,21 @@
         }
         if (liveBoostLabels.length) {
             ctx.fillStyle = 'rgba(89,255,155,0.95)';
-            ctx.fillText(liveBoostLabels.join(' / '), 18, 72);
+            ctx.fillText(liveBoostLabels.join(' · '), 18, 72);
         }
 
-        if (compactScene) {
-            const topHudHeight = liveBoostLabels.length ? 88 : 64;
-            const leftHudWidth = Math.min(width * 0.64, 300);
-            ctx.fillStyle = 'rgba(3,6,13,0.84)';
-            ctx.fillRect(0, 0, leftHudWidth, topHudHeight);
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = '600 14px Inter';
-            ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
-            ctx.fillStyle = 'rgba(142,166,191,0.95)';
-            ctx.fillText(playerProfile.lang === 'en' ? `Revives ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
-            if (liveBoostLabels.length) {
-                ctx.fillStyle = 'rgba(89,255,155,0.95)';
-                ctx.fillText(liveBoostLabels.join(' / '), 18, 72);
-            }
-            ctx.textAlign = 'center';
-            ctx.fillStyle = 'rgba(159,233,255,0.94)';
-            ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width * 0.5, 28);
-            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
-            ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width * 0.5, 50);
-            ctx.textAlign = 'left';
-        } else {
-            ctx.textAlign = 'right';
-            ctx.fillStyle = 'rgba(159,233,255,0.94)';
-            ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width - 18, 28);
-            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
-            ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width - 18, 50);
-            ctx.textAlign = 'left';
-        }
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(159,233,255,0.94)';
+        ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width - 18, 28);
+        ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+        ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width - 18, 50);
+        ctx.textAlign = 'left';
 
         if (!rect.width || !rect.height) {
             resizeCanvas();
         }
     }
+
     function resizeCanvas() {
         const rect = dom.canvasWrap.getBoundingClientRect();
         const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -5661,7 +4493,7 @@
         dom.canvas.width = Math.floor(width * dpr);
         dom.canvas.height = Math.floor(height * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        renderSceneV2();
+        renderScene();
     }
 
     function gameLoop(timestamp) {
@@ -5669,7 +4501,7 @@
         const dt = Math.min(0.033, (timestamp - game.lastTime) / 1000);
         game.lastTime = timestamp;
         updateGame(dt);
-        renderSceneV2();
+        renderScene();
         requestAnimationFrame(gameLoop);
     }
 
@@ -5726,11 +4558,7 @@
             playerProfile.lang = playerProfile.lang === 'en' ? 'zh' : 'en';
             saveState();
             renderAll();
-            renderSceneV2();
-        });
-
-        dom.runBriefBtn?.addEventListener('click', () => {
-            openInfoModal('run-brief');
+            renderScene();
         });
 
         dom.startRunBtn.addEventListener('click', (event) => {
@@ -5765,11 +4593,6 @@
             const unlockButton = event.target.closest('[data-unlock]');
             if (unlockButton) {
                 unlockEntry(unlockButton.dataset.unlock, unlockButton.dataset.id);
-                return;
-            }
-            const upgradeButton = event.target.closest('[data-upgrade-loadout]');
-            if (upgradeButton) {
-                upgradeEntry(upgradeButton.dataset.upgradeLoadout, upgradeButton.dataset.id);
                 return;
             }
             const equipButton = event.target.closest('[data-equip]');
@@ -5866,9 +4689,6 @@
             paymentVerificationNotice = paymentVerificationState === 'verified' ? paymentVerificationNotice : '';
             refreshPaymentVerificationState();
         });
-        dom.panelContent?.addEventListener('scroll', () => {
-            panelScrollState[activeTab] = dom.panelContent?.scrollTop || 0;
-        }, { passive: true });
 
         let touchStartX = 0;
         let touchStartY = 0;
