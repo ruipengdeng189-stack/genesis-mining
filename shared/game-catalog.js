@@ -191,8 +191,8 @@
                          "en":  "Tri-Lane Defense + Research Growth"
                      },
         "description":  {
-                            "zh":  "\u5df2\u5f00\u653e\u7684\u9632\u7ebf\u9996\u7248\uff0c\u5305\u542b 3 \u8def\u9632\u5b88\u3001\u6ce2\u6b21\u5f3a\u5316\u3001\u88c5\u914d\u3001\u7814\u7a76\u3001\u4efb\u52a1\u3001\u8d5b\u5b63\u4e0e\u8865\u7ed9\u5546\u5e97\u3002",
-                            "en":  "A live first defense build with 3-lane battles, wave upgrades, loadout, research, missions, season rewards, and a supply shop."
+                            "zh":  "\u5df2\u5f00\u653e\u7684\u4e09\u8def\u5854\u9632\u7248\u672c\uff0c\u73b0\u5df2\u6269\u5c55\u5230\u7b2c 3 \u7ae0\u5171 9 \u4e2a\u7ae0\u8282\uff0c\u5e76\u5305\u542b\u6ce2\u6b21\u5f3a\u5316\u3001\u88c5\u914d\u3001\u7814\u7a76\u3001\u4efb\u52a1\u3001\u8d5b\u5b63\u4e0e\u8865\u7ed9\u5546\u5e97\u3002",
+                            "en":  "A live tri-lane defense build now expanded to Chapter 3 with 9 stages, wave upgrades, loadout, research, missions, season rewards, and a supply shop."
                         },
         "icon":  "GD",
         "href":  "/games/defense/",

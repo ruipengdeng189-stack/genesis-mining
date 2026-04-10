@@ -344,6 +344,42 @@
             trait: { zh: '当前版本最高章节，Boss 波极重，建议优先准备史诗轨炮塔。', en: 'Current final chapter with a brutal boss wave. Epic rail setups shine here.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
             fragmentFocus: ['rail', 'chain', 'rocket']
+        },
+        {
+            id: '3-1',
+            recommended: 1220,
+            baseHp: 178,
+            baseSpeed: 92,
+            goldReward: 1860,
+            coreReward: 36,
+            fragmentReward: 46,
+            trait: { zh: '进入第 3 章后，三路会同时承受快怪与精英怪压力，必须保证至少两路具备稳定收线能力。', en: 'Chapter 3 opens with simultaneous pressure from fast and elite enemies, so at least two lanes must clear reliably.' },
+            enemies: ['fast', 'split', 'elite', 'boss'],
+            fragmentFocus: ['rail', 'frost', 'chain']
+        },
+        {
+            id: '3-2',
+            recommended: 1520,
+            baseHp: 214,
+            baseSpeed: 96,
+            goldReward: 2260,
+            coreReward: 42,
+            fragmentReward: 54,
+            trait: { zh: '护盾怪、分裂怪与 Boss 会连续叠压，护盾技能与链击 / 火箭的联动会明显更稳。', en: 'Shield units, split enemies, and the boss stack together here, making shield timing and Chain/Rocket synergy much more reliable.' },
+            enemies: ['shield', 'split', 'elite', 'boss'],
+            fragmentFocus: ['rail', 'rocket', 'chain']
+        },
+        {
+            id: '3-3',
+            recommended: 1880,
+            baseHp: 258,
+            baseSpeed: 100,
+            goldReward: 2780,
+            coreReward: 48,
+            fragmentReward: 62,
+            trait: { zh: '当前开放内容的终章，最终 Boss 波会把三路一起压满，建议至少拥有 1 路高等级轨炮与 1 路稳定减速。', en: 'This is the current end chapter. The final boss wave saturates all three lanes, so you want one high-level Rail lane plus one stable slow lane.' },
+            enemies: ['fast', 'shield', 'split', 'boss'],
+            fragmentFocus: ['rail', 'chain', 'frost']
         }
     ];
 
@@ -379,7 +415,11 @@
         { id: 'm5', title: { zh: '战场调度', en: 'Tactical Control' }, desc: { zh: '累计释放 12 次主动技能。', en: 'Use active skills 12 times.' }, target: 12, metric: (save) => save.stats.skillsUsed, reward: { gold: 960, fragments: { chain: 18 } } },
         { id: 'm6', title: { zh: '守线老兵', en: 'Line Veteran' }, desc: { zh: '累计参与 8 局防守。', en: 'Play 8 defense runs.' }, target: 8, metric: (save) => save.stats.runs, reward: { gold: 1260, cores: 30 } },
         { id: 'm7', title: { zh: '精英镇压', en: 'Elite Suppression' }, desc: { zh: '击败 8 只精英或 Boss。', en: 'Defeat 8 elites or bosses.' }, target: 8, metric: (save) => save.stats.bossKills, reward: { fragments: { rail: 18 }, cores: 48 } },
-        { id: 'm8', title: { zh: '核心工程师', en: 'Core Engineer' }, desc: { zh: '将任意炮台升到 4 级。', en: 'Upgrade any tower to level 4.' }, target: 4, metric: (save) => getHighestTowerLevel(save), reward: { gold: 1600, fragments: { rail: 14, chain: 14 } } }
+        { id: 'm8', title: { zh: '核心工程师', en: 'Core Engineer' }, desc: { zh: '将任意炮台升到 4 级。', en: 'Upgrade any tower to level 4.' }, target: 4, metric: (save) => getHighestTowerLevel(save), reward: { gold: 1600, fragments: { rail: 14, chain: 14 } } },
+        { id: 'm9', title: { zh: '深区突破', en: 'Deep Push' }, desc: { zh: '推进至章节 3-1。', en: 'Reach chapter 3-1.' }, target: 7, metric: (save) => save.bestChapterIndex + 1, reward: { gold: 2200, cores: 54, fragments: { rail: 16, chain: 18 } } },
+        { id: 'm10', title: { zh: '火力成型', en: 'Build Complete' }, desc: { zh: '将任意炮台升到 6 级。', en: 'Upgrade any tower to level 6.' }, target: 6, metric: (save) => getHighestTowerLevel(save), reward: { gold: 2800, fragments: { frost: 20, rocket: 20, rail: 18 } } },
+        { id: 'm11', title: { zh: '持续压制', en: 'Sustained Fire' }, desc: { zh: '累计造成 120000 点伤害。', en: 'Deal 120000 total damage.' }, target: 120000, metric: (save) => save.stats.totalDamage, reward: { gold: 3200, cores: 72, fragments: { chain: 22 } } },
+        { id: 'm12', title: { zh: '守线统帅', en: 'Line Commander' }, desc: { zh: '累计赢下 18 局防守。', en: 'Win 18 defense runs.' }, target: 18, metric: (save) => save.stats.wins, reward: { gold: 3800, cores: 96, fragments: { rail: 20, rocket: 24 } } }
     ];
 
     const SEASON_NODES = [
@@ -390,7 +430,11 @@
         { id: 's5', xp: 760, reward: { gold: 820, cores: 22 } },
         { id: 's6', xp: 1020, reward: { fragments: { chain: 24 } } },
         { id: 's7', xp: 1320, reward: { gold: 1100, cores: 28 } },
-        { id: 's8', xp: 1660, reward: { fragments: { rail: 28 }, cores: 36 } }
+        { id: 's8', xp: 1660, reward: { fragments: { rail: 28 }, cores: 36 } },
+        { id: 's9', xp: 2060, reward: { gold: 1560, cores: 40 } },
+        { id: 's10', xp: 2500, reward: { fragments: { frost: 22, rocket: 22, chain: 18 } } },
+        { id: 's11', xp: 3000, reward: { gold: 2140, cores: 56, fragments: { rail: 18 } } },
+        { id: 's12', xp: 3600, reward: { fragments: { rail: 32, chain: 24 }, cores: 72 } }
     ];
 
     const UPGRADE_CHOICES = [
@@ -471,7 +515,10 @@
         { id: 'p2', xp: 380, reward: { fragments: { frost: 18, rocket: 18 } } },
         { id: 'p3', xp: 760, reward: { gold: 3600, cores: 42 } },
         { id: 'p4', xp: 1200, reward: { fragments: { chain: 24, rail: 18 } } },
-        { id: 'p5', xp: 1700, reward: { gold: 5600, cores: 72, fragments: { rail: 20 } } }
+        { id: 'p5', xp: 1700, reward: { gold: 5600, cores: 72, fragments: { rail: 20 } } },
+        { id: 'p6', xp: 2280, reward: { gold: 7600, cores: 96, fragments: { chain: 28 } } },
+        { id: 'p7', xp: 3000, reward: { fragments: { frost: 24, rocket: 24, rail: 24 } } },
+        { id: 'p8', xp: 3900, reward: { gold: 11200, cores: 140, fragments: { chain: 30, rail: 30 } } }
     ];
 
     const LANE_POSITIONS = [170, 360, 550];
@@ -975,6 +1022,8 @@
     function getRecommendedSkillIdForChapter(chapter) {
         if (chapter.id === '1-1' || chapter.id === '1-2') return 'emp';
         if (chapter.id === '1-3' || chapter.id === '2-1') return 'overclock';
+        if (chapter.id === '3-1') return 'overclock';
+        if (chapter.id === '3-2' || chapter.id === '3-3') return 'shield';
         return 'shield';
     }
 
@@ -1003,6 +1052,18 @@
             '2-3': {
                 zh: 'Boss 波极重，优先准备高等级轨炮 / 链击组合，并在最终波前尽量保满核心护盾。',
                 en: 'The boss wave is brutal. Prioritize high-level Rail / Chain setups and keep the core shield healthy.'
+            },
+            '3-1': {
+                zh: '至少让两路具备稳定清线能力，再用超频把第三路的爆发抬起来；单靠采集塔滚雪球会明显吃力。',
+                en: 'Make sure two lanes can clear consistently, then use Overclock to raise the burst on the third lane. Harvest-only snowballing gets punished here.'
+            },
+            '3-2': {
+                zh: '护盾怪与分裂怪会连续施压，建议用护盾技能硬顶危险波，并让链击 / 火箭负责处理中后段堆怪。',
+                en: 'Shield and split enemies stack together, so use the shield skill to absorb danger spikes and let Chain/Rocket handle clustered mid-late lanes.'
+            },
+            '3-3': {
+                zh: '终章的关键不是单路极限输出，而是三路都不能崩。优先保住减速路与轨炮路，再用剩余资源补足第三路。',
+                en: 'The final chapter is less about one perfect lane and more about preventing any lane collapse. Protect your slow lane and Rail lane first, then patch the third lane.'
             }
         };
         return getLocalized(map[chapter.id] || {
