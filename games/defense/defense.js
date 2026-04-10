@@ -968,8 +968,53 @@
         return `<div class="panel-head"><div><h3>${title}</h3><p>${desc}</p></div>${extra || ''}</div>`;
     }
 
+    function getChapterFocusPreview(chapter) {
+        return chapter.fragmentFocus.map((towerId) => towerLabel(towerId)).join(' / ');
+    }
+
+    function getRecommendedSkillIdForChapter(chapter) {
+        if (chapter.id === '1-1' || chapter.id === '1-2') return 'emp';
+        if (chapter.id === '1-3' || chapter.id === '2-1') return 'overclock';
+        return 'shield';
+    }
+
+    function getChapterDirective(chapter) {
+        const map = {
+            '1-1': {
+                zh: '建议以脉冲塔 / 激光塔 / 采集塔起步，先稳住清线效率和前期金币回流。',
+                en: 'Open with Pulse / Laser / Harvest to stabilize lanes and build early economy.'
+            },
+            '1-2': {
+                zh: '高速怪会明显增加，优先让激光塔守主路，并把 EMP 留给最密集的冲线波次。',
+                en: 'Fast enemies spike here. Let Laser hold the main lane and save EMP for the densest rushes.'
+            },
+            '1-3': {
+                zh: '分裂怪和精英开始成型，霜冻塔 + 火箭塔的减速爆裂组合会比纯经济更稳。',
+                en: 'Split enemies and elites start to matter, so Frost + Rocket is safer than pure economy.'
+            },
+            '2-1': {
+                zh: '护盾怪血量抬升后，链击塔开始接管中后段火力，超频适合用来强顶高压波次。',
+                en: 'As shield units grow bulkier, Chain takes over mid-late DPS and Overclock carries pressure spikes.'
+            },
+            '2-2': {
+                zh: '这是经济与输出双检定章节，至少保证一路稳定清线，再补采集塔做滚雪球。',
+                en: 'This chapter tests both economy and damage. Lock one lane first, then snowball with Harvest.'
+            },
+            '2-3': {
+                zh: 'Boss 波极重，优先准备高等级轨炮 / 链击组合，并在最终波前尽量保满核心护盾。',
+                en: 'The boss wave is brutal. Prioritize high-level Rail / Chain setups and keep the core shield healthy.'
+            }
+        };
+        return getLocalized(map[chapter.id] || {
+            zh: '围绕当前章节敌潮特性调整装配与技能，让三路压力尽量均衡。',
+            en: 'Adjust your loadout and skill to the enemy mix so all three lanes stay balanced.'
+        });
+    }
+
     function renderDefendTab() {
         const current = getCurrentChapter();
+        const focusPreview = getChapterFocusPreview(current);
+        const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
         ui.panelContent.innerHTML = `
             ${renderPanelHead(t('defendPanelTitle'), t('defendPanelDesc'))}
             <div class="chapter-row">
@@ -992,10 +1037,25 @@
                     <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G</span>
                     <span class="mini-chip">${formatCompact(current.coreReward)} C</span>
                     <span class="mini-chip">${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
-                    ${current.enemies.map((enemyId) => `<span class="mini-chip">${enemyLabel(enemyId)}</span>`).join('')}
+                    <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
+                    <span class="mini-chip">${getLocalized({ zh: `碎片倾向 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
+                    <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
                 </div>
                 <div class="card-actions" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="startChapter" data-value="${state.save.chapterIndex}">${t('defendNow')}</button>
+                </div>
+            </article>
+            <article>
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${getLocalized({ zh: '章节战术', en: 'Chapter Brief' })}</div>
+                        <div class="card-title">${getLocalized({ zh: '推荐装配路线', en: 'Recommended Build Path' })}</div>
+                    </div>
+                    <div class="card-number">${recommendedSkill}</div>
+                </div>
+                <div class="card-copy">${getChapterDirective(current)}</div>
+                <div class="chip-row" style="margin-top:10px;">
+                    ${current.fragmentFocus.map((towerId) => `<span class="mini-chip">${towerLabel(towerId)}</span>`).join('')}
                 </div>
             </article>
             <div class="card-grid">
@@ -1503,10 +1563,14 @@
     function updateStartPanel() {
         const chapter = getCurrentChapter();
         const mainEnemy = chapter.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ');
+        const focusPreview = getChapterFocusPreview(chapter);
+        const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(chapter)].nameKey);
         ui.startDescription.textContent = t('startDescTemplate').replace('{chapter}', chapter.id);
         ui.startMeta.innerHTML = `
             <span class="mini-chip">${t('startMetaReward').replace('{gold}', formatCompact(chapter.goldReward)).replace('{core}', formatCompact(chapter.coreReward)).replace('{fragment}', formatCompact(chapter.fragmentReward))}</span>
             <span class="mini-chip">${t('startMetaEnemy').replace('{enemy}', mainEnemy)}</span>
+            <span class="mini-chip">${getLocalized({ zh: `碎片倾向 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
+            <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
         `;
     }
 
