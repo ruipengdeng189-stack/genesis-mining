@@ -12,6 +12,7 @@
     const NEWBIE_ASSIST_DISTANCE = 900;
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
     const NEWBIE_ASSIST_SPAWN_MIN = 0.36;
+    const TAP_DEDUP_MS = 320;
 
     const TEXT = {
         zh: {
@@ -4240,12 +4241,25 @@
         renderHud();
     }
 
-    function projectObject(obj, width, height) {
+    function isCompactRunnerViewport(width) {
+        if (Number.isFinite(width) && width <= 680) {
+            return true;
+        }
+        if (typeof window.matchMedia === 'function') {
+            return window.matchMedia('(max-width: 820px)').matches;
+        }
+        return (window.innerWidth || 0) <= 820;
+    }
+
+    function projectObject(obj, width, height, compactScene = isCompactRunnerViewport(width)) {
         const perspective = Math.max(0.04, 1 - obj.z / 150);
-        const roadHalf = 60 + perspective * width * 0.32;
-        const x = width / 2 + (obj.lane - 1) * roadHalf * 0.72;
-        const y = height * 0.12 + perspective * height * 0.78;
-        const size = 18 + perspective * 64;
+        const roadHalf = compactScene
+            ? 72 + perspective * width * 0.38
+            : 60 + perspective * width * 0.32;
+        const laneSpread = compactScene ? 0.84 : 0.72;
+        const x = width / 2 + (obj.lane - 1) * roadHalf * laneSpread;
+        const y = height * (compactScene ? 0.1 : 0.12) + perspective * height * (compactScene ? 0.8 : 0.78);
+        const size = 18 + perspective * (compactScene ? 68 : 64);
         return { x, y, size, perspective };
     }
 
@@ -4254,6 +4268,16 @@
         const rect = dom.canvas.getBoundingClientRect();
         const width = dom.canvas.width / dpr;
         const height = dom.canvas.height / dpr;
+        const compactScene = isCompactRunnerViewport(rect.width || width);
+        const sceneHorizon = height * (compactScene ? 0.15 : 0.18);
+        const roadBottomLeft = width * (compactScene ? 0.08 : 0.14);
+        const roadTopLeft = width * (compactScene ? 0.29 : 0.38);
+        const roadTopRight = width * (compactScene ? 0.71 : 0.62);
+        const roadBottomRight = width * (compactScene ? 0.92 : 0.86);
+        const laneLineLeftBottom = width * (compactScene ? 0.24 : 0.32);
+        const laneLineLeftTop = width * (compactScene ? 0.43 : 0.46);
+        const laneLineRightBottom = width * (compactScene ? 0.76 : 0.68);
+        const laneLineRightTop = width * (compactScene ? 0.57 : 0.54);
 
         ctx.clearRect(0, 0, width, height);
 
@@ -4277,14 +4301,14 @@
         }
 
         for (let side = 0; side < 2; side += 1) {
-            for (let tower = 0; tower < 6; tower += 1) {
+            for (let tower = 0; tower < (compactScene ? 4 : 6); tower += 1) {
                 const depth = 1 - tower / 6;
                 const towerHeight = 36 + depth * 110;
                 const towerWidth = 12 + depth * 18;
                 const x = side === 0
-                    ? width * 0.08 + tower * 18
-                    : width * 0.92 - tower * 18 - towerWidth;
-                const y = height * 0.26 + tower * 26;
+                    ? width * (compactScene ? 0.02 : 0.08) + tower * (compactScene ? 16 : 18)
+                    : width * (compactScene ? 0.98 : 0.92) - tower * (compactScene ? 16 : 18) - towerWidth;
+                const y = height * (compactScene ? 0.2 : 0.26) + tower * (compactScene ? 30 : 26);
                 ctx.fillStyle = `rgba(${side === 0 ? '87,229,255' : '164,107,255'}, ${0.08 + depth * 0.18})`;
                 ctx.fillRect(x, y, towerWidth, towerHeight);
                 ctx.fillStyle = 'rgba(255,255,255,0.2)';
@@ -4293,25 +4317,25 @@
         }
 
         ctx.save();
-        ctx.translate(width / 2, height * 0.52);
+        ctx.translate(width / 2, height * (compactScene ? 0.5 : 0.52));
         ctx.strokeStyle = 'rgba(87,229,255,0.12)';
         ctx.lineWidth = 1;
         for (let i = 0; i < 12; i += 1) {
             const y = i * 24;
             ctx.beginPath();
-            ctx.moveTo(-width * 0.44 + i * 8, y);
-            ctx.lineTo(width * 0.44 - i * 8, y);
+            ctx.moveTo(-width * (compactScene ? 0.48 : 0.44) + i * (compactScene ? 6 : 8), y);
+            ctx.lineTo(width * (compactScene ? 0.48 : 0.44) - i * (compactScene ? 6 : 8), y);
             ctx.stroke();
         }
         ctx.restore();
 
         ctx.beginPath();
-        ctx.moveTo(width * 0.14, height);
-        ctx.lineTo(width * 0.38, height * 0.18);
-        ctx.lineTo(width * 0.62, height * 0.18);
-        ctx.lineTo(width * 0.86, height);
+        ctx.moveTo(roadBottomLeft, height);
+        ctx.lineTo(roadTopLeft, sceneHorizon);
+        ctx.lineTo(roadTopRight, sceneHorizon);
+        ctx.lineTo(roadBottomRight, height);
         ctx.closePath();
-        const roadGradient = ctx.createLinearGradient(0, height * 0.18, 0, height);
+        const roadGradient = ctx.createLinearGradient(0, sceneHorizon, 0, height);
         roadGradient.addColorStop(0, 'rgba(18,28,54,0.6)');
         roadGradient.addColorStop(1, 'rgba(9,13,24,0.96)');
         ctx.fillStyle = roadGradient;
@@ -4323,12 +4347,12 @@
             ctx.strokeStyle = `rgba(87,229,255,${alpha})`;
             ctx.lineWidth = 1 + (streak % 3 === 0 ? 1 : 0);
             ctx.beginPath();
-            ctx.moveTo(width * 0.28 + streak * 6, height - offset);
-            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
+            ctx.moveTo(width * (compactScene ? 0.2 : 0.28) + streak * (compactScene ? 7 : 6), height - offset);
+            ctx.lineTo(width * 0.5, sceneHorizon + offset * 0.08);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(width * 0.72 - streak * 6, height - offset);
-            ctx.lineTo(width * 0.5, height * 0.18 + offset * 0.08);
+            ctx.moveTo(width * (compactScene ? 0.8 : 0.72) - streak * (compactScene ? 7 : 6), height - offset);
+            ctx.lineTo(width * 0.5, sceneHorizon + offset * 0.08);
             ctx.stroke();
         }
 
@@ -4336,20 +4360,20 @@
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(width * 0.5, height);
-        ctx.lineTo(width * 0.5, height * 0.18);
+        ctx.lineTo(width * 0.5, sceneHorizon);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(width * 0.32, height);
-        ctx.lineTo(width * 0.46, height * 0.18);
+        ctx.moveTo(laneLineLeftBottom, height);
+        ctx.lineTo(laneLineLeftTop, sceneHorizon);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(width * 0.68, height);
-        ctx.lineTo(width * 0.54, height * 0.18);
+        ctx.moveTo(laneLineRightBottom, height);
+        ctx.lineTo(laneLineRightTop, sceneHorizon);
         ctx.stroke();
 
         const sortedObjects = [...game.objects].sort((a, b) => b.z - a.z);
         sortedObjects.forEach((obj) => {
-            const { x, y, size } = projectObject(obj, width, height);
+            const { x, y, size } = projectObject(obj, width, height, compactScene);
             if (obj.type === 'coin') {
                 ctx.shadowBlur = 18;
                 ctx.shadowColor = 'rgba(255,214,107,0.46)';
@@ -4416,10 +4440,10 @@
             ctx.shadowBlur = 0;
         });
 
-        const playerX = width / 2 + (game.x - 1) * width * 0.16;
-        const playerY = height * 0.82 - game.y * height * 0.22 + (game.slideTimer > 0 ? 18 : 0);
-        const bodyW = 34;
-        const bodyH = game.slideTimer > 0 ? 28 : 52;
+        const playerX = width / 2 + (game.x - 1) * width * (compactScene ? 0.18 : 0.16);
+        const playerY = height * (compactScene ? 0.84 : 0.82) - game.y * height * 0.22 + (game.slideTimer > 0 ? 18 : 0);
+        const bodyW = compactScene ? 38 : 34;
+        const bodyH = game.slideTimer > 0 ? (compactScene ? 30 : 28) : (compactScene ? 56 : 52);
         ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.24)';
         ctx.beginPath();
@@ -4456,11 +4480,6 @@
             ctx.fillRect(0, 0, width, height);
         }
 
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.font = '600 14px Inter';
-        ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
-        ctx.fillStyle = 'rgba(142,166,191,0.95)';
-        ctx.fillText(playerProfile.lang === 'en' ? `Revives ${MAX_REVIVES - game.reviveCount}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
         const liveBoostLabels = [];
         if (game.runGoldMultiplier > 1 || game.runSeasonXpMultiplier > 1) {
             liveBoostLabels.push(playerProfile.lang === 'en' ? 'SETTLEMENT x1.25' : '结算 x1.25');
@@ -4468,17 +4487,45 @@
         if (game.freeReviveAvailable && (playerProfile.boosts.freeRevives || 0) > 0) {
             liveBoostLabels.push(playerProfile.lang === 'en' ? 'FREE REVIVE READY' : '免费复活待命');
         }
-        if (liveBoostLabels.length) {
-            ctx.fillStyle = 'rgba(89,255,155,0.95)';
-            ctx.fillText(liveBoostLabels.join(' · '), 18, 72);
-        }
+        const speedLabel = `${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`;
+        const statusLabel = game.overclockActive > 0
+            ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中')
+            : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定');
 
-        ctx.textAlign = 'right';
-        ctx.fillStyle = 'rgba(159,233,255,0.94)';
-        ctx.fillText(`${formatNumber(Math.floor(game.speedCurrent * 10))} km/h`, width - 18, 28);
-        ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
-        ctx.fillText(game.overclockActive > 0 ? (playerProfile.lang === 'en' ? 'OVERCLOCK LIVE' : '超频激活中') : (playerProfile.lang === 'en' ? 'TRACK STABLE' : '赛道稳定'), width - 18, 50);
-        ctx.textAlign = 'left';
+        if (compactScene) {
+            const hudWidth = Math.min(width * 0.66, 260);
+            const hudLeft = (width - hudWidth) / 2;
+            ctx.fillStyle = 'rgba(4,10,22,0.6)';
+            ctx.fillRect(hudLeft, 12, hudWidth, 42);
+            ctx.strokeStyle = 'rgba(96,212,255,0.18)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(hudLeft, 12, hudWidth, 42);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(159,233,255,0.96)';
+            ctx.font = '700 13px Inter';
+            ctx.fillText(speedLabel, width / 2, 29);
+            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+            ctx.font = '600 11px Inter';
+            ctx.fillText(statusLabel, width / 2, 45);
+            ctx.textAlign = 'left';
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '600 14px Inter';
+            ctx.fillText(playerProfile.lang === 'en' ? 'Swipe or buttons to control' : '手势或按钮控制', 18, 28);
+            ctx.fillStyle = 'rgba(142,166,191,0.95)';
+            ctx.fillText(playerProfile.lang === 'en' ? `Revives ${MAX_REVIVES - game.reviveCount}/${MAX_REVIVES}` : `剩余复活 ${Math.max(0, MAX_REVIVES - game.reviveCount)}/${MAX_REVIVES}`, 18, 50);
+            if (liveBoostLabels.length) {
+                ctx.fillStyle = 'rgba(89,255,155,0.95)';
+                ctx.fillText(liveBoostLabels.join(' · '), 18, 72);
+            }
+
+            ctx.textAlign = 'right';
+            ctx.fillStyle = 'rgba(159,233,255,0.94)';
+            ctx.fillText(speedLabel, width - 18, 28);
+            ctx.fillStyle = game.overclockActive > 0 ? 'rgba(255,214,107,0.95)' : 'rgba(142,166,191,0.95)';
+            ctx.fillText(statusLabel, width - 18, 50);
+            ctx.textAlign = 'left';
+        }
 
         if (!rect.width || !rect.height) {
             resizeCanvas();
@@ -4543,8 +4590,79 @@
         return 'jump';
     }
 
+    function bindTap(node, handler, options = {}) {
+        if (!node || typeof handler !== 'function') return;
+        const dedupMs = Math.max(0, Number(options.dedupMs ?? TAP_DEDUP_MS) || TAP_DEDUP_MS);
+        const resolveTarget = typeof options.resolveTarget === 'function' ? options.resolveTarget : null;
+
+        const getTarget = (event) => {
+            const rawTarget = event && event.target && event.target.nodeType === 1
+                ? event.target
+                : event && event.target && event.target.parentElement
+                    ? event.target.parentElement
+                    : null;
+            return resolveTarget ? resolveTarget(event, rawTarget || node) : node;
+        };
+
+        const trigger = (event) => {
+            if (event.type === 'pointerup' && event.pointerType === 'mouse') {
+                return;
+            }
+            const target = getTarget(event);
+            if (!target || target.disabled) {
+                return;
+            }
+
+            const now = Date.now();
+            const lastHandledAt = Number(target.dataset.tapHandledAt) || 0;
+            if (now - lastHandledAt < dedupMs) {
+                return;
+            }
+
+            target.dataset.tapHandledAt = String(now);
+            if (event.cancelable) {
+                event.preventDefault();
+            }
+            if (typeof event.stopPropagation === 'function') {
+                event.stopPropagation();
+            }
+            handler(event, target);
+        };
+
+        node.addEventListener('pointerup', trigger);
+        node.addEventListener('touchend', trigger, { passive: false });
+        node.addEventListener('click', trigger);
+    }
+
+    function bindMobileViewportLock() {
+        const hasTouch = 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
+        if (!hasTouch) {
+            return;
+        }
+
+        const preventViewportZoom = (event) => {
+            if (event.cancelable) {
+                event.preventDefault();
+            }
+        };
+
+        document.documentElement.style.touchAction = 'manipulation';
+        document.body.style.touchAction = 'manipulation';
+
+        document.addEventListener('gesturestart', preventViewportZoom, { passive: false });
+        document.addEventListener('gesturechange', preventViewportZoom, { passive: false });
+        document.addEventListener('gestureend', preventViewportZoom, { passive: false });
+        document.addEventListener('touchstart', (event) => {
+            if (event.touches.length > 1) {
+                preventViewportZoom(event);
+            }
+        }, { passive: false });
+    }
+
     function bindEvents() {
-        dom.soundToggle.addEventListener('click', () => {
+        bindMobileViewportLock();
+
+        bindTap(dom.soundToggle, () => {
             playerProfile.soundEnabled = !playerProfile.soundEnabled;
             saveState();
             applyI18n();
@@ -4554,39 +4672,38 @@
             }
         });
 
-        dom.langToggle.addEventListener('click', () => {
+        bindTap(dom.langToggle, () => {
             playerProfile.lang = playerProfile.lang === 'en' ? 'zh' : 'en';
             saveState();
             renderAll();
             renderScene();
         });
 
-        dom.startRunBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
+        bindTap(dom.startRunBtn, () => {
             startRun();
         });
-        dom.restartRunBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
+        bindTap(dom.restartRunBtn, () => {
             startRun();
         });
-        dom.pauseBtn.addEventListener('click', pauseRun);
-        dom.resumeBtn.addEventListener('click', resumeRun);
-        dom.quitRunBtn.addEventListener('click', () => endRun(true));
-        dom.reviveBtn.addEventListener('click', tryRevive);
-        dom.skipReviveBtn.addEventListener('click', () => endRun());
-        dom.skillBtn.addEventListener('click', useSkill);
-        dom.overclockBtn.addEventListener('click', triggerOverclock);
+        bindTap(dom.pauseBtn, pauseRun);
+        bindTap(dom.resumeBtn, resumeRun);
+        bindTap(dom.quitRunBtn, () => endRun(true));
+        bindTap(dom.reviveBtn, tryRevive);
+        bindTap(dom.skipReviveBtn, () => endRun());
+        bindTap(dom.skillBtn, useSkill);
+        bindTap(dom.overclockBtn, triggerOverclock);
 
         Array.from(document.querySelectorAll('[data-action]')).forEach((button) => {
-            button.addEventListener('click', () => handleAction(button.dataset.action));
+            bindTap(button, () => handleAction(button.dataset.action));
         });
 
-        dom.tabBar.addEventListener('click', (event) => {
-            const button = event.target.closest('.tab-btn');
-            if (!button) return;
+        bindTap(dom.tabBar, (_, button) => {
             switchTab(button.dataset.tab || 'run');
+        }, {
+            resolveTarget: (event, fallbackTarget) => {
+                const button = event.target.closest('.tab-btn');
+                return button || fallbackTarget.closest?.('.tab-btn') || null;
+            }
         });
 
         dom.panelContent.addEventListener('click', (event) => {
@@ -4658,18 +4775,16 @@
             }
         });
 
-        if (dom.resultCloseBtn) {
-            dom.resultCloseBtn.addEventListener('click', closeResultOverlay);
-        }
+        bindTap(dom.resultCloseBtn, closeResultOverlay);
 
-        dom.infoModalCloseBtn.addEventListener('click', closeInfoModal);
+        bindTap(dom.infoModalCloseBtn, closeInfoModal);
         dom.infoModal.addEventListener('click', (event) => {
             if (event.target === dom.infoModal) {
                 closeInfoModal();
             }
         });
 
-        dom.paymentCloseBtn?.addEventListener('click', closePaymentModal);
+        bindTap(dom.paymentCloseBtn, closePaymentModal);
         dom.paymentModal?.addEventListener('click', (event) => {
             if (event.target === dom.paymentModal) {
                 closePaymentModal();
