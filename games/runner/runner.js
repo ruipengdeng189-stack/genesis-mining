@@ -489,6 +489,7 @@
     let missionCountdownTimer = 0;
     let paymentCountdownTimer = 0;
     let audioCtx = null;
+    let canvasResizeFrame = 0;
     let lastResult = null;
     let activeInfoModal = '';
     let selectedPaymentOfferId = 'starter';
@@ -2526,7 +2527,7 @@
             }
             updateTabBadges();
             if (activeTab === 'run') {
-                requestAnimationFrame(resizeCanvas);
+                scheduleCanvasResize();
             }
             return;
         }
@@ -2548,10 +2549,11 @@
         dom.runnerMain?.classList.toggle('is-content-tab', activeTab !== 'run');
         dom.stageCard?.classList.toggle('is-tab-hidden', activeTab !== 'run');
         updateRuntimeBodyState();
+        syncRunOverlayState();
         if (resetPanelScroll && dom.panelContent) {
             dom.panelContent.scrollTop = 0;
         }
-        requestAnimationFrame(resizeCanvas);
+        scheduleCanvasResize();
     }
 
     function getLoadoutAlertCount() {
@@ -3700,6 +3702,14 @@
         }, 1700);
     }
 
+    function scheduleCanvasResize() {
+        if (canvasResizeFrame) return;
+        canvasResizeFrame = window.requestAnimationFrame(() => {
+            canvasResizeFrame = 0;
+            resizeCanvas();
+        });
+    }
+
     function ensureAudio() {
         if (!playerProfile.soundEnabled) return null;
         if (!audioCtx) {
@@ -3774,6 +3784,24 @@
         [dom.startOverlay, dom.pauseOverlay, dom.reviveOverlay, dom.resultOverlay].forEach((overlay) => {
             overlay.classList.add('is-hidden');
         });
+    }
+
+    function syncRunOverlayState() {
+        if (activeTab !== 'run') return;
+        if (!dom.resultOverlay.classList.contains('is-hidden')) return;
+        if (game.awaitingRevive) {
+            setOverlay(dom.reviveOverlay);
+            return;
+        }
+        if (game.running) {
+            if (game.paused) {
+                setOverlay(dom.pauseOverlay);
+            } else {
+                hideOverlays();
+            }
+            return;
+        }
+        setOverlay(dom.startOverlay);
     }
 
     function closeResultOverlay() {
@@ -3877,7 +3905,7 @@
             activeTab = 'run';
         }
         renderTabLayout();
-        resizeCanvas();
+        scheduleCanvasResize();
         resetRunState();
         applyRunBoosts();
         resetResultOverlayScroll();
@@ -4616,7 +4644,10 @@
         }
 
         if (!rect.width || !rect.height) {
-            resizeCanvas();
+            if (activeTab === 'run') {
+                scheduleCanvasResize();
+            }
+            return;
         }
     }
 
@@ -4975,7 +5006,10 @@
         }
 
         if (!rect.width || !rect.height) {
-            resizeCanvas();
+            if (activeTab === 'run') {
+                scheduleCanvasResize();
+            }
+            return;
         }
     }
 
