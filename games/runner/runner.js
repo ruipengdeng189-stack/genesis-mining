@@ -13,6 +13,15 @@
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
     const NEWBIE_ASSIST_SPAWN_MIN = 0.36;
     const TAP_DEDUP_MS = 320;
+    const RUN_ENTRY_FREE_TOTAL_RUNS = 2;
+    const RUN_ENTRY_BASE_GOLD = 120;
+    const RUN_ENTRY_RUN_STEP = 6;
+    const RUN_ENTRY_STEP_GOLD = 22;
+    const RUN_ENTRY_MAX_STEP_GOLD = 176;
+    const RUN_ENTRY_DISTANCE_STEP = 900;
+    const RUN_ENTRY_DISTANCE_STEP_GOLD = 12;
+    const RUN_ENTRY_MAX_DISTANCE_GOLD = 72;
+    const RUN_ENTRY_PASS_DISCOUNT = 0.72;
 
     const TEXT = {
         zh: {
@@ -72,7 +81,7 @@
             missionClaimed: '任务奖励已领取',
             equipped: '已切换装配',
             unlocked: '解锁成功',
-            topupShopInfo: '所有充值礼包都会在链上校验成功后即时发奖，并同步解锁赞助轨道。',
+            topupShopInfo: '所有充值礼包都会在链上校验成功后即时发奖，并同步解锁赞助轨道、入场费折扣与疾跑通行证。',
             runPanelTitle: '今日赛道',
             runPanelDesc: '短局爽感优先，核心是“再来一把”的高速循环。',
             runEvent1: '霓虹风暴',
@@ -188,7 +197,7 @@
             missionClaimed: 'Mission reward claimed',
             equipped: 'Loadout updated',
             unlocked: 'Unlocked successfully',
-            topupShopInfo: 'Verified top-up packs grant rewards instantly after on-chain confirmation and also unlock the sponsor track.',
+            topupShopInfo: 'Verified top-up packs grant rewards instantly after on-chain confirmation, while also unlocking sponsor perks, run-fee discounts, and rush passes.',
             runPanelTitle: 'Today\'s Track',
             runPanelDesc: 'Short-run excitement first, designed around a fast one-more-run loop.',
             runEvent1: 'Neon Storm',
@@ -263,7 +272,7 @@
             accent: '#ffd66b',
             title: { zh: '电弧穿梭者', en: 'Arc Volt' },
             desc: { zh: '偏向金币收益与能量循环，适合追求资源的中期角色。', en: 'Better gold flow and overclock gain for mid-game farming.' },
-            unlock: { type: 'bestDistance', value: 900, gold: 1400 },
+            unlock: { type: 'bestDistance', value: 900, gold: 3800 },
             stats: { speed: 1.06, combo: 1, control: 1 }
         },
         {
@@ -271,7 +280,7 @@
             accent: '#a46bff',
             title: { zh: '棱镜裂空者', en: 'Prism Splitter' },
             desc: { zh: '高风险高收益，冲榜分与连击成长更强。', en: 'High-risk, high-reward runner built for ladder score pushes.' },
-            unlock: { type: 'totalRuns', value: 6, gold: 2600 },
+            unlock: { type: 'totalRuns', value: 6, gold: 8200 },
             stats: { speed: 1.08, combo: 1.15, control: 0.96 }
         }
     ];
@@ -288,7 +297,7 @@
             id: 'dash',
             title: { zh: '相位冲刺', en: 'Phase Dash' },
             desc: { zh: '立刻清除前方近距离障碍并补充超频。', en: 'Clear nearby obstacles instantly and fill overclock.' },
-            unlock: { type: 'seasonLevel', value: 3, gold: 1600 },
+            unlock: { type: 'seasonLevel', value: 3, gold: 4600 },
             cooldown: 12
         }
     ];
@@ -304,7 +313,7 @@
             id: 'resonance',
             title: { zh: '谐振回路', en: 'Resonance Loop' },
             desc: { zh: '高连击时超频增长更快，适合冲榜。', en: 'Boost overclock gain at high combo for ladder pushes.' },
-            unlock: { type: 'totalDistance', value: 3000, gold: 2000 }
+            unlock: { type: 'totalDistance', value: 3000, gold: 5200 }
         }
     ];
 
@@ -316,7 +325,7 @@
             badge: { zh: '首充推荐', en: 'Starter' },
             name: { zh: '起跑补给', en: 'Recovery Pack' },
             desc: { zh: '补足前期金币、能核与首轮增益，适合快速把节奏跑起来。', en: 'A steady first top-up that stabilizes gold, cores, and your first boost cycle.' },
-            reward: { gold: 4000, core: 40, xp: 180, starterOverclockRuns: 2, settlementBoostRuns: 1 }
+            reward: { gold: 6000, core: 40, xp: 180, starterOverclockRuns: 2, settlementBoostRuns: 1, freeRuns: 4 }
         },
         {
             id: 'accelerator',
@@ -325,7 +334,7 @@
             badge: { zh: '高性价比', en: 'Value' },
             name: { zh: '超频推进包', en: 'Hyper Pack' },
             desc: { zh: '提高中期资源与超频循环，让跑局更容易进入爽点。', en: 'Builds a stronger mid-game loop with more resources and faster overclock pacing.' },
-            reward: { gold: 12000, core: 120, xp: 460, starterOverclockRuns: 4, settlementBoostRuns: 3, freeRevives: 1 }
+            reward: { gold: 18000, core: 120, xp: 460, starterOverclockRuns: 4, settlementBoostRuns: 3, freeRevives: 1, freeRuns: 10 }
         },
         {
             id: 'rush',
@@ -334,7 +343,7 @@
             badge: { zh: '冲榜包', en: 'Rush' },
             name: { zh: '冲榜脉冲包', en: 'Rank Surge Pack' },
             desc: { zh: '偏向高分追击，补足高压跑法需要的金币、经验与容错。', en: 'A ladder-focused bundle that supports high-score attempts with safer retries.' },
-            reward: { gold: 20000, core: 180, xp: 720, starterOverclockRuns: 3, settlementBoostRuns: 5, freeRevives: 2 }
+            reward: { gold: 30000, core: 180, xp: 720, starterOverclockRuns: 3, settlementBoostRuns: 5, freeRevives: 2, freeRuns: 16 }
         },
         {
             id: 'sovereign',
@@ -343,7 +352,7 @@
             badge: { zh: '统治包', en: 'Core' },
             name: { zh: '统治协定', en: 'Dominance Pack' },
             desc: { zh: '一口气抬高后期养成强度，同时解锁本赛季赞助轨道。', en: 'A stronger late-loop injection that also makes the sponsor lane feel meaningful.' },
-            reward: { gold: 42000, core: 320, xp: 1180, starterOverclockRuns: 5, settlementBoostRuns: 8, freeRevives: 3 }
+            reward: { gold: 65000, core: 320, xp: 1180, starterOverclockRuns: 5, settlementBoostRuns: 8, freeRevives: 3, freeRuns: 24 }
         },
         {
             id: 'nexus',
@@ -352,7 +361,7 @@
             badge: { zh: '后期核心', en: 'Endgame' },
             name: { zh: '核心枢纽包', en: 'T4 Nexus Pack' },
             desc: { zh: '适合冲赛季后段与守榜，储备足够覆盖多轮高压尝试。', en: 'Designed for deep-season defense and multiple high-pressure scoring attempts.' },
-            reward: { gold: 78000, core: 520, xp: 1800, starterOverclockRuns: 8, settlementBoostRuns: 12, freeRevives: 5 }
+            reward: { gold: 110000, core: 520, xp: 1800, starterOverclockRuns: 8, settlementBoostRuns: 12, freeRevives: 5, freeRuns: 38 }
         },
         {
             id: 'throne',
@@ -361,7 +370,7 @@
             badge: { zh: '王座级', en: 'Summit' },
             name: { zh: '王座协议', en: 'Throne Protocol' },
             desc: { zh: '顶级礼包，覆盖冲榜、赛季、续航三条主线，直接进入后期推进节奏。', en: 'A top-end bundle that powers ladder, season, and sustain all at once.' },
-            reward: { gold: 120000, core: 780, xp: 2600, starterOverclockRuns: 12, settlementBoostRuns: 18, freeRevives: 8 }
+            reward: { gold: 170000, core: 780, xp: 2600, starterOverclockRuns: 12, settlementBoostRuns: 18, freeRevives: 8, freeRuns: 56 }
         }
     ];
 
@@ -522,7 +531,8 @@
         boosts: {
             starterOverclockRuns: 0,
             settlementBoostRuns: 0,
-            freeRevives: 0
+            freeRevives: 0,
+            freeRuns: 0
         },
         shop: {
             dailyKey: '',
@@ -590,6 +600,8 @@
         reviveCount: 0,
         freeReviveAvailable: false,
         freeReviveConsumed: false,
+        runEntryCost: 0,
+        runEntryUsedVoucher: false,
         activeBoosts: [],
         distance: 0,
         score: 0,
@@ -673,6 +685,13 @@
 
     function formatNumber(value) {
         return Math.floor(value).toLocaleString(playerProfile.lang === 'en' ? 'en-US' : 'zh-CN');
+    }
+
+    function formatSignedNumber(value) {
+        const safeValue = Math.floor(Math.abs(Number(value) || 0));
+        if (value > 0) return `+${formatNumber(safeValue)}`;
+        if (value < 0) return `-${formatNumber(safeValue)}`;
+        return formatNumber(0);
     }
 
     function formatDistance(value) {
@@ -1100,6 +1119,144 @@
         return meetsUnlock(def) && (unlock.gold || 0) <= playerProfile.gold;
     }
 
+    function getRunLoadoutUpkeepCost() {
+        let upkeep = 0;
+        if (playerProfile.loadout.runner === 'volt') upkeep += 28;
+        if (playerProfile.loadout.runner === 'prism') upkeep += 56;
+        if (playerProfile.loadout.skill === 'dash') upkeep += 24;
+        if (playerProfile.loadout.passive === 'resonance') upkeep += 26;
+        return upkeep;
+    }
+
+    function getBaseRunEntryCost() {
+        if ((playerProfile.totalRuns || 0) < RUN_ENTRY_FREE_TOTAL_RUNS) {
+            return 0;
+        }
+        const runProgressCost = Math.min(
+            RUN_ENTRY_MAX_STEP_GOLD,
+            Math.floor((playerProfile.totalRuns || 0) / RUN_ENTRY_RUN_STEP) * RUN_ENTRY_STEP_GOLD
+        );
+        const distanceProgressCost = Math.min(
+            RUN_ENTRY_MAX_DISTANCE_GOLD,
+            Math.floor((playerProfile.bestDistance || 0) / RUN_ENTRY_DISTANCE_STEP) * RUN_ENTRY_DISTANCE_STEP_GOLD
+        );
+        return RUN_ENTRY_BASE_GOLD + runProgressCost + distanceProgressCost + getRunLoadoutUpkeepCost();
+    }
+
+    function getRunEntryCostState() {
+        const baseCost = getBaseRunEntryCost();
+        const sponsorUnlocked = !!playerProfile.payment.passUnlocked;
+        const discountRate = sponsorUnlocked ? RUN_ENTRY_PASS_DISCOUNT : 1;
+        const discountedCost = baseCost > 0
+            ? Math.max(60, Math.round(baseCost * discountRate))
+            : 0;
+        const freeRuns = Math.max(0, Number(playerProfile.boosts.freeRuns || 0));
+        const freeByNewbie = baseCost <= 0;
+        return {
+            baseCost,
+            discountedCost,
+            effectiveCost: freeByNewbie || freeRuns > 0 ? 0 : discountedCost,
+            freeRuns,
+            freeByNewbie,
+            sponsorUnlocked,
+            discountActive: sponsorUnlocked && discountedCost < baseCost
+        };
+    }
+
+    function getRunEntryLabel(state = getRunEntryCostState()) {
+        if (state.freeByNewbie) {
+            return localize({
+                zh: `前 ${RUN_ENTRY_FREE_TOTAL_RUNS} 局免费开跑`,
+                en: `First ${RUN_ENTRY_FREE_TOTAL_RUNS} runs are free`
+            });
+        }
+        if (state.freeRuns > 0) {
+            return localize({
+                zh: `疾跑通行证 x${formatNumber(state.freeRuns)}`,
+                en: `Rush passes x${formatNumber(state.freeRuns)}`
+            });
+        }
+        return localize({
+            zh: `本局入场 -${formatNumber(state.effectiveCost)} 金币`,
+            en: `Entry fee -${formatNumber(state.effectiveCost)} Gold`
+        });
+    }
+
+    function getRunEntryButtonLabel(baseText) {
+        const state = getRunEntryCostState();
+        if (state.freeByNewbie) {
+            return `${baseText} · ${localize({ zh: '免费', en: 'Free' })}`;
+        }
+        if (state.freeRuns > 0) {
+            return `${baseText} · ${localize({ zh: `免票 x${formatNumber(state.freeRuns)}`, en: `Pass x${formatNumber(state.freeRuns)}` })}`;
+        }
+        return `${baseText} · -${formatNumber(state.effectiveCost)} ${t('goldLabel')}`;
+    }
+
+    function updateRunEntryButtons() {
+        if (dom.startRunBtn) {
+            dom.startRunBtn.textContent = getRunEntryButtonLabel(t('startRun'));
+        }
+        if (dom.restartRunBtn) {
+            dom.restartRunBtn.textContent = getRunEntryButtonLabel(t('restartRun'));
+        }
+    }
+
+    function consumeRunEntryCost() {
+        const state = getRunEntryCostState();
+        if (state.freeByNewbie) {
+            return {
+                ok: true,
+                cost: 0,
+                usedVoucher: false,
+                note: localize({
+                    zh: `新手前 ${RUN_ENTRY_FREE_TOTAL_RUNS} 局免入场费`,
+                    en: `Early newbie runs waive the entry fee`
+                })
+            };
+        }
+        if (state.freeRuns > 0) {
+            playerProfile.boosts.freeRuns = Math.max(0, (playerProfile.boosts.freeRuns || 0) - 1);
+            saveState();
+            return {
+                ok: true,
+                cost: 0,
+                usedVoucher: true,
+                note: localize({
+                    zh: '已使用疾跑通行证，本局免入场费',
+                    en: 'Rush pass used. Entry fee waived'
+                })
+            };
+        }
+        if (playerProfile.gold < state.effectiveCost) {
+            return {
+                ok: false,
+                cost: state.effectiveCost,
+                usedVoucher: false,
+                note: localize({
+                    zh: `开跑需要 ${formatNumber(state.effectiveCost)} 金币`,
+                    en: `${formatNumber(state.effectiveCost)} gold needed to start`
+                })
+            };
+        }
+        playerProfile.gold -= state.effectiveCost;
+        saveState();
+        return {
+            ok: true,
+            cost: state.effectiveCost,
+            usedVoucher: false,
+            note: state.discountActive
+                ? localize({
+                    zh: `已支付入场费 ${formatNumber(state.effectiveCost)} 金币（赞助折扣）`,
+                    en: `Entry fee ${formatNumber(state.effectiveCost)} gold paid (sponsor discount)`
+                })
+                : localize({
+                    zh: `已支付入场费 ${formatNumber(state.effectiveCost)} 金币`,
+                    en: `Entry fee ${formatNumber(state.effectiveCost)} gold paid`
+                })
+        };
+    }
+
     function isFreeCost(cost = {}) {
         return (cost.gold || 0) <= 0 && (cost.core || 0) <= 0;
     }
@@ -1436,6 +1593,9 @@
 
     function formatBoostRewardText(key, value = 0) {
         const amount = formatNumber(value);
+        if (key === 'freeRuns') {
+            return localize({ zh: `疾跑通行证 x${amount}`, en: `Rush passes x${amount}` });
+        }
         if (key === 'starterOverclockRuns') {
             return localize({ zh: `超频开局 x${amount}`, en: `Boosted starts x${amount}` });
         }
@@ -1450,6 +1610,13 @@
 
     function getBoostInventoryEntries() {
         return [
+            {
+                key: 'freeRuns',
+                accent: '#ffd66b',
+                title: localize({ zh: '疾跑通行证', en: 'Rush Pass' }),
+                desc: localize({ zh: '每次开跑优先抵扣入场金币，适合高频重开冲分。', en: 'Automatically waives entry fees so repeated score pushes stay smooth.' }),
+                count: playerProfile.boosts.freeRuns || 0
+            },
             {
                 key: 'starterOverclockRuns',
                 accent: '#a46bff',
@@ -1492,6 +1659,7 @@
         playerProfile.gold += reward.gold || 0;
         playerProfile.core += reward.core || 0;
         playerProfile.seasonXp += reward.xp || 0;
+        playerProfile.boosts.freeRuns += reward.freeRuns || 0;
         playerProfile.boosts.starterOverclockRuns += reward.starterOverclockRuns || 0;
         playerProfile.boosts.settlementBoostRuns += reward.settlementBoostRuns || 0;
         playerProfile.boosts.freeRevives += reward.freeRevives || 0;
@@ -2424,6 +2592,9 @@
         if (reward.xp) {
             labels.push(localize({ zh: `赛季经验 +${formatNumber(reward.xp)}`, en: `Season XP +${formatNumber(reward.xp)}` }));
         }
+        if (reward.freeRuns) {
+            labels.push(formatBoostRewardText('freeRuns', reward.freeRuns));
+        }
         if (reward.starterOverclockRuns) {
             labels.push(formatBoostRewardText('starterOverclockRuns', reward.starterOverclockRuns));
         }
@@ -2720,6 +2891,11 @@
         const boostEntries = getBoostInventoryEntries();
         const readyBoostCount = boostEntries.filter((entry) => entry.count > 0).length;
         const liveBoosts = boostEntries.filter((entry) => game.activeBoosts.includes(entry.key));
+        const runEntryState = getRunEntryCostState();
+        const runEntryLabel = getRunEntryLabel(runEntryState);
+        const sponsorEntryTag = runEntryState.discountActive
+            ? localize({ zh: `赞助折扣 -${Math.round((1 - RUN_ENTRY_PASS_DISCOUNT) * 100)}%`, en: `Sponsor discount -${Math.round((1 - RUN_ENTRY_PASS_DISCOUNT) * 100)}%` })
+            : localize({ zh: '未开通赞助折扣', en: 'No sponsor discount yet' });
         return `
             <div class="card-grid">
                 <article class="stat-card showcase-card">
@@ -2740,7 +2916,9 @@
                     <div class="stat-row">
                         <span class="pill">${t('statCurrentSkill')}: ${localize(skill.title)}</span>
                         <span class="pill">${t('statCurrentPassive')}: ${localize(passive.title)}</span>
-                        <span class="pill good">${t('touchHint')}</span>
+                        <span class="pill ${runEntryState.effectiveCost > 0 ? 'hot' : 'good'}">${runEntryLabel}</span>
+                        <span class="pill ${runEntryState.discountActive ? 'good' : ''}">${sponsorEntryTag}</span>
+                        <span class="pill">${t('touchHint')}</span>
                     </div>
                 </article>
 
@@ -3375,6 +3553,7 @@
         const readyBoostCount = boostEntries.filter((entry) => entry.count > 0).length;
         const sponsorUnlocked = !!playerProfile.payment.passUnlocked;
         const totalSpentText = Number(playerProfile.payment.totalSpent || 0).toFixed(2);
+        const freeRunCountText = formatNumber(playerProfile.boosts.freeRuns || 0);
 
         return `
             <div class="card-grid">
@@ -3410,8 +3589,12 @@
                     </div>
                     <div class="runner-payment-cta">
                         <span class="pill ${sponsorUnlocked ? 'good' : 'hot'}">${sponsorUnlocked
-                            ? (playerProfile.lang === 'en' ? 'Sponsor rewards are now claimable in Season' : '赛季页已开放赞助奖励')
-                            : (playerProfile.lang === 'en' ? 'Any verified top-up unlocks the sponsor track' : '任意一笔校验成功的充值都会解锁赞助轨道')}</span>
+                            ? (playerProfile.lang === 'en'
+                                ? `Season sponsor rewards are live, with ${freeRunCountText} rush passes in storage and ${Math.round((1 - RUN_ENTRY_PASS_DISCOUNT) * 100)}% entry discount active`
+                                : `赛季页已开放赞助奖励，当前已储备 ${freeRunCountText} 张疾跑通行证，并享受 ${Math.round((1 - RUN_ENTRY_PASS_DISCOUNT) * 100)}% 入场折扣`)
+                            : (playerProfile.lang === 'en'
+                                ? 'Any verified top-up unlocks sponsor rewards, rush passes, and permanent run-fee discounts'
+                                : '任意一笔校验成功的充值都会解锁赞助奖励、疾跑通行证与长期入场费折扣')}</span>
                         <button class="primary-btn" type="button" data-open-payment="starter">${playerProfile.lang === 'en' ? 'Open Top-Up' : '打开充值'}</button>
                     </div>
                 </article>
@@ -3639,6 +3822,7 @@
             saveState();
         }
         applyI18n();
+        updateRunEntryButtons();
         renderTabLayout();
         updateReviveOverlayCopy();
         renderSummary();
@@ -3848,6 +4032,8 @@
         game.reviveCount = 0;
         game.freeReviveAvailable = false;
         game.freeReviveConsumed = false;
+        game.runEntryCost = 0;
+        game.runEntryUsedVoucher = false;
         game.activeBoosts = [];
         game.distance = 0;
         game.score = 0;
@@ -3904,20 +4090,26 @@
         if (activeTab !== 'run') {
             activeTab = 'run';
         }
+        const entryState = consumeRunEntryCost();
+        if (!entryState.ok) {
+            updateRunEntryButtons();
+            renderSummary();
+            showToast(entryState.note);
+            return;
+        }
         renderTabLayout();
         scheduleCanvasResize();
         resetRunState();
+        game.runEntryCost = entryState.cost;
+        game.runEntryUsedVoucher = entryState.usedVoucher;
         applyRunBoosts();
         resetResultOverlayScroll();
         hideOverlays();
         game.running = true;
         renderAll();
         playSfx('start');
-        if (game.newbieAssist) {
-            showToast(t('newbieAssistToast'));
-            return;
-        }
-        showToast(t('runReadyToast'));
+        const readyToast = game.newbieAssist ? t('newbieAssistToast') : t('runReadyToast');
+        showToast(entryState.note ? `${entryState.note} · ${readyToast}` : readyToast);
     }
 
     function pauseRun() {
@@ -4007,6 +4199,7 @@
             distance: runDistance,
             score: runScore,
             goldGain,
+            netGoldGain: goldGain - game.runEntryCost,
             coreGain,
             seasonXpGain,
             gradeInfo,
@@ -4017,6 +4210,8 @@
             maxCombo: game.maxCombo,
             dodgeRun: game.dodgeRun,
             reviveCount: game.reviveCount,
+            runEntryCost: game.runEntryCost,
+            runEntryUsedVoucher: game.runEntryUsedVoucher,
             hitless: game.hitless,
             runGoldMultiplier: game.runGoldMultiplier,
             runSeasonXpMultiplier: game.runSeasonXpMultiplier,
@@ -4036,6 +4231,12 @@
             playerProfile.lang === 'en' ? `Combo x${formatNumber(game.maxCombo)}` : `连击 x${formatNumber(game.maxCombo)}`,
             playerProfile.lang === 'en' ? `Dodges ${formatNumber(game.dodgeRun)}` : `闪避 ${formatNumber(game.dodgeRun)}`,
             playerProfile.lang === 'en' ? `Revives ${formatNumber(game.reviveCount)}` : `复活 ${formatNumber(game.reviveCount)}`,
+            game.runEntryCost > 0
+                ? (playerProfile.lang === 'en' ? `Entry Fee -${formatNumber(game.runEntryCost)}` : `入场费 -${formatNumber(game.runEntryCost)}`)
+                : (game.runEntryUsedVoucher ? (playerProfile.lang === 'en' ? 'Rush Pass Used' : '已使用疾跑通行证') : ''),
+            playerProfile.lang === 'en'
+                ? `Net Gold ${formatSignedNumber(goldGain - game.runEntryCost)}`
+                : `净金币 ${formatSignedNumber(goldGain - game.runEntryCost)}`,
             playerProfile.lang === 'en' ? `Season XP +${formatNumber(seasonXpGain)}` : `赛季经验 +${formatNumber(seasonXpGain)}`,
             game.runGoldMultiplier > 1 ? (playerProfile.lang === 'en' ? `Gold x${game.runGoldMultiplier.toFixed(2)}` : `金币倍率 x${game.runGoldMultiplier.toFixed(2)}`) : '',
             game.runSeasonXpMultiplier > 1 ? (playerProfile.lang === 'en' ? `XP x${game.runSeasonXpMultiplier.toFixed(2)}` : `经验倍率 x${game.runSeasonXpMultiplier.toFixed(2)}`) : '',
