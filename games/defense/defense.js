@@ -341,7 +341,7 @@
             goldReward: 1520,
             coreReward: 30,
             fragmentReward: 40,
-            trait: { zh: '当前版本最高章节，Boss 波极重，建议优先准备史诗轨炮塔。', en: 'Current final chapter with a brutal boss wave. Epic rail setups shine here.' },
+            trait: { zh: '第二章终局章节，Boss 波极重，建议优先准备史诗轨炮塔。', en: 'Final chapter of Arc 2 with a brutal boss wave. Epic rail setups shine here.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
             fragmentFocus: ['rail', 'chain', 'rocket']
         },
@@ -494,6 +494,30 @@
             slot: { zh: '后期核心', en: 'Late Core' },
             title: { zh: '矩阵中枢箱', en: 'Matrix Nexus Crate' },
             desc: { zh: '偏后期的高阶能核箱，专门提高赛季推进与轨炮 / 链击收集效率。', en: 'A late-game core sink built to speed up Season progress and Rail/Chain collection.' }
+        },
+        {
+            id: 'sponsorSupply',
+            priceType: 'gold',
+            basePrice: 6800,
+            repeatGrowth: 0.26,
+            milestoneGrowth: 0.1,
+            requiresSponsor: true,
+            kicker: { zh: '6800 G', en: '6800 G' },
+            slot: { zh: '赞助专供', en: 'Sponsor Only' },
+            title: { zh: '赞助军备箱', en: 'Sponsor Arsenal Crate' },
+            desc: { zh: '赞助轨道解锁后开放的高阶金币箱，主补能核、赛季经验与轨炮 / 链击碎片。', en: 'A sponsor-only gold sink focused on cores, Season XP, and Rail/Chain growth.' }
+        },
+        {
+            id: 'sponsorPrism',
+            priceType: 'core',
+            basePrice: 128,
+            repeatGrowth: 0.22,
+            milestoneGrowth: 0.08,
+            requiresSponsor: true,
+            kicker: { zh: '128 C', en: '128 C' },
+            slot: { zh: '终局赞助', en: 'Sponsor Endgame' },
+            title: { zh: '创世棱镜箱', en: 'Genesis Prism Crate' },
+            desc: { zh: '赞助专属终局能核箱，可把能核直接转成大量金币、赛季经验与高阶碎片。', en: 'A sponsor-exclusive endgame core sink that converts cores into big gold, Season XP, and high-tier fragments.' }
         }
     ];
 
@@ -564,7 +588,9 @@
         { id: 'p7', xp: 3000, reward: { fragments: { frost: 24, rocket: 24, rail: 24 } } },
         { id: 'p8', xp: 3900, reward: { gold: 11200, cores: 140, fragments: { chain: 30, rail: 30 } } },
         { id: 'p9', xp: 5000, reward: { gold: 14800, cores: 180, fragments: { frost: 28, rocket: 28, rail: 24 } } },
-        { id: 'p10', xp: 6400, reward: { gold: 19600, cores: 240, fragments: { chain: 34, rail: 34, rocket: 30 } } }
+        { id: 'p10', xp: 6400, reward: { gold: 19600, cores: 240, fragments: { chain: 34, rail: 34, rocket: 30 } } },
+        { id: 'p11', xp: 7900, reward: { gold: 25800, cores: 310, fragments: { rail: 38, chain: 34, frost: 30 } } },
+        { id: 'p12', xp: 9600, reward: { gold: 33600, cores: 390, fragments: { rocket: 36, chain: 38, rail: 42 } } }
     ];
 
     const LANE_POSITIONS = [170, 360, 550];
@@ -2150,7 +2176,7 @@
                 </div>
                 <div class="reward-row">${renderRewardChips(supplyReward)}</div>
                 <div class="card-actions">
-                    <button class="primary-btn" type="button" data-action="claimDaily" data-value="daily" ${ready ? '' : 'disabled'}>${ready ? t('shopClaim') : `${t('shopSoldOut')} 路 ${remaining}`}</button>
+                    <button class="primary-btn" type="button" data-action="claimDaily" data-value="daily" ${ready ? '' : 'disabled'}>${ready ? t('shopClaim') : `${t('shopSoldOut')} · ${remaining}`}</button>
                 </div>
             </article>
         `;
@@ -2194,37 +2220,46 @@
         `;
     }
 
-    function getDefenseProgressTier() {
-        return Math.max(1, (state.save.bestChapterIndex || 0) + 1);
+    function getDefenseProgressTier(saveSnapshot = state.save) {
+        return Math.max(1, (saveSnapshot.bestChapterIndex || 0) + 1);
     }
 
     function getShopOfferById(id) {
         return SHOP_ITEMS.find((offer) => offer.id === id) || null;
     }
 
-    function getShopOfferPurchaseCount(id) {
-        return Math.max(0, Number(state.save.shopPurchases?.[id]) || 0);
+    function getShopOfferPurchaseCount(id, saveSnapshot = state.save) {
+        return Math.max(0, Number(saveSnapshot.shopPurchases?.[id]) || 0);
     }
 
-    function getShopOfferCost(id) {
+    function isShopOfferUnlocked(offer, saveSnapshot = state.save) {
+        if (!offer) return false;
+        return !offer.requiresSponsor || !!saveSnapshot.payment?.passUnlocked;
+    }
+
+    function getShopOfferCost(id, saveSnapshot = state.save) {
         const offer = getShopOfferById(id);
         if (!offer) return 0;
-        const count = getShopOfferPurchaseCount(id);
-        const repeatGrowth = offer.priceType === 'gold' ? 0.22 : 0.18;
-        const milestoneGrowth = offer.priceType === 'gold' ? 0.08 : 0.06;
+        const count = getShopOfferPurchaseCount(id, saveSnapshot);
+        const repeatGrowth = Number.isFinite(offer.repeatGrowth)
+            ? offer.repeatGrowth
+            : (offer.priceType === 'gold' ? 0.22 : 0.18);
+        const milestoneGrowth = Number.isFinite(offer.milestoneGrowth)
+            ? offer.milestoneGrowth
+            : (offer.priceType === 'gold' ? 0.08 : 0.06);
         return Math.round(offer.basePrice * (1 + count * repeatGrowth + Math.floor(count / 3) * milestoneGrowth));
     }
 
-    function canAffordShopOffer(offerOrId) {
+    function canAffordShopOffer(offerOrId, saveSnapshot = state.save) {
         const offer = typeof offerOrId === 'string' ? getShopOfferById(offerOrId) : offerOrId;
-        if (!offer) return false;
-        const cost = getShopOfferCost(offer.id);
-        return offer.priceType === 'gold' ? state.save.gold >= cost : state.save.cores >= cost;
+        if (!offer || !isShopOfferUnlocked(offer, saveSnapshot)) return false;
+        const cost = getShopOfferCost(offer.id, saveSnapshot);
+        return offer.priceType === 'gold' ? (saveSnapshot.gold || 0) >= cost : (saveSnapshot.cores || 0) >= cost;
     }
 
-    function getDailySupplyReward() {
-        const tier = getDefenseProgressTier();
-        const sponsorUnlocked = !!state.save.payment.passUnlocked;
+    function getDailySupplyReward(saveSnapshot = state.save) {
+        const tier = getDefenseProgressTier(saveSnapshot);
+        const sponsorUnlocked = !!saveSnapshot.payment.passUnlocked;
         const reward = {
             gold: 360 + tier * 120 + Math.max(0, tier - 4) * 70,
             cores: 10 + tier * 2 + Math.max(0, tier - 6),
@@ -2249,9 +2284,9 @@
         return reward;
     }
 
-    function getShopOfferPreview(id) {
-        const tier = getDefenseProgressTier();
-        const count = getShopOfferPurchaseCount(id);
+    function getShopOfferPreview(id, saveSnapshot = state.save) {
+        const tier = getDefenseProgressTier(saveSnapshot);
+        const count = getShopOfferPurchaseCount(id, saveSnapshot);
         const intensity = tier + Math.floor(count / 2);
         switch (id) {
             case 'goldCrate':
@@ -2292,6 +2327,26 @@
                         rail: 9 + Math.floor(tier * 0.9) + Math.floor(count * 0.45)
                     }
                 };
+            case 'sponsorSupply':
+                return {
+                    cores: 26 + tier * 6 + Math.floor(count * 4),
+                    seasonXp: 84 + tier * 20 + count * 9,
+                    fragments: {
+                        rocket: 10 + tier + Math.floor(count * 0.5),
+                        chain: 13 + tier + Math.floor(count * 0.7),
+                        rail: 8 + Math.floor(tier * 0.95) + Math.floor(count * 0.5)
+                    }
+                };
+            case 'sponsorPrism':
+                return {
+                    gold: 1320 + intensity * 196,
+                    seasonXp: 92 + tier * 22 + count * 8,
+                    fragments: {
+                        rocket: 8 + Math.floor(tier * 0.9) + Math.floor(count * 0.35),
+                        chain: 12 + tier + Math.floor(count * 0.55),
+                        rail: 11 + Math.floor(tier * 0.95) + Math.floor(count * 0.6)
+                    }
+                };
             default:
                 return {};
         }
@@ -2325,33 +2380,44 @@
     function getGoldShopRecommendation(chapter = getCurrentChapter(), saveSnapshot = state.save) {
         const prepOverview = getChapterPrepOverview(chapter, saveSnapshot);
         const candidates = SHOP_ITEMS
-            .filter((offer) => offer.priceType === 'gold')
+            .filter((offer) => offer.priceType === 'gold' && isShopOfferUnlocked(offer, saveSnapshot))
             .map((offer) => {
-                const preview = getShopOfferPreview(offer.id);
-                const cost = getShopOfferCost(offer.id);
+                const preview = getShopOfferPreview(offer.id, saveSnapshot);
+                const cost = getShopOfferCost(offer.id, saveSnapshot);
                 const focus = getRewardFocusMetrics(preview, chapter);
                 let score = (focus.focusFragments * 2.6) + focus.totalFragments + (Number(preview.cores) || 0) * 3.4 + (Number(preview.seasonXp) || 0) * 0.18;
                 if (prepOverview.powerGap > 260 && offer.id === 'forgeCrate') score += 18;
                 if (prepOverview.powerGap <= 260 && offer.id === 'goldCrate') score += 10;
                 if (prepOverview.preset.lanes.includes('harvest') && offer.id === 'goldCrate') score += 6;
+                if (offer.id === 'sponsorSupply') {
+                    if (chapter.fragmentFocus.includes('chain')) score += 12;
+                    if (chapter.fragmentFocus.includes('rail')) score += 16;
+                    if (prepOverview.powerGap > 420) score += 18;
+                    if ((saveSnapshot.gold || 0) < cost * 0.6) score -= 22;
+                }
                 if ((saveSnapshot.gold || 0) >= cost) score += 6;
-                score -= cost / 260;
+                score -= cost / (offer.id === 'sponsorSupply' ? 420 : 260);
                 return {
                     offer,
                     preview,
                     cost,
-                    affordable: (saveSnapshot.gold || 0) >= cost,
+                    affordable: canAffordShopOffer(offer, saveSnapshot),
                     shortage: Math.max(0, cost - (saveSnapshot.gold || 0)),
                     score,
-                    reason: offer.id === 'forgeCrate'
+                    reason: offer.id === 'sponsorSupply'
                         ? getLocalized({
-                            zh: '更适合卡章节时补能核、赛季经验和高压章节常用碎片。',
-                            en: 'Better when you are stuck on chapter pressure and need cores, Season XP, and higher-tier fragments.'
+                            zh: '更适合把高额金币直接转成终局养成资源，一次补足能核、赛季经验和轨炮 / 链击碎片。',
+                            en: 'Best when you want to convert a large gold stash into endgame cores, Season XP, and Rail/Chain fragments.'
                         })
-                        : getLocalized({
-                            zh: '更适合稳定补中期常用碎片，持续抬高三路基础战力。',
-                            en: 'Better for steady mid-game fragment growth and raising baseline lane power.'
-                        })
+                        : offer.id === 'forgeCrate'
+                            ? getLocalized({
+                                zh: '更适合卡章节时补能核、赛季经验和高压章节常用碎片。',
+                                en: 'Better when you are stuck on chapter pressure and need cores, Season XP, and higher-tier fragments.'
+                            })
+                            : getLocalized({
+                                zh: '更适合稳定补中期常用碎片，持续抬高三路基础战力。',
+                                en: 'Better for steady mid-game fragment growth and raising baseline lane power.'
+                            })
                 };
             })
             .sort((a, b) => b.score - a.score || a.cost - b.cost);
@@ -2361,32 +2427,44 @@
     function getCoreShopRecommendation(chapter = getCurrentChapter(), saveSnapshot = state.save) {
         const prepOverview = getChapterPrepOverview(chapter, saveSnapshot);
         const candidates = SHOP_ITEMS
-            .filter((offer) => offer.priceType === 'core')
+            .filter((offer) => offer.priceType === 'core' && isShopOfferUnlocked(offer, saveSnapshot))
             .map((offer) => {
-                const preview = getShopOfferPreview(offer.id);
-                const cost = getShopOfferCost(offer.id);
+                const preview = getShopOfferPreview(offer.id, saveSnapshot);
+                const cost = getShopOfferCost(offer.id, saveSnapshot);
                 const focus = getRewardFocusMetrics(preview, chapter);
                 let score = (focus.focusFragments * 2.8) + focus.totalFragments + (Number(preview.gold) || 0) / 110 + (Number(preview.seasonXp) || 0) * 0.16;
                 if (chapter.fragmentFocus.includes('rail') && offer.id === 'relayCrate') score += 16;
                 if (prepOverview.powerGap > 340 && offer.id === 'relayCrate') score += 10;
+                if (offer.id === 'sponsorPrism') {
+                    if (chapter.fragmentFocus.includes('rocket')) score += 10;
+                    if (chapter.fragmentFocus.includes('chain')) score += 12;
+                    if (chapter.fragmentFocus.includes('rail')) score += 18;
+                    if (prepOverview.powerGap > 460) score += 16;
+                    if ((saveSnapshot.cores || 0) < cost * 0.6) score -= 18;
+                }
                 if ((saveSnapshot.cores || 0) >= cost) score += 6;
-                score -= cost / 12;
+                score -= cost / (offer.id === 'sponsorPrism' ? 18 : 12);
                 return {
                     offer,
                     preview,
                     cost,
-                    affordable: (saveSnapshot.cores || 0) >= cost,
+                    affordable: canAffordShopOffer(offer, saveSnapshot),
                     shortage: Math.max(0, cost - (saveSnapshot.cores || 0)),
                     score,
-                    reason: offer.id === 'relayCrate'
+                    reason: offer.id === 'sponsorPrism'
                         ? getLocalized({
-                            zh: '更偏后期，适合补链击 / 轨炮和赛季推进。',
-                            en: 'Leans later-game and is better for Chain/Rail growth plus Season progress.'
+                            zh: '更适合把能核压缩成大额金币回流与终局碎片，适合高压章节前集中补一口。',
+                            en: 'Best when you want to compress cores into a large gold refund plus endgame fragments before harder chapters.'
                         })
-                        : getLocalized({
-                            zh: '更轻量，适合先补链击 / 轨炮再回一点金币。',
-                            en: 'A lighter spend that feeds Chain/Rail first and refunds some gold.'
-                        })
+                        : offer.id === 'relayCrate'
+                            ? getLocalized({
+                                zh: '更偏后期，适合补链击 / 轨炮和赛季推进。',
+                                en: 'Leans later-game and is better for Chain/Rail growth plus Season progress.'
+                            })
+                            : getLocalized({
+                                zh: '更轻量，适合先补链击 / 轨炮再回一点金币。',
+                                en: 'A lighter spend that feeds Chain/Rail first and refunds some gold.'
+                            })
                 };
             })
             .sort((a, b) => b.score - a.score || a.cost - b.cost);
@@ -2472,13 +2550,28 @@
 
     function renderShopOfferCard(offer, strategyPlan = null) {
         const cost = getShopOfferCost(offer.id);
-        const canAfford = canAffordShopOffer(offer);
+        const unlocked = isShopOfferUnlocked(offer);
+        const lockedBySponsor = !!offer.requiresSponsor && !unlocked;
+        const canAfford = unlocked && canAffordShopOffer(offer);
         const purchases = getShopOfferPurchaseCount(offer.id);
         const preview = getShopOfferPreview(offer.id);
         const priceSuffix = offer.priceType === 'gold' ? 'G' : 'C';
         const isRecommended = strategyPlan && (strategyPlan.goldRoute?.offer.id === offer.id || strategyPlan.coreRoute?.offer.id === offer.id);
+        const paymentOfferId = strategyPlan?.paymentRoute?.offer?.id || selectedPaymentOfferId;
+        const chips = lockedBySponsor
+            ? [
+                `<span class="mini-chip">${getLocalized({ zh: '赞助专供', en: 'Sponsor Only' })}</span>`,
+                `<span class="mini-chip">${getLocalized({ zh: '首充后开放', en: 'Unlocks After First Top-Up' })}</span>`,
+                isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '后期高价值', en: 'Late-Game Value' })}</span>` : ''
+            ].filter(Boolean).join('')
+            : [
+                `<span class="mini-chip">${getLocalized({ zh: `已购买 ${purchases} 次`, en: `${purchases} bought` })}</span>`,
+                `<span class="mini-chip">${offer.priceType === 'gold' ? getLocalized({ zh: '金币消耗点', en: 'Gold sink' }) : getLocalized({ zh: '能核消耗点', en: 'Core sink' })}</span>`,
+                offer.requiresSponsor ? `<span class="mini-chip">${getLocalized({ zh: '赞助专供', en: 'Sponsor Only' })}</span>` : '',
+                isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''
+            ].filter(Boolean).join('');
         return `
-            <article class="shop-card ${canAfford ? 'mission-card claimable' : ''}">
+            <article class="shop-card ${lockedBySponsor ? 'premium' : ''} ${canAfford ? 'mission-card claimable' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${formatCompact(cost)} ${priceSuffix}</div>
@@ -2486,15 +2579,18 @@
                     </div>
                     <div class="card-number">${getLocalized(offer.slot)}</div>
                 </div>
-                <div class="card-copy">${getLocalized(offer.desc)}</div>
-                <div class="reward-row">
-                    <span class="mini-chip">${getLocalized({ zh: `已购买 ${purchases} 次`, en: `${purchases} bought` })}</span>
-                    <span class="mini-chip">${offer.priceType === 'gold' ? getLocalized({ zh: '金币消耗点', en: 'Gold sink' }) : getLocalized({ zh: '能核消耗点', en: 'Core sink' })}</span>
-                    ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''}
-                </div>
+                <div class="card-copy">${lockedBySponsor
+                    ? getLocalized({
+                        zh: `首笔校验充值后开放。${getLocalized(offer.desc)}`,
+                        en: `Unlocks after your first verified payment. ${getLocalized(offer.desc)}`
+                    })
+                    : getLocalized(offer.desc)}</div>
+                <div class="reward-row">${chips}</div>
                 <div class="reward-row">${renderRewardChips(preview)}</div>
                 <div class="card-actions">
-                    <button class="primary-btn" type="button" data-action="buyShop" data-value="${offer.id}" ${canAfford ? '' : 'disabled'}>${t('shopBuy')} 路 ${formatCompact(cost)} ${priceSuffix}</button>
+                    ${lockedBySponsor
+                        ? `<button class="primary-btn" type="button" data-action="openPayment" data-value="${paymentOfferId}">${getLocalized({ zh: '解锁后开放', en: 'Unlock To Open' })}</button>`
+                        : `<button class="primary-btn" type="button" data-action="buyShop" data-value="${offer.id}" ${canAfford ? '' : 'disabled'}>${t('shopBuy')} · ${formatCompact(cost)} ${priceSuffix}</button>`}
                 </div>
             </article>
         `;
@@ -2597,7 +2693,7 @@
                 }</div>
                 <div class="reward-row">
                     <span class="mini-chip">${getLocalized({ zh: `${premiumReady} 个赞助节点待领取`, en: `${premiumReady} sponsor nodes ready` })}</span>
-                    <span class="mini-chip">OKX Wallet 路 TRON (TRC20)</span>
+                    <span class="mini-chip">OKX Wallet · TRON (TRC20)</span>
                     <span class="mini-chip">${getLocalized({ zh: `推荐礼包 ${getLocalized(strategyPlan.paymentRoute.offer.name)}`, en: `Recommended ${getLocalized(strategyPlan.paymentRoute.offer.name)}` })}</span>
                     ${nextSponsorNode
                         ? `<span class="mini-chip">${sponsorUnlocked
@@ -3300,6 +3396,9 @@
     function buyShopItem(id) {
         const offer = getShopOfferById(id);
         if (!offer) return;
+        if (!isShopOfferUnlocked(offer)) {
+            return showToast(getLocalized({ zh: '先解锁赞助轨道', en: 'Unlock Sponsor track first' }));
+        }
         const cost = getShopOfferCost(id);
         if (offer.priceType === 'gold') {
             if (state.save.gold < cost) return showToast(t('toastNotEnoughGold'));
@@ -3704,7 +3803,7 @@
         if (ui.paymentCopyAmountBtn) ui.paymentCopyAmountBtn.textContent = getLocalized({ zh: '复制精确金额', en: 'Copy Exact Amount' });
         if (ui.paymentVerifyBtn) ui.paymentVerifyBtn.textContent = getLocalized({ zh: '校验 TXID', en: 'Verify TXID' });
         if (ui.paymentAmount) ui.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `$${offer.price.toFixed(2)} USDT`;
-        if (ui.paymentMeta) ui.paymentMeta.textContent = `${getLocalized({ zh: 'OKX 钱包', en: 'OKX Wallet' })} 路 ${order?.network || 'TRON (TRC20)'} 路 ${getLocalized(offer.name)}`;
+        if (ui.paymentMeta) ui.paymentMeta.textContent = `${getLocalized({ zh: 'OKX 钱包', en: 'OKX Wallet' })} · ${order?.network || 'TRON (TRC20)'} · ${getLocalized(offer.name)}`;
         if (ui.paymentOrderId) ui.paymentOrderId.textContent = order ? order.id : '--';
         if (ui.paymentExactAmount) ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
         if (ui.paymentExpiry) ui.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
