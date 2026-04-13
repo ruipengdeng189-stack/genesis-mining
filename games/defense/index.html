@@ -20,12 +20,14 @@
                     <button class="ghost-btn icon-btn" id="langToggle" type="button">EN</button>
                 </div>
             </div>
+
             <div class="hero-card">
                 <div class="hero-copy">
                     <div class="eyebrow" data-i18n="heroEyebrow">TRI-LANE DEFENSE LIVE</div>
                     <h1 data-i18n="heroTitle">创世防线</h1>
                     <p data-i18n="heroSubtitle">三路塔防 · 波次强化 · 核心守卫</p>
                 </div>
+
                 <div class="summary-grid">
                     <div class="summary-item">
                         <span data-i18n="goldLabel">金币</span>
@@ -78,6 +80,7 @@
 
                 <div class="battlefield-wrap" id="battlefieldWrap">
                     <canvas id="battlefieldCanvas" width="720" height="1040" aria-label="Genesis Defense battlefield"></canvas>
+                    <div class="battle-alert-stack" id="battleAlertStack" aria-live="polite"></div>
 
                     <div class="overlay-panel" id="startOverlay">
                         <div class="overlay-card">
@@ -85,6 +88,17 @@
                             <h2 data-i18n="startTitle">部署防线</h2>
                             <p id="startDescription">为三条通道装配炮台并守住创世核心，击退 6 波敌潮后获得金币、能核与蓝图碎片。</p>
                             <div class="overlay-meta" id="startMeta"></div>
+                            <div class="start-guide" id="startGuide">
+                                <div class="start-guide-card">
+                                    1. 开局前先确认三路装配。防守开始后会自动出怪、自动攻击，你主要负责看哪一路快顶不住了。
+                                </div>
+                                <div class="start-guide-card">
+                                    2. 主动技能是翻盘点。高速怪、精英怪或 Boss 压上来时，再交 EMP / 护盾 / 超频会更值。
+                                </div>
+                                <div class="start-guide-card">
+                                    3. 每波结束会弹出强化选择。优先补当前短板，比如缺清线就补攻速，缺容错就补护盾或减速。
+                                </div>
+                            </div>
                             <div class="overlay-actions">
                                 <button class="primary-btn" id="startRunBtn" type="button" data-i18n="startRun">开始防守</button>
                             </div>
@@ -151,7 +165,9 @@
                     <button class="ghost-btn wide-btn" id="pauseBtn" type="button" data-i18n="pauseBtn">暂停</button>
                 </div>
 
-                <div class="battle-note" id="battleNote">优先确认三路炮台配置，再开局迎战敌潮。</div>
+                <div class="battle-insights" id="battleInsights"></div>
+
+                <div class="battle-note" id="battleNote">先确认三路炮台配置，再点击开始防守。战斗会自动进行，你只需要放技能和选强化。</div>
             </section>
 
             <section class="panel-card" id="panelCard">
@@ -197,7 +213,9 @@
                 </div>
                 <button class="ghost-btn icon-btn" id="defensePaymentCloseBtn" type="button" aria-label="Close payment">×</button>
             </div>
+
             <div class="defense-payment-offer-grid" id="defensePaymentOfferGrid"></div>
+
             <div class="defense-payment-order-card">
                 <div class="defense-payment-order-top">
                     <div>
@@ -209,6 +227,7 @@
                         <strong id="defensePaymentOrderId">--</strong>
                     </div>
                 </div>
+
                 <div class="defense-payment-order-grid">
                     <div class="defense-payment-stat">
                         <span id="defensePaymentExactLabel">精确金额</span>
@@ -219,20 +238,25 @@
                         <strong id="defensePaymentExpiry">--:--</strong>
                     </div>
                 </div>
+
                 <div class="defense-payment-address-block">
                     <span class="mini-label" id="defensePaymentAddressLabel">收款地址</span>
                     <div class="defense-payment-address" id="defensePaymentWallet">--</div>
                 </div>
+
                 <div class="defense-payment-copy-row">
                     <button class="ghost-btn wide-btn" id="defensePaymentCopyAddressBtn" type="button">复制地址</button>
                     <button class="ghost-btn wide-btn" id="defensePaymentCopyAmountBtn" type="button">复制精确金额</button>
                 </div>
+
                 <div class="defense-payment-field">
                     <label class="mini-label" for="defensePaymentTxidInput" id="defensePaymentTxidLabel">粘贴 OKX Wallet 的 txid</label>
                     <input class="defense-payment-input" id="defensePaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="请输入或粘贴链上 txid">
                     <p class="defense-payment-hint" id="defensePaymentTxidHint">只有金额、地址和有效时间窗口全部匹配的订单才能通过校验。</p>
                 </div>
+
                 <div class="defense-payment-status" id="defensePaymentStatus">先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。</div>
+
                 <div class="defense-payment-actions">
                     <button class="primary-btn wide-btn" id="defensePaymentVerifyBtn" type="button">校验 TXID</button>
                 </div>

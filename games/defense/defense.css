@@ -234,6 +234,110 @@ a {
     min-height: min(58vh, 620px);
 }
 
+.battle-alert-stack {
+    position: absolute;
+    top: 220px;
+    right: 16px;
+    width: min(320px, calc(100% - 32px));
+    display: grid;
+    gap: 8px;
+    justify-items: stretch;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.battle-alert-card {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(126, 164, 255, 0.24);
+    background: linear-gradient(180deg, rgba(8, 15, 30, 0.94), rgba(5, 10, 21, 0.96));
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+    transform-origin: left bottom;
+    animation: defense-battle-alert-in 0.28s ease, defense-battle-alert-pulse 1.45s ease-in-out infinite;
+}
+
+.battle-alert-card.is-wave {
+    border-color: rgba(114, 244, 255, 0.28);
+    box-shadow: 0 0 0 1px rgba(114, 244, 255, 0.12), 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.battle-alert-card.is-skill,
+.battle-alert-card.is-emp,
+.battle-alert-card.is-shield {
+    border-color: rgba(114, 244, 255, 0.34);
+    background: linear-gradient(180deg, rgba(10, 28, 44, 0.94), rgba(5, 14, 24, 0.98));
+    box-shadow: 0 0 0 1px rgba(114, 244, 255, 0.16), 0 14px 32px rgba(0, 0, 0, 0.32);
+}
+
+.battle-alert-card.is-overclock {
+    border-color: rgba(255, 154, 90, 0.34);
+    box-shadow: 0 0 0 1px rgba(255, 154, 90, 0.14), 0 14px 32px rgba(0, 0, 0, 0.32);
+}
+
+.battle-alert-card.is-boss {
+    border-color: rgba(255, 107, 137, 0.42);
+    background: linear-gradient(180deg, rgba(34, 12, 24, 0.94), rgba(20, 7, 14, 0.98));
+    box-shadow: 0 0 0 1px rgba(255, 107, 137, 0.18), 0 16px 34px rgba(0, 0, 0, 0.34);
+}
+
+.battle-alert-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.battle-alert-card.is-boss .battle-alert-tag {
+    color: #ff96aa;
+}
+
+.battle-alert-card.is-skill .battle-alert-tag,
+.battle-alert-card.is-emp .battle-alert-tag,
+.battle-alert-card.is-shield .battle-alert-tag {
+    color: var(--cyan);
+}
+
+.battle-alert-card.is-overclock .battle-alert-tag {
+    color: #ffb168;
+}
+
+.battle-alert-text {
+    margin-top: 7px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+@keyframes defense-battle-alert-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes defense-battle-alert-pulse {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-1px);
+    }
+}
+
 .overlay-panel {
     position: absolute;
     inset: 0;
@@ -278,6 +382,22 @@ a {
     display: grid;
     gap: 8px;
     margin-top: 14px;
+}
+
+.start-guide {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.start-guide-card {
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(126, 164, 255, 0.14);
+    background: linear-gradient(180deg, rgba(18, 30, 58, 0.94), rgba(12, 22, 42, 0.96));
+    color: rgba(233, 241, 255, 0.92);
+    font-size: 13px;
+    line-height: 1.6;
 }
 
 .overlay-meta .mini-chip,
@@ -381,6 +501,115 @@ a {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
+}
+
+.battle-insights {
+    display: grid;
+    gap: 10px;
+}
+
+.battle-insight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.lane-pressure-card,
+.battle-insight-summary {
+    border-radius: 16px;
+    border: 1px solid rgba(128, 168, 255, 0.18);
+    background: linear-gradient(180deg, rgba(13, 22, 46, 0.9), rgba(8, 15, 30, 0.92));
+    box-shadow: var(--shadow);
+}
+
+.lane-pressure-card {
+    padding: 10px 12px;
+    display: grid;
+    gap: 8px;
+}
+
+.lane-pressure-card.is-rising {
+    border-color: rgba(255, 210, 107, 0.28);
+}
+
+.lane-pressure-card.is-danger {
+    border-color: rgba(255, 107, 137, 0.34);
+    box-shadow: 0 0 0 1px rgba(255, 107, 137, 0.14), var(--shadow);
+}
+
+.lane-pressure-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.lane-pressure-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+}
+
+.lane-pressure-state {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.lane-pressure-main {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.lane-pressure-sub,
+.lane-pressure-meta,
+.battle-insight-body {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.pressure-track {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.pressure-bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(114, 244, 255, 0.8), rgba(255, 210, 107, 0.92), rgba(255, 107, 137, 0.98));
+}
+
+.battle-insight-summary {
+    padding: 12px 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.battle-insight-kicker {
+    color: var(--cyan);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.battle-insight-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.battle-insight-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .battle-note {
@@ -658,6 +887,19 @@ body:not([data-defense-tab="defend"]) .stage-card {
     background: rgba(255,255,255,0.05);
 }
 
+.wide-btn.is-skill-ready {
+    background: linear-gradient(135deg, rgba(114, 244, 255, 0.18), rgba(255, 210, 107, 0.14));
+    box-shadow: inset 0 0 0 1px rgba(114, 244, 255, 0.28), 0 0 18px rgba(114, 244, 255, 0.12);
+}
+
+.wide-btn.is-skill-ready-fresh {
+    animation: defense-skill-ready-pulse 1.15s ease-in-out infinite;
+}
+
+.wide-btn.is-boss-pressure {
+    box-shadow: inset 0 0 0 1px rgba(255, 107, 137, 0.36), 0 0 20px rgba(255, 107, 137, 0.18);
+}
+
 .ghost-btn:disabled,
 .primary-btn:disabled {
     opacity: 0.42;
@@ -673,6 +915,18 @@ body:not([data-defense-tab="defend"]) .stage-card {
     min-width: 44px;
     min-height: 40px;
     padding: 0 12px;
+}
+
+@keyframes defense-skill-ready-pulse {
+    0%,
+    100% {
+        transform: translateY(0);
+        box-shadow: inset 0 0 0 1px rgba(114, 244, 255, 0.3), 0 0 18px rgba(114, 244, 255, 0.12);
+    }
+    50% {
+        transform: translateY(-1px);
+        box-shadow: inset 0 0 0 1px rgba(114, 244, 255, 0.42), 0 0 26px rgba(114, 244, 255, 0.24);
+    }
 }
 
 .app-tab-bar {
@@ -1078,6 +1332,11 @@ body:not([data-defense-tab="defend"]) .stage-card {
         gap: 6px;
     }
 
+    body[data-defense-tab="defend"] .hero-card {
+        gap: 10px;
+        padding: 12px;
+    }
+
     .summary-item {
         padding: 9px 10px;
         gap: 5px;
@@ -1137,6 +1396,75 @@ body:not([data-defense-tab="defend"]) .stage-card {
         gap: 6px;
     }
 
+    .battle-insights {
+        gap: 8px;
+    }
+
+    .battle-alert-stack {
+        top: 206px;
+        right: 10px;
+        width: min(260px, calc(100% - 20px));
+        gap: 6px;
+    }
+
+    .battle-alert-card {
+        width: min(100%, 280px);
+        padding: 9px 11px;
+        border-radius: 14px;
+    }
+
+    .battle-alert-tag {
+        min-height: 20px;
+        padding: 0 8px;
+        font-size: 9px;
+    }
+
+    .battle-alert-text {
+        margin-top: 5px;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .battle-insight-grid {
+        gap: 6px;
+    }
+
+    .lane-pressure-card {
+        padding: 8px;
+        border-radius: 14px;
+        gap: 6px;
+    }
+
+    .lane-pressure-title,
+    .lane-pressure-state {
+        font-size: 10px;
+    }
+
+    .lane-pressure-main {
+        font-size: 11px;
+    }
+
+    .lane-pressure-sub,
+    .lane-pressure-meta,
+    .battle-insight-body {
+        font-size: 10px;
+        line-height: 1.4;
+    }
+
+    .battle-insight-summary {
+        padding: 10px 12px;
+        border-radius: 14px;
+        gap: 8px;
+    }
+
+    .battle-insight-title {
+        font-size: 13px;
+    }
+
+    .battle-insight-chip-row {
+        gap: 6px;
+    }
+
     .wide-btn {
         min-height: 42px;
         padding: 10px 8px;
@@ -1168,8 +1496,15 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body[data-defense-tab="defend"] .overlay-panel {
-        align-items: flex-end;
-        padding: 12px;
+        position: fixed;
+        inset:
+            0
+            0
+            calc(var(--tabbar-height) + var(--safe-bottom) + 10px)
+            0;
+        align-items: flex-start;
+        justify-content: center;
+        padding: calc(var(--safe-top) + 12px) 12px 12px;
     }
 
     .overlay-card {
@@ -1180,6 +1515,10 @@ body:not([data-defense-tab="defend"]) .stage-card {
     body[data-defense-tab="defend"] .overlay-card {
         width: 100%;
         max-width: none;
+        max-height: 100%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
     .overlay-card h2 {
@@ -1192,12 +1531,21 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body[data-defense-tab="defend"] .overlay-meta,
+    body[data-defense-tab="defend"] .start-guide,
     body[data-defense-tab="defend"] .reward-list,
     body[data-defense-tab="defend"] .result-meta {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
         margin-top: 10px;
+    }
+
+    body[data-defense-tab="defend"] .start-guide-card {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 14px;
+        font-size: 12px;
+        line-height: 1.55;
     }
 
     body[data-defense-tab="defend"] .overlay-meta .mini-chip,
@@ -1232,11 +1580,7 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     .summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .summary-item:last-child {
-        grid-column: 1 / -1;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .battlefield-wrap,
@@ -1247,6 +1591,25 @@ body:not([data-defense-tab="defend"]) .stage-card {
     body[data-defense-tab="defend"] .battlefield-wrap,
     body[data-defense-tab="defend"] #battlefieldCanvas {
         min-height: clamp(360px, 50dvh, 520px);
+    }
+
+    body[data-defense-tab="defend"] .summary-item {
+        min-height: 62px;
+        padding: 8px 9px;
+    }
+
+    body[data-defense-tab="defend"] .summary-item span {
+        font-size: 11px;
+    }
+
+    body[data-defense-tab="defend"] .summary-item strong {
+        font-size: 14px;
+    }
+
+    .lane-pressure-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
     }
 
     .result-grid {

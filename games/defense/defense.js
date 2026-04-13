@@ -12,6 +12,7 @@
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const DEFENSE_DEBUG_ENABLED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 
     const TEXT = {
         zh: {
@@ -122,9 +123,11 @@
             battleNoteResultLose: '核心被击穿，先补强装配或研究，再尝试重新开局。',
             toastSaved: '防线进度已同步保存',
             toastSkillCooling: '技能冷却中',
+            toastSkillReady: '主动技能已就绪',
             toastSkillEmp: 'EMP 已释放，敌人被短暂压制',
             toastSkillOverclock: '炮台进入超频输出',
             toastSkillShield: '核心护盾已展开',
+            toastBossIncoming: 'Boss 已入场，准备迎击',
             toastNotEnoughGold: '金币不足',
             toastNotEnoughCore: '能核不足',
             toastMissionClaimed: '任务奖励已领取',
@@ -163,6 +166,10 @@
             skillReady: '{skill} · 可释放',
             skillCooling: '{skill} · {time}s',
             coreShieldText: '护盾 {value}',
+            waveIncomingText: '第 {wave} 波来袭',
+            finalWaveIncomingText: '最终波来袭',
+            bossIncomingText: 'Boss 压境',
+            skillReadyBanner: '{skill} 已就绪',
             laneStripDps: '路伤害',
             laneStripEmpty: '未装配',
             laneStripLevel: 'Lv.{level}',
@@ -271,6 +278,12 @@
             shopPanelTitle: 'Supply Shop',
             shopPanelDesc: 'Daily supply stabilizes retention, resource crates push mid-game growth, and verified top-ups unlock bonus season rewards.',
             toastFinalChapterClear: 'Final chapter cleared. Endgame rewards unlocked',
+            toastSkillReady: 'Active skill is ready',
+            toastBossIncoming: 'Boss is on the field',
+            waveIncomingText: 'Wave {wave} incoming',
+            finalWaveIncomingText: 'Final wave incoming',
+            bossIncomingText: 'Boss incoming',
+            skillReadyBanner: '{skill} ready',
             statFinalClears: 'Final Clears'
         }
     };
@@ -628,6 +641,7 @@
     let paymentVerificationNotice = '';
     let paymentOrderNonce = 0;
     let paymentOrderRequestPromise = null;
+    let lastBattleInsightStamp = '';
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
@@ -637,6 +651,7 @@
         applyLanguage();
         updateStartPanel();
         renderAll();
+        registerDebugApi();
         flushPendingPaymentClaims().catch(() => {});
         paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
         startLoop();
@@ -679,6 +694,8 @@
         ui.skillBtn = document.getElementById('skillBtn');
         ui.loadoutShortcutBtn = document.getElementById('loadoutShortcutBtn');
         ui.pauseBtn = document.getElementById('pauseBtn');
+        ui.battleAlertStack = document.getElementById('battleAlertStack');
+        ui.battleInsights = document.getElementById('battleInsights');
         ui.battleNote = document.getElementById('battleNote');
         ui.soundToggle = document.getElementById('soundToggle');
         ui.langToggle = document.getElementById('langToggle');
@@ -881,7 +898,20 @@
             laneTimers: [0, 0, 0],
             laneFlash: [0, 0, 0],
             laneSkillGlow: 0,
+            spawnBursts: [],
+            bannerTimer: 0,
+            bannerDuration: 0,
+            bannerText: '',
+            bannerTone: 'wave',
+            edgeFlashTimer: 0,
+            edgeFlashDuration: 0,
+            edgeFlashTone: 'wave',
+            bossAlertTimer: 0,
+            skillReadyPulse: 0,
+            alerts: [],
+            laneAlertTimers: [0, 0, 0],
             nextEnemyId: 1,
+            nextAlertId: 1,
             coreHp: getCoreMaxHp(saveSnapshot),
             shield: 0,
             skillCooldown: 0,
@@ -1027,6 +1057,138 @@
         return minutes > 0 ? `${minutes}:${String(seconds).padStart(2, '0')}` : `${seconds}s`;
     }
 
+    function getBattleToneColor(tone) {
+        const map = {
+            wave: '114,244,255',
+            skill: '114,244,255',
+            overclock: '255,154,90',
+            shield: '255,210,107',
+            emp: '114,244,255',
+            boss: '255,107,137'
+        };
+        return map[tone] || map.wave;
+    }
+
+    function getBattleAlertToneLabel(tone) {
+        return {
+            wave: getLocalized({ zh: '波次', en: 'Wave' }),
+            skill: getLocalized({ zh: '技能', en: 'Skill' }),
+            emp: getLocalized({ zh: '技能', en: 'Skill' }),
+            shield: getLocalized({ zh: '技能', en: 'Skill' }),
+            overclock: getLocalized({ zh: '强化', en: 'Boost' }),
+            boss: 'Boss'
+        }[tone] || getLocalized({ zh: '战场', en: 'Battle' });
+    }
+
+    function renderBattleAlerts() {
+        if (!ui.battleAlertStack) return;
+        const alerts = Array.isArray(state.battle.alerts) ? state.battle.alerts.slice().sort((a, b) => b.id - a.id) : [];
+        ui.battleAlertStack.innerHTML = alerts.map((alert) => `
+            <article class="battle-alert-card is-${alert.tone}">
+                <span class="battle-alert-tag">${getBattleAlertToneLabel(alert.tone)}</span>
+                <div class="battle-alert-text">${alert.text}</div>
+            </article>
+        `).join('');
+    }
+
+    function pushBattleAlert(text, tone = 'wave', duration = 2.2) {
+        if (!text) return;
+        state.battle.alerts = [
+            ...(Array.isArray(state.battle.alerts) ? state.battle.alerts : []),
+            {
+                id: state.battle.nextAlertId++,
+                text,
+                tone,
+                expiresAt: performance.now() + Math.max(0.8, duration) * 1000
+            }
+        ].slice(-3);
+        renderBattleAlerts();
+    }
+
+    function getLaneSpawnAlert(spawn) {
+        const laneName = getLaneName(spawn.lane);
+        if (spawn.type === 'boss') {
+            return {
+                tone: 'boss',
+                duration: 2.8,
+                text: getLocalized({ zh: `${laneName} Boss 压境`, en: `Boss pressing ${laneName}` })
+            };
+        }
+        if (spawn.type === 'elite') {
+            return {
+                tone: 'overclock',
+                duration: 2,
+                text: getLocalized({ zh: `${laneName} 精英突入`, en: `Elite breach on ${laneName}` })
+            };
+        }
+        return {
+            tone: 'wave',
+            duration: 1.6,
+            text: getLocalized({ zh: `${laneName} 来敌 · ${enemyLabel(spawn.type)}`, en: `${laneName} incoming · ${enemyLabel(spawn.type)}` })
+        };
+    }
+
+    function triggerBattleBanner(text, tone = 'wave', duration = 1.6) {
+        if (!text) return;
+        state.battle.bannerText = text;
+        state.battle.bannerTone = tone;
+        state.battle.bannerDuration = duration;
+        state.battle.bannerTimer = duration;
+    }
+
+    function triggerEdgeFlash(tone = 'wave', duration = 0.9) {
+        state.battle.edgeFlashTone = tone;
+        state.battle.edgeFlashDuration = duration;
+        state.battle.edgeFlashTimer = duration;
+    }
+
+    function announceSkillReady() {
+        if (!state.battle.running || state.battle.finished) return;
+        state.battle.skillReadyPulse = Math.max(state.battle.skillReadyPulse, 1.8);
+        triggerBattleBanner(t('skillReadyBanner').replace('{skill}', t(SKILLS[state.save.selectedSkill].nameKey)), 'skill', 1.1);
+        pushBattleAlert(
+            getLocalized({
+                zh: `${t(SKILLS[state.save.selectedSkill].nameKey)} 已可释放，留给高压路更赚`,
+                en: `${t(SKILLS[state.save.selectedSkill].nameKey)} is ready. Save it for the highest-pressure lane.`
+            }),
+            'skill',
+            2.4
+        );
+        showToast(t('toastSkillReady'));
+    }
+
+    function tickBattleVisuals(delta) {
+        if (!delta) return;
+        state.battle.spawnBursts = state.battle.spawnBursts
+            .map((burst) => ({ ...burst, timer: Math.max(0, burst.timer - delta) }))
+            .filter((burst) => burst.timer > 0);
+        state.battle.bannerTimer = Math.max(0, state.battle.bannerTimer - delta);
+        state.battle.edgeFlashTimer = Math.max(0, state.battle.edgeFlashTimer - delta);
+        state.battle.bossAlertTimer = Math.max(0, state.battle.bossAlertTimer - delta);
+        state.battle.skillReadyPulse = Math.max(0, state.battle.skillReadyPulse - delta);
+        state.battle.laneAlertTimers = state.battle.laneAlertTimers.map((timer) => Math.max(0, timer - delta));
+        const nextAlerts = state.battle.alerts.filter((alert) => alert.expiresAt > performance.now());
+        if (nextAlerts.length !== state.battle.alerts.length) {
+            state.battle.alerts = nextAlerts;
+            renderBattleAlerts();
+        }
+    }
+
+    function fillRoundRect(ctx, x, y, width, height, radius) {
+        const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + safeRadius, y);
+        ctx.lineTo(x + width - safeRadius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+        ctx.lineTo(x + width, y + height - safeRadius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+        ctx.lineTo(x + safeRadius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+        ctx.lineTo(x, y + safeRadius);
+        ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+        ctx.closePath();
+    }
+
     function applyLanguage() {
         document.title = t('pageTitle');
         document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
@@ -1042,6 +1204,7 @@
         renderHud();
         renderActionBar();
         renderLaneStrip();
+        renderBattleAlerts();
         renderPanel();
         renderTabState();
         if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
@@ -1081,16 +1244,21 @@
         ui.threatValue.textContent = t(getThreatKey());
         ui.battleNote.textContent = getBattleNoteText(chapter);
         updateStartPanel();
+        renderBattleInsights();
     }
 
     function renderActionBar() {
         ui.soundToggle.textContent = state.soundEnabled ? 'SFX ON' : 'SFX OFF';
         const skill = SKILLS[state.save.selectedSkill];
-        ui.skillBtn.textContent = state.battle.skillCooldown <= 0
+        const skillReady = state.battle.skillCooldown <= 0;
+        ui.skillBtn.textContent = skillReady
             ? t('skillReady').replace('{skill}', t(skill.nameKey))
             : t('skillCooling').replace('{skill}', t(skill.nameKey)).replace('{time}', String(state.battle.skillCooldown.toFixed(1)));
         ui.skillBtn.disabled = !state.battle.running || state.battle.awaitingUpgrade || state.battle.paused;
         ui.pauseBtn.disabled = !state.battle.running || state.battle.finished;
+        ui.skillBtn.classList.toggle('is-skill-ready', skillReady && state.battle.running && !state.battle.paused && !state.battle.awaitingUpgrade);
+        ui.skillBtn.classList.toggle('is-skill-ready-fresh', skillReady && state.battle.skillReadyPulse > 0 && state.battle.running);
+        ui.skillBtn.classList.toggle('is-boss-pressure', state.battle.bossAlertTimer > 0 && state.battle.running);
     }
 
     function renderLaneStrip() {
@@ -1232,6 +1400,235 @@
         if (state.battle.finished) return state.battle.result?.win ? t('battleNoteResultWin') : t('battleNoteResultLose');
         if (state.battle.running) return getBattleWaveGuide(chapter, state.battle.currentWave);
         return `${getChapterOpeningGuide(chapter)} ${getChapterWavePlan(chapter)}`;
+    }
+
+    function getLanePressureInfo(index) {
+        const towerId = state.save.laneLoadout[index];
+        const enemies = state.battle.enemies
+            .filter((enemy) => enemy.lane === index)
+            .sort((a, b) => b.y - a.y);
+        const leadingEnemy = enemies[0] || null;
+        const pushProgress = leadingEnemy ? Math.max(0, Math.min(1, leadingEnemy.y / SAFE_CORE_Y)) : 0;
+        const densityPressure = Math.min(0.34, enemies.length * 0.08);
+        const specialPressure = enemies.some((enemy) => enemy.boss) ? 0.34 : (enemies.some((enemy) => enemy.elite) ? 0.18 : 0);
+        const pressure = Math.min(1, pushProgress * 0.68 + densityPressure + specialPressure);
+        const towerName = towerId && TOWERS[towerId] ? towerLabel(towerId) : getLocalized({ zh: '空位', en: 'Empty' });
+        const dps = towerId && TOWERS[towerId] ? Math.round(getTowerPreviewDps(towerId)) : 0;
+        let tone = 'idle';
+        let stateLabel = getLocalized({ zh: '待战', en: 'Standby' });
+        if (enemies.length) {
+            if (pressure >= 0.72) {
+                tone = 'danger';
+                stateLabel = getLocalized({ zh: '高压', en: 'Danger' });
+            } else if (pressure >= 0.4) {
+                tone = 'rising';
+                stateLabel = getLocalized({ zh: '接敌', en: 'Engaged' });
+            } else {
+                tone = 'stable';
+                stateLabel = getLocalized({ zh: '稳住', en: 'Stable' });
+            }
+        }
+        return {
+            index,
+            laneName: getLaneName(index),
+            towerName,
+            dps,
+            enemies,
+            enemyCount: enemies.length,
+            leadingEnemy,
+            leadingLabel: leadingEnemy ? enemyLabel(leadingEnemy.type) : getLocalized({ zh: '暂无敌人', en: 'No enemies' }),
+            progress: pressure,
+            progressPercent: Math.round(pressure * 100),
+            pushPercent: Math.round(pushProgress * 100),
+            tone,
+            stateLabel
+        };
+    }
+
+    function getUpcomingSpawnPreview(limit = 3) {
+        const upcoming = state.battle.spawnQueue.slice(0, limit).map((spawn) => {
+            const remain = Math.max(0, spawn.at - state.battle.currentWaveElapsed);
+            return `${getLaneName(spawn.lane)} · ${enemyLabel(spawn.type)} · ${remain.toFixed(1)}s`;
+        });
+        if (upcoming.length) return upcoming.join(' / ');
+        if (state.battle.running) {
+            return getLocalized({
+                zh: '本波敌人已出完，清场后就会进入强化选择。',
+                en: 'All enemies for this wave have spawned. Clear the field to enter the upgrade choice.'
+            });
+        }
+        return `${t('enemyPreview')}：${getCurrentChapter().enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}`;
+    }
+
+    function getBattleDirectiveSummary(chapter, laneInfoList) {
+        if (state.battle.awaitingUpgrade) {
+            return {
+                title: getLocalized({ zh: '本波已清空，先选强化再继续', en: 'Wave cleared. Pick an upgrade first.' }),
+                body: getLocalized({ zh: '优先补当前短板：清线不稳补攻速 / 溅射，核心吃压就补护盾或减速。', en: 'Patch the weakest point first: add fire rate/splash for lane clear, or shield/slow if the core is under pressure.' })
+            };
+        }
+        if (state.battle.finished) {
+            return state.battle.result?.win
+                ? {
+                    title: getLocalized({ zh: '防线守住了，可以继续冲章节', en: 'Defense held. You can push the next chapter.' }),
+                    body: getLocalized({ zh: '先看结算里哪种碎片和资源回流最多，再决定是补研究还是继续冲关。', en: 'Check which fragments and resources came back strongest, then decide between research or another push.' })
+                }
+                : {
+                    title: getLocalized({ zh: '这次是被卡点打穿了', en: 'This run hit a wall.' }),
+                    body: getLocalized({ zh: '回头补最薄弱的一路，或者先升研究与炮台等级，再回来挑战会更稳。', en: 'Patch the weakest lane or upgrade research and towers before retrying.' })
+                };
+        }
+        if (!state.battle.running) {
+            return {
+                title: getLocalized({ zh: '开局前先看清三路分工', en: 'Read the three-lane roles before starting.' }),
+                body: getChapterDirective(chapter)
+            };
+        }
+        if (state.battle.paused) {
+            return {
+                title: getLocalized({ zh: '战斗已暂停，恢复后会从当前波继续', en: 'Battle is paused and resumes from the current wave.' }),
+                body: getLocalized({ zh: '看右上方技能和三路压力，再决定是立刻恢复还是先调整装配。', en: 'Check skill timing and lane pressure, then decide whether to resume immediately or adjust loadout first.' })
+            };
+        }
+        const hottestLane = laneInfoList.slice().sort((a, b) => b.progress - a.progress)[0];
+        const skillName = t(SKILLS[state.save.selectedSkill].nameKey);
+        if (state.battle.skillCooldown <= 0 && hottestLane && (hottestLane.tone === 'danger' || hottestLane.enemyCount >= 4)) {
+            return {
+                title: getLocalized({
+                    zh: `${hottestLane.laneName} 已进入高压区，可准备交 ${skillName}`,
+                    en: `${hottestLane.laneName} is under pressure. ${skillName} is ready.`
+                }),
+                body: getLocalized({
+                    zh: '别急着在平稳波次空放技能，等高速怪、精英或 Boss 真正贴近核心时再交更赚。',
+                    en: 'Do not dump the skill during a calm stretch. Wait until fast enemies, elites, or the boss truly threaten the core.'
+                })
+            };
+        }
+        return {
+            title: getLocalized({ zh: `当前重点：第 ${state.battle.currentWave} 波的节奏控制`, en: `Current focus: pacing wave ${state.battle.currentWave}` }),
+            body: getBattleWaveGuide(chapter, state.battle.currentWave)
+        };
+    }
+
+    function getSkillTimingHint(laneInfoList) {
+        const skillName = t(SKILLS[state.save.selectedSkill].nameKey);
+        if (!state.battle.running) {
+            return getLocalized({
+                zh: `技能定位：${skillName}。开局先观察两波节奏，再决定什么时候交技能。`,
+                en: `Skill role: ${skillName}. Watch the first two waves before committing it.`
+            });
+        }
+        if (state.battle.skillCooldown > 0) {
+            return getLocalized({
+                zh: `${skillName} 冷却中，还需 ${state.battle.skillCooldown.toFixed(1)} 秒。`,
+                en: `${skillName} is cooling down for ${state.battle.skillCooldown.toFixed(1)}s more.`
+            });
+        }
+        if (laneInfoList.some((lane) => lane.leadingEnemy?.boss)) {
+            return getLocalized({
+                zh: `${skillName} 已就绪，Boss 已入场，这一轮可以直接交。`,
+                en: `${skillName} is ready and the boss is on the field. This is a good cast window.`
+            });
+        }
+        if (laneInfoList.some((lane) => lane.enemyCount >= 3 && lane.tone !== 'idle')) {
+            return getLocalized({
+                zh: `${skillName} 已就绪，等敌人真正堆在一路时交会更值。`,
+                en: `${skillName} is ready. Wait until a lane truly stacks up for more value.`
+            });
+        }
+        return getLocalized({
+            zh: `${skillName} 已就绪，先留着应对后续高压或 Boss。`,
+            en: `${skillName} is ready. Hold it for the next spike or boss.`
+        });
+    }
+
+    function renderBattleInsights() {
+        if (!ui.battleInsights) return;
+        const chapter = getCurrentChapter();
+        const laneInfoList = [0, 1, 2].map((index) => getLanePressureInfo(index));
+        const stamp = JSON.stringify({
+            lang: state.lang,
+            chapter: chapter.id,
+            selectedSkill: state.save.selectedSkill,
+            laneLoadout: state.save.laneLoadout.join('|'),
+            laneLevels: state.save.laneLoadout.map((towerId) => getTowerLevel(towerId)).join('|'),
+            running: state.battle.running,
+            paused: state.battle.paused,
+            finished: state.battle.finished,
+            awaitingUpgrade: state.battle.awaitingUpgrade,
+            wave: state.battle.currentWave,
+            core: Math.round(state.battle.coreHp),
+            shield: Math.round(state.battle.shield / 10),
+            cooldown: Math.ceil(state.battle.skillCooldown),
+            lanes: laneInfoList.map((lane) => `${lane.tone}:${lane.enemyCount}:${lane.leadingEnemy?.type || 'none'}:${Math.round(lane.progress * 5)}`),
+            next: state.battle.spawnQueue.slice(0, 3).map((spawn) => `${spawn.type}:${spawn.lane}:${Math.ceil(Math.max(0, spawn.at - state.battle.currentWaveElapsed))}`).join('|'),
+            kills: state.battle.runStats.kills,
+            damage: Math.round(state.battle.runStats.damage / 100)
+        });
+        if (stamp === lastBattleInsightStamp) return;
+        lastBattleInsightStamp = stamp;
+        const directive = getBattleDirectiveSummary(chapter, laneInfoList);
+        const summaryChipUpcoming = state.battle.running
+            ? getLocalized({ zh: `下一波：${getUpcomingSpawnPreview(2)}`, en: `Next: ${getUpcomingSpawnPreview(2)}` })
+            : getUpcomingSpawnPreview(2);
+        const summaryChipPerformance = state.battle.running || state.battle.finished
+            ? getLocalized({
+                zh: `本局击杀 ${formatCompact(state.battle.runStats.kills)} · 伤害 ${formatCompact(Math.round(state.battle.runStats.damage))}`,
+                en: `Run ${formatCompact(state.battle.runStats.kills)} kills · ${formatCompact(Math.round(state.battle.runStats.damage))} damage`
+            })
+            : t('startMetaReward')
+                .replace('{gold}', formatCompact(chapter.goldReward))
+                .replace('{core}', formatCompact(chapter.coreReward))
+                .replace('{fragment}', formatCompact(chapter.fragmentReward));
+        const summaryChipAnchor = state.battle.running || state.battle.finished
+            ? getLocalized({
+                zh: `核心护盾 ${formatCompact(Math.round(state.battle.shield))}`,
+                en: `Core shield ${formatCompact(Math.round(state.battle.shield))}`
+            })
+            : getLocalized({
+                zh: `推荐战力 ${formatCompact(chapter.recommended)}`,
+                en: `Recommended power ${formatCompact(chapter.recommended)}`
+            });
+        ui.battleInsights.innerHTML = `
+            <div class="battle-insight-grid">
+                ${laneInfoList.map((lane) => `
+                    <article class="lane-pressure-card is-${lane.tone}">
+                        <div class="lane-pressure-head">
+                            <span class="lane-pressure-title">${lane.laneName}</span>
+                            <span class="lane-pressure-state">${lane.stateLabel}</span>
+                        </div>
+                        <div class="lane-pressure-main">${lane.towerName}</div>
+                        <div class="lane-pressure-sub">${getLocalized({
+                            zh: `${lane.enemyCount} 敌 · DPS ${formatCompact(lane.dps)}`,
+                            en: `${lane.enemyCount} foes · DPS ${formatCompact(lane.dps)}`
+                        })}</div>
+                        <div class="pressure-track">
+                            <span class="pressure-bar" style="width:${lane.progressPercent}%;"></span>
+                        </div>
+                        <div class="lane-pressure-meta">${lane.leadingEnemy
+                            ? getLocalized({
+                                zh: `前锋 ${lane.leadingLabel} · 推进 ${lane.pushPercent}%`,
+                                en: `${lane.leadingLabel} · ${lane.pushPercent}% pushed`
+                            })
+                            : getLocalized({
+                                zh: `当前空闲 · 可继续滚经济`,
+                                en: `Idle lane · safe for economy`
+                            })}</div>
+                    </article>
+                `).join('')}
+            </div>
+            <div class="battle-insight-summary">
+                <div class="battle-insight-kicker">${getLocalized({ zh: '战况速览', en: 'Battle Readout' })}</div>
+                <div class="battle-insight-title">${directive.title}</div>
+                <div class="battle-insight-body">${directive.body}</div>
+                <div class="battle-insight-chip-row">
+                    <span class="mini-chip">${summaryChipUpcoming}</span>
+                    <span class="mini-chip">${getSkillTimingHint(laneInfoList)}</span>
+                    <span class="mini-chip">${summaryChipPerformance}</span>
+                    <span class="mini-chip">${summaryChipAnchor}</span>
+                </div>
+            </div>
+        `;
     }
 
     function getChapterDirective(chapter) {
@@ -2960,6 +3357,8 @@
         state.battle.coreHp = getCoreMaxHp();
         state.battle.shield = getCoreShieldCap();
         state.battle.lastFrame = performance.now();
+        state.battle.skillReadyPulse = 1.8;
+        lastBattleInsightStamp = '';
         state.save.stats.runs += 1;
         saveProgress();
         hideOverlay(ui.resultOverlay);
@@ -2976,6 +3375,22 @@
         state.battle.spawnQueue = buildWaveQueue(getCurrentChapter(), waveNumber);
         state.battle.awaitingUpgrade = false;
         hideOverlay(ui.upgradeOverlay);
+        const incomingText = waveNumber >= TOTAL_WAVES
+            ? t('finalWaveIncomingText')
+            : t('waveIncomingText').replace('{wave}', String(waveNumber));
+        triggerBattleBanner(
+            incomingText,
+            waveNumber >= TOTAL_WAVES ? 'boss' : 'wave',
+            waveNumber >= TOTAL_WAVES ? 2 : 1.5
+        );
+        triggerEdgeFlash(waveNumber >= TOTAL_WAVES ? 'boss' : 'wave', waveNumber >= TOTAL_WAVES ? 1.2 : 0.6);
+        pushBattleAlert(
+            waveNumber >= TOTAL_WAVES
+                ? getLocalized({ zh: '最终波已开启，Boss 即将到场', en: 'Final wave started. Boss arrival is imminent.' })
+                : getLocalized({ zh: `${incomingText}，注意先吃压的那一路`, en: `${incomingText}. Watch the first lane that buckles.` }),
+            waveNumber >= TOTAL_WAVES ? 'boss' : 'wave',
+            waveNumber >= TOTAL_WAVES ? 2.8 : 2.3
+        );
     }
 
     function buildWaveQueue(chapter, waveNumber) {
@@ -3043,18 +3458,22 @@
             });
             cleanupDeadEnemies();
             showToast(t('toastSkillEmp'));
+            triggerEdgeFlash('emp', 0.65);
         } else if (state.save.selectedSkill === 'overclock') {
             state.battle.skillEffect = 'overclock';
             state.battle.skillEffectTimer = 8;
             showToast(t('toastSkillOverclock'));
+            triggerEdgeFlash('overclock', 0.8);
         } else {
             state.battle.shield = Math.min(getCoreShieldCap() * 1.6, state.battle.shield + 70 * relayBoost);
             state.battle.coreHp = Math.min(getCoreMaxHp(), state.battle.coreHp + 18 * relayBoost);
             showToast(t('toastSkillShield'));
+            triggerEdgeFlash('shield', 0.8);
         }
         state.save.stats.skillsUsed += 1;
         state.battle.skillCooldown = Math.max(6, SKILLS[state.save.selectedSkill].cooldown * (1 - getResearchLevel('relay') * 0.06));
         state.battle.laneSkillGlow = SKILL_READY_GLOW_MS;
+        state.battle.skillReadyPulse = 0;
         saveProgress();
         renderAll();
     }
@@ -3072,10 +3491,13 @@
         const battle = state.battle;
         const delta = Math.min(0.05, Math.max(0, (timestamp - battle.lastFrame) / 1000));
         battle.lastFrame = timestamp;
+        tickBattleVisuals(delta);
 
         if (!battle.running || battle.paused || battle.awaitingUpgrade || battle.finished) {
             if (battle.skillCooldown > 0 && !battle.paused && !battle.finished) {
+                const previousCooldown = battle.skillCooldown;
                 battle.skillCooldown = Math.max(0, battle.skillCooldown - delta);
+                if (previousCooldown > 0 && battle.skillCooldown <= 0) announceSkillReady();
                 renderActionBar();
             }
             return;
@@ -3083,7 +3505,9 @@
 
         battle.totalElapsed += delta;
         battle.currentWaveElapsed += delta;
+        const previousCooldown = battle.skillCooldown;
         battle.skillCooldown = Math.max(0, battle.skillCooldown - delta);
+        if (previousCooldown > 0 && battle.skillCooldown <= 0) announceSkillReady();
         battle.laneSkillGlow = Math.max(0, battle.laneSkillGlow - delta * 1000);
         if (battle.skillEffectTimer > 0) {
             battle.skillEffectTimer = Math.max(0, battle.skillEffectTimer - delta);
@@ -3127,10 +3551,42 @@
             radius: stats.radius,
             stun: 0,
             slow: 0,
+            spawnFx: spawn.type === 'boss' ? 1.2 : 0.9,
             split: stats.split,
             elite: stats.elite,
             boss: stats.boss
         });
+        state.battle.spawnBursts.push({
+            x: LANE_POSITIONS[spawn.lane],
+            y: 96,
+            radius: spawn.type === 'boss' ? 100 : 72,
+            timer: spawn.type === 'boss' ? 1.4 : 0.9,
+            duration: spawn.type === 'boss' ? 1.4 : 0.9,
+            tone: spawn.type === 'boss' ? 'boss' : (spawn.type === 'elite' ? 'overclock' : 'wave'),
+            label: spawn.type === 'boss'
+                ? 'BOSS'
+                : (spawn.type === 'elite'
+                    ? getLocalized({ zh: '精英', en: 'ELITE' })
+                    : ''),
+            subLabel: spawn.type === 'boss'
+                ? getLocalized({ zh: `${getLaneName(spawn.lane)}压境`, en: `${getLaneName(spawn.lane)} under push` })
+                : (spawn.type === 'elite'
+                    ? getLocalized({ zh: `${getLaneName(spawn.lane)}突入`, en: `${getLaneName(spawn.lane)} breach` })
+                    : '')
+        });
+        const shouldShowLaneAlert = spawn.type === 'boss' || spawn.type === 'elite' || state.battle.laneAlertTimers[spawn.lane] <= 0;
+        if (shouldShowLaneAlert) {
+            const laneAlert = getLaneSpawnAlert(spawn);
+            pushBattleAlert(laneAlert.text, laneAlert.tone, laneAlert.duration);
+            state.battle.laneAlertTimers[spawn.lane] = spawn.type === 'boss' ? 1.8 : 1.15;
+        }
+        if (spawn.type === 'boss') {
+            state.battle.bossAlertTimer = 3.2;
+            state.battle.skillReadyPulse = Math.max(state.battle.skillReadyPulse, 1.4);
+            triggerBattleBanner(t('bossIncomingText'), 'boss', 2.2);
+            triggerEdgeFlash('boss', 1.5);
+            showToast(t('toastBossIncoming'));
+        }
     }
 
     function getEnemyStats(type, chapter, wave) {
@@ -3159,6 +3615,7 @@
     function updateEnemies(delta) {
         for (let index = state.battle.enemies.length - 1; index >= 0; index -= 1) {
             const enemy = state.battle.enemies[index];
+            enemy.spawnFx = Math.max(0, (Number(enemy.spawnFx) || 0) - delta * 2.4);
             enemy.stun = Math.max(0, enemy.stun - delta);
             enemy.slow = Math.max(0, enemy.slow - delta * 0.5);
             if (enemy.stun > 0) continue;
@@ -4135,10 +4592,13 @@
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         drawLanes(ctx);
+        drawSpawnBursts(ctx);
         drawCore(ctx);
         drawTowers(ctx);
         drawEnemies(ctx);
         drawCanvasTopInfo(ctx);
+        drawBattleBanner(ctx);
+        drawEdgeFlash(ctx);
     }
 
     function drawLanes(ctx) {
@@ -4158,7 +4618,51 @@
         });
     }
 
+    function drawSpawnBursts(ctx) {
+        state.battle.spawnBursts.forEach((burst) => {
+            const progress = Math.max(0, Math.min(1, burst.timer / burst.duration));
+            const alpha = progress * 0.5;
+            const radius = burst.radius * (1.2 - progress * 0.45);
+            const tone = getBattleToneColor(burst.tone);
+            ctx.save();
+            ctx.strokeStyle = `rgba(${tone}, ${alpha})`;
+            ctx.lineWidth = 4 + progress * 8;
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = `rgba(${tone}, ${alpha * 0.18})`;
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, radius * 0.72, 0, Math.PI * 2);
+            ctx.fill();
+            if (burst.label) {
+                ctx.fillStyle = `rgba(3,8,18,${Math.min(0.84, 0.5 + alpha * 0.8)})`;
+                fillRoundRect(ctx, burst.x - 52, burst.y - 18, 104, 30, 999);
+                ctx.fill();
+                ctx.strokeStyle = `rgba(${tone}, ${Math.min(0.8, alpha + 0.18)})`;
+                ctx.lineWidth = 1.5;
+                fillRoundRect(ctx, burst.x - 52, burst.y - 18, 104, 30, 999);
+                ctx.stroke();
+                ctx.fillStyle = `rgba(${tone}, ${Math.min(1, alpha + 0.24)})`;
+                ctx.font = '800 16px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(burst.label, burst.x, burst.y + 3);
+            }
+            if (burst.subLabel) {
+                ctx.fillStyle = `rgba(238,245,255,${Math.min(0.92, alpha + 0.24)})`;
+                ctx.font = '600 12px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(burst.subLabel, burst.x, burst.y + 28);
+            }
+            ctx.restore();
+        });
+    }
+
     function drawCore(ctx) {
+        if (state.battle.bossAlertTimer > 0) {
+            const pulse = 0.18 + (state.battle.bossAlertTimer % 0.6) * 0.18;
+            ctx.fillStyle = `rgba(255,107,137,${pulse})`;
+            ctx.fillRect(76, SAFE_CORE_Y - 8, CANVAS_WIDTH - 152, 96);
+        }
         ctx.fillStyle = 'rgba(255,154,90,0.16)';
         ctx.fillRect(80, SAFE_CORE_Y, CANVAS_WIDTH - 160, 80);
         ctx.strokeStyle = 'rgba(255,210,107,0.6)';
@@ -4183,6 +4687,14 @@
             const y = 842;
             ctx.fillStyle = 'rgba(255,255,255,0.06)';
             ctx.fillRect(x - 38, y + 34, 76, 24);
+            if (state.battle.skillReadyPulse > 0 && state.battle.running) {
+                const pulse = state.battle.skillReadyPulse;
+                ctx.strokeStyle = `rgba(114,244,255,${Math.min(0.45, pulse * 0.22)})`;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(x, y, 42 + (1.8 - Math.min(1.8, pulse)) * 12, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.fillStyle = tower.color;
             ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = 'rgba(3,8,18,0.72)';
@@ -4203,26 +4715,37 @@
     function drawEnemies(ctx) {
         const colors = { grunt: '#91a2c0', fast: '#72f4ff', shield: '#ffd26b', split: '#9f79ff', elite: '#ff9a5a', boss: '#ff6b89' };
         state.battle.enemies.forEach((enemy) => {
+            const spawnScale = 1 + (Number(enemy.spawnFx) || 0) * 0.45;
+            const spawnAlpha = Math.max(0.48, 1 - (Number(enemy.spawnFx) || 0) * 0.42);
+            const radius = enemy.radius * spawnScale;
+            ctx.save();
+            ctx.globalAlpha = spawnAlpha;
             ctx.fillStyle = colors[enemy.type] || '#ffffff';
-            ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius, 0, Math.PI * 2); ctx.fill();
             if (enemy.elite) {
                 ctx.strokeStyle = 'rgba(255,255,255,0.4)';
                 ctx.lineWidth = enemy.boss ? 5 : 3;
-                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.radius + 8, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 8, 0, Math.PI * 2); ctx.stroke();
             }
             if (enemy.stun > 0 || enemy.slow > 0) {
                 ctx.strokeStyle = enemy.stun > 0 ? 'rgba(255,210,107,0.7)' : 'rgba(114,244,255,0.72)';
                 ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.radius + 14, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 14, 0, Math.PI * 2); ctx.stroke();
             }
-            drawHealthBar(ctx, enemy);
+            if (enemy.boss && state.battle.bossAlertTimer > 0) {
+                ctx.strokeStyle = `rgba(255,107,137,${0.26 + state.battle.bossAlertTimer * 0.08})`;
+                ctx.lineWidth = 6;
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 18, 0, Math.PI * 2); ctx.stroke();
+            }
+            ctx.restore();
+            drawHealthBar(ctx, enemy, radius);
         });
     }
 
-    function drawHealthBar(ctx, enemy) {
-        const width = enemy.radius * 2;
+    function drawHealthBar(ctx, enemy, radiusOverride = enemy.radius) {
+        const width = radiusOverride * 2;
         const x = enemy.x - width / 2;
-        const y = enemy.y - enemy.radius - 16;
+        const y = enemy.y - radiusOverride - 16;
         ctx.fillStyle = 'rgba(0,0,0,0.36)';
         ctx.fillRect(x, y, width, 6);
         ctx.fillStyle = enemy.boss ? '#ff6b89' : '#72f4ff';
@@ -4230,6 +4753,16 @@
     }
 
     function drawCanvasTopInfo(ctx) {
+        const skillReady = state.battle.skillCooldown <= 0;
+        if (skillReady && state.battle.running) {
+            ctx.fillStyle = 'rgba(114,244,255,0.12)';
+            fillRoundRect(ctx, 14, 10, 260, 78, 18);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(114,244,255,0.24)';
+            ctx.lineWidth = 1.5;
+            fillRoundRect(ctx, 14, 10, 260, 78, 18);
+            ctx.stroke();
+        }
         ctx.fillStyle = 'rgba(255,255,255,0.82)';
         ctx.font = '600 18px Inter';
         ctx.textAlign = 'left';
@@ -4237,6 +4770,184 @@
         ctx.font = '500 14px Inter';
         ctx.fillStyle = 'rgba(145,162,192,0.96)';
         ctx.fillText(`${t('threatLabel')}: ${t(getThreatKey())}`, 20, 56);
-        ctx.fillText(`${t(SKILLS[state.save.selectedSkill].nameKey)} · ${state.battle.skillCooldown > 0 ? state.battle.skillCooldown.toFixed(1) + 's' : 'READY'}`, 20, 78);
+        ctx.fillStyle = skillReady ? 'rgba(114,244,255,0.98)' : 'rgba(145,162,192,0.96)';
+        ctx.fillText(`${t(SKILLS[state.save.selectedSkill].nameKey)} · ${state.battle.skillCooldown > 0 ? state.battle.skillCooldown.toFixed(1) + 's' : getLocalized({ zh: '可释放', en: 'READY' })}`, 20, 78);
+    }
+
+    function drawBattleBanner(ctx) {
+        if (state.battle.bannerTimer <= 0 && state.battle.bossAlertTimer <= 0) return;
+        const activeTimer = state.battle.bannerTimer > 0 ? state.battle.bannerTimer : state.battle.bossAlertTimer;
+        const activeDuration = state.battle.bannerTimer > 0 ? state.battle.bannerDuration : 3.2;
+        const progress = Math.max(0, Math.min(1, activeTimer / Math.max(0.001, activeDuration)));
+        const alpha = Math.min(1, 0.28 + progress * 0.62);
+        const tone = state.battle.bannerTimer > 0 ? state.battle.bannerTone : 'boss';
+        const title = state.battle.bannerTimer > 0 ? state.battle.bannerText : t('bossIncomingText');
+        const subtitle = tone === 'boss'
+            ? getLocalized({ zh: '优先保住核心护盾，再集中火力处理 Boss', en: 'Protect the core shield first, then focus the boss.' })
+            : getLocalized({ zh: '观察哪一路先吃压，再决定何时交技能', en: 'Read which lane breaks first, then decide when to cast.' });
+        const toneColor = getBattleToneColor(tone);
+        const width = tone === 'boss' ? 420 : 360;
+        const x = (CANVAS_WIDTH - width) / 2;
+        const y = tone === 'boss' ? 112 : 132;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgba(3,8,18,${tone === 'boss' ? 0.88 : 0.76})`;
+        fillRoundRect(ctx, x, y, width, tone === 'boss' ? 100 : 84, 22);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${toneColor}, ${Math.min(0.95, alpha)})`;
+        ctx.lineWidth = tone === 'boss' ? 3 : 2;
+        fillRoundRect(ctx, x, y, width, tone === 'boss' ? 100 : 84, 22);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(${toneColor}, ${Math.min(1, alpha)})`;
+        ctx.font = tone === 'boss' ? '800 28px Inter' : '800 24px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(title, CANVAS_WIDTH / 2, y + 36);
+        ctx.fillStyle = 'rgba(238,245,255,0.9)';
+        ctx.font = '600 14px Inter';
+        ctx.fillText(subtitle, CANVAS_WIDTH / 2, y + 62);
+        if (tone === 'boss') {
+            ctx.fillStyle = 'rgba(255,107,137,0.18)';
+            fillRoundRect(ctx, x + 16, y + 72, width - 32, 14, 999);
+            ctx.fill();
+            ctx.fillStyle = `rgba(${toneColor}, 0.72)`;
+            fillRoundRect(ctx, x + 16, y + 72, (width - 32) * Math.max(0.18, progress), 14, 999);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    function drawEdgeFlash(ctx) {
+        const activeTimer = Math.max(state.battle.edgeFlashTimer, state.battle.bossAlertTimer * 0.6);
+        if (activeTimer <= 0) return;
+        const duration = Math.max(state.battle.edgeFlashDuration || 0.001, 0.001);
+        const ratio = state.battle.bossAlertTimer > 0
+            ? Math.max(0.2, Math.min(1, state.battle.bossAlertTimer / 3.2))
+            : Math.max(0, Math.min(1, activeTimer / duration));
+        const tone = state.battle.bossAlertTimer > 0 ? 'boss' : state.battle.edgeFlashTone;
+        const toneColor = getBattleToneColor(tone);
+        ctx.save();
+        ctx.strokeStyle = `rgba(${toneColor}, ${0.18 + ratio * 0.34})`;
+        ctx.lineWidth = 10 + ratio * 16;
+        ctx.shadowColor = `rgba(${toneColor}, ${0.22 + ratio * 0.28})`;
+        ctx.shadowBlur = 28;
+        ctx.strokeRect(10, 10, CANVAS_WIDTH - 20, CANVAS_HEIGHT - 20);
+        ctx.restore();
+    }
+
+    function setupDebugBattleScene() {
+        state.activeTab = 'defend';
+        document.body.setAttribute('data-defense-tab', 'defend');
+        hideOverlay(ui.startOverlay);
+        hideOverlay(ui.upgradeOverlay);
+        hideOverlay(ui.pauseOverlay);
+        hideOverlay(ui.resultOverlay);
+        state.save = {
+            ...state.save,
+            chapterIndex: 0,
+            bestChapterIndex: Math.max(state.save.bestChapterIndex, 0),
+            selectedSkill: 'emp',
+            laneLoadout: ['pulse', 'laser', 'harvest'],
+            towerLevels: { ...state.save.towerLevels, pulse: 4, laser: 4, harvest: 3, frost: 2, rocket: 2, chain: 1, rail: 1 },
+            researches: { ...state.save.researches, attack: 2, cadence: 2, fortify: 1, salvage: 1, relay: 2 }
+        };
+        state.battle = createEmptyBattle(state.save);
+        state.battle.running = true;
+        state.battle.currentWave = 3;
+        state.battle.coreHp = getCoreMaxHp();
+        state.battle.shield = getCoreShieldCap();
+        state.battle.lastFrame = performance.now();
+    }
+
+    function addDebugEnemy(type, lane, y) {
+        const chapter = getCurrentChapter();
+        const stats = getEnemyStats(type, chapter, type === 'boss' ? TOTAL_WAVES : Math.max(2, state.battle.currentWave || 2));
+        state.battle.enemies.push({
+            id: state.battle.nextEnemyId++,
+            type,
+            lane,
+            x: LANE_POSITIONS[lane],
+            y,
+            hp: stats.hp,
+            maxHp: stats.hp,
+            speed: stats.speed,
+            damage: stats.damage,
+            rewardGold: stats.rewardGold,
+            rewardCore: stats.rewardCore,
+            radius: stats.radius,
+            stun: 0,
+            slow: 0,
+            spawnFx: 0.4,
+            split: stats.split,
+            elite: stats.elite,
+            boss: stats.boss
+        });
+    }
+
+    function registerDebugApi() {
+        if (!DEFENSE_DEBUG_ENABLED) return;
+        window.__DEFENSE_DEBUG__ = {
+            wave(waveNumber = 3) {
+                setupDebugBattleScene();
+                state.battle.currentWave = Math.max(1, Math.min(TOTAL_WAVES, Number(waveNumber) || 3));
+                addDebugEnemy('fast', 0, 248);
+                addDebugEnemy('shield', 1, 208);
+                addDebugEnemy('grunt', 2, 228);
+                state.battle.spawnBursts.push({
+                    x: LANE_POSITIONS[1],
+                    y: 96,
+                    radius: 88,
+                    timer: 1.1,
+                    duration: 1.1,
+                    tone: 'wave',
+                    label: getLocalized({ zh: '敌袭', en: 'WAVE' }),
+                    subLabel: getLocalized({ zh: '中路接敌', en: 'MID CONTACT' })
+                });
+                triggerBattleBanner(t('waveIncomingText').replace('{wave}', String(state.battle.currentWave)), 'wave', 1.8);
+                triggerEdgeFlash('wave', 0.8);
+                pushBattleAlert(getLocalized({ zh: `第 ${state.battle.currentWave} 波来袭，先看中路接敌`, en: `Wave ${state.battle.currentWave} incoming. Mid lane contacts first.` }), 'wave', 2.2);
+                renderAll();
+            },
+            skillReady() {
+                setupDebugBattleScene();
+                state.battle.currentWave = 4;
+                addDebugEnemy('elite', 1, 322);
+                addDebugEnemy('fast', 2, 284);
+                state.battle.skillCooldown = 0;
+                state.battle.skillReadyPulse = 1.8;
+                pushBattleAlert(getLocalized({ zh: '主动技能已就绪，现在可以处理高压路', en: 'Active skill is ready. You can answer the pressured lane now.' }), 'skill', 2.2);
+                triggerBattleBanner(t('skillReadyBanner').replace('{skill}', t(SKILLS[state.save.selectedSkill].nameKey)), 'skill', 1.2);
+                renderAll();
+            },
+            boss() {
+                setupDebugBattleScene();
+                state.battle.currentWave = TOTAL_WAVES;
+                addDebugEnemy('boss', 1, 246);
+                addDebugEnemy('elite', 0, 284);
+                addDebugEnemy('elite', 2, 284);
+                state.battle.bossAlertTimer = 3.2;
+                state.battle.skillReadyPulse = 1.5;
+                state.battle.spawnBursts.push({
+                    x: LANE_POSITIONS[1],
+                    y: 96,
+                    radius: 112,
+                    timer: 1.5,
+                    duration: 1.5,
+                    tone: 'boss',
+                    label: 'BOSS',
+                    subLabel: getLocalized({ zh: '中路压境', en: 'CENTER PUSH' })
+                });
+                triggerBattleBanner(t('bossIncomingText'), 'boss', 2.3);
+                triggerEdgeFlash('boss', 1.4);
+                pushBattleAlert(getLocalized({ zh: 'Boss 已到场，先保核心护盾再集火', en: 'Boss is on the field. Stabilize the core shield, then focus fire.' }), 'boss', 2.5);
+                renderAll();
+            },
+            snapshot() {
+                return {
+                    wave: state.battle.currentWave,
+                    enemies: state.battle.enemies.map((enemy) => `${enemy.type}:${enemy.lane}:${Math.round(enemy.y)}`),
+                    alerts: state.battle.alerts.map((alert) => `${alert.tone}:${alert.text}`)
+                };
+            }
+        };
     }
 })();
