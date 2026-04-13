@@ -910,6 +910,8 @@
             skillReadyPulse: 0,
             alerts: [],
             laneAlertTimers: [0, 0, 0],
+            waveSpawnedCount: 0,
+            waveQueueSafetyRetries: 0,
             nextEnemyId: 1,
             nextAlertId: 1,
             coreHp: getCoreMaxHp(saveSnapshot),
@@ -946,8 +948,8 @@
         return String(navigator.language || '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
     }
 
-    function loadSave() {
-        const base = {
+    function createBaseSave() {
+        return {
             gold: 2800,
             cores: 140,
             chapterIndex: 0,
@@ -975,12 +977,85 @@
                 verifiedTxids: []
             }
         };
+    }
+
+    function clampSaveNumber(value, fallback, min = 0, max = Number.MAX_SAFE_INTEGER) {
+        const numeric = Math.floor(Number(value));
+        if (!Number.isFinite(numeric)) return fallback;
+        return Math.max(min, Math.min(max, numeric));
+    }
+
+    function normalizeSave(save, base = createBaseSave()) {
+        const normalized = {
+            ...base,
+            ...save
+        };
+        normalized.gold = clampSaveNumber(normalized.gold, base.gold, 0);
+        normalized.cores = clampSaveNumber(normalized.cores, base.cores, 0);
+        normalized.seasonXp = clampSaveNumber(normalized.seasonXp, base.seasonXp, 0);
+        normalized.chapterIndex = clampSaveNumber(normalized.chapterIndex, base.chapterIndex, 0, CHAPTERS.length - 1);
+        normalized.bestChapterIndex = clampSaveNumber(normalized.bestChapterIndex, Math.max(base.bestChapterIndex, normalized.chapterIndex), 0, CHAPTERS.length - 1);
+        normalized.bestChapterIndex = Math.max(normalized.bestChapterIndex, normalized.chapterIndex);
+        normalized.chapterIndex = Math.min(normalized.chapterIndex, normalized.bestChapterIndex);
+        normalized.selectedLane = clampSaveNumber(normalized.selectedLane, base.selectedLane, 0, 2);
+        normalized.selectedSkill = SKILLS[normalized.selectedSkill] ? normalized.selectedSkill : base.selectedSkill;
+        normalized.laneLoadout = Array.isArray(normalized.laneLoadout) && normalized.laneLoadout.length === 3
+            ? normalized.laneLoadout.map((towerId, index) => (TOWERS[towerId] ? towerId : base.laneLoadout[index]))
+            : base.laneLoadout.slice();
+        normalized.towerLevels = Object.fromEntries(
+            Object.keys(base.towerLevels).map((towerId) => [towerId, clampSaveNumber(normalized.towerLevels?.[towerId], base.towerLevels[towerId], 0)])
+        );
+        normalized.towerFragments = Object.fromEntries(
+            Object.keys(base.towerFragments).map((towerId) => [towerId, clampSaveNumber(normalized.towerFragments?.[towerId], base.towerFragments[towerId], 0)])
+        );
+        normalized.researches = Object.fromEntries(
+            Object.keys(base.researches).map((researchId) => [researchId, clampSaveNumber(normalized.researches?.[researchId], base.researches[researchId], 0)])
+        );
+        normalized.shopPurchases = normalized.shopPurchases && typeof normalized.shopPurchases === 'object'
+            ? { ...normalized.shopPurchases }
+            : {};
+        normalized.missionClaimed = Array.isArray(normalized.missionClaimed) ? Array.from(new Set(normalized.missionClaimed.filter(Boolean))) : [];
+        normalized.seasonClaimed = Array.isArray(normalized.seasonClaimed) ? Array.from(new Set(normalized.seasonClaimed.filter(Boolean))) : [];
+        normalized.dailySupplyAt = Math.max(0, Number(normalized.dailySupplyAt) || 0);
+        normalized.stats = {
+            ...base.stats,
+            ...(normalized.stats || {}),
+            runs: clampSaveNumber(normalized.stats?.runs, base.stats.runs, 0),
+            wins: clampSaveNumber(normalized.stats?.wins, base.stats.wins, 0),
+            kills: clampSaveNumber(normalized.stats?.kills, base.stats.kills, 0),
+            bossKills: clampSaveNumber(normalized.stats?.bossKills, base.stats.bossKills, 0),
+            skillsUsed: clampSaveNumber(normalized.stats?.skillsUsed, base.stats.skillsUsed, 0),
+            researchDone: clampSaveNumber(normalized.stats?.researchDone, base.stats.researchDone, 0),
+            totalDamage: clampSaveNumber(normalized.stats?.totalDamage, base.stats.totalDamage, 0),
+            chapterWins: normalized.stats?.chapterWins && typeof normalized.stats.chapterWins === 'object'
+                ? Object.fromEntries(Object.entries(normalized.stats.chapterWins).map(([chapterId, wins]) => [chapterId, clampSaveNumber(wins, 0, 0)]))
+                : {}
+        };
+        normalized.payment = {
+            ...base.payment,
+            ...(normalized.payment || {}),
+            minerId: typeof normalized.payment?.minerId === 'string' ? normalized.payment.minerId : '',
+            purchaseCount: clampSaveNumber(normalized.payment?.purchaseCount, base.payment.purchaseCount, 0),
+            totalSpent: Math.max(0, Number(normalized.payment?.totalSpent) || 0),
+            passUnlocked: !!normalized.payment?.passUnlocked,
+            claimedOrders: normalized.payment?.claimedOrders && typeof normalized.payment.claimedOrders === 'object' ? { ...normalized.payment.claimedOrders } : {},
+            pendingClaims: normalized.payment?.pendingClaims && typeof normalized.payment.pendingClaims === 'object' ? { ...normalized.payment.pendingClaims } : {},
+            premiumSeasonClaims: normalized.payment?.premiumSeasonClaims && typeof normalized.payment.premiumSeasonClaims === 'object' ? { ...normalized.payment.premiumSeasonClaims } : {},
+            verifiedTxids: Array.isArray(normalized.payment?.verifiedTxids)
+                ? Array.from(new Set(normalized.payment.verifiedTxids)).slice(0, 100)
+                : []
+        };
+        return normalized;
+    }
+
+    function loadSave() {
+        const base = createBaseSave();
 
         try {
             const raw = localStorage.getItem(SAVE_KEY);
             if (!raw) return base;
             const parsed = JSON.parse(raw);
-            return {
+            return normalizeSave({
                 ...base,
                 ...parsed,
                 laneLoadout: Array.isArray(parsed?.laneLoadout) && parsed.laneLoadout.length === 3 ? parsed.laneLoadout.slice(0, 3) : base.laneLoadout,
@@ -1008,7 +1083,7 @@
                         ? Array.from(new Set(parsed.payment.verifiedTxids)).slice(0, 100)
                         : []
                 }
-            };
+            }, base);
         } catch (error) {
             return base;
         }
@@ -1016,6 +1091,7 @@
 
     function saveProgress(showToastMessage) {
         try {
+            state.save = normalizeSave(state.save);
             localStorage.setItem(SAVE_KEY, JSON.stringify(state.save));
             if (showToastMessage) showToast(t('toastSaved'));
         } catch (error) {}
@@ -3374,6 +3450,10 @@
         state.battle.currentWaveElapsed = 0;
         state.battle.spawnQueue = buildWaveQueue(getCurrentChapter(), waveNumber);
         state.battle.awaitingUpgrade = false;
+        state.battle.pendingChoices = [];
+        state.battle.waveSpawnedCount = 0;
+        state.battle.waveQueueSafetyRetries = 0;
+        state.battle.lastFrame = performance.now();
         hideOverlay(ui.upgradeOverlay);
         const incomingText = waveNumber >= TOTAL_WAVES
             ? t('finalWaveIncomingText')
@@ -3396,15 +3476,24 @@
     function buildWaveQueue(chapter, waveNumber) {
         const queue = [];
         let at = 0.8;
-        const count = 5 + waveNumber * 2 + state.save.chapterIndex;
+        const chapterIndex = clampSaveNumber(state.save.chapterIndex, 0, 0, CHAPTERS.length - 1);
+        const count = 5 + waveNumber * 2 + chapterIndex;
         for (let index = 0; index < count; index += 1) {
-            at += Math.max(0.38, 1.08 - waveNumber * 0.08 - state.save.chapterIndex * 0.04 + (index % 2 === 0 ? 0.1 : 0));
+            at += Math.max(0.38, 1.08 - waveNumber * 0.08 - chapterIndex * 0.04 + (index % 2 === 0 ? 0.1 : 0));
             const pool = getEnemyPoolForWave(chapter, waveNumber);
-            queue.push({ at, lane: (index + waveNumber + state.save.chapterIndex) % 3, type: pool[index % pool.length] });
+            queue.push({ at, lane: (index + waveNumber + chapterIndex) % 3, type: pool[index % pool.length] });
         }
         if (waveNumber === TOTAL_WAVES) queue.push({ at: at + 1.6, lane: 1, type: 'boss' });
         else if (waveNumber >= 4) queue.push({ at: at + 0.9, lane: (waveNumber + 1) % 3, type: 'elite' });
         queue.push(...getChapterWaveQueueExtras(chapter, waveNumber, at));
+        if (!queue.length) {
+            const fallbackType = getEnemyPoolForWave(chapter, waveNumber)[0] || 'grunt';
+            queue.push(
+                { at: 1.1, lane: 0, type: fallbackType },
+                { at: 1.7, lane: 1, type: fallbackType },
+                { at: 2.3, lane: 2, type: fallbackType }
+            );
+        }
         queue.sort((a, b) => a.at - b.at || a.lane - b.lane);
         return queue;
     }
@@ -3524,6 +3613,19 @@
             return;
         }
         if (!battle.spawnQueue.length && !battle.enemies.length) {
+            if (battle.waveSpawnedCount <= 0 && battle.waveQueueSafetyRetries < 1) {
+                battle.waveQueueSafetyRetries += 1;
+                battle.currentWaveElapsed = 0;
+                battle.spawnQueue = buildWaveQueue(getCurrentChapter(), battle.currentWave);
+                renderHud();
+                renderActionBar();
+                return;
+            }
+            if (battle.waveSpawnedCount <= 0 && battle.currentWaveElapsed < 0.9) {
+                renderHud();
+                renderActionBar();
+                return;
+            }
             battle.runStats.clearedWaves = Math.max(battle.runStats.clearedWaves, battle.currentWave);
             if (battle.currentWave >= TOTAL_WAVES) finishBattle(true);
             else presentUpgradeChoices();
@@ -3536,6 +3638,7 @@
     function spawnEnemy(spawn) {
         const chapter = getCurrentChapter();
         const stats = getEnemyStats(spawn.type, chapter, state.battle.currentWave);
+        state.battle.waveSpawnedCount += 1;
         state.battle.enemies.push({
             id: state.battle.nextEnemyId++,
             type: spawn.type,
@@ -3598,7 +3701,8 @@
             elite: { hp: chapter.baseHp * 2.5, speed: chapter.baseSpeed * 0.95, damage: 18, rewardGold: 28, rewardCore: 2, radius: 26, elite: true },
             boss: { hp: chapter.baseHp * 6.8, speed: chapter.baseSpeed * 0.72, damage: 30, rewardGold: 64, rewardCore: 6, radius: 34, elite: true, boss: true }
         }[type];
-        const waveFactor = 1 + wave * 0.18 + state.save.chapterIndex * 0.11;
+        const chapterIndex = clampSaveNumber(state.save.chapterIndex, 0, 0, CHAPTERS.length - 1);
+        const waveFactor = 1 + wave * 0.18 + chapterIndex * 0.11;
         return {
             hp: Math.round(base.hp * waveFactor),
             speed: base.speed * (1 + wave * 0.04),
@@ -3750,6 +3854,8 @@
         choice.apply(state.battle);
         hideOverlay(ui.upgradeOverlay);
         state.battle.awaitingUpgrade = false;
+        state.battle.pendingChoices = [];
+        state.battle.lastFrame = performance.now();
         startWave(state.battle.currentWave + 1);
         renderAll();
     }
@@ -4060,7 +4166,9 @@
             || a.index - b.index;
     }
 
-    function getCurrentChapter() { return CHAPTERS[state.save.chapterIndex] || CHAPTERS[0]; }
+    function getCurrentChapter() {
+        return CHAPTERS[clampSaveNumber(state.save.chapterIndex, 0, 0, CHAPTERS.length - 1)] || CHAPTERS[0];
+    }
     function getChapterWinCount(chapterId, saveSnapshot = state.save) { return Number(saveSnapshot.stats?.chapterWins?.[chapterId]) || 0; }
     function getTotalFragments(save) { return Object.values(save.towerFragments || {}).reduce((sum, value) => sum + (Number(value) || 0), 0); }
     function getHighestTowerLevel(save) { return Math.max(...Object.values(save.towerLevels || { pulse: 1 }).map((level) => Number(level) || 0)); }
@@ -4886,6 +4994,30 @@
     function registerDebugApi() {
         if (!DEFENSE_DEBUG_ENABLED) return;
         window.__DEFENSE_DEBUG__ = {
+            startRun() {
+                startBattle(true);
+                renderAll();
+            },
+            pickFirstUpgrade() {
+                if (!state.battle.awaitingUpgrade || !state.battle.pendingChoices?.length) return false;
+                applyUpgradeChoice(state.battle.pendingChoices[0].id);
+                return true;
+            },
+            liveSnapshot() {
+                return {
+                    running: state.battle.running,
+                    paused: state.battle.paused,
+                    finished: state.battle.finished,
+                    awaitingUpgrade: state.battle.awaitingUpgrade,
+                    wave: state.battle.currentWave,
+                    currentWaveElapsed: Number(state.battle.currentWaveElapsed?.toFixed?.(2) || 0),
+                    enemies: state.battle.enemies.map((enemy) => `${enemy.type}:${enemy.lane}:${Math.round(enemy.y)}:${Math.round(enemy.hp)}`),
+                    spawnQueue: state.battle.spawnQueue.slice(0, 5).map((spawn) => `${spawn.type}:${spawn.lane}:${Number(spawn.at.toFixed(2))}`),
+                    pendingChoices: (state.battle.pendingChoices || []).map((choice) => choice.id),
+                    waveText: ui.waveValue?.textContent || '',
+                    note: ui.battleNote?.textContent || ''
+                };
+            },
             wave(waveNumber = 3) {
                 setupDebugBattleScene();
                 state.battle.currentWave = Math.max(1, Math.min(TOTAL_WAVES, Number(waveNumber) || 3));
