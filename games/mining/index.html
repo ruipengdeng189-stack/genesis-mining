@@ -7905,78 +7905,142 @@
     </style>
     <a class="hub-return-btn" href="/" aria-label="Return to Arcade">← Arcade</a>
     <style>
+        #mobileQuickUpgrades {
+            display: none;
+        }
+
         body.mobile-optimized[data-mobile-panel="main"] .power-center-section {
             overflow: visible !important;
         }
 
         body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .main-content {
-            order: 2;
+            order: 3;
         }
 
         body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container {
-            order: 3;
-            position: static !important;
-            display: grid !important;
-            left: auto !important;
-            right: auto !important;
-            top: auto !important;
-            bottom: auto !important;
-            width: 100% !important;
-            max-width: 336px !important;
-            margin: 2px auto 0 !important;
-            padding: 0 !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 8px !important;
-            align-content: start !important;
-            background: transparent !important;
-            border: 0 !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            overflow: visible !important;
-        }
-
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container .upgrade-section {
-            min-height: 0 !important;
-            padding: 10px 9px !important;
-            gap: 6px !important;
-            border-radius: 14px !important;
-            box-shadow: 0 0 14px rgba(0, 255, 65, 0.12) !important;
-        }
-
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container .upgrade-section:last-child {
-            grid-column: 1 / -1;
-        }
-
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container .upgrade-section h2 {
-            font-size: 13px !important;
-            margin-bottom: 0 !important;
-        }
-
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container .upgrade-info {
-            font-size: 10px !important;
-            line-height: 1.35 !important;
-            margin-bottom: 0 !important;
-        }
-
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container .upgrade-section > div[style*="font-size: 11px"] {
             display: none !important;
         }
 
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container #upgradeBtn,
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container #coolingBtn,
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container #autoBtn {
-            min-height: 40px !important;
-            padding: 8px 6px !important;
-            font-size: 11px !important;
-            line-height: 1.2 !important;
-            border-radius: 12px !important;
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades {
+            order: 2;
+            display: grid !important;
+            width: 100% !important;
+            max-width: 336px !important;
+            margin: 2px auto 0 !important;
+            gap: 10px !important;
+            padding: 11px 10px 12px !important;
+            background: linear-gradient(180deg, rgba(6, 28, 20, 0.96), rgba(4, 16, 11, 0.92)) !important;
+            border: 1px solid rgba(76, 255, 170, 0.22) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28), inset 0 0 18px rgba(0, 255, 65, 0.05) !important;
+            overflow: hidden !important;
         }
 
-        body.mobile-optimized[data-mobile-panel="main"] .power-center-section > .upgrade-container .upgrade-section.ready {
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrades-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrades-title {
+            min-width: 0;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(196, 255, 220, 0.92);
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrades-link {
+            appearance: none;
+            border: 1px solid rgba(76, 255, 170, 0.24);
+            background: rgba(8, 24, 16, 0.85);
+            color: #8cffbe;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrades-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-btn {
+            appearance: none;
+            border: 1px solid rgba(76, 255, 170, 0.14);
+            background: linear-gradient(180deg, rgba(10, 30, 22, 0.9), rgba(6, 16, 12, 0.94));
+            color: #d8ffe7;
+            border-radius: 15px;
+            min-height: 88px;
+            padding: 10px 9px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 4px;
+            font-family: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+            touch-action: manipulation;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-btn.ready {
+            border-color: rgba(255, 208, 87, 0.52);
+            box-shadow: 0 0 18px rgba(255, 208, 87, 0.22), inset 0 0 18px rgba(255, 208, 87, 0.08);
+            background: linear-gradient(180deg, rgba(24, 38, 18, 0.94), rgba(12, 20, 10, 0.96));
             transform: translateY(-1px);
-            box-shadow: 0 0 18px rgba(76, 255, 170, 0.16), inset 0 0 16px rgba(0, 255, 65, 0.05) !important;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-btn:disabled {
+            opacity: 0.72;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-name {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            color: #f4fff8;
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-level,
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-meta {
+            font-size: 10px;
+            line-height: 1.3;
+            color: rgba(196, 255, 220, 0.74);
+        }
+
+        body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-cost {
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffe98a;
+        }
+
+        @media (max-width: 360px) {
+            body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades {
+                padding: 10px 9px 11px !important;
+            }
+
+            body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrades-grid {
+                gap: 6px;
+            }
+
+            body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-btn {
+                min-height: 84px;
+                padding: 9px 8px;
+            }
+
+            body.mobile-optimized[data-mobile-panel="main"] #mobileQuickUpgrades .mobile-quick-upgrade-name {
+                font-size: 11px;
+            }
         }
     </style>
     <canvas id="particleCanvas"></canvas>
@@ -8073,6 +8137,33 @@
                     <div>AUTO MINE</div>
                     <div class="stat-value" id="autoRate">0</div>
                     <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">CPS</div>
+                </div>
+            </div>
+
+            <div class="mobile-quick-upgrades" id="mobileQuickUpgrades" aria-label="Quick upgrade controls">
+                <div class="mobile-quick-upgrades-head">
+                    <div class="mobile-quick-upgrades-title" id="mobileQuickUpgradeTitle">Quick Upgrades</div>
+                    <button class="mobile-quick-upgrades-link" id="mobileQuickUpgradeManageBtn" type="button">Full Panel</button>
+                </div>
+                <div class="mobile-quick-upgrades-grid">
+                    <button class="mobile-quick-upgrade-btn" id="mobileQuickPowerBtn" type="button">
+                        <span class="mobile-quick-upgrade-name" id="mobileQuickPowerName">POWER</span>
+                        <span class="mobile-quick-upgrade-level" id="mobileQuickPowerLevel">LV 1</span>
+                        <span class="mobile-quick-upgrade-cost" id="mobileQuickPowerCostText">10 COIN</span>
+                        <span class="mobile-quick-upgrade-meta" id="mobileQuickPowerMeta">+1 base</span>
+                    </button>
+                    <button class="mobile-quick-upgrade-btn" id="mobileQuickCoolingBtn" type="button">
+                        <span class="mobile-quick-upgrade-name" id="mobileQuickCoolingName">COOL</span>
+                        <span class="mobile-quick-upgrade-level" id="mobileQuickCoolingLevel">LV 0</span>
+                        <span class="mobile-quick-upgrade-cost" id="mobileQuickCoolingCostText">100 COIN</span>
+                        <span class="mobile-quick-upgrade-meta" id="mobileQuickCoolingMeta">Heat cut</span>
+                    </button>
+                    <button class="mobile-quick-upgrade-btn" id="mobileQuickAutoBtn" type="button">
+                        <span class="mobile-quick-upgrade-name" id="mobileQuickAutoName">AUTO</span>
+                        <span class="mobile-quick-upgrade-level" id="mobileQuickAutoLevel">LV 0</span>
+                        <span class="mobile-quick-upgrade-cost" id="mobileQuickAutoCostText">50 COIN</span>
+                        <span class="mobile-quick-upgrade-meta" id="mobileQuickAutoMeta">+0.5/s rig</span>
+                    </button>
                 </div>
             </div>
 
@@ -8538,6 +8629,14 @@
                 difficultyBonus: 'Difficulty',
                 upgradeBtn: 'Upgrade (+1)',
                 boostBase: 'Boost Base Hashrate',
+                quickUpgradeTitle: 'Quick Upgrades',
+                quickUpgradeManage: 'Full Panel',
+                quickPowerShort: 'POWER',
+                quickPowerMeta: '+1 base',
+                quickCoolingShort: 'COOL',
+                quickCoolingMeta: 'Heat cut',
+                quickAutoShort: 'AUTO',
+                quickAutoMeta: '+0.5/s rig',
                 
                 coolingSystem: 'Cooling System',
                 upgradeCooling: 'Upgrade Cooling',
@@ -14453,6 +14552,8 @@
             const researchBtnLabel = document.getElementById('researchBtnLabel');
             const insightBtnLabel = document.getElementById('insightBtnLabel');
             const dataVaultBtnLabel = document.getElementById('dataVaultBtnLabel');
+            const mobileQuickUpgradeTitle = document.getElementById('mobileQuickUpgradeTitle');
+            const mobileQuickUpgradeManageBtn = document.getElementById('mobileQuickUpgradeManageBtn');
             const missionsTitle = document.getElementById('missionsTitle');
             const missionsSubtitle = document.getElementById('missionsSubtitle');
             const forgeTitle = document.getElementById('forgeTitle');
@@ -14523,6 +14624,13 @@
             sections[2].querySelector('.upgrade-info div:nth-child(2)').childNodes[0].textContent = `${lang.cost}: `;
             document.getElementById('autoBtn').textContent = lang.upgradeMiner;
             sections[2].querySelector('div:last-child').textContent = lang.offlineMining;
+
+            if (mobileQuickUpgradeTitle) {
+                mobileQuickUpgradeTitle.textContent = currentLang === 'en' ? 'Quick Upgrades' : '快捷升级';
+            }
+            if (mobileQuickUpgradeManageBtn) {
+                mobileQuickUpgradeManageBtn.textContent = currentLang === 'en' ? 'Full Panel' : '详情';
+            }
 
             document.querySelector('.countdown-title').textContent = lang.newbieOffer;
             document.getElementById('overclockBtn').innerHTML = lang.overclockBtn.replace('\n', '<br>');
@@ -17148,6 +17256,22 @@
         const upgradeBtn = document.getElementById('upgradeBtn');
         const autoBtn = document.getElementById('autoBtn');
         const coolingBtn = document.getElementById('coolingBtn');
+        const mobileQuickUpgradeManageBtn = document.getElementById('mobileQuickUpgradeManageBtn');
+        const mobileQuickPowerBtn = document.getElementById('mobileQuickPowerBtn');
+        const mobileQuickCoolingBtn = document.getElementById('mobileQuickCoolingBtn');
+        const mobileQuickAutoBtn = document.getElementById('mobileQuickAutoBtn');
+        const mobileQuickPowerName = document.getElementById('mobileQuickPowerName');
+        const mobileQuickCoolingName = document.getElementById('mobileQuickCoolingName');
+        const mobileQuickAutoName = document.getElementById('mobileQuickAutoName');
+        const mobileQuickPowerLevel = document.getElementById('mobileQuickPowerLevel');
+        const mobileQuickCoolingLevel = document.getElementById('mobileQuickCoolingLevel');
+        const mobileQuickAutoLevel = document.getElementById('mobileQuickAutoLevel');
+        const mobileQuickPowerCostText = document.getElementById('mobileQuickPowerCostText');
+        const mobileQuickCoolingCostText = document.getElementById('mobileQuickCoolingCostText');
+        const mobileQuickAutoCostText = document.getElementById('mobileQuickAutoCostText');
+        const mobileQuickPowerMeta = document.getElementById('mobileQuickPowerMeta');
+        const mobileQuickCoolingMeta = document.getElementById('mobileQuickCoolingMeta');
+        const mobileQuickAutoMeta = document.getElementById('mobileQuickAutoMeta');
         const upgradeSectionCards = document.querySelectorAll('.upgrade-section');
         const payBtn = document.getElementById('payBtn');
         const boostBtn = document.getElementById('boostBtn');
@@ -17588,6 +17712,151 @@
                 const hasUpgradeReady = coins >= upgradeCost || coins >= autoCost || coins >= coolingCost;
                 upgradesBadge.classList.toggle('active', hasUpgradeReady);
             }
+        }
+
+        function showUpgradeFeedback(anchorEl, text) {
+            const fallbackRect = {
+                left: Math.max(0, (window.innerWidth || 360) * 0.5 - 20),
+                width: 40,
+                top: Math.max(88, (window.innerHeight || 720) * 0.24)
+            };
+            const rect = anchorEl && typeof anchorEl.getBoundingClientRect === 'function'
+                ? anchorEl.getBoundingClientRect()
+                : fallbackRect;
+            const upgradeParticle = document.createElement('div');
+            upgradeParticle.className = 'particle';
+            upgradeParticle.textContent = text;
+            upgradeParticle.style.left = `${rect.left + rect.width / 2}px`;
+            upgradeParticle.style.top = `${Math.max(88, rect.top)}px`;
+            upgradeParticle.style.fontSize = isMobileViewport() ? '16px' : '20px';
+            document.body.appendChild(upgradeParticle);
+
+            setTimeout(() => {
+                upgradeParticle.remove();
+            }, 1000);
+        }
+
+        function syncMobileQuickUpgrades() {
+            if (!mobileQuickPowerBtn || !mobileQuickCoolingBtn || !mobileQuickAutoBtn) {
+                return;
+            }
+
+            const labels = currentLang === 'en'
+                ? {
+                    power: 'POWER',
+                    powerMeta: '+1 base',
+                    cooling: 'COOL',
+                    coolingMeta: 'Heat cut',
+                    auto: 'AUTO',
+                    autoMeta: '+0.5/s rig'
+                }
+                : {
+                    power: '快捷算力',
+                    powerMeta: '+1 基础',
+                    cooling: '冷却',
+                    coolingMeta: '压制过热',
+                    auto: '挂机',
+                    autoMeta: '+0.5/秒'
+                };
+
+            if (mobileQuickPowerName) {
+                mobileQuickPowerName.textContent = labels.power;
+            }
+            if (mobileQuickCoolingName) {
+                mobileQuickCoolingName.textContent = labels.cooling;
+            }
+            if (mobileQuickAutoName) {
+                mobileQuickAutoName.textContent = labels.auto;
+            }
+            if (mobileQuickPowerMeta) {
+                mobileQuickPowerMeta.textContent = labels.powerMeta;
+            }
+            if (mobileQuickCoolingMeta) {
+                mobileQuickCoolingMeta.textContent = labels.coolingMeta;
+            }
+            if (mobileQuickAutoMeta) {
+                mobileQuickAutoMeta.textContent = labels.autoMeta;
+            }
+
+            if (mobileQuickPowerLevel) {
+                mobileQuickPowerLevel.textContent = `LV ${level}`;
+            }
+            if (mobileQuickCoolingLevel) {
+                mobileQuickCoolingLevel.textContent = `LV ${coolingLevel}`;
+            }
+            if (mobileQuickAutoLevel) {
+                mobileQuickAutoLevel.textContent = `LV ${autoLevel}`;
+            }
+
+            if (mobileQuickPowerCostText) {
+                mobileQuickPowerCostText.textContent = `${upgradeCost} COIN`;
+            }
+            if (mobileQuickCoolingCostText) {
+                mobileQuickCoolingCostText.textContent = `${coolingCost} COIN`;
+            }
+            if (mobileQuickAutoCostText) {
+                mobileQuickAutoCostText.textContent = `${autoCost} COIN`;
+            }
+
+            const quickButtonStates = [
+                { button: mobileQuickPowerBtn, ready: coins >= upgradeCost },
+                { button: mobileQuickCoolingBtn, ready: coins >= coolingCost },
+                { button: mobileQuickAutoBtn, ready: coins >= autoCost }
+            ];
+
+            quickButtonStates.forEach(({ button, ready }) => {
+                button.disabled = !ready;
+                button.classList.toggle('ready', ready);
+            });
+        }
+
+        function purchasePowerUpgrade(anchorEl = upgradeBtn) {
+            if (coins < upgradeCost) {
+                return false;
+            }
+
+            const powerGain = getUpgradePowerGain();
+            coins -= upgradeCost;
+            power += powerGain;
+            level += 1;
+            baseUpgradeCost = Math.floor(baseUpgradeCost * getUpgradeCostGrowth());
+
+            showUpgradeFeedback(anchorEl, `Computing power +${powerGain}!`);
+            playUpgradeSound('tap');
+            updateDisplay();
+            return true;
+        }
+
+        function purchaseAutoUpgrade(anchorEl = autoBtn) {
+            if (coins < autoCost) {
+                return false;
+            }
+
+            const autoGain = getAutoPurchaseGain();
+            coins -= autoCost;
+            autoLevel += 1;
+            autoRate += autoGain;
+            autoCost = Math.floor(autoCost * getAutoCostGrowth());
+
+            showUpgradeFeedback(anchorEl, `Mining rig +${autoGain.toFixed(2)}!`);
+            playUpgradeSound('auto');
+            updateDisplay();
+            return true;
+        }
+
+        function purchaseCoolingUpgrade(anchorEl = coolingBtn) {
+            if (coins < coolingCost) {
+                return false;
+            }
+
+            coins -= coolingCost;
+            coolingLevel += 1;
+            coolingCost = Math.floor(coolingCost * getCoolingCostGrowth());
+
+            showUpgradeFeedback(anchorEl, 'Cooling upgrade!');
+            playUpgradeSound('cooling');
+            updateDisplay();
+            return true;
         }
 
         function createMatrixBackground() {
@@ -18979,6 +19248,7 @@
                 coolingBtn.disabled = true;
             }
 
+            syncMobileQuickUpgrades();
             updateWarningBorders();
             updateMobileDockNotifications();
         }
@@ -19096,89 +19366,32 @@
             handleMineAction(event);
         }, { dedupMs: 55 });
 
-        upgradeBtn.addEventListener('click', () => {
-            if (coins >= upgradeCost) {
-                const powerGain = getUpgradePowerGain();
-                coins -= upgradeCost;
-                power += powerGain;
-                level += 1;
-                baseUpgradeCost = Math.floor(baseUpgradeCost * getUpgradeCostGrowth());
-                
-                const rect = upgradeBtn.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top;
-                
-                const upgradeParticle = document.createElement('div');
-                upgradeParticle.className = 'particle';
-                upgradeParticle.textContent = `Computing power +${powerGain}!`;
-                upgradeParticle.style.left = `${x}px`;
-                upgradeParticle.style.top = `${y}px`;
-                upgradeParticle.style.fontSize = '20px';
-                document.body.appendChild(upgradeParticle);
-                
-                setTimeout(() => {
-                    upgradeParticle.remove();
-                }, 1000);
-                
-                playUpgradeSound('tap');
-                updateDisplay();
-            }
-        });
+        bindResponsiveTap(upgradeBtn, () => upgradeBtn, () => {
+            purchasePowerUpgrade(upgradeBtn);
+        }, { dedupMs: 55 });
 
-        autoBtn.addEventListener('click', () => {
-            if (coins >= autoCost) {
-                const autoGain = getAutoPurchaseGain();
-                coins -= autoCost;
-                autoLevel += 1;
-                autoRate += autoGain;
-                autoCost = Math.floor(autoCost * getAutoCostGrowth());
-                
-                const rect = autoBtn.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top;
-                
-                const upgradeParticle = document.createElement('div');
-                upgradeParticle.className = 'particle';
-                upgradeParticle.textContent = `Mining rig +${autoGain.toFixed(2)}!`;
-                upgradeParticle.style.left = `${x}px`;
-                upgradeParticle.style.top = `${y}px`;
-                upgradeParticle.style.fontSize = '20px';
-                document.body.appendChild(upgradeParticle);
-                
-                setTimeout(() => {
-                    upgradeParticle.remove();
-                }, 1000);
-                
-                playUpgradeSound('auto');
-                updateDisplay();
-            }
-        });
+        bindResponsiveTap(autoBtn, () => autoBtn, () => {
+            purchaseAutoUpgrade(autoBtn);
+        }, { dedupMs: 55 });
 
-        coolingBtn.addEventListener('click', () => {
-            if (coins >= coolingCost) {
-                coins -= coolingCost;
-                coolingLevel += 1;
-                coolingCost = Math.floor(coolingCost * getCoolingCostGrowth());
-                
-                const rect = coolingBtn.getBoundingClientRect();
-                const x = rect.left + rect.width / 2;
-                const y = rect.top;
-                
-                const upgradeParticle = document.createElement('div');
-                upgradeParticle.className = 'particle';
-                upgradeParticle.textContent = 'Cooling upgrade!';
-                upgradeParticle.style.left = `${x}px`;
-                upgradeParticle.style.top = `${y}px`;
-                upgradeParticle.style.fontSize = '20px';
-                document.body.appendChild(upgradeParticle);
-                
-                setTimeout(() => {
-                    upgradeParticle.remove();
-                }, 1000);
-                
-                playUpgradeSound('cooling');
-                updateDisplay();
-            }
+        bindResponsiveTap(coolingBtn, () => coolingBtn, () => {
+            purchaseCoolingUpgrade(coolingBtn);
+        }, { dedupMs: 55 });
+
+        bindResponsiveTap(mobileQuickPowerBtn, () => mobileQuickPowerBtn, () => {
+            purchasePowerUpgrade(mobileQuickPowerBtn);
+        }, { dedupMs: 55 });
+
+        bindResponsiveTap(mobileQuickCoolingBtn, () => mobileQuickCoolingBtn, () => {
+            purchaseCoolingUpgrade(mobileQuickCoolingBtn);
+        }, { dedupMs: 55 });
+
+        bindResponsiveTap(mobileQuickAutoBtn, () => mobileQuickAutoBtn, () => {
+            purchaseAutoUpgrade(mobileQuickAutoBtn);
+        }, { dedupMs: 55 });
+
+        bindResponsiveTap(mobileQuickUpgradeManageBtn, () => mobileQuickUpgradeManageBtn, () => {
+            setMobilePanel('upgrades');
         });
 
         bindResponsiveTap(payBtn, () => payBtn, () => {
