@@ -861,8 +861,14 @@
             case 'claimMission':
                 claimMission(value);
                 break;
+            case 'claimAllMissions':
+                claimAllMissions();
+                break;
             case 'claimSeason':
                 claimSeason(value);
+                break;
+            case 'claimAllSeason':
+                claimAllSeasonRewards();
                 break;
             case 'claimDaily':
                 claimDailySupply();
@@ -1980,10 +1986,86 @@
         return lang === 'zh' ? `#${index}` : `#${index}`;
     }
 
+    function mergeRewards(...rewards) {
+        const merged = { gold: 0, cores: 0, seasonXp: 0, fragments: {} };
+        rewards.filter(Boolean).forEach((reward) => {
+            merged.gold += Number(reward.gold) || 0;
+            merged.cores += Number(reward.cores) || 0;
+            merged.seasonXp += Number(reward.seasonXp) || 0;
+            if (reward.fragments) {
+                Object.entries(reward.fragments).forEach(([towerId, amount]) => {
+                    merged.fragments[towerId] = (merged.fragments[towerId] || 0) + (Number(amount) || 0);
+                });
+            }
+        });
+        if (!Object.keys(merged.fragments).length) delete merged.fragments;
+        if (!merged.gold) delete merged.gold;
+        if (!merged.cores) delete merged.cores;
+        if (!merged.seasonXp) delete merged.seasonXp;
+        return merged;
+    }
+
+    function getClaimableMissionBundle(saveSnapshot = state.save) {
+        const missions = MISSIONS.filter((mission) => !saveSnapshot.missionClaimed.includes(mission.id) && mission.metric(saveSnapshot) >= mission.target);
+        return {
+            count: missions.length,
+            ids: missions.map((mission) => mission.id),
+            reward: mergeRewards(...missions.map((mission) => mission.reward))
+        };
+    }
+
+    function getClaimableSeasonBundle(saveSnapshot = state.save) {
+        const standardNodes = SEASON_NODES.filter((node) => !saveSnapshot.seasonClaimed.includes(node.id) && saveSnapshot.seasonXp >= node.xp);
+        const sponsorNodes = SPONSOR_SEASON_NODES.filter((node) => !!saveSnapshot.payment.passUnlocked && !saveSnapshot.payment.premiumSeasonClaims[node.id] && saveSnapshot.seasonXp >= node.xp);
+        return {
+            count: standardNodes.length + sponsorNodes.length,
+            sponsorCount: sponsorNodes.length,
+            standardIds: standardNodes.map((node) => node.id),
+            sponsorIds: sponsorNodes.map((node) => node.id),
+            reward: mergeRewards(...standardNodes.map((node) => node.reward), ...sponsorNodes.map((node) => node.reward))
+        };
+    }
+
     function renderMissionsTab() {
         const missionViews = MISSIONS.map((mission) => getMissionView(mission)).sort((a, b) => b.sort - a.sort);
+        const missionBundle = getClaimableMissionBundle();
         ui.panelContent.innerHTML = `
-            ${renderPanelHead(t('missionsPanelTitle'), t('missionsPanelDesc'), `<div class="mini-chip">${state.lang === 'zh' ? '鍙鍙栧鍔卞凡缃《' : 'Claimables pinned first'}</div>`)}
+            ${renderPanelHead(
+                t('missionsPanelTitle'),
+                t('missionsPanelDesc'),
+                `<div class="mini-chip">${missionBundle.count > 0
+                    ? getLocalized({ zh: `当前可批量领取 ${missionBundle.count} 个`, en: `${missionBundle.count} ready to batch claim` })
+                    : (state.lang === 'zh' ? '可领取奖励已置顶' : 'Claimables pinned first')
+                }</div>`
+            )}
+            <div class="card-grid">
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '任务回收', en: 'Mission Sweep' })}</div>
+                            <div class="card-title">${missionBundle.count > 0
+                                ? getLocalized({ zh: `${missionBundle.count} 个奖励待领取`, en: `${missionBundle.count} rewards ready` })
+                                : getLocalized({ zh: '当前暂无待领取任务', en: 'No mission rewards ready' })}</div>
+                        </div>
+                        <div class="card-number">${getLocalized({ zh: '一键结算', en: 'Batch Claim' })}</div>
+                    </div>
+                    <div class="card-copy">${missionBundle.count > 0
+                        ? getLocalized({
+                            zh: '把已完成任务一次性结算掉，能更快把金币、能核和碎片回流到当前防线成长。',
+                            en: 'Cash out finished missions in one tap to recycle gold, cores, and fragments into your current defense build.'
+                        })
+                        : getLocalized({
+                            zh: '继续推进任务目标，达到条件后这里会自动切换成一键领取入口。',
+                            en: 'Keep advancing mission goals and this panel will switch into a one-tap claim entry as soon as rewards are ready.'
+                        })}</div>
+                    ${missionBundle.count > 0 ? `<div class="reward-row">${renderRewardChips(missionBundle.reward)}</div>` : ''}
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="claimAllMissions" ${missionBundle.count > 0 ? '' : 'disabled'}>
+                            ${getLocalized({ zh: '一键领取任务', en: 'Claim All Missions' })}
+                        </button>
+                    </div>
+                </article>
+            </div>
             <div class="mission-grid">
                 ${missionViews.map((mission) => `
                     <article class="mission-card ${mission.claimable ? 'claimable' : ''} ${mission.claimed ? 'claimed' : ''}">
@@ -2011,6 +2093,7 @@
     function renderSeasonTab() {
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
         const rate = seasonInfo.required <= 0 ? 1 : seasonInfo.progress / seasonInfo.required;
+        const seasonBundle = getClaimableSeasonBundle();
         const nodes = SEASON_NODES.map((node, index) => ({ node, index, claimable: isSeasonClaimable(node.id), claimed: state.save.seasonClaimed.includes(node.id) }))
             .sort(compareRewardNodeState);
         ui.panelContent.innerHTML = `
@@ -2036,6 +2119,34 @@
                         <div class="card-number">${t('statKills')} ${formatCompact(state.save.stats.kills)}</div>
                     </div>
                     <div class="card-copy">${t('statRuns')} ${formatCompact(state.save.stats.runs)} 路 ${t('statWins')} ${formatCompact(state.save.stats.wins)}</div>
+                </article>
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '赛季回收', en: 'Season Sweep' })}</div>
+                            <div class="card-title">${seasonBundle.count > 0
+                                ? getLocalized({ zh: `${seasonBundle.count} 个节点待领取`, en: `${seasonBundle.count} nodes ready` })
+                                : getLocalized({ zh: '当前暂无待领取', en: 'Nothing ready yet' })}</div>
+                        </div>
+                        <div class="card-number">${seasonBundle.sponsorCount > 0
+                            ? getLocalized({ zh: `赞助 ${seasonBundle.sponsorCount}`, en: `Sponsor ${seasonBundle.sponsorCount}` })
+                            : getLocalized({ zh: '标准轨道', en: 'Standard Track' })}</div>
+                    </div>
+                    <div class="card-copy">${seasonBundle.count > 0
+                        ? getLocalized({
+                            zh: '标准赛季节点和赞助轨道奖励现在可以一起批量结算，减少来回点按。',
+                            en: 'Standard season nodes and sponsor-track rewards can now be settled together in one sweep.'
+                        })
+                        : getLocalized({
+                            zh: '继续推进章节、防守和赛季经验，达到节点后这里会自动出现一键领取入口。',
+                            en: 'Keep pushing chapters and Season XP; this panel will surface a batch-claim entry once nodes are ready.'
+                        })}</div>
+                    ${seasonBundle.count > 0 ? `<div class="reward-row">${renderRewardChips(seasonBundle.reward)}</div>` : ''}
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="claimAllSeason" ${seasonBundle.count > 0 ? '' : 'disabled'}>
+                            ${getLocalized({ zh: '一键领取赛季', en: 'Claim All Season' })}
+                        </button>
+                    </div>
                 </article>
             </div>
             <div class="season-grid">
@@ -2907,6 +3018,16 @@
         renderAll();
     }
 
+    function claimAllMissions() {
+        const bundle = getClaimableMissionBundle();
+        if (!bundle.count) return;
+        state.save.missionClaimed = Array.from(new Set([...state.save.missionClaimed, ...bundle.ids]));
+        grantReward(bundle.reward);
+        saveProgress();
+        showToast(getLocalized({ zh: `已一键领取 ${bundle.count} 个任务奖励`, en: `${bundle.count} mission rewards claimed` }));
+        renderAll();
+    }
+
     function claimSeason(id) {
         const node = SEASON_NODES.find((item) => item.id === id);
         if (!node || !isSeasonClaimable(id)) return;
@@ -2914,6 +3035,22 @@
         grantReward(node.reward);
         saveProgress();
         showToast(t('toastSeasonClaimed'));
+        renderAll();
+    }
+
+    function claimAllSeasonRewards() {
+        const bundle = getClaimableSeasonBundle();
+        if (!bundle.count) return;
+        state.save.seasonClaimed = Array.from(new Set([...state.save.seasonClaimed, ...bundle.standardIds]));
+        bundle.sponsorIds.forEach((id) => {
+            state.save.payment.premiumSeasonClaims[id] = true;
+        });
+        grantReward(bundle.reward);
+        saveProgress();
+        showToast(getLocalized({
+            zh: `已批量领取 ${bundle.count} 个赛季节点奖励`,
+            en: `${bundle.count} season rewards claimed`
+        }));
         renderAll();
     }
 
