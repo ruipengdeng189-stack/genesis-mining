@@ -864,6 +864,9 @@
             case 'openPayment':
                 openPaymentModal(value || null);
                 break;
+            case 'openTab':
+                switchTab(value || 'defend');
+                break;
             case 'startChapter':
                 startBattle(false);
                 break;
@@ -1280,10 +1283,49 @@
         });
     }
 
+    function getClaimableMissionCount() {
+        return MISSIONS.filter((mission) => !state.save.missionClaimed.includes(mission.id) && mission.metric(state.save) >= mission.target).length;
+    }
+
+    function getClaimableSeasonCount() {
+        return SEASON_NODES.filter((node) => isSeasonClaimable(node.id)).length;
+    }
+
+    function getDefenseEconomyPreview(chapter = getCurrentChapter()) {
+        const missionReady = getClaimableMissionCount();
+        const seasonReady = getClaimableSeasonCount();
+        const sponsorReady = getSponsorSeasonReadyCount();
+        const dailyReady = isDailySupplyReady();
+        const dailyRemaining = dailyReady
+            ? getLocalized({ zh: '鏃ュ父琛ョ粰鍙鍙', en: 'Daily supply ready' })
+            : getLocalized({
+                zh: `涓嬩竴娆¤ˉ缁?${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`,
+                en: `Next supply ${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`
+            });
+        const claimableTotal = missionReady + seasonReady + sponsorReady + (dailyReady ? 1 : 0);
+        const powerGap = Math.max(0, chapter.recommended - getPowerRating(state.save));
+        return {
+            missionReady,
+            seasonReady,
+            sponsorReady,
+            dailyReady,
+            dailyRemaining,
+            claimableTotal,
+            powerGap,
+            clearPreview: {
+                gold: chapter.goldReward,
+                cores: chapter.coreReward,
+                fragments: chapter.fragmentReward
+            }
+        };
+    }
+
     function renderDefendTab() {
         const current = getCurrentChapter();
         const focusPreview = getChapterFocusPreview(current);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
+        const economyPreview = getDefenseEconomyPreview(current);
+        const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
         ui.panelContent.innerHTML = `
             ${renderPanelHead(t('defendPanelTitle'), t('defendPanelDesc'))}
             <div class="chapter-row">
@@ -1345,8 +1387,51 @@
                             <div class="card-title">${getLocalized({ zh: `共 ${TOTAL_WAVES} 波`, en: `${TOTAL_WAVES} Waves` })}</div>
                         </div>
                         <div class="card-number">${t('chapterInfoBoss')}</div>
+                        </div>
+                        <div class="card-copy">${getChapterWavePlan(current)}</div>
+                    </article>
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                        <div class="card-kicker">${t('previewEconomy')}</div>
+                            <div class="card-title">${economyPreview.claimableTotal > 0
+                                ? getLocalized({ zh: '寮€鎵撳墠鏈夎祫婧愬彲鍥炴敹', en: 'Resources are ready before the next run' })
+                                : getLocalized({ zh: '鏈珷鑺傚洖鏀剁幆宸茬粡鎼ソ', en: 'This chapter loop is ready to fund itself' })}</div>
+                        </div>
+                        <div class="card-number">${economyPreview.claimableTotal > 0
+                            ? getLocalized({ zh: `寰呴 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })
+                            : economyPreview.dailyReady ? getLocalized({ zh: '鍙琛ョ粰', en: 'Supply ready' }) : economyPreview.dailyRemaining}</div>
                     </div>
-                    <div class="card-copy">${getChapterWavePlan(current)}</div>
+                    <div class="card-copy">${economyPreview.powerGap > 0
+                        ? getLocalized({
+                            zh: `鎺ㄨ崘鍏堣ˉ ${formatCompact(economyPreview.powerGap)} 鎴樺姏鍐嶅啿鏈珷鑺傦紝鍚屾椂鍙厛鍥炴敹鏃ュ父 / 浠诲姟 / 璧涘璧勬簮銆`,
+                            en: `You are about ${formatCompact(economyPreview.powerGap)} power short, so reclaim daily, mission, and season resources before pushing.`
+                        })
+                        : getLocalized({
+                            zh: '褰撳墠鎴樺姏宸茬粡杈惧埌鎺ㄨ崘鍖洪棿锛屽彲鐩存帴寮€鎵撳苟绻佺粰璧勬簮鍥炴祦銆',
+                            en: 'Your power is inside the recommended range, so you can defend now and keep the resource loop rolling.'
+                        })}</div>
+                    <div class="reward-row">
+                        <span class="mini-chip">${getLocalized({ zh: `閫氬叧棰勮 ${formatCompact(economyPreview.clearPreview.gold)}G`, en: `Clear ${formatCompact(economyPreview.clearPreview.gold)}G` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `${formatCompact(economyPreview.clearPreview.cores)} C`, en: `${formatCompact(economyPreview.clearPreview.cores)} C` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `${formatCompact(economyPreview.clearPreview.fragments)} ${t('fragmentLabel')}`, en: `${formatCompact(economyPreview.clearPreview.fragments)} ${t('fragmentLabel')}` })}</span>
+                        <span class="mini-chip">${economyPreview.dailyRemaining}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `浠诲姟寰呴 ${economyPreview.missionReady}`, en: `Missions ${economyPreview.missionReady}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `璧涘寰呴 ${seasonTotalReady}`, en: `Season ${seasonTotalReady}` })}</span>
+                    </div>
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="${economyPreview.dailyReady ? 'claimDaily' : 'openTab'}" data-value="${economyPreview.dailyReady ? 'daily' : 'shop'}">
+                            ${economyPreview.dailyReady
+                                ? getLocalized({ zh: '鐩存帴棰嗗彇琛ョ粰', en: 'Claim Supply' })
+                                : getLocalized({ zh: '鎵撳紑琛ョ粰', en: 'Open Supply' })}
+                        </button>
+                        ${economyPreview.missionReady > 0
+                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="missions">${getLocalized({ zh: `浠诲姟 x${economyPreview.missionReady}`, en: `Missions x${economyPreview.missionReady}` })}</button>`
+                            : ''}
+                        ${seasonTotalReady > 0
+                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">${getLocalized({ zh: `璧涘 x${seasonTotalReady}`, en: `Season x${seasonTotalReady}` })}</button>`
+                            : ''}
+                    </div>
                 </article>
             </div>
         `;
