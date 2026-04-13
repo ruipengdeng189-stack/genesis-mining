@@ -643,9 +643,11 @@
     }
 
     function cacheDom() {
+        ui.stageCard = document.getElementById('stageCard');
         ui.canvas = document.getElementById('battlefieldCanvas');
         ui.ctx = ui.canvas.getContext('2d');
         ui.toast = document.getElementById('toast');
+        ui.panelCard = document.getElementById('panelCard');
         ui.panelContent = document.getElementById('panelContent');
         ui.tabBar = document.getElementById('tabBar');
         ui.laneStrip = document.getElementById('laneStrip');
@@ -2904,9 +2906,25 @@
         });
     }
 
+    function scrollToActiveSection(tab) {
+        const target = tab === 'defend' ? ui.stageCard : ui.panelCard;
+        if (!target) return;
+        requestAnimationFrame(() => {
+            try {
+                target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            } catch (error) {}
+        });
+    }
+
     function switchTab(tab) {
-        state.activeTab = tab;
+        const nextTab = ['defend', 'loadout', 'research', 'missions', 'season', 'shop'].includes(tab) ? tab : 'defend';
+        const changed = state.activeTab !== nextTab;
+        if (changed && nextTab !== 'defend' && state.battle.running && !state.battle.finished && !state.battle.paused) {
+            pauseBattle();
+        }
+        state.activeTab = nextTab;
         renderAll();
+        if (changed) scrollToActiveSection(nextTab);
     }
 
     function selectChapter(index) {

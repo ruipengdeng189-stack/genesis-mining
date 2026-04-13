@@ -194,6 +194,8 @@ a {
 .stage-card,
 .panel-card {
     padding: 14px;
+    scroll-margin-top: calc(var(--safe-top) + 10px);
+    scroll-margin-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 20px);
 }
 
 .stage-card {
@@ -383,6 +385,10 @@ a {
 
 .battle-note {
     min-height: 18px;
+}
+
+body:not([data-defense-tab="defend"]) .stage-card {
+    display: none;
 }
 
 .panel-card {
@@ -1089,20 +1095,53 @@ a {
 
     .battlefield-wrap,
     #battlefieldCanvas {
-        min-height: clamp(280px, 42dvh, 440px);
+        min-height: clamp(320px, 46dvh, 480px);
+    }
+
+    body[data-defense-tab="defend"] .battlefield-wrap,
+    body[data-defense-tab="defend"] #battlefieldCanvas {
+        min-height: clamp(380px, 54dvh, 600px);
     }
 
     .lane-strip {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .lane-slot {
+        padding: 8px;
+        border-radius: 14px;
+    }
+
+    .lane-slot-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .lane-dps {
+        font-size: 10px;
+    }
+
+    .lane-tower {
+        font-size: 12px;
+    }
+
+    .lane-meta {
+        font-size: 10px;
+        line-height: 1.3;
     }
 
     .action-row {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
     }
 
     .wide-btn {
-        min-height: 44px;
+        min-height: 42px;
+        padding: 10px 8px;
+        border-radius: 12px;
+        font-size: 11px;
     }
 
     .app-tab-bar {
@@ -1128,13 +1167,54 @@ a {
         padding: 10px;
     }
 
+    body[data-defense-tab="defend"] .overlay-panel {
+        align-items: flex-end;
+        padding: 12px;
+    }
+
     .overlay-card {
         border-radius: 18px;
         padding: 14px;
     }
 
+    body[data-defense-tab="defend"] .overlay-card {
+        width: 100%;
+        max-width: none;
+    }
+
     .overlay-card h2 {
         font-size: 24px;
+    }
+
+    body[data-defense-tab="defend"] .overlay-card p {
+        font-size: 12px;
+        line-height: 1.55;
+    }
+
+    body[data-defense-tab="defend"] .overlay-meta,
+    body[data-defense-tab="defend"] .reward-list,
+    body[data-defense-tab="defend"] .result-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    body[data-defense-tab="defend"] .overlay-meta .mini-chip,
+    body[data-defense-tab="defend"] .reward-chip {
+        min-height: 28px;
+        padding: 0 10px;
+        font-size: 11px;
+    }
+
+    body[data-defense-tab="defend"] .battle-note {
+        min-height: 0;
+        font-size: 11px;
+        line-height: 1.45;
+    }
+
+    body:not([data-defense-tab="defend"]) .panel-card {
+        min-height: calc(100dvh - var(--safe-top) - var(--tabbar-height) - 96px);
     }
 
     .shop-kpi-grid {
@@ -1162,6 +1242,11 @@ a {
     .battlefield-wrap,
     #battlefieldCanvas {
         min-height: clamp(260px, 38dvh, 360px);
+    }
+
+    body[data-defense-tab="defend"] .battlefield-wrap,
+    body[data-defense-tab="defend"] #battlefieldCanvas {
+        min-height: clamp(360px, 50dvh, 520px);
     }
 
     .result-grid {
