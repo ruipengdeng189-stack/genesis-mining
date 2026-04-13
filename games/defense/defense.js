@@ -837,6 +837,12 @@
                 saveProgress();
                 renderAll();
                 break;
+            case 'applyChapterPreset':
+                applyChapterPreset(value || getCurrentChapter().id, true);
+                break;
+            case 'applyChapterLanePreset':
+                applyChapterPreset(value || getCurrentChapter().id, false);
+                break;
             case 'equipTower':
                 equipTower(value);
                 break;
@@ -1283,6 +1289,85 @@
         });
     }
 
+    function getChapterPresetConfig(chapterId) {
+        const map = {
+            '1-1': { lanes: ['pulse', 'laser', 'harvest'], skill: 'emp' },
+            '1-2': { lanes: ['laser', 'pulse', 'harvest'], skill: 'emp' },
+            '1-3': { lanes: ['frost', 'rocket', 'harvest'], skill: 'overclock' },
+            '2-1': { lanes: ['chain', 'frost', 'rocket'], skill: 'overclock' },
+            '2-2': { lanes: ['harvest', 'chain', 'rocket'], skill: 'overclock' },
+            '2-3': { lanes: ['frost', 'chain', 'rail'], skill: 'shield' },
+            '3-1': { lanes: ['chain', 'frost', 'rail'], skill: 'overclock' },
+            '3-2': { lanes: ['frost', 'rocket', 'chain'], skill: 'shield' },
+            '3-3': { lanes: ['frost', 'chain', 'rail'], skill: 'shield' }
+        };
+        return map[chapterId] || { lanes: ['pulse', 'laser', 'harvest'], skill: getRecommendedSkillIdForChapter(getCurrentChapter()) };
+    }
+
+    function isTowerUnlockedForSave(towerId, saveSnapshot = state.save) {
+        const tower = TOWERS[towerId];
+        const level = Number(saveSnapshot.towerLevels?.[towerId]) || 0;
+        return !!tower && (level > 0 || tower.unlockFragments === 0);
+    }
+
+    function getTowerPresetFallbacks(towerId) {
+        const fallbackMap = {
+            pulse: ['pulse', 'laser', 'harvest'],
+            laser: ['laser', 'pulse', 'harvest'],
+            harvest: ['harvest', 'pulse', 'laser'],
+            frost: ['frost', 'laser', 'pulse', 'harvest'],
+            rocket: ['rocket', 'laser', 'pulse', 'chain'],
+            chain: ['chain', 'laser', 'pulse', 'rocket'],
+            rail: ['rail', 'chain', 'rocket', 'laser', 'pulse']
+        };
+        return fallbackMap[towerId] || ['pulse', 'laser', 'harvest'];
+    }
+
+    function getChapterLoadoutPreset(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const config = getChapterPresetConfig(chapter.id);
+        const used = new Set();
+        const resolvedLanes = config.lanes.map((towerId, laneIndex) => {
+            const preferredOrder = [
+                towerId,
+                ...getTowerPresetFallbacks(towerId),
+                ...(saveSnapshot.laneLoadout || []),
+                'pulse',
+                'laser',
+                'harvest'
+            ];
+            let resolved = preferredOrder.find((candidate) => !used.has(candidate) && isTowerUnlockedForSave(candidate, saveSnapshot));
+            if (!resolved) {
+                resolved = preferredOrder.find((candidate) => isTowerUnlockedForSave(candidate, saveSnapshot))
+                    || saveSnapshot.laneLoadout?.[laneIndex]
+                    || 'pulse';
+            }
+            used.add(resolved);
+            return resolved;
+        });
+        return {
+            chapterId: chapter.id,
+            skill: config.skill,
+            preferredLanes: config.lanes,
+            lanes: resolvedLanes,
+            usedFallback: resolvedLanes.some((towerId, index) => towerId !== config.lanes[index])
+        };
+    }
+
+    function applyChapterPreset(chapterId, applySkill = true) {
+        const chapter = CHAPTERS.find((item) => item.id === chapterId) || getCurrentChapter();
+        const preset = getChapterLoadoutPreset(chapter);
+        state.save.laneLoadout = preset.lanes.slice(0, 3);
+        if (applySkill) {
+            state.save.selectedSkill = preset.skill;
+        }
+        saveProgress();
+        showToast(getLocalized({
+            zh: applySkill ? `宸插簲鐢?${chapter.id} 鎺ㄨ崘缂栭槦` : `宸插簲鐢?${chapter.id} 鎺ㄨ崘鐏姏缁勫悎`,
+            en: applySkill ? `${chapter.id} preset applied` : `${chapter.id} lane preset applied`
+        }));
+        renderAll();
+    }
+
     function getClaimableMissionCount() {
         return MISSIONS.filter((mission) => !state.save.missionClaimed.includes(mission.id) && mission.metric(state.save) >= mission.target).length;
     }
@@ -1439,8 +1524,43 @@
 
     function renderLoadoutTab() {
         const selectedLane = state.save.selectedLane;
+        const chapter = getCurrentChapter();
+        const preset = getChapterLoadoutPreset(chapter);
+        const presetSkillLabel = t(SKILLS[preset.skill].nameKey);
         ui.panelContent.innerHTML = `
             ${renderPanelHead(t('loadoutPanelTitle'), t('loadoutPanelDesc'), `<div class="mini-chip">${t('laneSelect')} 路 ${getLaneName(selectedLane)}</div>`)}
+            <article class="stat-card">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${getLocalized({ zh: '绔犺妭鎺ㄨ崘缂栭槦', en: 'Chapter Preset' })}</div>
+                        <div class="card-title">${chapter.id} 路 ${presetSkillLabel}</div>
+                    </div>
+                    <div class="card-number">${preset.usedFallback
+                        ? getLocalized({ zh: '宸茶嚜鍔ㄩ€傞厤', en: 'Auto adjusted' })
+                        : getLocalized({ zh: '鏍囧噯缂栭槦', en: 'Standard preset' })}</div>
+                </div>
+                <div class="card-copy">${preset.usedFallback
+                    ? getLocalized({
+                        zh: '閮ㄥ垎鎺ㄨ崘鐐彴灏氭湭瑙ｉ攣锛岀郴缁熷凡鑷姩鐢ㄥ綋鍓嶅彲鐢ㄧ殑鍚屽畾浣嶇偖鍙版浛鎹€',
+                        en: 'Some recommended towers are still locked, so the preset automatically swaps to currently available alternatives.'
+                    })
+                    : getLocalized({
+                        zh: '涓€閿簲鐢ㄥ綋鍓嶇珷鑺傜殑鎺ㄨ崘涓夎矾缂栭槦鍜屼富鍔ㄦ妧鑳斤紝鍙互鐩存帴寮€濮嬮槻瀹堛€',
+                        en: 'Apply the recommended three-lane build and active skill for the current chapter in one tap.'
+                    })}</div>
+                <div class="reward-row">
+                    ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} 路 ${towerLabel(towerId)}</span>`).join('')}
+                    <span class="mini-chip">${getLocalized({ zh: `鎶€鑳?${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
+                </div>
+                <div class="card-actions" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
+                        ${getLocalized({ zh: '涓€閿簲鐢ㄦ帹鑽愮紪闃?', en: 'Apply Preset' })}
+                    </button>
+                    <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
+                        ${getLocalized({ zh: '鍙浛鎹笁璺厤缃?', en: 'Apply Lanes Only' })}
+                    </button>
+                </div>
+            </article>
             <div class="lane-picker">
                 ${[0, 1, 2].map((lane) => `
                     <button class="lane-picker-btn ${selectedLane === lane ? 'active' : ''}" type="button" data-action="lane" data-value="${lane}">
@@ -1480,6 +1600,12 @@
         const canUpgrade = unlocked && level > 0 && level < 8 && state.save.gold >= getTowerUpgradeCost(tower.id);
         const canUnlock = !unlocked && (state.save.towerFragments[tower.id] || 0) >= getUnlockNeed(tower.id);
         const progress = unlocked ? Math.min(1, level / 8) : Math.min(1, (state.save.towerFragments[tower.id] || 0) / getUnlockNeed(tower.id));
+        const chapter = getCurrentChapter();
+        const preset = getChapterLoadoutPreset(chapter);
+        const recommendedLanes = preset.lanes
+            .map((towerId, laneIndex) => towerId === tower.id ? getLaneName(laneIndex) : '')
+            .filter(Boolean);
+        const focusRecommended = chapter.fragmentFocus.includes(tower.id);
         return `
             <article class="tower-card ${(canUpgrade || canUnlock) ? 'ready' : ''} ${!unlocked ? 'locked' : ''}">
                 <div class="card-top">
@@ -1493,6 +1619,8 @@
                 <div class="tower-tags">
                     <span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>
                     <span class="tag-chip">${formatCompact(state.save.towerFragments[tower.id] || 0)} ${t('fragmentLabel')}</span>
+                    ${focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '绔犺妭鎺夎惤鍊惧悜', en: 'Focus Drop' })}</span>` : ''}
+                    ${recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `鎺ㄨ崘 ${laneName}`, en: `${laneName} preset` })}</span>`).join('')}
                 </div>
                 <div class="progress-line"><i style="width:${(progress * 100).toFixed(2)}%;"></i></div>
                 <div class="card-actions">
