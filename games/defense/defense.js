@@ -843,6 +843,9 @@
             case 'applyChapterLanePreset':
                 applyChapterPreset(value || getCurrentChapter().id, false);
                 break;
+            case 'applyChapterPresetStart':
+                startChapterWithPreset(value || getCurrentChapter().id);
+                break;
             case 'equipTower':
                 equipTower(value);
                 break;
@@ -1353,7 +1356,8 @@
         };
     }
 
-    function applyChapterPreset(chapterId, applySkill = true) {
+    function applyChapterPreset(chapterId, applySkill = true, options = {}) {
+        const { showNotice = true, rerender = true } = options;
         const chapter = CHAPTERS.find((item) => item.id === chapterId) || getCurrentChapter();
         const preset = getChapterLoadoutPreset(chapter);
         state.save.laneLoadout = preset.lanes.slice(0, 3);
@@ -1361,11 +1365,42 @@
             state.save.selectedSkill = preset.skill;
         }
         saveProgress();
-        showToast(getLocalized({
-            zh: applySkill ? `宸插簲鐢?${chapter.id} 鎺ㄨ崘缂栭槦` : `宸插簲鐢?${chapter.id} 鎺ㄨ崘鐏姏缁勫悎`,
-            en: applySkill ? `${chapter.id} preset applied` : `${chapter.id} lane preset applied`
-        }));
-        renderAll();
+        if (showNotice) {
+            showToast(getLocalized({
+                zh: applySkill ? `宸插簲鐢?${chapter.id} 鎺ㄨ崘缂栭槦` : `宸插簲鐢?${chapter.id} 鎺ㄨ崘鐏姏缁勫悎`,
+                en: applySkill ? `${chapter.id} preset applied` : `${chapter.id} lane preset applied`
+            }));
+        }
+        if (rerender) renderAll();
+    }
+
+    function getChapterPrepOverview(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const preset = getChapterLoadoutPreset(chapter, saveSnapshot);
+        const currentLanes = [0, 1, 2].map((laneIndex) => saveSnapshot.laneLoadout?.[laneIndex] || preset.lanes[laneIndex] || 'pulse');
+        const currentSkill = saveSnapshot.selectedSkill || preset.skill;
+        const laneMatches = preset.lanes.map((towerId, laneIndex) => currentLanes[laneIndex] === towerId);
+        const skillMatches = currentSkill === preset.skill;
+        const powerGap = Math.max(0, Math.round(chapter.recommended - getPowerRating(saveSnapshot)));
+        const adjustmentsNeeded = laneMatches.filter((matched) => !matched).length + (skillMatches ? 0 : 1);
+        return {
+            preset,
+            currentLanes,
+            currentSkill,
+            laneMatches,
+            skillMatches,
+            powerGap,
+            adjustmentsNeeded,
+            ready: adjustmentsNeeded === 0 && powerGap <= 0
+        };
+    }
+
+    function startChapterWithPreset(chapterId) {
+        const chapterIndex = CHAPTERS.findIndex((item) => item.id === chapterId);
+        if (chapterIndex >= 0 && state.save.chapterIndex !== chapterIndex) {
+            state.save.chapterIndex = chapterIndex;
+        }
+        applyChapterPreset(chapterId, true, { showNotice: false, rerender: false });
+        startBattle(false);
     }
 
     function getClaimableMissionCount() {
@@ -1410,6 +1445,8 @@
         const focusPreview = getChapterFocusPreview(current);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
         const economyPreview = getDefenseEconomyPreview(current);
+        const prepOverview = getChapterPrepOverview(current);
+        const prepSkillLabel = t(SKILLS[prepOverview.currentSkill]?.nameKey || SKILLS[prepOverview.preset.skill].nameKey);
         const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
         ui.panelContent.innerHTML = `
             ${renderPanelHead(t('defendPanelTitle'), t('defendPanelDesc'))}
@@ -1455,6 +1492,49 @@
                 </div>
             </article>
             <div class="card-grid">
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '寮€鎵撳墠妫€鏌?', en: 'Battle Ready' })}</div>
+                            <div class="card-title">${prepOverview.ready
+                                ? getLocalized({ zh: '褰撳墠缂栭槦宸插氨缁?', en: 'Preset synced and ready' })
+                                : getLocalized({ zh: `杩樻湁 ${prepOverview.adjustmentsNeeded} 椤瑰緟璋冩暣`, en: `${prepOverview.adjustmentsNeeded} prep tweaks left` })}</div>
+                        </div>
+                        <div class="card-number">${prepOverview.powerGap > 0
+                            ? getLocalized({ zh: `鎴樺姏宸窛 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                            : getLocalized({ zh: '鎴樺姏杈炬爣', en: 'Power ready' })}</div>
+                    </div>
+                    <div class="card-copy">${prepOverview.ready
+                        ? getLocalized({
+                            zh: '涓夎矾鐐彴鍜屾妧鑳介兘宸茬粡瀵归綈褰撳墠绔犺妭鎺ㄨ崘锛屽彲浠ョ洿鎺ヨ繘鍏ラ槻瀹堬紝鏇村悗缁啿鍏冲彧闇€鍙嶅澶嶇敤杩欏缂栭槦銆',
+                            en: 'Your three lanes and skill already match the chapter preset, so you can jump straight into defense.'
+                        })
+                        : getLocalized({
+                            zh: '闃茬嚎椤甸潰鐜板湪鍙互鐩存帴涓€閿鐢ㄦ帹鑽愮紪闃燂紝涓嶇敤鍐嶆墜鍔ㄥ洖鍒拌閰嶉〉閫愪釜璋冩暣銆',
+                            en: 'You can now apply the recommended chapter setup right from the defend tab without manually rebuilding the loadout.'
+                        })}</div>
+                    <div class="reward-row">
+                        ${prepOverview.currentLanes.map((towerId, laneIndex) => `<span class="mini-chip">${prepOverview.laneMatches[laneIndex]
+                            ? getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} 宸插氨缁?`, en: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} ready` })
+                            : getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(towerId)} → ${towerLabel(prepOverview.preset.lanes[laneIndex])}`, en: `${getLaneName(laneIndex)} ${towerLabel(towerId)} → ${towerLabel(prepOverview.preset.lanes[laneIndex])}` })}</span>`).join('')}
+                        <span class="mini-chip">${prepOverview.skillMatches
+                            ? getLocalized({ zh: `鎶€鑳?${prepSkillLabel} 宸插氨缁?`, en: `Skill ${prepSkillLabel} ready` })
+                            : getLocalized({ zh: `鎶€鑳?${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}`, en: `Skill ${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}` })}</span>
+                    </div>
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${current.id}">
+                            ${prepOverview.ready
+                                ? getLocalized({ zh: '鐩存帴寮€鎵?', en: 'Defend Now' })
+                                : getLocalized({ zh: '涓€閿鐢ㄥ苟寮€鎵?', en: 'Apply & Defend' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="applyChapterPreset" data-value="${current.id}">
+                            ${getLocalized({ zh: '鍙悓姝ユ帹鑽愮紪闃?', en: 'Apply Preset' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '鍓嶅線瑁呴厤', en: 'Open Loadout' })}
+                        </button>
+                    </div>
+                </article>
                 <article class="stat-card">
                     <div class="card-top">
                         <div>
@@ -1526,6 +1606,7 @@
         const selectedLane = state.save.selectedLane;
         const chapter = getCurrentChapter();
         const preset = getChapterLoadoutPreset(chapter);
+        const prepOverview = getChapterPrepOverview(chapter);
         const presetSkillLabel = t(SKILLS[preset.skill].nameKey);
         ui.panelContent.innerHTML = `
             ${renderPanelHead(t('loadoutPanelTitle'), t('loadoutPanelDesc'), `<div class="mini-chip">${t('laneSelect')} 路 ${getLaneName(selectedLane)}</div>`)}
@@ -1555,6 +1636,11 @@
                 <div class="card-actions" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
                         ${getLocalized({ zh: '涓€閿簲鐢ㄦ帹鑽愮紪闃?', en: 'Apply Preset' })}
+                    </button>
+                    <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${chapter.id}">
+                        ${prepOverview.ready
+                            ? getLocalized({ zh: '鐩存帴寮€鎵?', en: 'Defend Now' })
+                            : getLocalized({ zh: '涓€閿鐢ㄥ苟寮€鎵?', en: 'Apply & Defend' })}
                     </button>
                     <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
                         ${getLocalized({ zh: '鍙浛鎹笁璺厤缃?', en: 'Apply Lanes Only' })}
@@ -2199,12 +2285,16 @@
         const mainEnemy = chapter.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ');
         const focusPreview = getChapterFocusPreview(chapter);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(chapter)].nameKey);
+        const prepOverview = getChapterPrepOverview(chapter);
         ui.startDescription.textContent = `${t('startDescTemplate').replace('{chapter}', chapter.id)} ${getChapterOpeningGuide(chapter)} ${getChapterWavePlan(chapter)}`;
         ui.startMeta.innerHTML = `
             <span class="mini-chip">${t('startMetaReward').replace('{gold}', formatCompact(chapter.goldReward)).replace('{core}', formatCompact(chapter.coreReward)).replace('{fragment}', formatCompact(chapter.fragmentReward))}</span>
             <span class="mini-chip">${t('startMetaEnemy').replace('{enemy}', mainEnemy)}</span>
             <span class="mini-chip">${getLocalized({ zh: `纰庣墖鍊惧悜 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
             <span class="mini-chip">${getLocalized({ zh: `鎺ㄨ崘鎶€鑳?${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
+            <span class="mini-chip">${prepOverview.ready
+                ? getLocalized({ zh: '鎺ㄨ崘缂栭槦宸插氨缁?', en: 'Preset ready' })
+                : getLocalized({ zh: `杩樻湁 ${prepOverview.adjustmentsNeeded} 椤瑰緟璋冩暣`, en: `${prepOverview.adjustmentsNeeded} prep tweaks` })}</span>
         `;
     }
 
