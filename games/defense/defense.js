@@ -1394,6 +1394,143 @@
         };
     }
 
+    function getResearchMeta(researchId) {
+        const titleMap = {
+            attack: state.lang === 'zh' ? '火力矩阵' : 'Damage Matrix',
+            cadence: state.lang === 'zh' ? '冷却回路' : 'Cooldown Circuit',
+            fortify: state.lang === 'zh' ? '核心装甲' : 'Core Armor',
+            salvage: state.lang === 'zh' ? '战利回收' : 'Salvage Recovery',
+            relay: state.lang === 'zh' ? '继电增幅' : 'Relay Amplifier'
+        };
+        const descMap = {
+            attack: state.lang === 'zh' ? '提升所有炮台基础伤害。' : 'Improves base damage for all towers.',
+            cadence: state.lang === 'zh' ? '提升所有炮台攻击频率。' : 'Improves attack speed for all towers.',
+            fortify: state.lang === 'zh' ? '提升核心上限与护盾容量。' : 'Raises max core HP and shield.',
+            salvage: state.lang === 'zh' ? '提升本局金币收益和采集塔回收量。' : 'Improves gold rewards and harvest returns.',
+            relay: state.lang === 'zh' ? '缩短主动技能冷却，并提升技能强度。' : 'Shortens active skill cooldown and strengthens the skill.'
+        };
+        return {
+            title: titleMap[researchId] || researchId,
+            desc: descMap[researchId] || ''
+        };
+    }
+
+    function getResearchRecommendationReason(researchId, chapter = getCurrentChapter(), preset = getChapterLoadoutPreset(chapter)) {
+        const enemies = new Set(chapter.enemies || []);
+        switch (researchId) {
+            case 'attack':
+                return enemies.has('boss') || enemies.has('shield')
+                    ? getLocalized({ zh: '当前章节有护盾怪或 Boss，优先补足单发伤害更稳。', en: 'Shield units and bosses in this chapter make stronger per-shot damage the safest push.' })
+                    : getLocalized({ zh: '这是最稳定的通用火力补强，能直接缩短每波清场时间。', en: 'This is the most reliable all-purpose firepower upgrade for shortening each wave.' });
+            case 'cadence':
+                return enemies.has('fast')
+                    ? getLocalized({ zh: '高速怪压力明显，先补攻速更容易守住前排节奏。', en: 'Fast enemies are the main pressure here, so extra fire rate helps stabilize the front line.' })
+                    : getLocalized({ zh: '当前推荐阵容里有持续输出塔，攻速收益会更直观。', en: 'Your current recommended loadout has sustained-fire towers, so attack speed pays off quickly.' });
+            case 'fortify':
+                return enemies.has('elite') || enemies.has('boss') || preset.skill === 'shield'
+                    ? getLocalized({ zh: '精英波和 Boss 波更吃核心容错，核心装甲能提高续航。', en: 'Elite and boss waves reward more core durability, making this the safer survival pick.' })
+                    : getLocalized({ zh: '如果你经常被后段压穿，先补核心装甲会更稳。', en: 'If late waves keep leaking through, fortify is the most stable fix.' });
+            case 'salvage':
+                return preset.lanes.includes('harvest')
+                    ? getLocalized({ zh: '当前推荐阵容带采集塔，战利回收会同步放大金币循环。', en: 'The current preset includes Harvest, so salvage upgrades amplify your gold loop immediately.' })
+                    : getLocalized({ zh: '当你想加快后续金币循环时，战利回收是最稳的经济补强。', en: 'When you want faster long-term gold flow, Salvage is the most reliable economy upgrade.' });
+            case 'relay':
+                return preset.skill === 'shield' || preset.skill === 'overclock'
+                    ? getLocalized({ zh: '当前章节推荐主动技吃频率，继电增幅能明显改善关键波的技能覆盖。', en: 'The recommended active skill benefits a lot from tighter cooldown coverage in this chapter.' })
+                    : getLocalized({ zh: '主动技能越快转好，越容易接住高压波次。', en: 'Shorter skill cycles make high-pressure waves much easier to absorb.' });
+            default:
+                return getLocalized({ zh: '先补这个分支能更平滑地推进当前章节。', en: 'This branch gives the smoothest progression into the current chapter.' });
+        }
+    }
+
+    function getResearchUpgradePlan(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const preset = getChapterLoadoutPreset(chapter, saveSnapshot);
+        const enemies = new Set(chapter.enemies || []);
+        const currentPower = getPowerRating(saveSnapshot);
+        const powerGap = Math.max(0, Math.round(chapter.recommended - currentPower));
+        const rankedPlan = Object.keys(RESEARCH).map((researchId) => {
+            const research = RESEARCH[researchId];
+            const level = getResearchLevel(researchId, saveSnapshot);
+            const maxLevel = research.maxLevel;
+            const maxed = level >= maxLevel;
+            const cost = maxed
+                ? 0
+                : Math.round(
+                    research.baseCost
+                    + research.stepCost * level
+                    + Math.max(0, level - 2) * research.stepCost * 0.12
+                    + Math.max(0, level - 5) * research.stepCost * 0.18
+                );
+            let score = 10;
+            if (researchId === 'attack') {
+                score += 16 + (powerGap > 0 ? 10 : 4);
+                if (enemies.has('shield')) score += 12;
+                if (enemies.has('boss')) score += 10;
+                if (preset.lanes.some((towerId) => ['rocket', 'rail', 'chain'].includes(towerId))) score += 8;
+            }
+            if (researchId === 'cadence') {
+                score += 14 + (powerGap > 0 ? 8 : 4);
+                if (enemies.has('fast')) score += 16;
+                if (preset.lanes.some((towerId) => ['pulse', 'laser', 'frost', 'chain'].includes(towerId))) score += 8;
+            }
+            if (researchId === 'fortify') {
+                score += 10;
+                if (enemies.has('elite')) score += 8;
+                if (enemies.has('boss')) score += 10;
+                if (powerGap > 180) score += 4;
+                if (preset.skill === 'shield') score += 6;
+            }
+            if (researchId === 'salvage') {
+                score += 8;
+                if (preset.lanes.includes('harvest')) score += 16;
+                if ((saveSnapshot.gold || 0) < 1200) score += 6;
+            }
+            if (researchId === 'relay') {
+                score += 9;
+                if (preset.skill === 'shield') score += 10;
+                if (preset.skill === 'overclock') score += 8;
+                if (preset.skill === 'emp') score += 5;
+                if (enemies.has('boss')) score += 4;
+            }
+            score -= level * 1.6;
+            if (!maxed && (saveSnapshot.gold || 0) >= cost) score += 6;
+            if (maxed) score = -999;
+            const currentEffect = research.effect(level);
+            const nextEffect = research.effect(Math.min(maxLevel, level + 1));
+            return {
+                id: researchId,
+                level,
+                maxLevel,
+                maxed,
+                cost,
+                affordable: !maxed && (saveSnapshot.gold || 0) >= cost,
+                shortage: !maxed ? Math.max(0, cost - (saveSnapshot.gold || 0)) : 0,
+                score,
+                currentEffect,
+                nextEffect,
+                nextDelta: Math.max(0, nextEffect - currentEffect),
+                meta: getResearchMeta(researchId),
+                reason: getResearchRecommendationReason(researchId, chapter, preset)
+            };
+        }).sort((a, b) => b.score - a.score || a.cost - b.cost || a.id.localeCompare(b.id));
+
+        const activeList = rankedPlan.filter((item) => !item.maxed);
+        activeList.forEach((item, index) => {
+            item.rank = index + 1;
+        });
+        rankedPlan.filter((item) => item.maxed).forEach((item) => {
+            item.rank = 0;
+        });
+        const list = [...activeList, ...rankedPlan.filter((item) => item.maxed)];
+
+        return {
+            powerGap,
+            top: activeList[0] || null,
+            topAffordable: activeList.find((item) => item.affordable) || null,
+            list
+        };
+    }
+
     function startChapterWithPreset(chapterId) {
         const chapterIndex = CHAPTERS.findIndex((item) => item.id === chapterId);
         if (chapterIndex >= 0 && state.save.chapterIndex !== chapterIndex) {
@@ -1724,50 +1861,110 @@
     }
 
     function renderResearchTab() {
+        const chapter = getCurrentChapter();
+        const researchPlan = getResearchUpgradePlan(chapter);
+        const topResearch = researchPlan.top;
+        const topAffordableResearch = researchPlan.topAffordable;
+        const economyPreview = getDefenseEconomyPreview(chapter);
+        const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
+        const sortedResearchIds = researchPlan.list.map((item) => item.id);
+        const recoveryAction = economyPreview.dailyReady
+            ? {
+                action: 'claimDaily',
+                value: 'daily',
+                label: getLocalized({ zh: '领取补给', en: 'Claim Supply' })
+            }
+            : economyPreview.missionReady > 0
+                ? {
+                    action: 'openTab',
+                    value: 'missions',
+                    label: getLocalized({ zh: `任务 x${economyPreview.missionReady}`, en: `Missions x${economyPreview.missionReady}` })
+                }
+                : seasonTotalReady > 0
+                    ? {
+                        action: 'openTab',
+                        value: 'season',
+                        label: getLocalized({ zh: `赛季 x${seasonTotalReady}`, en: `Season x${seasonTotalReady}` })
+                    }
+                    : {
+                        action: 'openTab',
+                        value: 'defend',
+                        label: getLocalized({ zh: '返回防线', en: 'Back To Defend' })
+                    };
         ui.panelContent.innerHTML = `
             ${renderPanelHead(t('researchPanelTitle'), t('researchPanelDesc'))}
+            <div class="card-grid">
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '当前研究路线', en: 'Current Research Route' })}</div>
+                            <div class="card-title">${topResearch
+                                ? topResearch.meta.title
+                                : getLocalized({ zh: '研究已全部满级', en: 'All research maxed' })}</div>
+                        </div>
+                        <div class="card-number">${topResearch
+                            ? (topResearch.affordable
+                                ? getLocalized({ zh: `${formatCompact(topResearch.cost)}G 可升`, en: `${formatCompact(topResearch.cost)}G ready` })
+                                : getLocalized({ zh: `还差 ${formatCompact(topResearch.shortage)}G`, en: `Need ${formatCompact(topResearch.shortage)}G` }))
+                            : getLocalized({ zh: '已毕业', en: 'Maxed' })}</div>
+                    </div>
+                    <div class="card-copy">${topResearch
+                        ? `${topResearch.reason} ${researchPlan.powerGap > 0
+                            ? getLocalized({ zh: `当前章节还差约 ${formatCompact(researchPlan.powerGap)} 战力，优先补这个分支更容易过线。`, en: `You are still about ${formatCompact(researchPlan.powerGap)} power short for this chapter, so this branch closes the gap fastest.` })
+                            : getLocalized({ zh: '当前战力已经接近推荐值，这条分支主要负责提高容错与后续稳定度。', en: 'Your power is already near the recommended range, so this branch now improves consistency and safety.' })}`
+                        : getLocalized({ zh: '当前所有研究都已毕业，可以把资源更多投入到炮台升星、章节推进和赛季奖励上。', en: 'All research is maxed, so you can shift resources into tower growth, chapter pushes, and season rewards.' })}</div>
+                    ${topResearch ? `<div class="reward-row">
+                        ${researchPlan.list.slice(0, 3).map((item, index) => `<span class="mini-chip">${getLocalized({ zh: `推荐 ${index + 1} · ${item.meta.title} +${item.nextDelta}%`, en: `Top ${index + 1} · ${item.meta.title} +${item.nextDelta}%` })}</span>`).join('')}
+                    </div>` : ''}
+                    <div class="card-actions" style="margin-top:12px;">
+                        ${topAffordableResearch
+                            ? `<button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${topAffordableResearch.id}">
+                                ${getLocalized({ zh: `优先升级 ${topAffordableResearch.meta.title}`, en: `Upgrade ${topAffordableResearch.meta.title}` })}
+                            </button>`
+                            : `<button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
+                                ${recoveryAction.label}
+                            </button>`}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
+                            ${getLocalized({ zh: '返回防线', en: 'Back To Defend' })}
+                        </button>
+                    </div>
+                </article>
+            </div>
             <div class="research-grid">
-                ${Object.keys(RESEARCH)
-                    .sort((a, b) => Number(canUpgradeResearch(b)) - Number(canUpgradeResearch(a)))
-                    .map((researchId) => renderResearchCard(researchId))
+                ${sortedResearchIds
+                    .map((researchId) => renderResearchCard(researchId, researchPlan.list.find((item) => item.id === researchId) || null))
                     .join('')}
             </div>
         `;
     }
 
-    function renderResearchCard(researchId) {
+    function renderResearchCard(researchId, recommendation = null) {
         const level = getResearchLevel(researchId);
         const maxLevel = RESEARCH[researchId].maxLevel;
         const cost = getResearchCost(researchId);
         const maxed = level >= maxLevel;
-        const titleMap = {
-            attack: state.lang === 'zh' ? '鐏姏鐭╅樀' : 'Damage Matrix',
-            cadence: state.lang === 'zh' ? '鍐峰嵈鍥炶矾' : 'Cooldown Circuit',
-            fortify: state.lang === 'zh' ? '鏍稿績瑁呯敳' : 'Core Armor',
-            salvage: state.lang === 'zh' ? '鎴樺埄鍥炴敹' : 'Salvage Recovery',
-            relay: state.lang === 'zh' ? '缁х數澧炲箙' : 'Relay Amplifier'
-        };
-        const descMap = {
-            attack: state.lang === 'zh' ? '鎻愬崌鎵€鏈夌偖鍙板熀纭€浼ゅ銆' : 'Improves base damage for all towers.',
-            cadence: state.lang === 'zh' ? '鎻愬崌鎵€鏈夌偖鍙版敾鍑婚鐜囥€' : 'Improves attack speed for all towers.',
-            fortify: state.lang === 'zh' ? '鎻愬崌鏍稿績涓婇檺涓庢姢鐩惧閲忋€' : 'Raises max core HP and shield.',
-            salvage: state.lang === 'zh' ? '鎻愬崌鏈眬閲戝竵鏀剁泭鍜岄噰闆嗗鍥炴敹閲忋€' : 'Improves gold rewards and harvest returns.',
-            relay: state.lang === 'zh' ? '缂╃煭涓诲姩鎶€鑳藉喎鍗达紝骞舵彁鍗囨妧鑳藉己搴︺€' : 'Shortens active skill cooldown and strengthens the skill.'
-        };
+        const meta = getResearchMeta(researchId);
+        const currentEffect = RESEARCH[researchId].effect(level);
+        const nextEffect = RESEARCH[researchId].effect(Math.min(maxLevel, level + 1));
+        const nextDelta = Math.max(0, nextEffect - currentEffect);
+        const isRecommended = !!recommendation && !recommendation.maxed;
         return `
             <article class="research-card ${canUpgradeResearch(researchId) ? 'ready' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${t('researchPanelTitle')}</div>
-                        <div class="card-title">${titleMap[researchId]}</div>
+                        <div class="card-title">${meta.title}</div>
                     </div>
                     <div class="card-number">Lv.${level} / ${maxLevel}</div>
                 </div>
-                <div class="card-copy">${descMap[researchId]}</div>
+                <div class="card-copy">${meta.desc}</div>
                 <div class="chip-row">
-                    <span class="mini-chip">${t('researchEffect')} ${RESEARCH[researchId].effect(level)}%</span>
+                    <span class="mini-chip">${t('researchEffect')} ${currentEffect}%</span>
+                    ${!maxed ? `<span class="mini-chip">${getLocalized({ zh: `下一级 +${nextDelta}%`, en: `Next +${nextDelta}%` })}</span>` : ''}
+                    ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: `推荐位 ${researchPlanIndexLabel(recommendation, state.lang)}`, en: `Priority ${researchPlanIndexLabel(recommendation, state.lang)}` })}</span>` : ''}
                     <span class="mini-chip">${maxed ? t('researchMaxed') : `${t('researchCost')} ${formatCompact(cost)}G`}</span>
                 </div>
+                ${isRecommended ? `<div class="card-copy">${recommendation.reason}</div>` : ''}
                 <div class="card-actions">
                     <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgradeResearch(researchId) ? '' : 'disabled'}>
                         ${maxed ? t('researchMaxed') : `${t('upgradeNow')} 路 ${formatCompact(cost)}G`}
@@ -1775,6 +1972,12 @@
                 </div>
             </article>
         `;
+    }
+
+    function researchPlanIndexLabel(recommendation, lang = state.lang) {
+        if (!recommendation) return '';
+        const index = Math.max(1, Number(recommendation.rank || 0));
+        return lang === 'zh' ? `#${index}` : `#${index}`;
     }
 
     function renderMissionsTab() {
