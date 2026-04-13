@@ -2509,6 +2509,19 @@
         };
     }
 
+    function getRecommendedPaymentOfferId(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        return getPaymentOfferRecommendation(chapter, saveSnapshot).offer.id;
+    }
+
+    function syncRecommendedPaymentOfferSelection({ force = false, chapter = getCurrentChapter(), saveSnapshot = state.save } = {}) {
+        const recommendedOfferId = getRecommendedPaymentOfferId(chapter, saveSnapshot);
+        const currentExists = DEFENSE_PAYMENT_OFFERS.some((offer) => offer.id === selectedPaymentOfferId);
+        if (force || !currentExists) {
+            selectedPaymentOfferId = recommendedOfferId;
+        }
+        return recommendedOfferId;
+    }
+
     function buildShopOfferReward(id) {
         const preview = getShopOfferPreview(id);
         const reward = {};
@@ -2559,9 +2572,9 @@
         const nextSponsorNode = paymentRoute.nextSponsorNode;
         const primaryAction = paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
             ? {
-                action: 'openTab',
+                action: 'claimAllSeason',
                 value: 'season',
-                label: getLocalized({ zh: '先领赞助奖励', en: 'Claim Sponsor First' })
+                label: getLocalized({ zh: '商城内直接领取', en: 'Claim From Shop' })
             }
             : {
                 action: 'openPayment',
@@ -2615,6 +2628,10 @@
                     ${goldRoute && !goldRoute.affordable ? `<span class="mini-chip">${getLocalized({ zh: `金币还差 ${formatCompact(goldRoute.shortage)}`, en: `Need ${formatCompact(goldRoute.shortage)}G` })}</span>` : ''}
                     ${coreRoute && !coreRoute.affordable ? `<span class="mini-chip">${getLocalized({ zh: `能核还差 ${formatCompact(coreRoute.shortage)}`, en: `Need ${formatCompact(coreRoute.shortage)}C` })}</span>` : ''}
                 </div>
+                ${nextSponsorNode ? `<div class="reward-row">
+                    <span class="mini-chip">${getLocalized({ zh: '下个赞助节点预览', en: 'Next Sponsor Reward' })}</span>
+                    ${renderRewardChips(nextSponsorNode.node.reward)}
+                </div>` : ''}
                 <div class="card-actions" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
                         ${primaryAction.label}
@@ -2657,6 +2674,10 @@
                             : getLocalized({ zh: '首充后开启赞助节点', en: 'First top-up unlocks sponsor nodes' })}</span>`
                         : ''}
                 </div>
+                ${nextSponsorNode ? `<div class="reward-row">
+                    <span class="mini-chip">${getLocalized({ zh: '下个赞助节点奖励', en: 'Next Sponsor Reward' })}</span>
+                    ${renderRewardChips(nextSponsorNode.node.reward)}
+                </div>` : ''}
                 <div class="shop-kpi-grid">
                     <div class="shop-kpi">
                         <span>${getLocalized({ zh: '宸叉牎楠岃鍗', en: 'Verified Orders' })}</span>
@@ -2676,11 +2697,14 @@
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="primary-btn" type="button" data-action="${sponsorUnlocked && premiumReady > 0 ? 'openTab' : 'openPayment'}" data-value="${sponsorUnlocked && premiumReady > 0 ? 'season' : strategyPlan.paymentRoute.offer.id}">
+                    <button class="primary-btn" type="button" data-action="${sponsorUnlocked && premiumReady > 0 ? 'claimAllSeason' : 'openPayment'}" data-value="${sponsorUnlocked && premiumReady > 0 ? 'season' : strategyPlan.paymentRoute.offer.id}">
                         ${sponsorUnlocked && premiumReady > 0
-                            ? getLocalized({ zh: '前往赛季领取', en: 'Open Season Claims' })
+                            ? getLocalized({ zh: '商城内领取待奖', en: 'Claim Ready Rewards' })
                             : getLocalized({ zh: '打开推荐礼包', en: 'Open Recommended Pack' })}
                     </button>
+                    ${sponsorUnlocked && premiumReady > 0 ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">
+                        ${getLocalized({ zh: '查看赛季轨道', en: 'Open Season Track' })}
+                    </button>` : ''}
                 </div>
             </article>
         `;
@@ -2717,6 +2741,9 @@
 
     function renderSponsorSeasonSection() {
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
+        const nextSponsorNode = getNextSponsorSeasonNode();
+        const strategyPlan = getShopStrategyPlan();
+        const sponsorReady = getSponsorSeasonReadyCount();
 
         if (!sponsorUnlocked) {
             return `
@@ -2729,9 +2756,12 @@
                         <div class="card-number">${getLocalized({ zh: '寰呰В閿', en: 'Locked' })}</div>
                     </div>
                     <div class="card-copy">${getLocalized({ zh: '浠绘剰涓€绗旈摼涓婃牎楠屾垚鍔熺殑鍏呭€奸兘浼氳В閿佽禐鍔╄建閬擄紝闅忓悗鍙殢璧涘缁忛獙棰嗗彇棰濆閲戝竵銆佽兘鏍稿拰楂橀樁濉斿彴纰庣墖銆', en: 'Any verified top-up unlocks the Sponsor track so you can claim extra gold, cores, and high-tier fragments as Season XP grows.' })}</div>
-                    <div class="reward-row">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } })}</div>
+                    ${nextSponsorNode ? `<div class="reward-row">
+                        <span class="mini-chip">${getLocalized({ zh: '解锁后首个赞助节点', en: 'First Sponsor Node After Unlock' })}</span>
+                        ${renderRewardChips(nextSponsorNode.node.reward)}
+                    </div>` : `<div class="reward-row">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } })}</div>`}
                     <div class="card-actions">
-                        <button class="primary-btn" type="button" data-action="openPayment" data-value="starter">${getLocalized({ zh: '绔嬪嵆瑙ｉ攣', en: 'Unlock Now' })}</button>
+                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${strategyPlan.paymentRoute.offer.id}">${getLocalized({ zh: '绔嬪嵆瑙ｉ攣', en: 'Unlock Now' })}</button>
                     </div>
                 </article>
             `;
@@ -2752,8 +2782,32 @@
                     <h3>${t('sponsorTrack')}</h3>
                     <p>${getLocalized({ zh: '璧炲姪杞ㄩ亾宸插紑鍚€傝揪鍒版寚瀹氳禌瀛ｇ粡楠屽悗锛屽彲棰嗗彇棰濆閲戝竵銆佽兘鏍镐笌楂橀樁纰庣墖銆', en: 'Sponsor track is now live. Reach the required Season XP to claim extra gold, cores, and high-tier fragments.' })}</p>
                 </div>
-                <div class="mini-chip">${getLocalized({ zh: `待领取 ${getSponsorSeasonReadyCount()} 个节点`, en: `${getSponsorSeasonReadyCount()} nodes ready` })}</div>
+                <div class="mini-chip">${getLocalized({ zh: `待领取 ${sponsorReady} 个节点`, en: `${sponsorReady} nodes ready` })}</div>
             </div>
+            ${nextSponsorNode ? `
+                <article class="shop-card premium topup-overview-card" style="margin-bottom:14px;">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '下一赞助节点', en: 'Next Sponsor Node' })}</div>
+                            <div class="card-title">${getLocalized({ zh: `赞助节点 ${SPONSOR_SEASON_NODES.findIndex((item) => item.id === nextSponsorNode.node.id) + 1}`, en: `Sponsor Node ${SPONSOR_SEASON_NODES.findIndex((item) => item.id === nextSponsorNode.node.id) + 1}` })}</div>
+                        </div>
+                        <div class="card-number">${nextSponsorNode.ready
+                            ? getLocalized({ zh: '可直接领取', en: 'Ready Now' })
+                            : getLocalized({ zh: `还差 ${formatCompact(nextSponsorNode.remainingXp)} XP`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP left` })}</div>
+                    </div>
+                    <div class="card-copy">${nextSponsorNode.ready
+                        ? getLocalized({ zh: '这个节点已经满足条件，可以直接从当前页一键领取。', en: 'This node is ready and can be claimed directly from the current page.' })
+                        : getLocalized({ zh: '继续提升赛季经验就能拿到这一档额外赞助奖励。', en: 'Keep earning Season XP to unlock this extra sponsor reward tier.' })}</div>
+                    <div class="reward-row">${renderRewardChips(nextSponsorNode.node.reward)}</div>
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="${nextSponsorNode.ready ? 'claimAllSeason' : 'openTab'}" data-value="${nextSponsorNode.ready ? 'season' : 'shop'}">
+                            ${nextSponsorNode.ready
+                                ? getLocalized({ zh: '一键领取待奖', en: 'Claim Ready Rewards' })
+                                : getLocalized({ zh: '返回商城补强', en: 'Open Shop Route' })}
+                        </button>
+                    </div>
+                </article>
+            ` : ''}
             <div class="season-grid">
                 ${sponsorNodes.map(({ node, index, claimable, claimed }) => `
                     <article class="season-node ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
@@ -3682,6 +3736,7 @@
 
     function renderPaymentOfferGrid() {
         if (!ui.paymentOfferGrid) return;
+        const recommendedOfferId = getRecommendedPaymentOfferId();
         ui.paymentOfferGrid.innerHTML = DEFENSE_PAYMENT_OFFERS.map((offer) => `
             <button
                 class="defense-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
@@ -3690,6 +3745,7 @@
                 style="--offer-accent:${offer.accent};"
             >
                 <span class="pill defense-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${getLocalized(offer.badge)}</span>
+                ${offer.id === recommendedOfferId ? `<span class="pill defense-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${getLocalized({ zh: '当前推荐', en: 'Recommended' })}</span>` : ''}
                 <div class="defense-payment-offer-price">$${offer.price.toFixed(2)}</div>
                 <h3>${getLocalized(offer.name)}</h3>
                 <p>${getLocalized(offer.desc)}</p>
@@ -3868,6 +3924,7 @@
     async function openPaymentModal(offerId = null) {
         if (!ui.paymentModal) return;
         if (offerId) selectedPaymentOfferId = offerId;
+        else syncRecommendedPaymentOfferSelection({ force: true });
         flushPendingPaymentClaims().catch(() => {});
         renderPaymentOfferGrid();
         resetPaymentVerificationState(true);
