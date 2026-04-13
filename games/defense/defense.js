@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     const HUB_LANG_KEY = 'genesis_arcade_hub_lang_v1';
     const HUB_PROFILE_KEY = 'genesis_arcade_hub_profile_v1';
     const SAVE_KEY = 'genesis_defense_save_v1';
@@ -15,208 +15,208 @@
 
     const TEXT = {
         zh: {
-            pageTitle: '鍒涗笘闃茬嚎 / Genesis Defense',
-            backHub: '杩斿洖澶у巺',
+            pageTitle: '创世防线 / Genesis Defense',
+            backHub: '返回大厅',
             heroEyebrow: 'TRI-LANE DEFENSE LIVE',
-            heroTitle: '鍒涗笘闃茬嚎',
-            heroSubtitle: '涓夎矾濉旈槻 路 娉㈡寮哄寲 路 鏍稿績瀹堝崼',
-            goldLabel: '閲戝竵',
-            coreLabel: '鑳芥牳',
-            fragmentLabel: '纰庣墖',
-            seasonLabel: '璧涘',
-            ratingLabel: '鎴樺姏',
-            bestStageLabel: '鏈€楂樼珷鑺',
-            chapterLabel: '绔犺妭',
-            waveLabel: '娉㈡',
-            coreHpLabel: '鏍稿績',
-            threatLabel: '濞佽儊',
+            heroTitle: '创世防线',
+            heroSubtitle: '三路塔防 · 波次强化 · 核心守卫',
+            goldLabel: '金币',
+            coreLabel: '能核',
+            fragmentLabel: '碎片',
+            seasonLabel: '赛季',
+            ratingLabel: '战力',
+            bestStageLabel: '最高章节',
+            chapterLabel: '章节',
+            waveLabel: '波次',
+            coreHpLabel: '核心',
+            threatLabel: '威胁',
             startKicker: 'CORE DEFENSE',
-            startTitle: '閮ㄧ讲闃茬嚎',
-            startRun: '寮€濮嬮槻瀹',
+            startTitle: '部署防线',
+            startRun: '开始防守',
             upgradeKicker: 'WAVE UPGRADE',
-            upgradeTitle: '閫夋嫨涓€椤瑰己鍖',
-            upgradeSubtitle: '姣忔尝缁撴潫鍚庡彲鑾峰緱 1 娆′复鏃跺鐩婏紝灏介噺鍥寸粫褰撳墠鐐彴闃靛鍋氱粍鍚堛€',
+            upgradeTitle: '选择一项强化',
+            upgradeSubtitle: '每波结束后可获得 1 次临时增益，尽量围绕当前炮台阵容做组合。',
             pauseKicker: 'DEFENSE PAUSED',
-            pauseTitle: '鎴樺眬宸叉殏鍋',
-            resumeRun: '缁х画闃插畧',
-            quitRun: '缁撴潫鏈眬',
-            goldGainLabel: '閲戝竵鏀剁泭',
-            coreGainLabel: '鑳芥牳鏀剁泭',
-            seasonGainLabel: '璧涘缁忛獙',
-            chapterProgressLabel: '绔犺妭杩涘害',
-            restartRun: '鍐嶅畧涓€灞€',
-            nextChapter: '鎸戞垬涓嬩竴绔',
-            loadoutShortcut: '鍓嶅線瑁呴厤',
-            pauseBtn: '鏆傚仠',
-            tabDefend: '闃茬嚎',
-            tabLoadout: '瑁呴厤',
-            tabResearch: '鐮旂┒',
-            tabMissions: '浠诲姟',
-            tabSeason: '璧涘',
-            tabShop: '鍟嗗簵',
-            skillEmp: 'EMP 鑴夊啿',
-            skillOverclock: '瓒呴鍥炶矾',
-            skillShield: '瀹堟姢绔嬪満',
-            threatStable: '绋冲畾',
-            threatRising: '鍗囨俯',
-            threatDanger: '鍗遍櫓',
-            defendPanelTitle: '绔犺妭閮ㄧ讲',
-            defendPanelDesc: '閫夋嫨绔犺妭銆佹煡鐪嬫晫娼瀯鎴愶紝骞跺洿缁曚笁璺偖鍙伴厤缃喅瀹氭湰灞€鑺傚銆',
-            loadoutPanelTitle: '涓夎矾瑁呴厤',
-            loadoutPanelDesc: '姣忔潯閫氶亾鍙嫭绔嬭閰嶇偖鍙帮紝涓诲姩鎶€鑳藉喅瀹氬叧閿尝娆＄殑缈荤洏绌洪棿銆',
-            researchPanelTitle: '鐮旂┒瀹為獙瀹',
-            researchPanelDesc: '鐮旂┒鏄暱鏈熸垚闀夸富杞达紝浼氬悓鏃舵姮楂樼ǔ瀹氶€氬叧鐜囧拰鍚庣画绔犺妭鎴樺姏闂ㄦ銆',
-            missionsPanelTitle: '浠诲姟涓績',
-            missionsPanelDesc: '鎶婂彲棰嗗彇濂栧姳缃《锛屽府鍔╀綘蹇€熻幏寰楃煭绾垮弽棣堜笌璧勬簮鍥炴祦銆',
-            seasonPanelTitle: '璧涘杞ㄩ亾',
-            seasonPanelDesc: '瀹屾垚闃插畧銆佹帹杩涚珷鑺傘€佺疮璁″嚮鏉€閮借兘鎻愬崌璧涘绛夌骇骞堕鍙栭噷绋嬪鍔便€',
-            shopPanelTitle: '琛ョ粰鍟嗗簵',
-            shopPanelDesc: '鏃ュ父琛ョ粰璐熻矗鍩虹鍥炴祦锛岃祫婧愮鎵挎媴涓湡鎺ㄨ繘锛岄摼涓婃牎楠屽厖鍊间細瑙ｉ攣璧炲姪杞ㄩ亾涓庨澶栬禌瀛ｅ鍔便€',
-            recommendRating: '鎺ㄨ崘鎴樺姏',
-            rewardPreview: '鎺夎惤棰勮',
-            enemyPreview: '鏁屾疆棰勮',
-            chapterBuff: '绔犺妭鐗规€',
-            chapterLocked: '鏈В閿',
-            chapterUnlocked: '宸茶В閿',
-            defendNow: '绔嬪嵆闃插畧',
-            lane1: '宸﹁矾',
-            lane2: '涓矾',
-            lane3: '鍙宠矾',
-            laneSelect: '褰撳墠瑁呴厤璺',
-            skillSelect: '涓诲姩鎶€鑳',
-            equipNow: '瑁呭鍒板綋鍓嶈矾',
-            equipped: '宸茶澶',
-            unlockNow: '瑙ｉ攣',
-            upgradeNow: '鍗囩骇',
-            upgradeMax: '宸叉弧绾',
-            needFragments: '闇€瑕佺鐗',
-            needGold: '闇€瑕侀噾甯',
-            needCores: '闇€瑕佽兘鏍',
-            levelText: '绛夌骇',
-            rareText: '绋€鏈',
-            epicText: '鍙茶瘲',
-            commonText: '鍩虹',
-            supportText: '缁忔祹',
-            dpsText: '杈撳嚭',
-            actionReady: '鍙搷浣',
-            actionLocked: '鏈弧瓒',
-            researchEffect: '褰撳墠鏁堟灉',
-            researchCost: '鐮旂┒娑堣€',
-            missionClaim: '棰嗗彇濂栧姳',
-            missionClaimed: '宸查鍙',
-            missionLocked: '杩涜涓',
-            seasonClaim: '棰嗗彇鑺傜偣',
-            seasonClaimed: '宸查鍙',
-            seasonProgress: '璧涘杩涘害',
-            seasonToNext: '璺濈涓嬩竴绾',
-            shopClaim: '鍏嶈垂棰嗗彇',
-            shopBuy: '绔嬪嵆璐拱',
-            shopSoldOut: '鍐峰嵈涓',
-            shopPreviewOnly: '棰勭暀鍚庣画鏀粯鎺ュ叆',
-            startDescTemplate: '涓轰笁鏉￠€氶亾瑁呴厤鐐彴骞跺畧浣忓垱涓栨牳蹇冿紝鍑婚€€ 6 娉㈡晫娼悗鑾峰緱閲戝竵銆佽兘鏍镐笌钃濆浘纰庣墖銆傚綋鍓嶇珷鑺傦細{chapter}銆',
-            startMetaReward: '閫氬叧濂栧姳 {gold} 閲戝竵 路 {core} 鑳芥牳 路 {fragment} 纰庣墖',
-            startMetaEnemy: '鏁屾疆閲嶇偣锛歿enemy}',
-            battleNoteIdle: '浼樺厛纭涓夎矾鐐彴閰嶇疆锛屽啀寮€灞€杩庢垬鏁屾疆銆',
-            battleNoteWave: '娉㈡鎺ㄨ繘涓細浼樺厛澶勭悊楂橀€熸€笌鎶ょ浘鎬紝鎶€鑳界暀缁欏帇鍔涘嘲鍊兼垨 BOSS銆',
-            battleNoteUpgrade: '娉㈡宸叉竻绌猴紝閫夋嫨涓€椤瑰己鍖栫户缁帹杩涖€',
-            battleNoteResultWin: '闃茬嚎瀹堜綇浜嗭紝璧勬簮宸茬粨绠楋紝鍙户缁啿鏇撮珮绔犺妭銆',
-            battleNoteResultLose: '鏍稿績琚嚮绌匡紝鍏堣ˉ寮鸿閰嶆垨鐮旂┒锛屽啀灏濊瘯閲嶆柊寮€灞€銆',
-            toastSaved: '闃茬嚎杩涘害宸插悓姝ヤ繚瀛',
-            toastSkillCooling: '鎶€鑳藉喎鍗翠腑',
-            toastSkillEmp: 'EMP 宸查噴鏀撅紝鏁屼汉琚煭鏆傚帇鍒',
-            toastSkillOverclock: '鐐彴杩涘叆瓒呴杈撳嚭',
-            toastSkillShield: '鏍稿績鎶ょ浘宸插睍寮€',
-            toastNotEnoughGold: '閲戝竵涓嶈冻',
-            toastNotEnoughCore: '鑳芥牳涓嶈冻',
-            toastMissionClaimed: '浠诲姟濂栧姳宸查鍙',
-            toastSeasonClaimed: '璧涘鑺傜偣濂栧姳宸查鍙',
-            toastResearchUp: '鐮旂┒绛夌骇鎻愬崌',
-            toastTowerUp: '鐐彴鍗囩骇鎴愬姛',
-            toastTowerUnlock: '鐐彴瑙ｉ攣鎴愬姛',
-            toastEquipped: '褰撳墠閫氶亾瑁呴厤宸叉洿鏂',
-            toastDailySupply: '宸查鍙栦粖鏃ヨˉ缁',
-            toastShopBought: '琛ョ粰宸插埌璐',
-            toastWaveClear: '鏈尝娓呯┖锛岄€夋嫨寮哄寲缁х画鎺ㄨ繘',
-            toastRunWin: '闃茬嚎鎴愬姛瀹堜綇',
-            toastRunLose: '鏍稿績琚獊鐮达紝鏈眬缁撴潫',
-            toastChapterUnlocked: '鏂扮珷鑺傚凡瑙ｉ攣',
-            toastNeedUnlock: '璇峰厛瑙ｉ攣璇ョ偖鍙',
-            toastNeedFragments: '纰庣墖涓嶈冻',
-            toastNeedLane: '璇烽€夋嫨涓€鏉￠€氶亾杩涜瑁呴厤',
+            pauseTitle: '战局已暂停',
+            resumeRun: '继续防守',
+            quitRun: '结束本局',
+            goldGainLabel: '金币收益',
+            coreGainLabel: '能核收益',
+            seasonGainLabel: '赛季经验',
+            chapterProgressLabel: '章节进度',
+            restartRun: '再守一局',
+            nextChapter: '挑战下一章',
+            loadoutShortcut: '前往装配',
+            pauseBtn: '暂停',
+            tabDefend: '防线',
+            tabLoadout: '装配',
+            tabResearch: '研究',
+            tabMissions: '任务',
+            tabSeason: '赛季',
+            tabShop: '商店',
+            skillEmp: 'EMP 脉冲',
+            skillOverclock: '超频回路',
+            skillShield: '守护立场',
+            threatStable: '稳定',
+            threatRising: '升温',
+            threatDanger: '危险',
+            defendPanelTitle: '章节部署',
+            defendPanelDesc: '选择章节、查看敌潮构成，并围绕三路炮台配置决定本局节奏。',
+            loadoutPanelTitle: '三路装配',
+            loadoutPanelDesc: '每条通道可独立装配炮台，主动技能决定关键波次的翻盘空间。',
+            researchPanelTitle: '研究实验室',
+            researchPanelDesc: '研究是长期成长主轴，会同时抬高稳定通关率和后续章节战力门槛。',
+            missionsPanelTitle: '任务中心',
+            missionsPanelDesc: '把可领取奖励置顶，帮助你快速获得短线反馈与资源回流。',
+            seasonPanelTitle: '赛季轨道',
+            seasonPanelDesc: '完成防守、推进章节、累计击杀都能提升赛季等级并领取里程奖励。',
+            shopPanelTitle: '补给商店',
+            shopPanelDesc: '日常补给负责基础回流，资源箱承担中期推进，链上校验充值会解锁赞助轨道与额外赛季奖励。',
+            recommendRating: '推荐战力',
+            rewardPreview: '掉落预览',
+            enemyPreview: '敌潮预览',
+            chapterBuff: '章节特性',
+            chapterLocked: '未解锁',
+            chapterUnlocked: '已解锁',
+            defendNow: '立即防守',
+            lane1: '左路',
+            lane2: '中路',
+            lane3: '右路',
+            laneSelect: '当前装配路',
+            skillSelect: '主动技能',
+            equipNow: '装备到当前路',
+            equipped: '已装备',
+            unlockNow: '解锁',
+            upgradeNow: '升级',
+            upgradeMax: '已满级',
+            needFragments: '需要碎片',
+            needGold: '需要金币',
+            needCores: '需要能核',
+            levelText: '等级',
+            rareText: '稀有',
+            epicText: '史诗',
+            commonText: '基础',
+            supportText: '经济',
+            dpsText: '输出',
+            actionReady: '可操作',
+            actionLocked: '未满足',
+            researchEffect: '当前效果',
+            researchCost: '研究消耗',
+            missionClaim: '领取奖励',
+            missionClaimed: '已领取',
+            missionLocked: '进行中',
+            seasonClaim: '领取节点',
+            seasonClaimed: '已领取',
+            seasonProgress: '赛季进度',
+            seasonToNext: '距离下一级',
+            shopClaim: '免费领取',
+            shopBuy: '立即购买',
+            shopSoldOut: '冷却中',
+            shopPreviewOnly: '预留后续支付接入',
+            startDescTemplate: '为三条通道装配炮台并守住创世核心，击退 6 波敌潮后获得金币、能核与蓝图碎片。当前章节：{chapter}。',
+            startMetaReward: '通关奖励 {gold} 金币 · {core} 能核 · {fragment} 碎片',
+            startMetaEnemy: '敌潮重点：{enemy}',
+            battleNoteIdle: '优先确认三路炮台配置，再开局迎战敌潮。',
+            battleNoteWave: '波次推进中：优先处理高速怪与护盾怪，技能留给压力峰值或 BOSS。',
+            battleNoteUpgrade: '波次已清空，选择一项强化继续推进。',
+            battleNoteResultWin: '防线守住了，资源已结算，可继续冲更高章节。',
+            battleNoteResultLose: '核心被击穿，先补强装配或研究，再尝试重新开局。',
+            toastSaved: '防线进度已同步保存',
+            toastSkillCooling: '技能冷却中',
+            toastSkillEmp: 'EMP 已释放，敌人被短暂压制',
+            toastSkillOverclock: '炮台进入超频输出',
+            toastSkillShield: '核心护盾已展开',
+            toastNotEnoughGold: '金币不足',
+            toastNotEnoughCore: '能核不足',
+            toastMissionClaimed: '任务奖励已领取',
+            toastSeasonClaimed: '赛季节点奖励已领取',
+            toastResearchUp: '研究等级提升',
+            toastTowerUp: '炮台升级成功',
+            toastTowerUnlock: '炮台解锁成功',
+            toastEquipped: '当前通道装配已更新',
+            toastDailySupply: '已领取今日补给',
+            toastShopBought: '补给已到账',
+            toastWaveClear: '本波清空，选择强化继续推进',
+            toastRunWin: '防线成功守住',
+            toastRunLose: '核心被突破，本局结束',
+            toastChapterUnlocked: '新章节已解锁',
+            toastNeedUnlock: '请先解锁该炮台',
+            toastNeedFragments: '碎片不足',
+            toastNeedLane: '请选择一条通道进行装配',
             resultWinKicker: 'DEFENSE SUCCESS',
             resultLoseKicker: 'CORE BREACHED',
-            resultWinTitle: '闃茬嚎鑳滃埄',
-            resultLoseTitle: '闃茬嚎澶卞畧',
-            chapterProgressWin: '宸茶В閿佽嚦 {chapter}',
-            chapterProgressLose: '褰撳墠鏈€楂樻帹杩?{chapter}',
-            resultStats: '鍑绘潃 {kills} 路 浼ゅ {damage}',
-            chapterInfoBoss: '绗?6 娉㈠浐瀹氬嚭鐜?Boss',
-            missionReadyDot: '鍙鍙',
-            seasonReadyDot: '鍙鍙',
-            labReadyDot: '鍙崌绾',
-            dailyReadyDot: '鍏嶈垂',
-            sponsorTrack: '璧炲姪杞ㄩ亾',
-            sponsorDesc: '浠绘剰涓€绗旀牎楠屾垚鍔熺殑鍏呭€奸兘浼氳В閿佽禐鍔╄建閬擄紝骞跺湪璧涘椤靛紑鏀鹃澶栧鍔辫妭鐐广€',
-            chapterBadgeNew: '鏂扮珷鑺',
-            chapterBadgeCurrent: '褰撳墠鎸戞垬',
-            waveText: '绗?{wave} / 6 娉',
-            skillReady: '{skill} 路 鍙噴鏀',
-            skillCooling: '{skill} 路 {time}s',
-            coreShieldText: '鎶ょ浘 {value}',
-            laneStripDps: '璺激瀹',
-            laneStripEmpty: '鏈閰',
+            resultWinTitle: '防线胜利',
+            resultLoseTitle: '防线失守',
+            chapterProgressWin: '已解锁至 {chapter}',
+            chapterProgressLose: '当前最高推进 {chapter}',
+            resultStats: '击杀 {kills} · 伤害 {damage}',
+            chapterInfoBoss: '第 6 波固定出现 Boss',
+            missionReadyDot: '可领取',
+            seasonReadyDot: '可领取',
+            labReadyDot: '可升级',
+            dailyReadyDot: '免费',
+            sponsorTrack: '赞助轨道',
+            sponsorDesc: '任意一笔校验成功的充值都会解锁赞助轨道，并在赛季页开放额外奖励节点。',
+            chapterBadgeNew: '新章节',
+            chapterBadgeCurrent: '当前挑战',
+            waveText: '第 {wave} / 6 波',
+            skillReady: '{skill} · 可释放',
+            skillCooling: '{skill} · {time}s',
+            coreShieldText: '护盾 {value}',
+            laneStripDps: '路伤害',
+            laneStripEmpty: '未装配',
             laneStripLevel: 'Lv.{level}',
-            researchMaxed: '鐮旂┒宸叉弧',
-            fragmentsGain: '{name} 纰庣墖 +{value}',
-            seasonNodeTitle: '璧涘鑺傜偣 {index}',
-            shopFreeTitle: '鏃ュ父琛ョ粰绠',
-            shopFreeDesc: '姣?20 灏忔椂鍙鍙栦竴娆★紝鎻愪緵閲戝竵銆佽兘鏍镐笌鍩虹鐐彴纰庣墖銆',
-            shopGoldTitle: '钃濆浘琛ョ粰绠',
-            shopGoldDesc: '娑堣€楅噾甯佹娊鍙栬摑鍥剧鐗囷紝閫傚悎涓湡鎶珮鐐彴绛夌骇銆',
-            shopCoreTitle: '楂樿兘涓户绠',
-            shopCoreDesc: '娑堣€楄兘鏍告崲鍙栫█鏈?鍙茶瘲纰庣墖涓庨澶栭噾甯併€',
-            previewTowerPower: '鎴樺姏鏋勬垚',
-            previewWavePressure: '鍘嬪姏鏇茬嚎',
-            previewEconomy: '璧勬簮鍥炴祦',
-            chapterStateTitle: '褰撳墠绔犺妭鍘嬪姏',
-            chapterStateDesc: '鏁板€间細闅忕潃绔犺妭閫愭鎶珮锛岄珮绋€鏈夌偖鍙版洿閫傚悎鎵挎媴鍚庢湡绐佺牬銆',
-            bonusDamage: '鐏姏澧炲箙',
-            bonusSpeed: '鍐峰嵈鍔犻€',
-            bonusShield: '鎶ょ浘鍔犲帤',
-            bonusGold: '鎴樺埄鍥炴敹',
-            bonusFreeze: '鍐扮紦鎵╂暎',
-            bonusCrit: '鏍稿績鏆村嚮',
-            bonusSplash: '鐖嗚閾惧紡',
-            statRuns: '闃插畧灞€鏁',
-            statWins: '鎴愬姛瀹堜綇',
-            statKills: '绱鍑绘潃',
-            statDamage: '鎬讳激瀹',
-            statSkills: '鎶€鑳介噴鏀',
-            statResearch: '鐮旂┒娆℃暟',
-            statBest: '鏈€楂樻帹杩',
-            enemyFast: '楂橀€熸€',
-            enemyShield: '鎶ょ浘鎬',
-            enemySplit: '鍒嗚鎬',
-            enemyElite: '绮捐嫳鎬',
-            enemyBoss: '瑁傞殭宸ㄥ儚',
-            enemyGrunt: '鏉傚叺',
-            towerPulse: '鑴夊啿濉',
-            towerLaser: '婵€鍏夊',
-            towerFrost: '闇滃喕濉',
-            towerRocket: '鐏濉',
-            towerHarvest: '閲囬泦濉',
-            towerChain: '閾惧嚮濉',
-            towerRail: '杞ㄧ偖濉',
-            rarityCommon: '鍩虹',
-            rarityRare: '绋€鏈',
-            rarityEpic: '鍙茶瘲'
+            researchMaxed: '研究已满',
+            fragmentsGain: '{name} 碎片 +{value}',
+            seasonNodeTitle: '赛季节点 {index}',
+            shopFreeTitle: '日常补给箱',
+            shopFreeDesc: '每 20 小时可领取一次，提供金币、能核与基础炮台碎片。',
+            shopGoldTitle: '蓝图补给箱',
+            shopGoldDesc: '消耗金币抽取蓝图碎片，适合中期抬高炮台等级。',
+            shopCoreTitle: '高能中继箱',
+            shopCoreDesc: '消耗能核换取稀有/史诗碎片与额外金币。',
+            previewTowerPower: '战力构成',
+            previewWavePressure: '压力曲线',
+            previewEconomy: '资源回流',
+            chapterStateTitle: '当前章节压力',
+            chapterStateDesc: '数值会随着章节逐步抬高，高稀有炮台更适合承担后期突破。',
+            bonusDamage: '火力增幅',
+            bonusSpeed: '冷却加速',
+            bonusShield: '护盾加厚',
+            bonusGold: '战利回收',
+            bonusFreeze: '冰缓扩散',
+            bonusCrit: '核心暴击',
+            bonusSplash: '爆裂链式',
+            statRuns: '防守局数',
+            statWins: '成功守住',
+            statKills: '累计击杀',
+            statDamage: '总伤害',
+            statSkills: '技能释放',
+            statResearch: '研究次数',
+            statBest: '最高推进',
+            enemyFast: '高速怪',
+            enemyShield: '护盾怪',
+            enemySplit: '分裂怪',
+            enemyElite: '精英怪',
+            enemyBoss: '裂隙巨像',
+            enemyGrunt: '杂兵',
+            towerPulse: '脉冲塔',
+            towerLaser: '激光塔',
+            towerFrost: '霜冻塔',
+            towerRocket: '火箭塔',
+            towerHarvest: '采集塔',
+            towerChain: '链击塔',
+            towerRail: '轨炮塔',
+            rarityCommon: '基础',
+            rarityRare: '稀有',
+            rarityEpic: '史诗'
         },
         en: {
             pageTitle: 'Genesis Defense',
             backHub: 'Back To Hub',
             heroEyebrow: 'TRI-LANE DEFENSE LIVE',
             heroTitle: 'Genesis Defense',
-            heroSubtitle: '3 Lanes 路 Wave Upgrades 路 Core Survival',
+            heroSubtitle: '3 Lanes · Wave Upgrades · Core Survival',
             goldLabel: 'Gold',
             coreLabel: 'Cores',
             fragmentLabel: 'Fragments',
@@ -281,7 +281,7 @@
             goldReward: 420,
             coreReward: 10,
             fragmentReward: 18,
-            trait: { zh: '鍩虹璇曠偧锛屼富瑕佺啛鎮変笁璺閰嶄笌娉㈡寮哄寲鑺傚銆', en: 'Intro chapter to learn three-lane setup and wave upgrades.' },
+            trait: { zh: '基础试炼，主要熟悉三路装配与波次强化节奏。', en: 'Intro chapter to learn three-lane setup and wave upgrades.' },
             enemies: ['grunt', 'fast', 'shield'],
             fragmentFocus: ['pulse', 'laser', 'harvest']
         },
@@ -293,7 +293,7 @@
             goldReward: 560,
             coreReward: 12,
             fragmentReward: 20,
-            trait: { zh: '楂橀€熸€槑鏄惧澶氾紝浼樺厛鍑嗗婵€鍏夊涓庢帶鍦烘妧鑳姐€', en: 'Fast enemies show up more often, making laser and control tools more valuable.' },
+            trait: { zh: '高速怪明显增多，优先准备激光塔与控场技能。', en: 'Fast enemies show up more often, making laser and control tools more valuable.' },
             enemies: ['grunt', 'fast', 'shield', 'split'],
             fragmentFocus: ['laser', 'frost', 'rocket']
         },
@@ -305,7 +305,7 @@
             goldReward: 740,
             coreReward: 16,
             fragmentReward: 24,
-            trait: { zh: '鍒嗚鎬笌绮捐嫳寮€濮嬭繘鍏ヤ富娉㈡锛岄渶瑕佹洿绋崇殑鍑忛€熶笌鐖嗚浼ゅ銆', en: 'Split enemies and elites enter the main waves, pushing for slows and splash damage.' },
+            trait: { zh: '分裂怪与精英开始进入主波次，需要更稳的减速与爆裂伤害。', en: 'Split enemies and elites enter the main waves, pushing for slows and splash damage.' },
             enemies: ['grunt', 'fast', 'split', 'elite'],
             fragmentFocus: ['frost', 'rocket', 'chain']
         },
@@ -317,7 +317,7 @@
             goldReward: 930,
             coreReward: 20,
             fragmentReward: 28,
-            trait: { zh: '鎶ょ浘鎬閲忔垚闀挎槑鏄撅紝閾惧嚮濉斾笌杞ㄧ偖濉斿紑濮嬪睍鐜颁环鍊笺€', en: 'Shield units grow tougher, and chain / rail tools start to matter.' },
+            trait: { zh: '护盾怪血量成长明显，链击塔与轨炮塔开始展现价值。', en: 'Shield units grow tougher, and chain / rail tools start to matter.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
             fragmentFocus: ['rocket', 'chain', 'rail']
         },
@@ -329,7 +329,7 @@
             goldReward: 1180,
             coreReward: 24,
             fragmentReward: 34,
-            trait: { zh: '涓悗鏈熺珷鑺傦紝缁忔祹涓庤緭鍑鸿鍚屾鎶珮锛屽惁鍒欎細琚簿鑻辨尝鎷栧灝銆', en: 'Mid-late chapter where economy and damage must scale together.' },
+            trait: { zh: '中后期章节，经济与输出要同步抬高，否则会被精英波拖垮。', en: 'Mid-late chapter where economy and damage must scale together.' },
             enemies: ['fast', 'shield', 'elite', 'boss'],
             fragmentFocus: ['chain', 'rail', 'frost']
         },
@@ -341,7 +341,7 @@
             goldReward: 1520,
             coreReward: 30,
             fragmentReward: 40,
-            trait: { zh: '褰撳墠鐗堟湰鏈€楂樼珷鑺傦紝Boss 娉㈡瀬閲嶏紝寤鸿浼樺厛鍑嗗鍙茶瘲杞ㄧ偖濉斻€', en: 'Current final chapter with a brutal boss wave. Epic rail setups shine here.' },
+            trait: { zh: '当前版本最高章节，Boss 波极重，建议优先准备史诗轨炮塔。', en: 'Current final chapter with a brutal boss wave. Epic rail setups shine here.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
             fragmentFocus: ['rail', 'chain', 'rocket']
         },
@@ -353,7 +353,7 @@
             goldReward: 1860,
             coreReward: 36,
             fragmentReward: 46,
-            trait: { zh: '杩涘叆绗?3 绔犲悗锛屼笁璺細鍚屾椂鎵垮彈蹇€笌绮捐嫳鎬帇鍔涳紝蹇呴』淇濊瘉鑷冲皯涓よ矾鍏峰绋冲畾鏀剁嚎鑳藉姏銆', en: 'Chapter 3 opens with simultaneous pressure from fast and elite enemies, so at least two lanes must clear reliably.' },
+            trait: { zh: '进入第 3 章后，三路会同时承受快怪与精英怪压力，必须保证至少两路具备稳定收线能力。', en: 'Chapter 3 opens with simultaneous pressure from fast and elite enemies, so at least two lanes must clear reliably.' },
             enemies: ['fast', 'split', 'elite', 'boss'],
             fragmentFocus: ['rail', 'frost', 'chain']
         },
@@ -365,7 +365,7 @@
             goldReward: 2260,
             coreReward: 42,
             fragmentReward: 54,
-            trait: { zh: '鎶ょ浘鎬€佸垎瑁傛€笌 Boss 浼氳繛缁彔鍘嬶紝鎶ょ浘鎶€鑳戒笌閾惧嚮 / 鐏鐨勮仈鍔ㄤ細鏄庢樉鏇寸ǔ銆', en: 'Shield units, split enemies, and the boss stack together here, making shield timing and Chain/Rocket synergy much more reliable.' },
+            trait: { zh: '护盾怪、分裂怪与 Boss 会连续叠压，护盾技能与链击 / 火箭的联动会明显更稳。', en: 'Shield units, split enemies, and the boss stack together here, making shield timing and Chain/Rocket synergy much more reliable.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
             fragmentFocus: ['rail', 'rocket', 'chain']
         },
@@ -377,78 +377,11 @@
             goldReward: 2780,
             coreReward: 48,
             fragmentReward: 62,
-            trait: { zh: '褰撳墠寮€鏀惧唴瀹圭殑缁堢珷锛屾渶缁?Boss 娉細鎶婁笁璺竴璧峰帇婊★紝寤鸿鑷冲皯鎷ユ湁 1 璺珮绛夌骇杞ㄧ偖涓?1 璺ǔ瀹氬噺閫熴€', en: 'This is the current end chapter. The final boss wave saturates all three lanes, so you want one high-level Rail lane plus one stable slow lane.' },
+            trait: { zh: '当前开放内容的终章，最终 Boss 波会把三路一起压满，建议至少拥有 1 路高等级轨炮与 1 路稳定减速。', en: 'This is the current end chapter. The final boss wave saturates all three lanes, so you want one high-level Rail lane plus one stable slow lane.' },
             enemies: ['fast', 'shield', 'split', 'boss'],
             fragmentFocus: ['rail', 'chain', 'frost']
         }
     ];
-
-    const CHAPTER_WAVE_SCRIPTS = {
-        '3-1': {
-            2: [
-                { progress: 0.24, lane: 0, type: 'fast' },
-                { progress: 0.3, lane: 2, type: 'fast' },
-                { progress: 0.38, lane: 1, type: 'shield' }
-            ],
-            4: [
-                { progress: 0.34, lane: 0, type: 'elite' },
-                { progress: 0.42, lane: 2, type: 'elite' },
-                { progress: 0.54, lane: 1, type: 'split' }
-            ],
-            6: [
-                { progress: 0.48, lane: 0, type: 'fast' },
-                { progress: 0.56, lane: 2, type: 'fast' },
-                { progress: 0.68, lane: 1, type: 'elite' }
-            ]
-        },
-        '3-2': {
-            2: [
-                { progress: 0.22, lane: 0, type: 'shield' },
-                { progress: 0.28, lane: 1, type: 'fast' },
-                { progress: 0.34, lane: 2, type: 'shield' }
-            ],
-            4: [
-                { progress: 0.3, lane: 0, type: 'split' },
-                { progress: 0.36, lane: 1, type: 'shield' },
-                { progress: 0.42, lane: 2, type: 'split' },
-                { progress: 0.56, lane: 1, type: 'elite' }
-            ],
-            5: [
-                { progress: 0.46, lane: 0, type: 'elite' },
-                { progress: 0.53, lane: 2, type: 'elite' },
-                { progress: 0.62, lane: 1, type: 'shield' }
-            ],
-            6: [
-                { progress: 0.5, lane: 0, type: 'shield' },
-                { progress: 0.6, lane: 2, type: 'split' },
-                { progress: 0.72, lane: 1, type: 'elite' }
-            ]
-        },
-        '3-3': {
-            2: [
-                { progress: 0.2, lane: 0, type: 'fast' },
-                { progress: 0.25, lane: 1, type: 'fast' },
-                { progress: 0.3, lane: 2, type: 'fast' }
-            ],
-            4: [
-                { progress: 0.28, lane: 0, type: 'split' },
-                { progress: 0.35, lane: 1, type: 'elite' },
-                { progress: 0.42, lane: 2, type: 'split' }
-            ],
-            5: [
-                { progress: 0.34, lane: 0, type: 'shield' },
-                { progress: 0.44, lane: 1, type: 'elite' },
-                { progress: 0.54, lane: 2, type: 'shield' }
-            ],
-            6: [
-                { progress: 0.42, lane: 0, type: 'fast' },
-                { progress: 0.48, lane: 2, type: 'fast' },
-                { progress: 0.6, lane: 0, type: 'elite' },
-                { progress: 0.68, lane: 2, type: 'elite' },
-                { progress: 0.78, lane: 1, type: 'split' }
-            ]
-        }
-    };
 
     const TOWERS = {
         pulse: { id: 'pulse', tier: 'common', baseDamage: 16, cooldown: 0.72, upgradeGold: 220, unlockFragments: 0, color: '#72f4ff', power: 55, splash: 0, slow: 0 },
@@ -513,16 +446,16 @@
     ];
 
     const UPGRADE_CHOICES = [
-        { id: 'damage', label: { zh: '鍏ㄨ矾鐏姏 +18%', en: 'All lane damage +18%' }, hint: { zh: '鐏姏澧炲箙', en: 'Damage Boost' }, apply: (battle) => { battle.modifiers.damage *= 1.18; } },
-        { id: 'speed', label: { zh: '鍏ㄨ矾鏀婚€?+16%', en: 'All lane fire rate +16%' }, hint: { zh: '鍐峰嵈鍔犻€', en: 'Cooldown Speed' }, apply: (battle) => { battle.modifiers.attackSpeed *= 1.16; } },
-        { id: 'gold', label: { zh: '鏈眬閲戝竵鏀剁泭 +22%', en: 'Gold gain this run +22%' }, hint: { zh: '鎴樺埄鍥炴敹', en: 'Salvage Boost' }, apply: (battle) => { battle.modifiers.gold *= 1.22; } },
-        { id: 'shield', label: { zh: '鏍稿績绔嬪嵆鑾峰緱棰濆鎶ょ浘', en: 'Gain instant shield' }, hint: { zh: '鎶ょ浘鍔犲帤', en: 'Shield Boost' }, apply: (battle) => { battle.shield = Math.min(getCoreShieldCap() * 1.45, battle.shield + 70 + getResearchLevel('fortify') * 10); } },
-        { id: 'freeze', label: { zh: '鐐彴鍛戒腑闄勫甫 12% 鍐扮紦', en: '12% slow chance on hit' }, hint: { zh: '鍐扮紦鎵╂暎', en: 'Freeze Spread' }, apply: (battle) => { battle.modifiers.freezeChance += 0.12; } },
-        { id: 'splash', label: { zh: '鐐彴杩藉姞 20% 婧呭皠浼ゅ', en: '20% splash damage added' }, hint: { zh: '鐖嗚閾惧紡', en: 'Splash Chain' }, apply: (battle) => { battle.modifiers.splashBonus += 0.2; } },
-        { id: 'repair', label: { zh: '鏍稿績淇 +28 骞惰ˉ鐩', en: 'Repair core +28 and shield' }, hint: { zh: '绋充綇闃茬嚎', en: 'Stabilize Core' }, apply: (battle) => { battle.coreHp = Math.min(getCoreMaxHp(), battle.coreHp + 28 + getResearchLevel('fortify') * 4); battle.shield = Math.min(getCoreShieldCap() * 1.7, battle.shield + 38 + getResearchLevel('fortify') * 6); } },
-        { id: 'skillReset', label: { zh: '鎶€鑳藉喎鍗?-8 绉', en: 'Skill cooldown -8s' }, hint: { zh: '鎶€鑳藉洖璺', en: 'Skill Loop' }, apply: (battle) => { battle.skillCooldown = Math.max(0, battle.skillCooldown - 8); battle.laneSkillGlow = SKILL_READY_GLOW_MS; } },
-        { id: 'bossBreak', label: { zh: '绮捐嫳 / Boss 浼ゅ +35%', en: 'Elite/Boss damage +35%' }, hint: { zh: '閲嶅帇鍏嬪埗', en: 'Pressure Breaker' }, apply: (battle) => { battle.modifiers.eliteDamage *= 1.35; } },
-        { id: 'coreFlow', label: { zh: '鑳芥牳鎺夎惤 +45%', en: 'Core drops +45%' }, hint: { zh: '鑳芥牳鍥炴祦', en: 'Core Flow' }, apply: (battle) => { battle.modifiers.coreGain *= 1.45; } }
+        { id: 'damage', label: { zh: '全路火力 +18%', en: 'All lane damage +18%' }, hint: { zh: '火力增幅', en: 'Damage Boost' }, apply: (battle) => { battle.modifiers.damage *= 1.18; } },
+        { id: 'speed', label: { zh: '全路攻速 +16%', en: 'All lane fire rate +16%' }, hint: { zh: '冷却加速', en: 'Cooldown Speed' }, apply: (battle) => { battle.modifiers.attackSpeed *= 1.16; } },
+        { id: 'gold', label: { zh: '本局金币收益 +22%', en: 'Gold gain this run +22%' }, hint: { zh: '战利回收', en: 'Salvage Boost' }, apply: (battle) => { battle.modifiers.gold *= 1.22; } },
+        { id: 'shield', label: { zh: '核心立即获得额外护盾', en: 'Gain instant shield' }, hint: { zh: '护盾加厚', en: 'Shield Boost' }, apply: (battle) => { battle.shield = Math.min(getCoreShieldCap() * 1.45, battle.shield + 70 + getResearchLevel('fortify') * 10); } },
+        { id: 'freeze', label: { zh: '炮台命中附带 12% 冰缓', en: '12% slow chance on hit' }, hint: { zh: '冰缓扩散', en: 'Freeze Spread' }, apply: (battle) => { battle.modifiers.freezeChance += 0.12; } },
+        { id: 'splash', label: { zh: '炮台追加 20% 溅射伤害', en: '20% splash damage added' }, hint: { zh: '爆裂链式', en: 'Splash Chain' }, apply: (battle) => { battle.modifiers.splashBonus += 0.2; } },
+        { id: 'repair', label: { zh: '核心修复 +28 并补盾', en: 'Repair core +28 and shield' }, hint: { zh: '稳住防线', en: 'Stabilize Core' }, apply: (battle) => { battle.coreHp = Math.min(getCoreMaxHp(), battle.coreHp + 28 + getResearchLevel('fortify') * 4); battle.shield = Math.min(getCoreShieldCap() * 1.7, battle.shield + 38 + getResearchLevel('fortify') * 6); } },
+        { id: 'skillReset', label: { zh: '技能冷却 -8 秒', en: 'Skill cooldown -8s' }, hint: { zh: '技能回路', en: 'Skill Loop' }, apply: (battle) => { battle.skillCooldown = Math.max(0, battle.skillCooldown - 8); battle.laneSkillGlow = SKILL_READY_GLOW_MS; } },
+        { id: 'bossBreak', label: { zh: '精英 / Boss 伤害 +35%', en: 'Elite/Boss damage +35%' }, hint: { zh: '压制突围包', en: 'Pressure Breaker' }, apply: (battle) => { battle.modifiers.eliteDamage *= 1.35; } },
+        { id: 'coreFlow', label: { zh: '能核掉落 +45%', en: 'Core drops +45%' }, hint: { zh: '能核回流', en: 'Core Flow' }, apply: (battle) => { battle.modifiers.coreGain *= 1.45; } }
     ];
 
     const SHOP_ITEMS = [
@@ -531,36 +464,36 @@
             priceType: 'gold',
             basePrice: 920,
             kicker: { zh: '920 G', en: '920 G' },
-            slot: { zh: '鎴愰暱纰庣墖', en: 'Growth Fragments' },
-            title: { zh: '钃濆浘琛ョ粰绠', en: 'Blueprint Crate' },
-            desc: { zh: '閲戝竵鍚戝熀纭€璧勬簮绠憋紝鍋忓悜闇滃喕 / 鐏 / 閾惧嚮鐨勪腑鏈熸垚闀裤€', en: 'A gold sink for mid-game fragment growth focused on Frost, Rocket, and Chain.' }
+            slot: { zh: '成长碎片', en: 'Growth Fragments' },
+            title: { zh: '蓝图补给箱', en: 'Blueprint Crate' },
+            desc: { zh: '金币向基础资源箱，偏向霜冻 / 火箭 / 链击的中期成长。', en: 'A gold sink for mid-game fragment growth focused on Frost, Rocket, and Chain.' }
         },
         {
             id: 'forgeCrate',
             priceType: 'gold',
             basePrice: 2480,
             kicker: { zh: '2480 G', en: '2480 G' },
-            slot: { zh: '鎺ㄨ繘鍐涙', en: 'Push Arsenal' },
-            title: { zh: '鍓嶇嚎鍐涙绠', en: 'Frontline Arsenal' },
-            desc: { zh: '涓哄崱绔犺妭鍑嗗鐨勯珮闃堕噾甯佺锛屼細琛ュ厖鑳芥牳銆佽禌瀛ｇ粡楠屽拰楂樺帇绔犺妭甯哥敤纰庣墖銆', en: 'A heavier gold sink for chapter walls with cores, Season XP, and higher-tier fragments.' }
+            slot: { zh: '推进军械', en: 'Push Arsenal' },
+            title: { zh: '前线军械箱', en: 'Frontline Arsenal' },
+            desc: { zh: '为卡章节准备的高阶金币箱，会补充能核、赛季经验和高压章节常用碎片。', en: 'A heavier gold sink for chapter walls with cores, Season XP, and higher-tier fragments.' }
         },
         {
             id: 'coreCrate',
             priceType: 'core',
             basePrice: 34,
             kicker: { zh: '34 C', en: '34 C' },
-            slot: { zh: '绋€鏈夌', en: 'Rare Box' },
-            title: { zh: '楂樿兘涓户绠', en: 'High-Energy Relay' },
-            desc: { zh: '鑳芥牳鍚戣ˉ缁欑锛屼富瑕佽ˉ杩為攣 / 杞ㄧ偖纰庣墖锛屽苟甯﹀洖涓€閮ㄥ垎閲戝竵涓庤禌瀛ｇ粡楠屻€', en: 'A core sink that feeds Chain and Rail growth while refunding some gold and Season XP.' }
+            slot: { zh: '稀有箱', en: 'Rare Box' },
+            title: { zh: '高能中继箱', en: 'High-Energy Relay' },
+            desc: { zh: '能核向补给箱，主要补连锁 / 轨炮碎片，并带回一部分金币与赛季经验。', en: 'A core sink that feeds Chain and Rail growth while refunding some gold and Season XP.' }
         },
         {
             id: 'relayCrate',
             priceType: 'core',
             basePrice: 72,
             kicker: { zh: '72 C', en: '72 C' },
-            slot: { zh: '鍚庢湡鏍稿績', en: 'Late Core' },
-            title: { zh: '鐭╅樀涓灑绠', en: 'Matrix Nexus Crate' },
-            desc: { zh: '鍋忓悗鏈熺殑楂橀樁鑳芥牳绠憋紝涓撻棬鎻愰珮璧涘鎺ㄨ繘涓庤建鐐?/ 閾惧嚮鏀堕泦鏁堢巼銆', en: 'A late-game core sink built to speed up Season progress and Rail/Chain collection.' }
+            slot: { zh: '后期核心', en: 'Late Core' },
+            title: { zh: '矩阵中枢箱', en: 'Matrix Nexus Crate' },
+            desc: { zh: '偏后期的高阶能核箱，专门提高赛季推进与轨炮 / 链击收集效率。', en: 'A late-game core sink built to speed up Season progress and Rail/Chain collection.' }
         }
     ];
 
@@ -569,54 +502,54 @@
             id: 'starter',
             price: 1.0,
             accent: '#57e5ff',
-            badge: { zh: '棣栧厖鎺ㄨ崘', en: 'Starter' },
-            name: { zh: '鍓嶇嚎琛ョ粰', en: 'Frontline Cache' },
-            desc: { zh: '蹇€熻ˉ瓒冲墠鏈熼噾甯併€佽兘鏍稿拰鍩虹濉斿彴纰庣墖锛岃鍓嶄笁绔犳帹杩涙洿骞崇ǔ銆', en: 'A light first pack that stabilizes gold, cores, and starter tower fragments.' },
+            badge: { zh: '首充推荐', en: 'Starter' },
+            name: { zh: '前线补给', en: 'Frontline Cache' },
+            desc: { zh: '快速补足前期金币、能核和基础塔台碎片，让前三章推进更平稳。', en: 'A light first pack that stabilizes gold, cores, and starter tower fragments.' },
             reward: { gold: 3200, cores: 28, seasonXp: 120, fragments: { pulse: 20, laser: 18, harvest: 16 } }
         },
         {
             id: 'accelerator',
             price: 2.99,
             accent: '#ff8fe8',
-            badge: { zh: '涓湡鎻愰€', en: 'Value' },
-            name: { zh: '涓户鍔犻€熺', en: 'Relay Booster' },
-            desc: { zh: '閫傚悎琛ュ己涓湡娉㈡鍘嬪姏锛屾彁渚涙洿瀹炵敤鐨勫喕缁撱€佺伀绠拰杩為攣纰庣墖銆', en: 'A mid-loop power spike with more practical fragments for dangerous waves.' },
+            badge: { zh: '中期提速', en: 'Value' },
+            name: { zh: '中继加速箱', en: 'Relay Booster' },
+            desc: { zh: '适合补强中期波次压力，提供更实用的冻结、火箭和连锁碎片。', en: 'A mid-loop power spike with more practical fragments for dangerous waves.' },
             reward: { gold: 9800, cores: 86, seasonXp: 320, fragments: { frost: 24, rocket: 24, chain: 12 } }
         },
         {
             id: 'rush',
             price: 3.99,
             accent: '#ffb168',
-            badge: { zh: '鍐插叧瀹炶', en: 'Rush' },
-            name: { zh: '鍘嬪埗绐佸洿鍖', en: 'Pressure Breaker' },
-            desc: { zh: '涓撲负鍗＄珷鑺傜偣鍑嗗锛屽吋椤鹃噾甯併€佽兘鏍稿拰楂樺帇绔犺妭闇€瑕佺殑楂橀樁纰庣墖銆', en: 'Designed for chapter walls with extra economy and higher-tier fragments.' },
+            badge: { zh: '冲关实装', en: 'Rush' },
+            name: { zh: '压制突围包', en: 'Pressure Breaker' },
+            desc: { zh: '专为卡章节点准备，兼顾金币、能核和高压章节需要的高阶碎片。', en: 'Designed for chapter walls with extra economy and higher-tier fragments.' },
             reward: { gold: 14800, cores: 132, seasonXp: 480, fragments: { rocket: 28, chain: 18, rail: 10 } }
         },
         {
             id: 'sovereign',
             price: 5.99,
             accent: '#ffe27b',
-            badge: { zh: '鏍稿績鎴愰暱', en: 'Core' },
-            name: { zh: '鎸囨尌涓灑鍖', en: 'Command Relay' },
-            desc: { zh: '鍚屾琛ュ己鎴樺姏涓庤禌瀛ｆ敹鐩婏紝閫傚悎寮€濮嬪啿鍑讳腑鍚庢湡绔犺妭銆', en: 'A stronger growth bundle for deeper chapter pushes and season progress.' },
+            badge: { zh: '核心成长', en: 'Core' },
+            name: { zh: '指挥中枢包', en: 'Command Relay' },
+            desc: { zh: '同步补强战力与赛季收益，适合开始冲击中后期章节。', en: 'A stronger growth bundle for deeper chapter pushes and season progress.' },
             reward: { gold: 24000, cores: 210, seasonXp: 760, fragments: { frost: 28, rocket: 28, chain: 22, rail: 16 } }
         },
         {
             id: 'nexus',
             price: 9.99,
             accent: '#7dffb3',
-            badge: { zh: '鍚庢湡鏍稿績', en: 'Endgame' },
-            name: { zh: '鍫″瀿鏍稿績鍖', en: 'Citadel Core' },
-            desc: { zh: '鍥寸粫鍚庢湡闃靛琛ョ粰锛岀洿鎺ユ彁楂樿兘鏍稿偍澶囧拰杩為攣 / 杞ㄧ偖鎴愰暱閫熷害銆', en: 'An endgame pack that boosts core stock and high-tier tower growth.' },
+            badge: { zh: '后期核心', en: 'Endgame' },
+            name: { zh: '堡垒核心包', en: 'Citadel Core' },
+            desc: { zh: '围绕后期阵容补给，直接提高能核储备和连锁 / 轨炮成长速度。', en: 'An endgame pack that boosts core stock and high-tier tower growth.' },
             reward: { gold: 42000, cores: 360, seasonXp: 1200, fragments: { frost: 32, rocket: 32, chain: 34, rail: 28 } }
         },
         {
             id: 'throne',
             price: 12.99,
             accent: '#89c9ff',
-            badge: { zh: '缁堝眬鏁村', en: 'Summit' },
-            name: { zh: '鍒涗笘鍐涙搴', en: 'Genesis Arsenal' },
-            desc: { zh: '瑕嗙洊鏁村濉斿彴鎴愰暱鎵€闇€锛岄€傚悎鍑嗗闀挎湡瀹堢嚎涓庡啿璧涘濂栧姳銆', en: 'A full arsenal bundle built for long-term defense and season chasing.' },
+            badge: { zh: '终局整备', en: 'Summit' },
+            name: { zh: '创世军械库', en: 'Genesis Arsenal' },
+            desc: { zh: '覆盖整套塔台成长所需，适合准备长期守线与冲赛季奖励。', en: 'A full arsenal bundle built for long-term defense and season chasing.' },
             reward: { gold: 62000, cores: 520, seasonXp: 1800, fragments: { pulse: 40, laser: 40, harvest: 40, frost: 36, rocket: 36, chain: 30, rail: 24 } }
         }
     ];
@@ -1160,62 +1093,62 @@
     function getChapterOpeningGuide(chapter) {
         const map = {
             '1-1': {
-                zh: '寮€灞€鍏堢ǔ浣忎腑璺紝鍐嶇敤閲囬泦濉旀妸鍓嶄袱娉㈤噾甯佹粴璧锋潵銆',
+                zh: '开局先稳住中路，再用采集塔把前两波金币滚起来。',
                 en: 'Stabilize the middle lane first, then let Harvest snowball the first two waves.'
             },
             '1-2': {
-                zh: '绗?2 娉㈠揩鎬細鎻愰€燂紝EMP 涓嶈鍦ㄥ紑鍦虹┖鏀俱€',
+                zh: '第 2 波快怪会提速，EMP 不要在开场空放。',
                 en: 'Fast enemies spike on wave 2, so do not waste EMP on the opener.'
             },
             '1-3': {
-                zh: '鍏堣ˉ鍑忛€熻矾锛屽啀琛ョ垎瑁傝矾锛屽紑灞€鍒€ョ潃杩芥眰涓夎矾骞冲潎銆',
+                zh: '先补减速路，再补爆裂路，开局别急着追求三路平均。',
                 en: 'Lock in one slow lane and one splash lane before trying to balance all three.'
             },
             '2-1': {
-                zh: '鎶ょ浘鎬紑濮嬫姮澶达紝浼樺厛璁╄繛閿佹垨杞ㄧ偖鎺ヤ綇涓悗娈点€',
+                zh: '护盾怪开始抬头，优先让链击或轨炮接住中后段。',
                 en: 'Shield units matter now, so let Chain or Rail own the mid-late stretch.'
             },
             '2-2': {
-                zh: '鑷冲皯涓€鏉¤矾瑕佸厛鎴愬瀷锛屽啀鑰冭檻鐢ㄧ粡娴庡鍚冮暱绾挎敹鐩娿€',
+                zh: '至少一条路要先成型，再考虑用经济塔吃长线收益。',
                 en: 'Complete one stable lane first, then convert spare room into economy.'
             },
             '2-3': {
-                zh: '绗?6 娉㈠墠灏介噺淇濅綇婊＄浘锛岀粓灞€浼氱洿鎺ヨ€冧綘 Boss 澶勭悊銆',
+                zh: '第 6 波前尽量保住满盾，终局会直接考你 Boss 处理。',
                 en: 'Try to stay near full shield before wave 6 because the boss check is direct.'
             },
             '3-1': {
-                zh: '寮€灞€浼樺厛绋充綇涓よ矾娓呯嚎锛屽啀鐢ㄨ秴棰戞妸绗笁璺殑鐖嗗彂鎶捣鏉ャ€',
+                zh: '开局优先稳住两路清线，再用超频把第三路的爆发抬起来。',
                 en: 'Stabilize two lanes first, then use Overclock to raise the burst on the third.'
             },
             '3-2': {
-                zh: '鍓嶄袱娉㈠厛鐣欐妧鑳斤紝绗?4 娉㈠紑濮嬩細鍑虹幇杩炵画鍙犲帇銆',
+                zh: '前两波先留技能，第 4 波开始会出现连续叠压。',
                 en: 'Save your skill through the opener because chained pressure starts on wave 4.'
             },
             '3-3': {
-                zh: '鍏堜繚鍑忛€熻矾鍜岃建鐐矾锛岀 6 娉㈠墠灏介噺鎶婃牳蹇冩姢鐩捐ˉ婊°€',
+                zh: '先保减速路和轨炮路，第 6 波前尽量把核心护盾补满。',
                 en: 'Protect your slow lane and Rail lane first, and refill shield before wave 6.'
             }
         };
         return getLocalized(map[chapter.id] || {
-            zh: '鍏堢湅鏁屾疆缁撴瀯锛屽啀鍥寸粫褰撳墠鏈€绋崇殑涓よ矾鏉ュ仛寮€灞€閮ㄧ讲銆',
+            zh: '先看敌潮结构，再围绕当前最稳的两路来做开局部署。',
             en: 'Read the enemy mix first, then anchor your opener around the two most stable lanes.'
         });
     }
 
     function getChapterWavePlan(chapter) {
         const map = {
-            '1-1': { zh: '鑺傚骞崇ǔ锛岄噸鐐圭啛鎮変笁璺珯浣嶄笌鍗囩骇鏃舵満銆', en: 'A steady intro wave plan built to teach lanes and upgrade timing.' },
-            '1-2': { zh: '绗?2 娉㈠揩鎬瘯鍘嬶紝绗?4 娉㈠紑濮嬪嚭鐜版洿鏄庢樉鐨勫垎璺媺鎵€', en: 'Wave 2 tests fast enemy control and wave 4 starts lane-pulling pressure.' },
-            '1-3': { zh: '绗?3 娉㈠紑濮嬫贩鍏ュ垎瑁傛€紝绗?4-6 娉㈡洿鑰冮獙鍑忛€熶笌婧呭皠銆', en: 'Split enemies start on wave 3 and waves 4-6 lean harder on slow plus splash.' },
-            '2-1': { zh: '绗?4 娉㈣捣浼氳繛缁嚭鐜伴珮琛€鍗曚綅锛岀粓灞€ Boss 鏇村亸姝ｉ潰鍘嬪埗銆', en: 'Wave 4 onward adds consecutive bulkier units before a direct boss check.' },
-            '2-2': { zh: '涓湡娉㈡浼氭寔缁€冮獙缁忔祹涓庤緭鍑哄悓姝ユ垚鍨嬨€', en: 'Mid waves pressure both economy and damage at the same time.' },
-            '2-3': { zh: '绗?5-6 娉㈡槑鏄炬彁鍘嬶紝缁撳熬浠ラ噸 Boss 娉㈠仛绔犺妭闂ㄦ銆', en: 'Waves 5-6 spike sharply and the chapter closes on a heavy boss gate.' },
-            '3-1': { zh: '绗?2 娉㈠弻渚у揩鍘嬶紝绗?4 娉㈠弻绮捐嫳璇曞帇锛岀 6 娉?Boss 鍓嶅啀琛ヤ竴娆′晶璺啿绾裤€', en: 'Wave 2 sends side-lane speed pressure, wave 4 adds dual elites, and wave 6 rechecks side lanes before the boss.' },
-            '3-2': { zh: '绗?2 娉㈠弻鎶ょ浘璧锋墜锛岀 4-5 娉㈣繛缁彔鍔犲垎瑁備笌绮捐嫳锛岀 6 娉?Boss 甯︽姢鐩炬敮鎻淬€', en: 'Wave 2 opens with double shield pressure, waves 4-5 stack split plus elite threats, and wave 6 adds boss support pressure.' },
-            '3-3': { zh: '绗?2 娉笁璺揩鍘嬶紝绗?4-5 娉㈣繛缁笁绾垮彔鍘嬶紝绗?6 娉?Boss 鍓嶅悗閮芥湁渚ц矾绮捐嫳琛ュ帇銆', en: 'Wave 2 pressures all three lanes, waves 4-5 keep triple-lane stacking, and wave 6 wraps the boss with side-lane elite pressure.' }
+            '1-1': { zh: '节奏平稳，重点熟悉三路站位与升级时机。', en: 'A steady intro wave plan built to teach lanes and upgrade timing.' },
+            '1-2': { zh: '第 2 波快怪试压，第 4 波开始出现更明显的分路拉扯。', en: 'Wave 2 tests fast enemy control and wave 4 starts lane-pulling pressure.' },
+            '1-3': { zh: '第 3 波开始混入分裂怪，第 4-6 波更考验减速与溅射。', en: 'Split enemies start on wave 3 and waves 4-6 lean harder on slow plus splash.' },
+            '2-1': { zh: '第 4 波起会连续出现高血单位，终局 Boss 更偏正面压制。', en: 'Wave 4 onward adds consecutive bulkier units before a direct boss check.' },
+            '2-2': { zh: '中期波次会持续考验经济与输出同步成型。', en: 'Mid waves pressure both economy and damage at the same time.' },
+            '2-3': { zh: '第 5-6 波明显提压，结尾以重 Boss 波做章节门槛。', en: 'Waves 5-6 spike sharply and the chapter closes on a heavy boss gate.' },
+            '3-1': { zh: '第 2 波双侧快压，第 4 波双精英试压，第 6 波 Boss 前再补一轮侧路冲线。', en: 'Wave 2 sends side-lane speed pressure, wave 4 adds dual elites, and wave 6 rechecks side lanes before the boss.' },
+            '3-2': { zh: '第 2 波双护盾起手，第 4-5 波连续叠加分裂与精英，第 6 波 Boss 带护盾支援。', en: 'Wave 2 opens with double shield pressure, waves 4-5 stack split plus elite threats, and wave 6 adds boss support pressure.' },
+            '3-3': { zh: '第 2 波三路快压，第 4-5 波连续三线叠压，第 6 波 Boss 前后都有侧路精英补压。', en: 'Wave 2 pressures all three lanes, waves 4-5 keep triple-lane stacking, and wave 6 wraps the boss with side-lane elite pressure.' }
         };
         return getLocalized(map[chapter.id] || {
-            zh: '娉㈡浼氶€愭笎鎶婁笁璺竴璧锋姮鍘嬶紝鍔″繀鎻愬墠鍑嗗绋冲畾娓呯嚎鐐广€',
+            zh: '波次会逐渐把三路一起抬压，务必提前准备稳定清线点。',
             en: 'Pressure rises toward all three lanes together, so prepare stable clear points early.'
         });
     }
@@ -1223,21 +1156,21 @@
     function getBattleWaveGuide(chapter, waveNumber) {
         const map = {
             '3-1': {
-                2: { zh: '绗?2 娉㈠弻渚у揩鍘嬪凡杩涘満锛屽厛鐪嬭竟璺竻绾垮啀鍐冲畾鏄惁浜よ秴棰戙€', en: 'Wave 2 side-lane speed pressure is live. Read your side clears before spending Overclock.' },
-                4: { zh: '绗?4 娉㈠弻绮捐嫳浼氬悓鏃惰瘯鍘嬩袱渚э紝鍒妸鍏ㄩ儴鐖嗗彂鍘嬪湪鍚屼竴璺€', en: 'Wave 4 sends dual elites into the side lanes, so do not overcommit all burst to one lane.' },
-                6: { zh: 'Boss 鍓嶈繕鏈変竴杞晶璺啿绾匡紝鏍稿績鎶ょ浘鍒湪寮€娉㈠墠灏辫搴曘€', en: 'One more side-lane rush arrives before the boss, so do not enter the wave on empty shield.' }
+                2: { zh: '第 2 波双侧快压已进场，先看边路清线再决定是否交超频。', en: 'Wave 2 side-lane speed pressure is live. Read your side clears before spending Overclock.' },
+                4: { zh: '第 4 波双精英会同时试压两侧，别把全部爆发压在同一路。', en: 'Wave 4 sends dual elites into the side lanes, so do not overcommit all burst to one lane.' },
+                6: { zh: 'Boss 前还有一轮侧路冲线，核心护盾别在开波前就见底。', en: 'One more side-lane rush arrives before the boss, so do not enter the wave on empty shield.' }
             },
             '3-2': {
-                2: { zh: '绗?2 娉㈠弻鎶ょ浘浼氭嫋闀挎垬绾匡紝鎶€鑳藉敖閲忕户缁繚鐣欍€', en: 'Wave 2 double shield units extend the fight, so keep your skill held if possible.' },
-                4: { zh: '绗?4 娉㈠紑濮嬪垎瑁備笌鎶ょ浘鍙犲帇锛岃繛閿?/ 鐏浼氭瘮鍗曠偣鏇寸ǔ銆', en: 'Wave 4 stacks split and shield pressure, making Chain or Rocket safer than single-target lanes.' },
-                5: { zh: '绗?5 娉㈠弻绮捐嫳鏄湰绔犳渶鍗遍櫓鐨勪腑娈佃妭鐐癸紝蹇呰鏃跺厛浜ゆ姢鐩俱€', en: 'Wave 5 dual elites are the most dangerous mid-run checkpoint here, so shielding early is fine.' },
-                6: { zh: 'Boss 浼氬甫鐫€鏀彺鎬竴璧峰帇涓悗娈碉紝鍒瓑鏍稿績鎺夎鍚庢墠琛ョ浘銆', en: 'The boss arrives with support pressure, so refresh shield before the core starts leaking.' }
+                2: { zh: '第 2 波双护盾会拖长战线，技能尽量继续保留。', en: 'Wave 2 double shield units extend the fight, so keep your skill held if possible.' },
+                4: { zh: '第 4 波开始分裂与护盾叠压，链击 / 火箭会比单点更稳。', en: 'Wave 4 stacks split and shield pressure, making Chain or Rocket safer than single-target lanes.' },
+                5: { zh: '第 5 波双精英是本章最危险的中段节点，必要时先交护盾。', en: 'Wave 5 dual elites are the most dangerous mid-run checkpoint here, so shielding early is fine.' },
+                6: { zh: 'Boss 会带着支援怪一起压中后段，别等核心掉血后才补盾。', en: 'The boss arrives with support pressure, so refresh shield before the core starts leaking.' }
             },
             '3-3': {
-                2: { zh: '绗?2 娉笁璺揩鍘嬩細鐩存帴鎽稿簳浣犵殑娓呯嚎鑳藉姏锛屼紭鍏堜繚鏈€钖勭殑涓€璺€', en: 'Wave 2 tests all three lanes immediately, so protect whichever lane is least stable.' },
-                4: { zh: '绗?4 娉笁绾垮彔鍘嬪紑濮嬪舰鎴愶紝鍑忛€熻矾涓嶈兘鏂€', en: 'Wave 4 starts the true triple-lane stack, so your slow lane cannot collapse.' },
-                5: { zh: '绗?5 娉細鎶婃姢鐩惧拰绮捐嫳涓€璧锋姮涓婃潵锛岀伀绠?/ 杩為攣鐨勮鐩栨瘮璐崟鍙戞洿閲嶈銆', en: 'Wave 5 stacks shield units with elites, so Rocket or Chain coverage beats greedy single shots.' },
-                6: { zh: '鏈€缁堟尝浼氬湪 Boss 涓や晶鎸佺画琛ュ帇锛屽厛淇濅綇涓ょ考鍐嶉泦涓伀鍔涘鐞嗕腑蹇冦€', en: 'The final wave keeps feeding pressure into both sides of the boss, so hold the wings before hard-focusing center.' }
+                2: { zh: '第 2 波三路快压会直接摸底你的清线能力，优先保最脆的一路。', en: 'Wave 2 tests all three lanes immediately, so protect whichever lane is least stable.' },
+                4: { zh: '第 4 波三线叠压开始成型，减速路不能断。', en: 'Wave 4 starts the true triple-lane stack, so your slow lane cannot collapse.' },
+                5: { zh: '第 5 波会把护盾和精英一起抬上来，火箭 / 链击的覆盖比贪单发更重要。', en: 'Wave 5 stacks shield units with elites, so Rocket or Chain coverage beats greedy single shots.' },
+                6: { zh: '最终波会在 Boss 两侧持续补压，先保住两翼再集中火力处理中心。', en: 'The final wave keeps feeding pressure into both sides of the boss, so hold the wings before hard-focusing center.' }
             }
         };
         return getLocalized(map[chapter.id]?.[waveNumber] || {
@@ -1256,44 +1189,44 @@
     function getChapterDirective(chapter) {
         const map = {
             '1-1': {
-                zh: '寤鸿浠ヨ剦鍐插 / 婵€鍏夊 / 閲囬泦濉旇捣姝ワ紝鍏堢ǔ浣忔竻绾挎晥鐜囧拰鍓嶆湡閲戝竵鍥炴祦銆',
+                zh: '建议以脉冲塔 / 激光塔 / 采集塔起步，先稳住清线效率和前期金币回流。',
                 en: 'Open with Pulse / Laser / Harvest to stabilize lanes and build early economy.'
             },
             '1-2': {
-                zh: '楂橀€熸€細鏄庢樉澧炲姞锛屼紭鍏堣婵€鍏夊瀹堜富璺紝骞舵妸 EMP 鐣欑粰鏈€瀵嗛泦鐨勫啿绾挎尝娆°€',
+                zh: '高速怪会明显增加，优先让激光塔守主路，并把 EMP 留给最密集的冲线波次。',
                 en: 'Fast enemies spike here. Let Laser hold the main lane and save EMP for the densest rushes.'
             },
             '1-3': {
-                zh: '鍒嗚鎬拰绮捐嫳寮€濮嬫垚鍨嬶紝闇滃喕濉?+ 鐏濉旂殑鍑忛€熺垎瑁傜粍鍚堜細姣旂函缁忔祹鏇寸ǔ銆',
+                zh: '分裂怪和精英开始成型，霜冻塔 + 火箭塔的减速爆裂组合会比纯经济更稳。',
                 en: 'Split enemies and elites start to matter, so Frost + Rocket is safer than pure economy.'
             },
             '2-1': {
-                zh: '鎶ょ浘鎬閲忔姮鍗囧悗锛岄摼鍑诲寮€濮嬫帴绠′腑鍚庢鐏姏锛岃秴棰戦€傚悎鐢ㄦ潵寮洪《楂樺帇娉㈡銆',
+                zh: '护盾怪血量抬升后，链击塔开始接管中后段火力，超频适合用来强顶高压波次。',
                 en: 'As shield units grow bulkier, Chain takes over mid-late DPS and Overclock carries pressure spikes.'
             },
             '2-2': {
-                zh: '杩欐槸缁忔祹涓庤緭鍑哄弻妫€瀹氱珷鑺傦紝鑷冲皯淇濊瘉涓€璺ǔ瀹氭竻绾匡紝鍐嶈ˉ閲囬泦濉斿仛婊氶洩鐞冦€',
+                zh: '这是经济与输出双检定章节，至少保证一路稳定清线，再补采集塔做滚雪球。',
                 en: 'This chapter tests both economy and damage. Lock one lane first, then snowball with Harvest.'
             },
             '2-3': {
-                zh: 'Boss 娉㈡瀬閲嶏紝浼樺厛鍑嗗楂樼瓑绾ц建鐐?/ 閾惧嚮缁勫悎锛屽苟鍦ㄦ渶缁堟尝鍓嶅敖閲忎繚婊℃牳蹇冩姢鐩俱€',
+                zh: 'Boss 波极重，优先准备高等级轨炮 / 链击组合，并在最终波前尽量保满核心护盾。',
                 en: 'The boss wave is brutal. Prioritize high-level Rail / Chain setups and keep the core shield healthy.'
             },
             '3-1': {
-                zh: '鑷冲皯璁╀袱璺叿澶囩ǔ瀹氭竻绾胯兘鍔涳紝鍐嶇敤瓒呴鎶婄涓夎矾鐨勭垎鍙戞姮璧锋潵锛涘崟闈犻噰闆嗗婊氶洩鐞冧細鏄庢樉鍚冨姏銆',
+                zh: '至少让两路具备稳定清线能力，再用超频把第三路的爆发抬起来；单靠采集塔滚雪球会明显吃力。',
                 en: 'Make sure two lanes can clear consistently, then use Overclock to raise the burst on the third lane. Harvest-only snowballing gets punished here.'
             },
             '3-2': {
-                zh: '鎶ょ浘鎬笌鍒嗚鎬細杩炵画鏂藉帇锛屽缓璁敤鎶ょ浘鎶€鑳界‖椤跺嵄闄╂尝锛屽苟璁╅摼鍑?/ 鐏璐熻矗澶勭悊涓悗娈靛爢鎬€',
+                zh: '护盾怪与分裂怪会连续施压，建议用护盾技能硬顶危险波，并让链击 / 火箭负责处理中后段堆怪。',
                 en: 'Shield and split enemies stack together, so use the shield skill to absorb danger spikes and let Chain/Rocket handle clustered mid-late lanes.'
             },
             '3-3': {
-                zh: '缁堢珷鐨勫叧閿笉鏄崟璺瀬闄愯緭鍑猴紝鑰屾槸涓夎矾閮戒笉鑳藉穿銆備紭鍏堜繚浣忓噺閫熻矾涓庤建鐐矾锛屽啀鐢ㄥ墿浣欒祫婧愯ˉ瓒崇涓夎矾銆',
+                zh: '终章的关键不是单路极限输出，而是三路都不能崩。优先保住减速路与轨炮路，再用剩余资源补足第三路。',
                 en: 'The final chapter is less about one perfect lane and more about preventing any lane collapse. Protect your slow lane and Rail lane first, then patch the third lane.'
             }
         };
         return getLocalized(map[chapter.id] || {
-            zh: '鍥寸粫褰撳墠绔犺妭鏁屾疆鐗规€ц皟鏁磋閰嶄笌鎶€鑳斤紝璁╀笁璺帇鍔涘敖閲忓潎琛°€',
+            zh: '围绕当前章节敌潮特性调整装配与技能，让三路压力尽量均衡。',
             en: 'Adjust your loadout and skill to the enemy mix so all three lanes stay balanced.'
         });
     }
@@ -1373,7 +1306,7 @@
         saveProgress();
         if (showNotice) {
             showToast(getLocalized({
-                zh: applySkill ? `宸插簲鐢?${chapter.id} 鎺ㄨ崘缂栭槦` : `宸插簲鐢?${chapter.id} 鎺ㄨ崘鐏姏缁勫悎`,
+                zh: applySkill ? `已应用 ${chapter.id} 推荐编队` : `已应用 ${chapter.id} 推荐火力组合`,
                 en: applySkill ? `${chapter.id} preset applied` : `${chapter.id} lane preset applied`
             }));
         }
@@ -1560,9 +1493,9 @@
         const sponsorReady = getSponsorSeasonReadyCount();
         const dailyReady = isDailySupplyReady();
         const dailyRemaining = dailyReady
-            ? getLocalized({ zh: '鏃ュ父琛ョ粰鍙鍙', en: 'Daily supply ready' })
+            ? getLocalized({ zh: '日常补给可领取', en: 'Daily supply ready' })
             : getLocalized({
-                zh: `涓嬩竴娆¤ˉ缁?${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`,
+                zh: `下一次补给 ${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`,
                 en: `Next supply ${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`
             });
         const claimableTotal = missionReady + seasonReady + sponsorReady + (dailyReady ? 1 : 0);
@@ -1614,8 +1547,8 @@
                     <span class="mini-chip">${formatCompact(current.coreReward)} C</span>
                     <span class="mini-chip">${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
                     <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
-                    <span class="mini-chip">${getLocalized({ zh: `纰庣墖鍊惧悜 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
-                    <span class="mini-chip">${getLocalized({ zh: `鎺ㄨ崘鎶€鑳?${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
+                    <span class="mini-chip">${getLocalized({ zh: `碎片倾向 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
+                    <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
                 </div>
                 <div class="card-actions" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="startChapter" data-value="${state.save.chapterIndex}">${t('defendNow')}</button>
@@ -1624,8 +1557,8 @@
             <article>
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">${getLocalized({ zh: '绔犺妭鎴樻湳', en: 'Chapter Brief' })}</div>
-                        <div class="card-title">${getLocalized({ zh: '鎺ㄨ崘瑁呴厤璺嚎', en: 'Recommended Build Path' })}</div>
+                        <div class="card-kicker">${getLocalized({ zh: '章节战术', en: 'Chapter Brief' })}</div>
+                        <div class="card-title">${getLocalized({ zh: '推荐装配路线', en: 'Recommended Build Path' })}</div>
                     </div>
                     <div class="card-number">${recommendedSkill}</div>
                 </div>
@@ -1638,43 +1571,43 @@
                 <article class="stat-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${getLocalized({ zh: '寮€鎵撳墠妫€鏌?', en: 'Battle Ready' })}</div>
+                            <div class="card-kicker">${getLocalized({ zh: '开打前检查', en: 'Battle Ready' })}</div>
                             <div class="card-title">${prepOverview.ready
-                                ? getLocalized({ zh: '褰撳墠缂栭槦宸插氨缁?', en: 'Preset synced and ready' })
-                                : getLocalized({ zh: `杩樻湁 ${prepOverview.adjustmentsNeeded} 椤瑰緟璋冩暣`, en: `${prepOverview.adjustmentsNeeded} prep tweaks left` })}</div>
+                                ? getLocalized({ zh: '当前编队已就绪', en: 'Preset synced and ready' })
+                                : getLocalized({ zh: `还有 ${prepOverview.adjustmentsNeeded} 项待调整`, en: `${prepOverview.adjustmentsNeeded} prep tweaks left` })}</div>
                         </div>
                         <div class="card-number">${prepOverview.powerGap > 0
-                            ? getLocalized({ zh: `鎴樺姏宸窛 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
-                            : getLocalized({ zh: '鎴樺姏杈炬爣', en: 'Power ready' })}</div>
+                            ? getLocalized({ zh: `战力差距 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                            : getLocalized({ zh: '战力达标', en: 'Power ready' })}</div>
                     </div>
                     <div class="card-copy">${prepOverview.ready
                         ? getLocalized({
-                            zh: '涓夎矾鐐彴鍜屾妧鑳介兘宸茬粡瀵归綈褰撳墠绔犺妭鎺ㄨ崘锛屽彲浠ョ洿鎺ヨ繘鍏ラ槻瀹堬紝鏇村悗缁啿鍏冲彧闇€鍙嶅澶嶇敤杩欏缂栭槦銆',
+                            zh: '三路炮台和技能都已经对齐当前章节推荐，可以直接进入防守，后续冲关只需要反复复用这套编队。',
                             en: 'Your three lanes and skill already match the chapter preset, so you can jump straight into defense.'
                         })
                         : getLocalized({
-                            zh: '闃茬嚎椤甸潰鐜板湪鍙互鐩存帴涓€閿鐢ㄦ帹鑽愮紪闃燂紝涓嶇敤鍐嶆墜鍔ㄥ洖鍒拌閰嶉〉閫愪釜璋冩暣銆',
+                            zh: '防线页面现在可以直接一键套用推荐编队，不用再手动回到装配页逐个调整。',
                             en: 'You can now apply the recommended chapter setup right from the defend tab without manually rebuilding the loadout.'
                         })}</div>
                     <div class="reward-row">
                         ${prepOverview.currentLanes.map((towerId, laneIndex) => `<span class="mini-chip">${prepOverview.laneMatches[laneIndex]
-                            ? getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} 宸插氨缁?`, en: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} ready` })
+                            ? getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} 已就绪`, en: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} ready` })
                             : getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(towerId)} → ${towerLabel(prepOverview.preset.lanes[laneIndex])}`, en: `${getLaneName(laneIndex)} ${towerLabel(towerId)} → ${towerLabel(prepOverview.preset.lanes[laneIndex])}` })}</span>`).join('')}
                         <span class="mini-chip">${prepOverview.skillMatches
-                            ? getLocalized({ zh: `鎶€鑳?${prepSkillLabel} 宸插氨缁?`, en: `Skill ${prepSkillLabel} ready` })
-                            : getLocalized({ zh: `鎶€鑳?${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}`, en: `Skill ${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}` })}</span>
+                            ? getLocalized({ zh: `技能 ${prepSkillLabel} 已就绪`, en: `Skill ${prepSkillLabel} ready` })
+                            : getLocalized({ zh: `技能 ${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}`, en: `Skill ${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}` })}</span>
                     </div>
                     <div class="card-actions" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${current.id}">
                             ${prepOverview.ready
-                                ? getLocalized({ zh: '鐩存帴寮€鎵?', en: 'Defend Now' })
-                                : getLocalized({ zh: '涓€閿鐢ㄥ苟寮€鎵?', en: 'Apply & Defend' })}
+                                ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
+                                : getLocalized({ zh: '一键套用并开打', en: 'Apply & Defend' })}
                         </button>
                         <button class="ghost-btn" type="button" data-action="applyChapterPreset" data-value="${current.id}">
-                            ${getLocalized({ zh: '鍙悓姝ユ帹鑽愮紪闃?', en: 'Apply Preset' })}
+                            ${getLocalized({ zh: '只同步推荐编队', en: 'Apply Preset' })}
                         </button>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
-                            ${getLocalized({ zh: '鍓嶅線瑁呴厤', en: 'Open Loadout' })}
+                            ${getLocalized({ zh: '前往装配', en: 'Open Loadout' })}
                         </button>
                     </div>
                 </article>
@@ -1703,41 +1636,41 @@
                         <div>
                         <div class="card-kicker">${t('previewEconomy')}</div>
                             <div class="card-title">${economyPreview.claimableTotal > 0
-                                ? getLocalized({ zh: '寮€鎵撳墠鏈夎祫婧愬彲鍥炴敹', en: 'Resources are ready before the next run' })
-                                : getLocalized({ zh: '鏈珷鑺傚洖鏀剁幆宸茬粡鎼ソ', en: 'This chapter loop is ready to fund itself' })}</div>
+                                ? getLocalized({ zh: '开打前有资源可回收', en: 'Resources are ready before the next run' })
+                                : getLocalized({ zh: '本章节回收环已经搭好', en: 'This chapter loop is ready to fund itself' })}</div>
                         </div>
                         <div class="card-number">${economyPreview.claimableTotal > 0
-                            ? getLocalized({ zh: `寰呴 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })
-                            : economyPreview.dailyReady ? getLocalized({ zh: '鍙琛ョ粰', en: 'Supply ready' }) : economyPreview.dailyRemaining}</div>
+                            ? getLocalized({ zh: `待领 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })
+                            : economyPreview.dailyReady ? getLocalized({ zh: '可领补给', en: 'Supply ready' }) : economyPreview.dailyRemaining}</div>
                     </div>
                     <div class="card-copy">${economyPreview.powerGap > 0
                         ? getLocalized({
-                            zh: `鎺ㄨ崘鍏堣ˉ ${formatCompact(economyPreview.powerGap)} 鎴樺姏鍐嶅啿鏈珷鑺傦紝鍚屾椂鍙厛鍥炴敹鏃ュ父 / 浠诲姟 / 璧涘璧勬簮銆`,
+                            zh: `推荐先补 ${formatCompact(economyPreview.powerGap)} 战力再冲本章节，同时可先回收日常 / 任务 / 赛季资源。`,
                             en: `You are about ${formatCompact(economyPreview.powerGap)} power short, so reclaim daily, mission, and season resources before pushing.`
                         })
                         : getLocalized({
-                            zh: '褰撳墠鎴樺姏宸茬粡杈惧埌鎺ㄨ崘鍖洪棿锛屽彲鐩存帴寮€鎵撳苟绻佺粰璧勬簮鍥炴祦銆',
+                            zh: '当前战力已经达到推荐区间，可直接开打并让资源继续回流。',
                             en: 'Your power is inside the recommended range, so you can defend now and keep the resource loop rolling.'
                         })}</div>
                     <div class="reward-row">
-                        <span class="mini-chip">${getLocalized({ zh: `閫氬叧棰勮 ${formatCompact(economyPreview.clearPreview.gold)}G`, en: `Clear ${formatCompact(economyPreview.clearPreview.gold)}G` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `通关预览 ${formatCompact(economyPreview.clearPreview.gold)}G`, en: `Clear ${formatCompact(economyPreview.clearPreview.gold)}G` })}</span>
                         <span class="mini-chip">${getLocalized({ zh: `${formatCompact(economyPreview.clearPreview.cores)} C`, en: `${formatCompact(economyPreview.clearPreview.cores)} C` })}</span>
                         <span class="mini-chip">${getLocalized({ zh: `${formatCompact(economyPreview.clearPreview.fragments)} ${t('fragmentLabel')}`, en: `${formatCompact(economyPreview.clearPreview.fragments)} ${t('fragmentLabel')}` })}</span>
                         <span class="mini-chip">${economyPreview.dailyRemaining}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `浠诲姟寰呴 ${economyPreview.missionReady}`, en: `Missions ${economyPreview.missionReady}` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `璧涘寰呴 ${seasonTotalReady}`, en: `Season ${seasonTotalReady}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `任务待领 ${economyPreview.missionReady}`, en: `Missions ${economyPreview.missionReady}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `赛季待领 ${seasonTotalReady}`, en: `Season ${seasonTotalReady}` })}</span>
                     </div>
                     <div class="card-actions" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${economyPreview.dailyReady ? 'claimDaily' : 'openTab'}" data-value="${economyPreview.dailyReady ? 'daily' : 'shop'}">
                             ${economyPreview.dailyReady
-                                ? getLocalized({ zh: '鐩存帴棰嗗彇琛ョ粰', en: 'Claim Supply' })
-                                : getLocalized({ zh: '鎵撳紑琛ョ粰', en: 'Open Supply' })}
+                                ? getLocalized({ zh: '直接领取补给', en: 'Claim Supply' })
+                                : getLocalized({ zh: '打开补给', en: 'Open Supply' })}
                         </button>
                         ${economyPreview.missionReady > 0
-                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="missions">${getLocalized({ zh: `浠诲姟 x${economyPreview.missionReady}`, en: `Missions x${economyPreview.missionReady}` })}</button>`
+                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="missions">${getLocalized({ zh: `任务 x${economyPreview.missionReady}`, en: `Missions x${economyPreview.missionReady}` })}</button>`
                             : ''}
                         ${seasonTotalReady > 0
-                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">${getLocalized({ zh: `璧涘 x${seasonTotalReady}`, en: `Season x${seasonTotalReady}` })}</button>`
+                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">${getLocalized({ zh: `赛季 x${seasonTotalReady}`, en: `Season x${seasonTotalReady}` })}</button>`
                             : ''}
                     </div>
                 </article>
@@ -1756,37 +1689,37 @@
             <article class="stat-card">
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">${getLocalized({ zh: '绔犺妭鎺ㄨ崘缂栭槦', en: 'Chapter Preset' })}</div>
+                        <div class="card-kicker">${getLocalized({ zh: '章节推荐编队', en: 'Chapter Preset' })}</div>
                         <div class="card-title">${chapter.id} 路 ${presetSkillLabel}</div>
                     </div>
                     <div class="card-number">${preset.usedFallback
-                        ? getLocalized({ zh: '宸茶嚜鍔ㄩ€傞厤', en: 'Auto adjusted' })
-                        : getLocalized({ zh: '鏍囧噯缂栭槦', en: 'Standard preset' })}</div>
+                        ? getLocalized({ zh: '已自动适配', en: 'Auto adjusted' })
+                        : getLocalized({ zh: '标准编队', en: 'Standard preset' })}</div>
                 </div>
                 <div class="card-copy">${preset.usedFallback
                     ? getLocalized({
-                        zh: '閮ㄥ垎鎺ㄨ崘鐐彴灏氭湭瑙ｉ攣锛岀郴缁熷凡鑷姩鐢ㄥ綋鍓嶅彲鐢ㄧ殑鍚屽畾浣嶇偖鍙版浛鎹€',
+                        zh: '部分推荐炮台尚未解锁，系统已自动用当前可用的同定位炮台替换。',
                         en: 'Some recommended towers are still locked, so the preset automatically swaps to currently available alternatives.'
                     })
                     : getLocalized({
-                        zh: '涓€閿簲鐢ㄥ綋鍓嶇珷鑺傜殑鎺ㄨ崘涓夎矾缂栭槦鍜屼富鍔ㄦ妧鑳斤紝鍙互鐩存帴寮€濮嬮槻瀹堛€',
+                        zh: '一键应用当前章节的推荐三路编队和主动技能，可以直接开始防守。',
                         en: 'Apply the recommended three-lane build and active skill for the current chapter in one tap.'
                     })}</div>
                 <div class="reward-row">
                     ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} 路 ${towerLabel(towerId)}</span>`).join('')}
-                    <span class="mini-chip">${getLocalized({ zh: `鎶€鑳?${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
+                    <span class="mini-chip">${getLocalized({ zh: `技能 ${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
                 </div>
                 <div class="card-actions" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
-                        ${getLocalized({ zh: '涓€閿簲鐢ㄦ帹鑽愮紪闃?', en: 'Apply Preset' })}
+                        ${getLocalized({ zh: '一键应用推荐编队', en: 'Apply Preset' })}
                     </button>
                     <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${chapter.id}">
                         ${prepOverview.ready
-                            ? getLocalized({ zh: '鐩存帴寮€鎵?', en: 'Defend Now' })
-                            : getLocalized({ zh: '涓€閿鐢ㄥ苟寮€鎵?', en: 'Apply & Defend' })}
+                            ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
+                            : getLocalized({ zh: '一键套用并开打', en: 'Apply & Defend' })}
                     </button>
                     <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
-                        ${getLocalized({ zh: '鍙浛鎹笁璺厤缃?', en: 'Apply Lanes Only' })}
+                        ${getLocalized({ zh: '只替换三路配置', en: 'Apply Lanes Only' })}
                     </button>
                 </div>
             </article>
@@ -1803,7 +1736,7 @@
                         <div class="card-kicker">${t('skillSelect')}</div>
                         <div class="card-title">${t(SKILLS[state.save.selectedSkill].nameKey)}</div>
                     </div>
-                    <div class="card-number">${state.lang === 'zh' ? '涓诲姩浣' : 'Active Slot'}</div>
+                    <div class="card-number">${state.lang === 'zh' ? '主动位' : 'Active Slot'}</div>
                 </div>
                 <div class="skill-picker" style="margin-top:12px;">
                     ${Object.values(SKILLS).map((skill) => `
@@ -1848,8 +1781,8 @@
                 <div class="tower-tags">
                     <span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>
                     <span class="tag-chip">${formatCompact(state.save.towerFragments[tower.id] || 0)} ${t('fragmentLabel')}</span>
-                    ${focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '绔犺妭鎺夎惤鍊惧悜', en: 'Focus Drop' })}</span>` : ''}
-                    ${recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `鎺ㄨ崘 ${laneName}`, en: `${laneName} preset` })}</span>`).join('')}
+                    ${focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '章节掉落倾向', en: 'Focus Drop' })}</span>` : ''}
+                    ${recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`).join('')}
                 </div>
                 <div class="progress-line"><i style="width:${(progress * 100).toFixed(2)}%;"></i></div>
                 <div class="card-actions">
@@ -2181,8 +2114,8 @@
                 t('shopPanelTitle'),
                 t('shopPanelDesc'),
                 `<div class="mini-chip">${sponsorUnlocked
-                    ? getLocalized({ zh: `璧炲姪杞ㄩ亾宸茶В閿?路 寰呴 ${sponsorReady}`, en: `Sponsor track unlocked 路 ${sponsorReady} ready` })
-                    : getLocalized({ zh: '浠绘剰涓€绗旀牎楠屾垚鍔熺殑鍏呭€奸兘浼氳В閿佽禐鍔╄建閬', en: 'Any verified top-up unlocks the sponsor track' })
+                    ? getLocalized({ zh: `赞助轨道已解锁 · 待领 ${sponsorReady}`, en: `Sponsor track unlocked · ${sponsorReady} ready` })
+                    : getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道', en: 'Any verified top-up unlocks the sponsor track' })
                 }</div>`
             )}
             <div class="card-grid">
@@ -2213,7 +2146,7 @@
                 </div>
                 <div class="card-copy">${t('shopFreeDesc')}</div>
                 <div class="reward-row">
-                    <span class="mini-chip">${sponsorUnlocked ? getLocalized({ zh: '璧炲姪鍔犳垚宸茬敓鏁', en: 'Sponsor boost active' }) : getLocalized({ zh: '棣栧厖鍙崌绾ф瘡鏃ヨˉ缁', en: 'Top-up unlocks daily boost' })}</span>
+                    <span class="mini-chip">${sponsorUnlocked ? getLocalized({ zh: '赞助加成已生效', en: 'Sponsor boost active' }) : getLocalized({ zh: '首充可升级每日补给', en: 'Top-up unlocks daily boost' })}</span>
                 </div>
                 <div class="reward-row">${renderRewardChips(supplyReward)}</div>
                 <div class="card-actions">
@@ -2250,7 +2183,7 @@
                         <div class="card-kicker">34 C</div>
                         <div class="card-title">${t('shopCoreTitle')}</div>
                     </div>
-                    <div class="card-number">${state.lang === 'zh' ? '绋€鏈夌' : 'Rare Box'}</div>
+                    <div class="card-number">${state.lang === 'zh' ? '稀有箱' : 'Rare Box'}</div>
                 </div>
                 <div class="card-copy">${t('shopCoreDesc')}</div>
                 <div class="reward-row">${renderRewardChips({ gold: 280, fragments: { chain: 12, rail: 8 } })}</div>
@@ -2556,7 +2489,7 @@
                 <div class="card-copy">${getLocalized(offer.desc)}</div>
                 <div class="reward-row">
                     <span class="mini-chip">${getLocalized({ zh: `已购买 ${purchases} 次`, en: `${purchases} bought` })}</span>
-                    <span class="mini-chip">${offer.priceType === 'gold' ? getLocalized({ zh: '閲戝竵娑堣€楃偣', en: 'Gold sink' }) : getLocalized({ zh: '鑳芥牳娑堣€楃偣', en: 'Core sink' })}</span>
+                    <span class="mini-chip">${offer.priceType === 'gold' ? getLocalized({ zh: '金币消耗点', en: 'Gold sink' }) : getLocalized({ zh: '能核消耗点', en: 'Core sink' })}</span>
                     ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''}
                 </div>
                 <div class="reward-row">${renderRewardChips(preview)}</div>
@@ -2654,16 +2587,16 @@
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">VERIFIED TOP-UP</div>
-                        <div class="card-title">${getLocalized({ zh: '闃茬嚎鍏呭€间腑蹇', en: 'Defense Top-Up Center' })}</div>
+                        <div class="card-title">${getLocalized({ zh: '防线充值中心', en: 'Defense Top-Up Center' })}</div>
                     </div>
-                    <div class="card-number">${sponsorUnlocked ? getLocalized({ zh: '宸插紑鍚', en: 'Unlocked' }) : getLocalized({ zh: '鏈紑鍚', en: 'Locked' })}</div>
+                    <div class="card-number">${sponsorUnlocked ? getLocalized({ zh: '已解锁', en: 'Unlocked' }) : getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
                 </div>
                 <div class="card-copy">${sponsorUnlocked
-                    ? getLocalized({ zh: '閾句笂鏍￠獙鎴愬姛鍚庯紝鍏呭€煎鍔变細鐩存帴鍒拌处锛屽悓鏃惰禌瀛ｉ〉浼氬紑鏀捐禐鍔╄建閬撻澶栬妭鐐广€', en: 'Verified payments grant rewards instantly and unlock extra Sponsor nodes in Season.' })
-                    : getLocalized({ zh: '鍒涘缓璁㈠崟鍚庢寜绮剧‘閲戦鏀粯锛屽啀绮樿创 txid 鏍￠獙鍗冲彲鍙戝锛屽苟姘镐箙瑙ｉ攣璧炲姪杞ㄩ亾銆', en: 'Create an order, pay the exact amount, then verify the txid to grant rewards and unlock the Sponsor track.' })
+                    ? getLocalized({ zh: '链上校验成功后，充值奖励会直接到账，同时赛季页会开放赞助轨道额外节点。', en: 'Verified payments grant rewards instantly and unlock extra Sponsor nodes in Season.' })
+                    : getLocalized({ zh: '创建订单后按精确金额支付，再粘贴 txid 校验即可发奖，并永久解锁赞助轨道。', en: 'Create an order, pay the exact amount, then verify the txid to grant rewards and unlock the Sponsor track.' })
                 }</div>
                 <div class="reward-row">
-                    <span class="mini-chip">${getLocalized({ zh: `${premiumReady} 涓禐鍔╄妭鐐瑰緟棰嗗彇`, en: `${premiumReady} sponsor nodes ready` })}</span>
+                    <span class="mini-chip">${getLocalized({ zh: `${premiumReady} 个赞助节点待领取`, en: `${premiumReady} sponsor nodes ready` })}</span>
                     <span class="mini-chip">OKX Wallet 路 TRON (TRC20)</span>
                     <span class="mini-chip">${getLocalized({ zh: `推荐礼包 ${getLocalized(strategyPlan.paymentRoute.offer.name)}`, en: `Recommended ${getLocalized(strategyPlan.paymentRoute.offer.name)}` })}</span>
                     ${nextSponsorNode
@@ -2680,19 +2613,19 @@
                 </div>` : ''}
                 <div class="shop-kpi-grid">
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '宸叉牎楠岃鍗', en: 'Verified Orders' })}</span>
+                        <span>${getLocalized({ zh: '已校验订单', en: 'Verified Orders' })}</span>
                         <strong>${formatCompact(state.save.payment.purchaseCount || 0)}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '璧炲姪杞ㄩ亾', en: 'Sponsor Track' })}</span>
-                        <strong>${sponsorUnlocked ? getLocalized({ zh: '宸茶В閿', en: 'Unlocked' }) : getLocalized({ zh: '鏈В閿', en: 'Locked' })}</strong>
+                        <span>${getLocalized({ zh: '赞助轨道', en: 'Sponsor Track' })}</span>
+                        <strong>${sponsorUnlocked ? getLocalized({ zh: '已解锁', en: 'Unlocked' }) : getLocalized({ zh: '待解锁', en: 'Locked' })}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '绱鍏呭€', en: 'Total Spent' })}</span>
+                        <span>${getLocalized({ zh: '累计充值', en: 'Total Spent' })}</span>
                         <strong>$${Number(state.save.payment.totalSpent || 0).toFixed(2)}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '璧涘绛夌骇', en: 'Season Level' })}</span>
+                        <span>${getLocalized({ zh: '赛季等级', en: 'Season Level' })}</span>
                         <strong>Lv.${seasonInfo.level}</strong>
                     </div>
                 </div>
@@ -2724,7 +2657,7 @@
                 </div>
                 <div class="card-copy">${getLocalized(offer.desc)}</div>
                 <div class="reward-row">
-                    <span class="mini-chip">${getLocalized({ zh: '閾句笂鏍￠獙鍙戝', en: 'On-chain verified' })}</span>
+                    <span class="mini-chip">${getLocalized({ zh: '链上校验发奖', en: 'On-chain verified' })}</span>
                     <span class="mini-chip">TRON (TRC20)</span>
                     ${!sponsorUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '首充解锁赞助', en: 'Unlocks Sponsor' })}</span>` : ''}
                     ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''}
@@ -2732,7 +2665,7 @@
                 <div class="reward-row">${renderRewardChips(offer.reward)}</div>
                 <div class="card-actions">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">
-                        ${getLocalized({ zh: '鍒涘缓璁㈠崟骞舵敮浠', en: 'Create Order & Pay' })}
+                        ${getLocalized({ zh: '创建订单并支付', en: 'Create Order & Pay' })}
                     </button>
                 </div>
             </article>
@@ -2751,17 +2684,17 @@
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${t('sponsorTrack')}</div>
-                            <div class="card-title">${getLocalized({ zh: '璧炲姪杞ㄩ亾鏈紑鍚', en: 'Sponsor Track Locked' })}</div>
+                            <div class="card-title">${getLocalized({ zh: '赞助轨道未开启', en: 'Sponsor Track Locked' })}</div>
                         </div>
-                        <div class="card-number">${getLocalized({ zh: '寰呰В閿', en: 'Locked' })}</div>
+                        <div class="card-number">${getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
                     </div>
-                    <div class="card-copy">${getLocalized({ zh: '浠绘剰涓€绗旈摼涓婃牎楠屾垚鍔熺殑鍏呭€奸兘浼氳В閿佽禐鍔╄建閬擄紝闅忓悗鍙殢璧涘缁忛獙棰嗗彇棰濆閲戝竵銆佽兘鏍稿拰楂橀樁濉斿彴纰庣墖銆', en: 'Any verified top-up unlocks the Sponsor track so you can claim extra gold, cores, and high-tier fragments as Season XP grows.' })}</div>
+                    <div class="card-copy">${getLocalized({ zh: '任意一笔链上校验成功的充值都会解锁赞助轨道，随后可随赛季经验领取额外金币、能核和高阶塔台碎片。', en: 'Any verified top-up unlocks the Sponsor track so you can claim extra gold, cores, and high-tier fragments as Season XP grows.' })}</div>
                     ${nextSponsorNode ? `<div class="reward-row">
                         <span class="mini-chip">${getLocalized({ zh: '解锁后首个赞助节点', en: 'First Sponsor Node After Unlock' })}</span>
                         ${renderRewardChips(nextSponsorNode.node.reward)}
                     </div>` : `<div class="reward-row">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } })}</div>`}
                     <div class="card-actions">
-                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${strategyPlan.paymentRoute.offer.id}">${getLocalized({ zh: '绔嬪嵆瑙ｉ攣', en: 'Unlock Now' })}</button>
+                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${strategyPlan.paymentRoute.offer.id}">${getLocalized({ zh: '立即解锁', en: 'Unlock Now' })}</button>
                     </div>
                 </article>
             `;
@@ -2780,7 +2713,7 @@
             <div class="panel-head">
                 <div>
                     <h3>${t('sponsorTrack')}</h3>
-                    <p>${getLocalized({ zh: '璧炲姪杞ㄩ亾宸插紑鍚€傝揪鍒版寚瀹氳禌瀛ｇ粡楠屽悗锛屽彲棰嗗彇棰濆閲戝竵銆佽兘鏍镐笌楂橀樁纰庣墖銆', en: 'Sponsor track is now live. Reach the required Season XP to claim extra gold, cores, and high-tier fragments.' })}</p>
+                    <p>${getLocalized({ zh: '赞助轨道已开启。达到指定赛季经验后，可领取额外金币、能核与高阶碎片。', en: 'Sponsor track is now live. Reach the required Season XP to claim extra gold, cores, and high-tier fragments.' })}</p>
                 </div>
                 <div class="mini-chip">${getLocalized({ zh: `待领取 ${sponsorReady} 个节点`, en: `${sponsorReady} nodes ready` })}</div>
             </div>
@@ -2813,8 +2746,8 @@
                     <article class="season-node ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
-                                <div class="card-kicker">${claimable ? getLocalized({ zh: '鍙鍙', en: 'Ready' }) : `XP ${node.xp}`}</div>
-                                <div class="card-title">${getLocalized({ zh: `璧炲姪鑺傜偣 ${index + 1}`, en: `Sponsor Node ${index + 1}` })}</div>
+                                <div class="card-kicker">${claimable ? getLocalized({ zh: '可领取', en: 'Ready' }) : `XP ${node.xp}`}</div>
+                                <div class="card-title">${getLocalized({ zh: `赞助节点 ${index + 1}`, en: `Sponsor Node ${index + 1}` })}</div>
                             </div>
                             <div class="card-number">${formatCompact(node.xp)} XP</div>
                         </div>
@@ -2836,7 +2769,7 @@
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${t('sponsorTrack')}</div>
-                        <div class="card-title">${state.lang === 'zh' ? '璧炲姪绀煎寘棰勭暀浣' : 'Sponsor Pack Slot'}</div>
+                        <div class="card-title">${state.lang === 'zh' ? '赞助礼包预留位' : 'Sponsor Pack Slot'}</div>
                     </div>
                     <div class="card-number">Future</div>
                 </div>
@@ -2853,7 +2786,7 @@
         const chips = [];
         if (reward.gold) chips.push(`<span class="mini-chip">${formatCompact(reward.gold)} G</span>`);
         if (reward.cores) chips.push(`<span class="mini-chip">${formatCompact(reward.cores)} C</span>`);
-        if (reward.seasonXp) chips.push(`<span class="mini-chip">${formatCompact(reward.seasonXp)} ${getLocalized({ zh: '璧涘缁忛獙', en: 'Season XP' })}</span>`);
+        if (reward.seasonXp) chips.push(`<span class="mini-chip">${formatCompact(reward.seasonXp)} ${getLocalized({ zh: '赛季经验', en: 'Season XP' })}</span>`);
         if (reward.fragments) {
             Object.entries(reward.fragments).forEach(([towerId, amount]) => {
                 if ((Number(amount) || 0) > 0) chips.push(`<span class="mini-chip">${towerLabel(towerId)} +${formatCompact(amount)}</span>`);
@@ -2895,11 +2828,11 @@
         ui.startMeta.innerHTML = `
             <span class="mini-chip">${t('startMetaReward').replace('{gold}', formatCompact(chapter.goldReward)).replace('{core}', formatCompact(chapter.coreReward)).replace('{fragment}', formatCompact(chapter.fragmentReward))}</span>
             <span class="mini-chip">${t('startMetaEnemy').replace('{enemy}', mainEnemy)}</span>
-            <span class="mini-chip">${getLocalized({ zh: `纰庣墖鍊惧悜 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
-            <span class="mini-chip">${getLocalized({ zh: `鎺ㄨ崘鎶€鑳?${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
+            <span class="mini-chip">${getLocalized({ zh: `碎片倾向 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
+            <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
             <span class="mini-chip">${prepOverview.ready
-                ? getLocalized({ zh: '鎺ㄨ崘缂栭槦宸插氨缁?', en: 'Preset ready' })
-                : getLocalized({ zh: `杩樻湁 ${prepOverview.adjustmentsNeeded} 椤瑰緟璋冩暣`, en: `${prepOverview.adjustmentsNeeded} prep tweaks` })}</span>
+                ? getLocalized({ zh: '推荐编队已就绪', en: 'Preset ready' })
+                : getLocalized({ zh: `还有 ${prepOverview.adjustmentsNeeded} 项待调整`, en: `${prepOverview.adjustmentsNeeded} prep tweaks` })}</span>
         `;
     }
 
@@ -3351,7 +3284,7 @@
         state.save.payment.premiumSeasonClaims[id] = true;
         grantReward(node.reward);
         saveProgress();
-        showToast(getLocalized({ zh: '璧炲姪杞ㄩ亾濂栧姳宸查鍙', en: 'Sponsor track reward claimed.' }));
+        showToast(getLocalized({ zh: '赞助轨道奖励已领取', en: 'Sponsor track reward claimed.' }));
         renderAll();
     }
 
@@ -3605,19 +3538,19 @@
         const text = String(errorMessage || '').trim();
         const lower = text.toLowerCase();
 
-        if (!text) return getLocalized({ zh: '鏀粯鏍￠獙澶辫触锛岃绋嶅悗閲嶈瘯銆', en: 'Payment verification failed. Please try again.' });
-        if (lower.includes('txid not found')) return getLocalized({ zh: '鏈湪 TRON 涓荤綉鎵惧埌璇?txid锛岃纭浜ゆ槗宸茬粡涓婇摼銆', en: 'This txid was not found on TRON mainnet yet.' });
-        if (lower.includes('not confirmed yet')) return getLocalized({ zh: '璇ヤ氦鏄撹繕鏈‘璁わ紝璇风◢鍚庡啀璇曘€', en: 'This transfer is not confirmed yet. Try again shortly.' });
-        if (lower.includes('execution failed')) return getLocalized({ zh: '閾句笂浜ゆ槗鎵ц澶辫触锛屾棤娉曞彂濂栥€', en: 'The on-chain transaction failed, so rewards cannot be granted.' });
-        if (lower.includes('not a trc20 contract transfer')) return getLocalized({ zh: '杩欎笉鏄竴绗?TRC20 杞处銆', en: 'This transaction is not a TRC20 transfer.' });
-        if (lower.includes('not trc20 usdt')) return getLocalized({ zh: '璇ヤ氦鏄撲笉鏄?TRC20-USDT 鏀粯銆', en: 'This transaction is not a TRC20-USDT payment.' });
-        if (lower.includes('recipient address')) return getLocalized({ zh: '鏀舵鍦板潃涓嶅尮閰嶏紝璇风‘璁よ浆鍏ョ殑鏄綋鍓嶈鍗曞湴鍧€銆', en: 'Recipient address mismatch. Please send to the address shown in the current order.' });
-        if (lower.includes('amount mismatch')) return getLocalized({ zh: '鏀粯閲戦涓庡綋鍓嶈鍗曠殑绮剧‘閲戦涓嶄竴鑷淬€', en: 'The payment amount does not match the current exact order amount.' });
-        if (lower.includes('before this order was created')) return getLocalized({ zh: '璇ヤ氦鏄撴棭浜庤鍗曞垱寤烘椂闂达紝涓嶈兘鐢ㄤ簬褰撳墠璁㈠崟銆', en: 'This transfer happened before the order was created and cannot be used.' });
-        if (lower.includes('after the order expired') || lower.includes('order expired')) return getLocalized({ zh: '褰撳墠璁㈠崟宸茶繃鏈燂紝璇烽噸鏂板垱寤鸿鍗曘€', en: 'This order has expired. Create a new order before paying again.' });
-        if (lower.includes('already been used by another order') || lower.includes('another txid')) return getLocalized({ zh: '璇?txid 宸茶鍏朵粬璁㈠崟浣跨敤銆', en: 'This txid has already been used by another order.' });
-        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return getLocalized({ zh: '璁㈠崟鍒涘缓澶辫触锛岃閲嶆柊閫夋嫨绀煎寘銆', en: 'Failed to create the payment order. Please select the pack again.' });
-        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return getLocalized({ zh: '鏀粯鎺ュ彛鏆傛椂涓嶅彲鐢紝璇风◢鍚庡啀璇曘€', en: 'The payment service is temporarily unavailable. Please try again later.' });
+        if (!text) return getLocalized({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
+        if (lower.includes('txid not found')) return getLocalized({ zh: '未在 TRON 主网找到该 txid，请确认交易已经上链。', en: 'This txid was not found on TRON mainnet yet.' });
+        if (lower.includes('not confirmed yet')) return getLocalized({ zh: '该交易还未确认，请稍后再试。', en: 'This transfer is not confirmed yet. Try again shortly.' });
+        if (lower.includes('execution failed')) return getLocalized({ zh: '链上交易执行失败，无法发奖。', en: 'The on-chain transaction failed, so rewards cannot be granted.' });
+        if (lower.includes('not a trc20 contract transfer')) return getLocalized({ zh: '这不是一笔 TRC20 转账。', en: 'This transaction is not a TRC20 transfer.' });
+        if (lower.includes('not trc20 usdt')) return getLocalized({ zh: '该交易不是 TRC20-USDT 支付。', en: 'This transaction is not a TRC20-USDT payment.' });
+        if (lower.includes('recipient address')) return getLocalized({ zh: '收款地址不匹配，请确认转入的是当前订单地址。', en: 'Recipient address mismatch. Please send to the address shown in the current order.' });
+        if (lower.includes('amount mismatch')) return getLocalized({ zh: '支付金额与当前订单的精确金额不一致。', en: 'The payment amount does not match the current exact order amount.' });
+        if (lower.includes('before this order was created')) return getLocalized({ zh: '该交易早于订单创建时间，不能用于当前订单。', en: 'This transfer happened before the order was created and cannot be used.' });
+        if (lower.includes('after the order expired') || lower.includes('order expired')) return getLocalized({ zh: '当前订单已过期，请重新创建订单。', en: 'This order has expired. Create a new order before paying again.' });
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return getLocalized({ zh: '该 txid 已被其他订单使用。', en: 'This txid has already been used by another order.' });
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return getLocalized({ zh: '订单创建失败，请重新选择礼包。', en: 'Failed to create the payment order. Please select the pack again.' });
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return getLocalized({ zh: '支付接口暂时不可用，请稍后再试。', en: 'The payment service is temporarily unavailable. Please try again later.' });
         return text;
     }
 
@@ -3758,20 +3691,20 @@
         const offer = getSelectedPaymentOffer();
         const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
 
-        if (ui.paymentTitle) ui.paymentTitle.textContent = getLocalized({ zh: '闃茬嚎鍏呭€间腑蹇', en: 'Defense Top-Up Center' });
-        if (ui.paymentDesc) ui.paymentDesc.textContent = getLocalized({ zh: '鍒涘缓閾句笂璁㈠崟鍚庯紝浣跨敤 OKX Wallet 鏀粯绮剧‘閲戦锛屽啀绮樿创 txid 鏍￠獙骞跺彂鏀鹃槻绾垮鍔便€', en: 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant Defense rewards.' });
-        if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = getLocalized({ zh: '璁㈠崟鍙', en: 'Order ID' });
-        if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = getLocalized({ zh: '绮剧‘閲戦', en: 'Exact Amount' });
-        if (ui.paymentExpiryLabel) ui.paymentExpiryLabel.textContent = getLocalized({ zh: '鍓╀綑鏃堕棿', en: 'Expires In' });
-        if (ui.paymentAddressLabel) ui.paymentAddressLabel.textContent = getLocalized({ zh: '鏀舵鍦板潃', en: 'Receiving Address' });
-        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = getLocalized({ zh: '绮樿创 OKX Wallet 鐨?txid', en: 'Paste OKX Wallet txid' });
-        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = getLocalized({ zh: '璇疯緭鍏ユ垨绮樿创 OKX Wallet 鐨勯摼涓?txid', en: 'Paste the on-chain txid from OKX Wallet' });
-        if (ui.paymentTxidHint) ui.paymentTxidHint.textContent = getLocalized({ zh: '鍙湁閲戦銆佸湴鍧€鍜屾湁鏁堟椂闂寸獥鍙ｅ叏閮ㄥ尮閰嶇殑璁㈠崟鎵嶈兘閫氳繃鏍￠獙銆', en: 'Only payments that match the exact amount, recipient address, and valid time window can pass verification.' });
-        if (ui.paymentCopyAddressBtn) ui.paymentCopyAddressBtn.textContent = getLocalized({ zh: '澶嶅埗鍦板潃', en: 'Copy Address' });
-        if (ui.paymentCopyAmountBtn) ui.paymentCopyAmountBtn.textContent = getLocalized({ zh: '澶嶅埗绮剧‘閲戦', en: 'Copy Exact Amount' });
-        if (ui.paymentVerifyBtn) ui.paymentVerifyBtn.textContent = getLocalized({ zh: '鏍￠獙 TXID', en: 'Verify TXID' });
+        if (ui.paymentTitle) ui.paymentTitle.textContent = getLocalized({ zh: '防线充值中心', en: 'Defense Top-Up Center' });
+        if (ui.paymentDesc) ui.paymentDesc.textContent = getLocalized({ zh: '创建链上订单后，使用 OKX Wallet 支付精确金额，再粘贴 txid 校验并发放防线奖励。', en: 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant Defense rewards.' });
+        if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = getLocalized({ zh: '订单号', en: 'Order ID' });
+        if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = getLocalized({ zh: '精确金额', en: 'Exact Amount' });
+        if (ui.paymentExpiryLabel) ui.paymentExpiryLabel.textContent = getLocalized({ zh: '剩余时间', en: 'Expires In' });
+        if (ui.paymentAddressLabel) ui.paymentAddressLabel.textContent = getLocalized({ zh: '收款地址', en: 'Receiving Address' });
+        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = getLocalized({ zh: '粘贴 OKX Wallet 的 txid', en: 'Paste OKX Wallet txid' });
+        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = getLocalized({ zh: '请输入或粘贴 OKX Wallet 的链上 txid', en: 'Paste the on-chain txid from OKX Wallet' });
+        if (ui.paymentTxidHint) ui.paymentTxidHint.textContent = getLocalized({ zh: '只有金额、地址和有效时间窗口全部匹配的订单才能通过校验。', en: 'Only payments that match the exact amount, recipient address, and valid time window can pass verification.' });
+        if (ui.paymentCopyAddressBtn) ui.paymentCopyAddressBtn.textContent = getLocalized({ zh: '复制地址', en: 'Copy Address' });
+        if (ui.paymentCopyAmountBtn) ui.paymentCopyAmountBtn.textContent = getLocalized({ zh: '复制精确金额', en: 'Copy Exact Amount' });
+        if (ui.paymentVerifyBtn) ui.paymentVerifyBtn.textContent = getLocalized({ zh: '校验 TXID', en: 'Verify TXID' });
         if (ui.paymentAmount) ui.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `$${offer.price.toFixed(2)} USDT`;
-        if (ui.paymentMeta) ui.paymentMeta.textContent = `${getLocalized({ zh: 'OKX 閽卞寘', en: 'OKX Wallet' })} 路 ${order?.network || 'TRON (TRC20)'} 路 ${getLocalized(offer.name)}`;
+        if (ui.paymentMeta) ui.paymentMeta.textContent = `${getLocalized({ zh: 'OKX 钱包', en: 'OKX Wallet' })} 路 ${order?.network || 'TRON (TRC20)'} 路 ${getLocalized(offer.name)}`;
         if (ui.paymentOrderId) ui.paymentOrderId.textContent = order ? order.id : '--';
         if (ui.paymentExactAmount) ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
         if (ui.paymentExpiry) ui.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
@@ -3811,14 +3744,14 @@
         ui.paymentCopyAmountBtn.disabled = !hasOrder;
 
         if (paymentVerificationState === 'verified') {
-            ui.paymentStatus.textContent = paymentVerificationNotice || getLocalized({ zh: '鏀粯宸叉牎楠岄€氳繃锛屽鍔卞凡鍙戞斁銆', en: 'Payment verified and rewards granted.' });
+            ui.paymentStatus.textContent = paymentVerificationNotice || getLocalized({ zh: '支付已校验通过，奖励已发放。', en: 'Payment verified and rewards granted.' });
             ui.paymentStatus.classList.add('is-success');
             ui.paymentVerifyBtn.disabled = true;
             return;
         }
 
         if (orderExpired) {
-            ui.paymentStatus.textContent = getLocalized({ zh: '褰撳墠璁㈠崟宸茶繃鏈燂紝璇烽噸鏂伴€夋嫨绀煎寘鍒涘缓鏂拌鍗曘€', en: 'This order has expired. Select the pack again to create a fresh order.' });
+            ui.paymentStatus.textContent = getLocalized({ zh: '当前订单已过期，请重新选择礼包创建新订单。', en: 'This order has expired. Select the pack again to create a fresh order.' });
             ui.paymentStatus.classList.add('is-error');
             ui.paymentVerifyBtn.disabled = true;
             return;
@@ -3832,13 +3765,13 @@
         }
 
         if (txid && !txidValid) {
-            ui.paymentStatus.textContent = getLocalized({ zh: 'TXID 鏍煎紡涓嶆纭紝璇风矘璐?64 浣嶉摼涓?txid銆', en: 'TXID format looks invalid. Please paste the 64-character on-chain txid.' });
+            ui.paymentStatus.textContent = getLocalized({ zh: 'TXID 格式不正确，请粘贴 64 位链上 txid。', en: 'TXID format looks invalid. Please paste the 64-character on-chain txid.' });
             ui.paymentStatus.classList.add('is-error');
             ui.paymentVerifyBtn.disabled = true;
             return;
         }
 
-        ui.paymentStatus.textContent = paymentVerificationNotice || getLocalized({ zh: '鍏堝垱寤鸿鍗曪紝鍐嶅幓 OKX Wallet 瀹屾垚鏀粯锛屾渶鍚庢妸 txid 绮樿创鍒拌繖閲屾牎楠屻€', en: 'Create an order, complete the payment in OKX Wallet, then paste the txid here.' });
+        ui.paymentStatus.textContent = paymentVerificationNotice || getLocalized({ zh: '先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。', en: 'Create an order, complete the payment in OKX Wallet, then paste the txid here.' });
         ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
     }
 
@@ -3895,7 +3828,7 @@
                     currentPaymentOrder = null;
                     paymentVerificationState = 'idle';
                     paymentVerificationNotice = '';
-                    paymentVerificationError = error?.message || getLocalized({ zh: '璁㈠崟鍒涘缓澶辫触锛岃绋嶅悗閲嶈瘯銆', en: 'Failed to create order. Please try again.' });
+                    paymentVerificationError = error?.message || getLocalized({ zh: '订单创建失败，请稍后重试。', en: 'Failed to create order. Please try again.' });
                     renderPaymentOrderUI();
                     refreshPaymentVerificationState();
                 }
@@ -3953,8 +3886,8 @@
         const copied = await copyTextToClipboard(wallet);
         paymentVerificationError = '';
         paymentVerificationNotice = copied
-            ? getLocalized({ zh: '鏀舵鍦板潃宸插鍒躲€', en: 'Receiving address copied.' })
-            : getLocalized({ zh: '鑷姩澶嶅埗涓嶅彲鐢紝璇锋墜鍔ㄥ鍒跺湴鍧€銆', en: 'Automatic copy is unavailable. Please copy the address manually.' });
+            ? getLocalized({ zh: '收款地址已复制。', en: 'Receiving address copied.' })
+            : getLocalized({ zh: '自动复制不可用，请手动复制地址。', en: 'Automatic copy is unavailable. Please copy the address manually.' });
         paymentVerificationState = 'idle';
         refreshPaymentVerificationState();
     }
@@ -3971,8 +3904,8 @@
         const copied = await copyTextToClipboard(Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS));
         paymentVerificationError = '';
         paymentVerificationNotice = copied
-            ? getLocalized({ zh: '绮剧‘閲戦宸插鍒躲€', en: 'Exact amount copied.' })
-            : getLocalized({ zh: '鑷姩澶嶅埗涓嶅彲鐢紝璇锋墜鍔ㄥ鍒剁簿纭噾棰濄€', en: 'Automatic copy is unavailable. Please copy the exact amount manually.' });
+            ? getLocalized({ zh: '精确金额已复制。', en: 'Exact amount copied.' })
+            : getLocalized({ zh: '自动复制不可用，请手动复制精确金额。', en: 'Automatic copy is unavailable. Please copy the exact amount manually.' });
         paymentVerificationState = 'idle';
         refreshPaymentVerificationState();
     }
@@ -3999,21 +3932,21 @@
 
         const txid = getNormalizedPaymentTxid();
         if (!PAYMENT_TXID_REGEX.test(txid)) {
-            paymentVerificationError = getLocalized({ zh: 'TXID 鏍煎紡涓嶆纭紝璇锋鏌ュ悗閲嶆柊杈撳叆銆', en: 'Invalid TXID format. Please check and try again.' });
+            paymentVerificationError = getLocalized({ zh: 'TXID 格式不正确，请检查后重新输入。', en: 'Invalid TXID format. Please check and try again.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
         if ((state.save.payment.verifiedTxids || []).includes(txid)) {
-            paymentVerificationError = getLocalized({ zh: '璇?txid 宸茬粡浣跨敤杩囷紝涓嶈兘閲嶅鍙戝銆', en: 'This TXID has already been used and cannot grant rewards again.' });
+            paymentVerificationError = getLocalized({ zh: '该 txid 已经使用过，不能重复发奖。', en: 'This TXID has already been used and cannot grant rewards again.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
         if (!currentPaymentOrder || isPaymentOrderExpired(currentPaymentOrder)) {
-            paymentVerificationError = getLocalized({ zh: '褰撳墠璁㈠崟宸茶繃鏈燂紝璇烽噸鏂板垱寤鸿鍗曘€', en: 'The current order has expired. Please create a new one.' });
+            paymentVerificationError = getLocalized({ zh: '当前订单已过期，请重新创建订单。', en: 'The current order has expired. Please create a new one.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
@@ -4035,7 +3968,7 @@
                     delete state.save.payment.pendingClaims[orderId];
                 }
                 paymentVerificationState = 'verified';
-                paymentVerificationNotice = getLocalized({ zh: '璇ヨ鍗曞鍔卞凡鍙戞斁锛屾棤闇€閲嶅棰嗗彇銆', en: 'Rewards for this order have already been granted.' });
+                paymentVerificationNotice = getLocalized({ zh: '该订单奖励已发放，无需重复领取。', en: 'Rewards for this order have already been granted.' });
                 refreshPaymentVerificationState();
                 saveProgress();
                 return;
@@ -4047,17 +3980,17 @@
             try {
                 await claimBackendPayment(orderId, txid);
                 delete state.save.payment.pendingClaims[orderId];
-                paymentVerificationNotice = getLocalized({ zh: '閾句笂鏍￠獙鎴愬姛锛屽鍔卞凡鍙戞斁銆', en: 'On-chain verification succeeded and rewards were granted.' });
+                paymentVerificationNotice = getLocalized({ zh: '链上校验成功，奖励已发放。', en: 'On-chain verification succeeded and rewards were granted.' });
                 saveProgress();
             } catch (claimError) {
-                paymentVerificationNotice = getLocalized({ zh: '閾句笂鏍￠獙鎴愬姛锛屽鍔卞凡鍒拌处锛涘悗鍙板彂濂栬褰曞皢鍦ㄧ◢鍚庤嚜鍔ㄥ悓姝ャ€', en: 'On-chain verification succeeded and rewards were granted. Backend sync will retry automatically.' });
+                paymentVerificationNotice = getLocalized({ zh: '链上校验成功，奖励已到账；后台发奖记录将在稍后自动同步。', en: 'On-chain verification succeeded and rewards were granted. Backend sync will retry automatically.' });
                 console.warn('Defense payment claim sync queued.', { orderId, claimError });
             }
             refreshPaymentVerificationState();
         } catch (error) {
             paymentVerificationState = 'idle';
             paymentVerificationNotice = '';
-            paymentVerificationError = error?.message || getLocalized({ zh: '鏀粯鏍￠獙澶辫触锛岃绋嶅悗閲嶈瘯銆', en: 'Payment verification failed. Please try again.' });
+            paymentVerificationError = error?.message || getLocalized({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
             refreshPaymentVerificationState();
         }
     }
