@@ -112,7 +112,6 @@
             shopClaim: '免费领取',
             shopBuy: '立即购买',
             shopSoldOut: '冷却中',
-            shopPreviewOnly: '预留后续支付接入',
             startDescTemplate: '为三条通道装配炮台并守住创世核心，击退 6 波敌潮后获得金币、能核与蓝图碎片。当前章节：{chapter}。',
             startMetaReward: '通关奖励 {gold} 金币 · {core} 能核 · {fragment} 碎片',
             startMetaEnemy: '敌潮重点：{enemy}',
@@ -140,6 +139,7 @@
             toastRunWin: '防线成功守住',
             toastRunLose: '核心被突破，本局结束',
             toastChapterUnlocked: '新章节已解锁',
+            toastFinalChapterClear: '终章已攻破，终局奖励已开启',
             toastNeedUnlock: '请先解锁该炮台',
             toastNeedFragments: '碎片不足',
             toastNeedLane: '请选择一条通道进行装配',
@@ -194,6 +194,7 @@
             statSkills: '技能释放',
             statResearch: '研究次数',
             statBest: '最高推进',
+            statFinalClears: '终章通关',
             enemyFast: '高速怪',
             enemyShield: '护盾怪',
             enemySplit: '分裂怪',
@@ -268,7 +269,9 @@
             seasonPanelTitle: 'Season Track',
             seasonPanelDesc: 'Defense clears, chapter pushes, and total kills all feed your season rewards.',
             shopPanelTitle: 'Supply Shop',
-            shopPanelDesc: 'Daily supply stabilizes retention, resource crates push mid-game growth, and verified top-ups unlock bonus season rewards.'
+            shopPanelDesc: 'Daily supply stabilizes retention, resource crates push mid-game growth, and verified top-ups unlock bonus season rewards.',
+            toastFinalChapterClear: 'Final chapter cleared. Endgame rewards unlocked',
+            statFinalClears: 'Final Clears'
         }
     };
 
@@ -423,7 +426,11 @@
         { id: 'm13', title: { zh: '前线推进', en: 'Forward Pressure' }, desc: { zh: '推进至章节 3-2。', en: 'Reach chapter 3-2.' }, target: 8, metric: (save) => save.bestChapterIndex + 1, reward: { gold: 4600, cores: 120, fragments: { rail: 18, rocket: 22, chain: 22 } } },
         { id: 'm14', title: { zh: '终章接入', en: 'Final Approach' }, desc: { zh: '推进至章节 3-3。', en: 'Reach chapter 3-3.' }, target: 9, metric: (save) => save.bestChapterIndex + 1, reward: { gold: 5600, cores: 146, fragments: { rail: 24, frost: 20, chain: 24 } } },
         { id: 'm15', title: { zh: '高压常驻', en: 'Pressure Resident' }, desc: { zh: '累计赢下 24 局防守。', en: 'Win 24 defense runs.' }, target: 24, metric: (save) => save.stats.wins, reward: { gold: 6800, cores: 180, fragments: { rail: 26, rocket: 28 } } },
-        { id: 'm16', title: { zh: '赛季冲刺', en: 'Season Surge' }, desc: { zh: '累计获得 5200 赛季经验。', en: 'Earn 5200 Season XP total.' }, target: 5200, metric: (save) => save.seasonXp, reward: { gold: 8200, cores: 220, fragments: { frost: 28, chain: 28, rail: 24 } } }
+        { id: 'm16', title: { zh: '赛季冲刺', en: 'Season Surge' }, desc: { zh: '累计获得 5200 赛季经验。', en: 'Earn 5200 Season XP total.' }, target: 5200, metric: (save) => save.seasonXp, reward: { gold: 8200, cores: 220, fragments: { frost: 28, chain: 28, rail: 24 } } },
+        { id: 'm17', title: { zh: '终章首破', en: 'Final Breakthrough' }, desc: { zh: '成功通关章节 3-3 1 次。', en: 'Clear chapter 3-3 once.' }, target: 1, metric: (save) => getChapterWinCount('3-3', save), reward: { gold: 9600, cores: 240, seasonXp: 320, fragments: { rail: 28, chain: 26, frost: 24 } } },
+        { id: 'm18', title: { zh: '终章镇守', en: 'Final Hold' }, desc: { zh: '成功通关章节 3-3 4 次。', en: 'Clear chapter 3-3 four times.' }, target: 4, metric: (save) => getChapterWinCount('3-3', save), reward: { gold: 13800, cores: 320, seasonXp: 460, fragments: { rail: 32, chain: 32, rocket: 30 } } },
+        { id: 'm19', title: { zh: '赛季高峰', en: 'Season Apex' }, desc: { zh: '累计获得 8800 赛季经验。', en: 'Earn 8800 Season XP total.' }, target: 8800, metric: (save) => save.seasonXp, reward: { gold: 16200, cores: 380, fragments: { frost: 34, chain: 34, rail: 32 } } },
+        { id: 'm20', title: { zh: '巅峰火控', en: 'Peak Fire Control' }, desc: { zh: '将任意炮台升到 8 级。', en: 'Upgrade any tower to level 8.' }, target: 8, metric: (save) => getHighestTowerLevel(save), reward: { gold: 18800, cores: 460, seasonXp: 620, fragments: { rocket: 36, chain: 36, rail: 40 } } }
     ];
 
     const SEASON_NODES = [
@@ -442,7 +449,11 @@
         { id: 's13', xp: 4300, reward: { gold: 2860, cores: 84, fragments: { rocket: 24, chain: 20 } } },
         { id: 's14', xp: 5150, reward: { fragments: { rail: 26, frost: 26, chain: 22 }, cores: 96 } },
         { id: 's15', xp: 6150, reward: { gold: 3980, cores: 124, fragments: { rail: 24, rocket: 28 } } },
-        { id: 's16', xp: 7350, reward: { gold: 5200, cores: 160, fragments: { frost: 30, rocket: 30, chain: 30, rail: 28 } } }
+        { id: 's16', xp: 7350, reward: { gold: 5200, cores: 160, fragments: { frost: 30, rocket: 30, chain: 30, rail: 28 } } },
+        { id: 's17', xp: 8750, reward: { gold: 6800, cores: 196, fragments: { chain: 34, rail: 30 } } },
+        { id: 's18', xp: 10350, reward: { fragments: { frost: 32, rocket: 32, rail: 30 }, cores: 220 } },
+        { id: 's19', xp: 12350, reward: { gold: 9200, cores: 260, fragments: { chain: 34, rail: 34, rocket: 30 } } },
+        { id: 's20', xp: 14600, reward: { gold: 12600, cores: 320, fragments: { frost: 38, rocket: 38, chain: 38, rail: 36 } } }
     ];
 
     const UPGRADE_CHOICES = [
@@ -590,7 +601,9 @@
         { id: 'p9', xp: 5000, reward: { gold: 14800, cores: 180, fragments: { frost: 28, rocket: 28, rail: 24 } } },
         { id: 'p10', xp: 6400, reward: { gold: 19600, cores: 240, fragments: { chain: 34, rail: 34, rocket: 30 } } },
         { id: 'p11', xp: 7900, reward: { gold: 25800, cores: 310, fragments: { rail: 38, chain: 34, frost: 30 } } },
-        { id: 'p12', xp: 9600, reward: { gold: 33600, cores: 390, fragments: { rocket: 36, chain: 38, rail: 42 } } }
+        { id: 'p12', xp: 9600, reward: { gold: 33600, cores: 390, fragments: { rocket: 36, chain: 38, rail: 42 } } },
+        { id: 'p13', xp: 11400, reward: { gold: 42800, cores: 480, fragments: { frost: 36, rocket: 34, chain: 42, rail: 46 } } },
+        { id: 'p14', xp: 13600, reward: { gold: 54800, cores: 590, fragments: { frost: 40, rocket: 40, chain: 46, rail: 50 } } }
     ];
 
     const LANE_POSITIONS = [170, 360, 550];
@@ -918,7 +931,7 @@
             missionClaimed: [],
             seasonClaimed: [],
             dailySupplyAt: 0,
-            stats: { runs: 0, wins: 0, kills: 0, bossKills: 0, skillsUsed: 0, researchDone: 0, totalDamage: 0 },
+            stats: { runs: 0, wins: 0, kills: 0, bossKills: 0, skillsUsed: 0, researchDone: 0, totalDamage: 0, chapterWins: {} },
             payment: {
                 minerId: '',
                 purchaseCount: 0,
@@ -945,7 +958,14 @@
                 shopPurchases: { ...base.shopPurchases, ...(parsed?.shopPurchases || {}) },
                 missionClaimed: Array.isArray(parsed?.missionClaimed) ? parsed.missionClaimed : [],
                 seasonClaimed: Array.isArray(parsed?.seasonClaimed) ? parsed.seasonClaimed : [],
-                stats: { ...base.stats, ...(parsed?.stats || {}) },
+                stats: {
+                    ...base.stats,
+                    ...(parsed?.stats || {}),
+                    chapterWins: {
+                        ...base.stats.chapterWins,
+                        ...((parsed?.stats?.chapterWins && typeof parsed.stats.chapterWins === 'object') ? parsed.stats.chapterWins : {})
+                    }
+                },
                 payment: {
                     ...base.payment,
                     ...(parsed?.payment || {}),
@@ -1083,7 +1103,7 @@
                         <span class="lane-dps">${t('laneStripDps')} ${formatCompact(dps)}</span>
                     </div>
                     <div class="lane-tower">${tower ? towerLabel(towerId) : t('laneStripEmpty')}</div>
-                    <div class="lane-meta">${tower ? `${t('laneStripLevel').replace('{level}', level)} 路 ${rarityLabel(tower.tier)}` : ''}</div>
+                    <div class="lane-meta">${tower ? `${t('laneStripLevel').replace('{level}', level)} · ${rarityLabel(tower.tier)}` : ''}</div>
                 </button>
             `;
         }).join('');
@@ -1555,7 +1575,7 @@
             <div class="chapter-row">
                 ${CHAPTERS.map((chapter, index) => `
                     <button class="chapter-btn ${index === state.save.chapterIndex ? 'active' : ''}" type="button" data-action="chapter" data-value="${index}" ${index > state.save.bestChapterIndex ? 'disabled' : ''}>
-                        ${chapter.id}${index === state.save.chapterIndex ? ` 路 ${t('chapterBadgeCurrent')}` : ''}
+                        ${chapter.id}${index === state.save.chapterIndex ? ` · ${t('chapterBadgeCurrent')}` : ''}
                     </button>
                 `).join('')}
             </div>
@@ -1711,12 +1731,12 @@
         const prepOverview = getChapterPrepOverview(chapter);
         const presetSkillLabel = t(SKILLS[preset.skill].nameKey);
         ui.panelContent.innerHTML = `
-            ${renderPanelHead(t('loadoutPanelTitle'), t('loadoutPanelDesc'), `<div class="mini-chip">${t('laneSelect')} 路 ${getLaneName(selectedLane)}</div>`)}
+            ${renderPanelHead(t('loadoutPanelTitle'), t('loadoutPanelDesc'), `<div class="mini-chip">${t('laneSelect')} · ${getLaneName(selectedLane)}</div>`)}
             <article class="stat-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${getLocalized({ zh: '章节推荐编队', en: 'Chapter Preset' })}</div>
-                        <div class="card-title">${chapter.id} 路 ${presetSkillLabel}</div>
+                        <div class="card-title">${chapter.id} · ${presetSkillLabel}</div>
                     </div>
                     <div class="card-number">${preset.usedFallback
                         ? getLocalized({ zh: '已自动适配', en: 'Auto adjusted' })
@@ -1732,7 +1752,7 @@
                         en: 'Apply the recommended three-lane build and active skill for the current chapter in one tap.'
                     })}</div>
                 <div class="reward-row">
-                    ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} 路 ${towerLabel(towerId)}</span>`).join('')}
+                    ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} · ${towerLabel(towerId)}</span>`).join('')}
                     <span class="mini-chip">${getLocalized({ zh: `技能 ${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
                 </div>
                 <div class="card-actions" style="margin-top:12px;">
@@ -1818,7 +1838,7 @@
                             : `<button class="primary-btn" type="button" data-action="equipTower" data-value="${tower.id}">${t('equipNow')}</button>`)
                         : `<button class="primary-btn" type="button" data-action="unlockTower" data-value="${tower.id}" ${canUnlock ? '' : 'disabled'}>${t('unlockNow')}</button>`}
                     ${unlocked
-                        ? `<button class="ghost-btn" type="button" data-action="upgradeTower" data-value="${tower.id}" ${(canUpgrade && level < 8) ? '' : 'disabled'}>${level >= 8 ? t('upgradeMax') : `${t('upgradeNow')} 路 ${formatCompact(getTowerUpgradeCost(tower.id))}G`}</button>`
+                        ? `<button class="ghost-btn" type="button" data-action="upgradeTower" data-value="${tower.id}" ${(canUpgrade && level < 8) ? '' : 'disabled'}>${level >= 8 ? t('upgradeMax') : `${t('upgradeNow')} · ${formatCompact(getTowerUpgradeCost(tower.id))}G`}</button>`
                         : `<button class="ghost-btn" type="button" disabled>${t('needFragments')} ${formatCompact(getUnlockNeed(tower.id))}</button>`}
                 </div>
             </article>
@@ -1932,7 +1952,7 @@
                 ${isRecommended ? `<div class="card-copy">${recommendation.reason}</div>` : ''}
                 <div class="card-actions">
                     <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgradeResearch(researchId) ? '' : 'disabled'}>
-                        ${maxed ? t('researchMaxed') : `${t('upgradeNow')} 路 ${formatCompact(cost)}G`}
+                        ${maxed ? t('researchMaxed') : `${t('upgradeNow')} · ${formatCompact(cost)}G`}
                     </button>
                 </div>
             </article>
@@ -2053,6 +2073,8 @@
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
         const rate = seasonInfo.required <= 0 ? 1 : seasonInfo.progress / seasonInfo.required;
         const seasonBundle = getClaimableSeasonBundle();
+        const finalChapterId = CHAPTERS[CHAPTERS.length - 1].id;
+        const finalChapterClears = getChapterWinCount(finalChapterId);
         const nodes = SEASON_NODES.map((node, index) => ({ node, index, claimable: isSeasonClaimable(node.id), claimed: state.save.seasonClaimed.includes(node.id) }))
             .sort(compareRewardNodeState);
         ui.panelContent.innerHTML = `
@@ -2077,7 +2099,7 @@
                         </div>
                         <div class="card-number">${t('statKills')} ${formatCompact(state.save.stats.kills)}</div>
                     </div>
-                    <div class="card-copy">${t('statRuns')} ${formatCompact(state.save.stats.runs)} 路 ${t('statWins')} ${formatCompact(state.save.stats.wins)}</div>
+                    <div class="card-copy">${t('statRuns')} ${formatCompact(state.save.stats.runs)} · ${t('statWins')} ${formatCompact(state.save.stats.wins)} · ${t('statFinalClears')} ${formatCompact(finalChapterClears)}</div>
                 </article>
                 <article class="stat-card">
                     <div class="card-top">
@@ -2859,25 +2881,6 @@
         `;
     }
 
-    function renderPremiumCard() {
-        return `
-            <article class="shop-card premium">
-                <div class="card-top">
-                    <div>
-                        <div class="card-kicker">${t('sponsorTrack')}</div>
-                        <div class="card-title">${state.lang === 'zh' ? '赞助礼包预留位' : 'Sponsor Pack Slot'}</div>
-                    </div>
-                    <div class="card-number">Future</div>
-                </div>
-                <div class="card-copy">${t('sponsorDesc')}</div>
-                <div class="reward-row">${renderRewardChips({ gold: 2200, cores: 90, fragments: { rail: 26, chain: 22 } })}</div>
-                <div class="card-actions">
-                    <button class="ghost-btn" type="button" disabled>${t('shopPreviewOnly')}</button>
-                </div>
-            </article>
-        `;
-    }
-
     function renderRewardChips(reward) {
         const chips = [];
         if (reward.gold) chips.push(`<span class="mini-chip">${formatCompact(reward.gold)} G</span>`);
@@ -3278,6 +3281,8 @@
 
     function finishBattle(win, forcedQuit) {
         const chapter = getCurrentChapter();
+        const finalChapterId = CHAPTERS[CHAPTERS.length - 1].id;
+        let finishToastKey = win ? 'toastRunWin' : 'toastRunLose';
         state.battle.running = false;
         state.battle.finished = true;
         state.battle.paused = false;
@@ -3297,17 +3302,23 @@
         state.save.stats.bossKills += state.battle.runStats.bossKills;
         if (win) {
             state.save.stats.wins += 1;
+            const chapterWins = state.save.stats.chapterWins && typeof state.save.stats.chapterWins === 'object'
+                ? state.save.stats.chapterWins
+                : {};
+            state.save.stats.chapterWins = chapterWins;
+            chapterWins[chapter.id] = (Number(chapterWins[chapter.id]) || 0) + 1;
             const prevBest = state.save.bestChapterIndex;
             if (state.save.chapterIndex >= state.save.bestChapterIndex && state.save.bestChapterIndex < CHAPTERS.length - 1) {
                 state.save.bestChapterIndex += 1;
-                if (prevBest !== state.save.bestChapterIndex) showToast(t('toastChapterUnlocked'));
             }
+            if (chapter.id === finalChapterId && chapterWins[chapter.id] === 1) finishToastKey = 'toastFinalChapterClear';
+            else if (prevBest !== state.save.bestChapterIndex) finishToastKey = 'toastChapterUnlocked';
         }
         state.battle.result = { win, forcedQuit: !!forcedQuit, goldGain, coreGain, seasonGain, fragmentGain, chapterProgress: CHAPTERS[state.save.bestChapterIndex].id };
         saveProgress();
         renderResultOverlay();
         renderAll();
-        showToast(t(win ? 'toastRunWin' : 'toastRunLose'));
+        showToast(t(finishToastKey));
     }
 
     function renderResultOverlay() {
@@ -3575,6 +3586,7 @@
     }
 
     function getCurrentChapter() { return CHAPTERS[state.save.chapterIndex] || CHAPTERS[0]; }
+    function getChapterWinCount(chapterId, saveSnapshot = state.save) { return Number(saveSnapshot.stats?.chapterWins?.[chapterId]) || 0; }
     function getTotalFragments(save) { return Object.values(save.towerFragments || {}).reduce((sum, value) => sum + (Number(value) || 0), 0); }
     function getHighestTowerLevel(save) { return Math.max(...Object.values(save.towerLevels || { pulse: 1 }).map((level) => Number(level) || 0)); }
     function getThreatKey() { return state.battle.coreHp <= getCoreMaxHp() * 0.35 || state.battle.enemies.length >= 8 ? 'threatDanger' : (state.battle.coreHp <= getCoreMaxHp() * 0.6 || state.battle.enemies.length >= 4 ? 'threatRising' : 'threatStable'); }
@@ -4203,10 +4215,10 @@
         ctx.fillStyle = 'rgba(255,255,255,0.82)';
         ctx.font = '600 18px Inter';
         ctx.textAlign = 'left';
-        ctx.fillText(`${getCurrentChapter().id} 路 ${t('waveText').replace('{wave}', String(Math.max(1, state.battle.currentWave || 1)))}`, 20, 34);
+        ctx.fillText(`${getCurrentChapter().id} · ${t('waveText').replace('{wave}', String(Math.max(1, state.battle.currentWave || 1)))}`, 20, 34);
         ctx.font = '500 14px Inter';
         ctx.fillStyle = 'rgba(145,162,192,0.96)';
         ctx.fillText(`${t('threatLabel')}: ${t(getThreatKey())}`, 20, 56);
-        ctx.fillText(`${t(SKILLS[state.save.selectedSkill].nameKey)} 路 ${state.battle.skillCooldown > 0 ? state.battle.skillCooldown.toFixed(1) + 's' : 'READY'}`, 20, 78);
+        ctx.fillText(`${t(SKILLS[state.save.selectedSkill].nameKey)} · ${state.battle.skillCooldown > 0 ? state.battle.skillCooldown.toFixed(1) + 's' : 'READY'}`, 20, 78);
     }
 })();
