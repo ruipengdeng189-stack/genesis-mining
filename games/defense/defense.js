@@ -768,8 +768,11 @@
         ui.laneStrip.addEventListener('click', (event) => {
             const target = event.target.closest('[data-lane-index]');
             if (!target) return;
+            event.preventDefault();
+            event.stopPropagation();
             state.save.selectedLane = Number(target.dataset.laneIndex) || 0;
-            switchTab('loadout');
+            saveProgress();
+            renderLaneStrip();
         });
 
         ui.panelContent.addEventListener('click', onPanelAction);
@@ -910,6 +913,15 @@
             skillReadyPulse: 0,
             alerts: [],
             laneAlertTimers: [0, 0, 0],
+            shotTraces: [],
+            skillBursts: [],
+            hitBursts: [],
+            defeatBursts: [],
+            coreImpactTimer: 0,
+            coreImpactSeverity: 0,
+            screenShakeTimer: 0,
+            screenShakeStrength: 0,
+            waveClearTimer: 0,
             waveSpawnedCount: 0,
             waveQueueSafetyRetries: 0,
             nextEnemyId: 1,
@@ -1145,6 +1157,16 @@
         return map[tone] || map.wave;
     }
 
+    function hexToRgbString(hex, fallback = '255,255,255') {
+        if (typeof hex !== 'string') return fallback;
+        const normalized = hex.trim().replace('#', '');
+        const fullHex = normalized.length === 3
+            ? normalized.split('').map((part) => `${part}${part}`).join('')
+            : normalized;
+        if (!/^[0-9a-fA-F]{6}$/.test(fullHex)) return fallback;
+        return `${parseInt(fullHex.slice(0, 2), 16)},${parseInt(fullHex.slice(2, 4), 16)},${parseInt(fullHex.slice(4, 6), 16)}`;
+    }
+
     function getBattleAlertToneLabel(tone) {
         return {
             wave: getLocalized({ zh: '波次', en: 'Wave' }),
@@ -1204,6 +1226,111 @@
         };
     }
 
+    function getEnemyBurstTone(type) {
+        if (type === 'boss') return 'boss';
+        if (type === 'elite') return 'overclock';
+        if (type === 'shield') return 'shield';
+        return 'wave';
+    }
+
+    function getTowerTraceTone(towerId) {
+        return hexToRgbString(TOWERS[towerId]?.color, getBattleToneColor('wave'));
+    }
+
+    function pushTowerShotTrace(towerId, fromX, fromY, toX, toY, scale = 1, chained = false) {
+        const durationMap = {
+            pulse: 0.16,
+            laser: 0.12,
+            frost: 0.18,
+            rocket: 0.24,
+            harvest: 0.14,
+            chain: 0.2,
+            rail: 0.22
+        };
+        const widthMap = {
+            pulse: 3.2,
+            laser: 2.6,
+            frost: 3.4,
+            rocket: 5,
+            harvest: 2.8,
+            chain: 3.2,
+            rail: 5.8
+        };
+        state.battle.shotTraces.push({
+            towerId,
+            fromX,
+            fromY,
+            toX,
+            toY,
+            tone: getTowerTraceTone(towerId),
+            timer: durationMap[towerId] || 0.16,
+            duration: durationMap[towerId] || 0.16,
+            width: (widthMap[towerId] || 3) * scale,
+            scale,
+            chained: !!chained
+        });
+        if (state.battle.shotTraces.length > 40) state.battle.shotTraces.shift();
+    }
+
+    function pushSkillBurst(skillId) {
+        const duration = skillId === 'overclock' ? 1.15 : 0.92;
+        state.battle.skillBursts.push({
+            skillId,
+            timer: duration,
+            duration
+        });
+        if (state.battle.skillBursts.length > 8) state.battle.skillBursts.shift();
+    }
+
+    function pushHitBurst(x, y, tone = 'wave', scale = 1) {
+        state.battle.hitBursts.push({
+            x,
+            y,
+            tone,
+            scale,
+            timer: 0.26,
+            duration: 0.26
+        });
+        if (state.battle.hitBursts.length > 28) state.battle.hitBursts.shift();
+    }
+
+    function pushDefeatBurst(enemy) {
+        state.battle.defeatBursts.push({
+            x: enemy.x,
+            y: enemy.y,
+            radius: enemy.radius,
+            tone: getEnemyBurstTone(enemy.type),
+            timer: enemy.boss ? 0.9 : (enemy.elite ? 0.66 : 0.48),
+            duration: enemy.boss ? 0.9 : (enemy.elite ? 0.66 : 0.48),
+            boss: !!enemy.boss,
+            elite: !!enemy.elite
+        });
+        if (state.battle.defeatBursts.length > 16) state.battle.defeatBursts.shift();
+    }
+
+    function triggerCoreImpact(damage, shieldAbsorbed = 0) {
+        const severity = Math.min(1.8, Math.max(damage, shieldAbsorbed * 0.6) / 20);
+        state.battle.coreImpactTimer = Math.max(state.battle.coreImpactTimer, 0.5 + severity * 0.24);
+        state.battle.coreImpactSeverity = Math.max(state.battle.coreImpactSeverity, severity);
+        state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.2 + severity * 0.14);
+        state.battle.screenShakeStrength = Math.max(state.battle.screenShakeStrength, 5 + severity * 6);
+        triggerEdgeFlash(shieldAbsorbed > 0 && damage <= 0 ? 'shield' : 'boss', 0.45 + severity * 0.16);
+    }
+
+    function triggerWaveClearCelebration() {
+        state.battle.waveClearTimer = Math.max(state.battle.waveClearTimer, 1.2);
+        state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.18);
+        state.battle.screenShakeStrength = Math.max(state.battle.screenShakeStrength, 4.2);
+        pushBattleAlert(
+            getLocalized({
+                zh: `第 ${state.battle.currentWave} 波已清空，准备拿强化继续推进`,
+                en: `Wave ${state.battle.currentWave} cleared. Take an upgrade and keep pushing.`
+            }),
+            'wave',
+            2.5
+        );
+    }
+
     function triggerBattleBanner(text, tone = 'wave', duration = 1.6) {
         if (!text) return;
         state.battle.bannerText = text;
@@ -1238,11 +1365,32 @@
         state.battle.spawnBursts = state.battle.spawnBursts
             .map((burst) => ({ ...burst, timer: Math.max(0, burst.timer - delta) }))
             .filter((burst) => burst.timer > 0);
+        state.battle.shotTraces = state.battle.shotTraces
+            .map((trace) => ({ ...trace, timer: Math.max(0, trace.timer - delta) }))
+            .filter((trace) => trace.timer > 0);
+        state.battle.skillBursts = state.battle.skillBursts
+            .map((burst) => ({ ...burst, timer: Math.max(0, burst.timer - delta) }))
+            .filter((burst) => burst.timer > 0);
         state.battle.bannerTimer = Math.max(0, state.battle.bannerTimer - delta);
         state.battle.edgeFlashTimer = Math.max(0, state.battle.edgeFlashTimer - delta);
         state.battle.bossAlertTimer = Math.max(0, state.battle.bossAlertTimer - delta);
         state.battle.skillReadyPulse = Math.max(0, state.battle.skillReadyPulse - delta);
         state.battle.laneAlertTimers = state.battle.laneAlertTimers.map((timer) => Math.max(0, timer - delta));
+        state.battle.hitBursts = state.battle.hitBursts
+            .map((burst) => ({ ...burst, timer: Math.max(0, burst.timer - delta) }))
+            .filter((burst) => burst.timer > 0);
+        state.battle.defeatBursts = state.battle.defeatBursts
+            .map((burst) => ({ ...burst, timer: Math.max(0, burst.timer - delta) }))
+            .filter((burst) => burst.timer > 0);
+        state.battle.coreImpactTimer = Math.max(0, state.battle.coreImpactTimer - delta);
+        state.battle.coreImpactSeverity = state.battle.coreImpactTimer > 0
+            ? Math.max(0, state.battle.coreImpactSeverity - delta * 1.8)
+            : 0;
+        state.battle.waveClearTimer = Math.max(0, state.battle.waveClearTimer - delta);
+        state.battle.screenShakeTimer = Math.max(0, state.battle.screenShakeTimer - delta);
+        state.battle.screenShakeStrength = state.battle.screenShakeTimer > 0
+            ? Math.max(0, state.battle.screenShakeStrength - delta * 18)
+            : 0;
         const nextAlerts = state.battle.alerts.filter((alert) => alert.expiresAt > performance.now());
         if (nextAlerts.length !== state.battle.alerts.length) {
             state.battle.alerts = nextAlerts;
@@ -1475,7 +1623,7 @@
         if (state.battle.awaitingUpgrade) return t('battleNoteUpgrade');
         if (state.battle.finished) return state.battle.result?.win ? t('battleNoteResultWin') : t('battleNoteResultLose');
         if (state.battle.running) return getBattleWaveGuide(chapter, state.battle.currentWave);
-        return `${getChapterOpeningGuide(chapter)} ${getChapterWavePlan(chapter)}`;
+        return getChapterOpeningGuide(chapter);
     }
 
     function getLanePressureInfo(index) {
@@ -2037,164 +2185,187 @@
         };
     }
 
+    function getDefendQuickAccessItems(prepOverview, economyPreview) {
+        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
+        const researchReadyCount = Object.keys(RESEARCH).filter((id) => canUpgradeResearch(id)).length;
+        return [
+            {
+                label: getLocalized({ zh: '装配', en: 'Loadout' }),
+                value: prepOverview.adjustmentsNeeded > 0
+                    ? getLocalized({ zh: `待调 ${prepOverview.adjustmentsNeeded}`, en: `${prepOverview.adjustmentsNeeded} left` })
+                    : getLocalized({ zh: '已就绪', en: 'Ready' }),
+                meta: getLocalized({ zh: '三路 + 技能', en: '3 lanes + skill' }),
+                action: 'openTab',
+                data: 'loadout',
+                tone: prepOverview.adjustmentsNeeded > 0 ? 'warn' : 'ready'
+            },
+            {
+                label: getLocalized({ zh: '研究', en: 'Research' }),
+                value: researchReadyCount > 0
+                    ? getLocalized({ zh: `可升 ${researchReadyCount}`, en: `${researchReadyCount} ready` })
+                    : getLocalized({ zh: '查看', en: 'View' }),
+                meta: getLocalized({ zh: '火力 / 冷却 / 护盾', en: 'Damage / Cadence / Shield' }),
+                action: 'openTab',
+                data: 'research',
+                tone: researchReadyCount > 0 ? 'ready' : 'neutral'
+            },
+            {
+                label: getLocalized({ zh: '任务', en: 'Missions' }),
+                value: economyPreview.missionReady > 0 ? `x${economyPreview.missionReady}` : '0',
+                meta: economyPreview.missionReady > 0
+                    ? getLocalized({ zh: '待领取', en: 'Claimable' })
+                    : getLocalized({ zh: '进行中', en: 'In progress' }),
+                action: 'openTab',
+                data: 'missions',
+                tone: economyPreview.missionReady > 0 ? 'ready' : 'neutral'
+            },
+            {
+                label: getLocalized({ zh: '赛季', en: 'Season' }),
+                value: seasonTotalReady > 0 ? `x${seasonTotalReady}` : `Lv.${seasonInfo.level}`,
+                meta: seasonTotalReady > 0
+                    ? getLocalized({ zh: '奖励待领', en: 'Rewards ready' })
+                    : getLocalized({ zh: '轨道进度', en: 'Track progress' }),
+                action: 'openTab',
+                data: 'season',
+                tone: seasonTotalReady > 0 ? 'ready' : 'neutral'
+            },
+            {
+                label: getLocalized({ zh: '补给', en: 'Supply' }),
+                value: economyPreview.dailyReady
+                    ? getLocalized({ zh: '可领取', en: 'Ready' })
+                    : (hasShopRedDot()
+                        ? getLocalized({ zh: '可购买', en: 'Deals' })
+                        : getLocalized({ zh: '打开', en: 'Open' })),
+                meta: economyPreview.dailyReady
+                    ? getLocalized({ zh: '日常补给', en: 'Daily supply' })
+                    : getLocalized({ zh: '商店 / 充值', en: 'Shop / top-up' }),
+                action: economyPreview.dailyReady ? 'claimDaily' : 'openTab',
+                data: economyPreview.dailyReady ? 'daily' : 'shop',
+                tone: economyPreview.dailyReady ? 'ready' : (hasShopRedDot() ? 'warn' : 'neutral')
+            }
+        ];
+    }
+
+    function renderCompactKpiGrid(items) {
+        return `
+            <div class="compact-kpi-grid">
+                ${items
+                    .filter(Boolean)
+                    .map((item) => `
+                        <div class="compact-kpi">
+                            <span>${item.label}</span>
+                            <strong>${item.value}</strong>
+                        </div>
+                    `)
+                    .join('')}
+            </div>
+        `;
+    }
+
     function renderDefendTab() {
         const current = getCurrentChapter();
         const focusPreview = getChapterFocusPreview(current);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
         const economyPreview = getDefenseEconomyPreview(current);
         const prepOverview = getChapterPrepOverview(current);
-        const prepSkillLabel = t(SKILLS[prepOverview.currentSkill]?.nameKey || SKILLS[prepOverview.preset.skill].nameKey);
-        const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
+        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview);
         ui.panelContent.innerHTML = `
-            ${renderPanelHead(t('defendPanelTitle'), t('defendPanelDesc'))}
-            <div class="chapter-row">
+            ${renderPanelHead(
+                t('defendPanelTitle'),
+                getLocalized({
+                    zh: '这里只保留章节、开打和快速跳转；装配、研究、领奖、补给都去对应页签处理。',
+                    en: 'This tab only keeps chapter selection, battle start, and quick jumps. Build, upgrades, claims, and shop live in their own tabs.'
+                }),
+                `<div class="mini-chip">${current.id} · ${formatCompact(current.recommended)}</div>`
+            )}
+            <div class="chapter-row defend-chapter-row">
                 ${CHAPTERS.map((chapter, index) => `
                     <button class="chapter-btn ${index === state.save.chapterIndex ? 'active' : ''}" type="button" data-action="chapter" data-value="${index}" ${index > state.save.bestChapterIndex ? 'disabled' : ''}>
                         ${chapter.id}${index === state.save.chapterIndex ? ` · ${t('chapterBadgeCurrent')}` : ''}
                     </button>
                 `).join('')}
             </div>
-            <article>
-                <div class="card-top">
-                    <div>
-                        <div class="card-kicker">${t('chapterLabel')}</div>
-                        <div class="card-title">${current.id}</div>
-                    </div>
-                    <div class="card-number">${t('recommendRating')} ${formatCompact(current.recommended)}</div>
-                </div>
-                <div class="card-copy">${getLocalized(current.trait)}</div>
-                <div class="chip-row" style="margin-top:10px;">
-                    <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G</span>
-                    <span class="mini-chip">${formatCompact(current.coreReward)} C</span>
-                    <span class="mini-chip">${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
-                    <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
-                    <span class="mini-chip">${getLocalized({ zh: `碎片倾向 ${focusPreview}`, en: `Focus Drops ${focusPreview}` })}</span>
-                    <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Recommended Skill ${recommendedSkill}` })}</span>
-                </div>
-                <div class="card-actions" style="margin-top:12px;">
-                    <button class="primary-btn" type="button" data-action="startChapter" data-value="${state.save.chapterIndex}">${t('defendNow')}</button>
-                </div>
-            </article>
-            <article>
-                <div class="card-top">
-                    <div>
-                        <div class="card-kicker">${getLocalized({ zh: '章节战术', en: 'Chapter Brief' })}</div>
-                        <div class="card-title">${getLocalized({ zh: '推荐装配路线', en: 'Recommended Build Path' })}</div>
-                    </div>
-                    <div class="card-number">${recommendedSkill}</div>
-                </div>
-                <div class="card-copy">${getChapterDirective(current)}</div>
-                <div class="chip-row" style="margin-top:10px;">
-                    ${current.fragmentFocus.map((towerId) => `<span class="mini-chip">${towerLabel(towerId)}</span>`).join('')}
-                </div>
-            </article>
-            <div class="card-grid">
-                <article class="stat-card">
+            <div class="defend-compact-layout">
+                <article class="defend-primary-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${getLocalized({ zh: '开打前检查', en: 'Battle Ready' })}</div>
+                            <div class="card-kicker">${getLocalized({ zh: '开战面板', en: 'Frontline Ready' })}</div>
                             <div class="card-title">${prepOverview.ready
-                                ? getLocalized({ zh: '当前编队已就绪', en: 'Preset synced and ready' })
-                                : getLocalized({ zh: `还有 ${prepOverview.adjustmentsNeeded} 项待调整`, en: `${prepOverview.adjustmentsNeeded} prep tweaks left` })}</div>
+                                ? getLocalized({ zh: `${current.id} 可直接开打`, en: `${current.id} is ready` })
+                                : getLocalized({ zh: `${current.id} 还差 ${prepOverview.adjustmentsNeeded} 项调整`, en: `${current.id} needs ${prepOverview.adjustmentsNeeded} tweaks` })}</div>
                         </div>
                         <div class="card-number">${prepOverview.powerGap > 0
-                            ? getLocalized({ zh: `战力差距 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
-                            : getLocalized({ zh: '战力达标', en: 'Power ready' })}</div>
+                            ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                            : getLocalized({ zh: '达标', en: 'Ready' })}</div>
                     </div>
-                    <div class="card-copy">${prepOverview.ready
+                    <div class="defend-mini-stat-grid">
+                        <div class="defend-mini-stat">
+                            <span>${t('previewTowerPower')}</span>
+                            <strong>${formatCompact(getPowerRating(state.save))}</strong>
+                        </div>
+                        <div class="defend-mini-stat">
+                            <span>${t('recommendRating')}</span>
+                            <strong>${formatCompact(current.recommended)}</strong>
+                        </div>
+                        <div class="defend-mini-stat">
+                            <span>${getLocalized({ zh: '待领总数', en: 'Claims Ready' })}</span>
+                            <strong>${economyPreview.claimableTotal}</strong>
+                        </div>
+                        <div class="defend-mini-stat">
+                            <span>${t('seasonLabel')}</span>
+                            <strong>Lv.${seasonInfo.level}</strong>
+                        </div>
+                    </div>
+                    <div class="chip-row defend-chip-row">
+                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
+                        <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `掉落倾向 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Skill ${recommendedSkill}` })}</span>
+                    </div>
+                    <div class="defend-inline-note">${prepOverview.ready
                         ? getLocalized({
-                            zh: '三路炮台和技能都已经对齐当前章节推荐，可以直接进入防守，后续冲关只需要反复复用这套编队。',
-                            en: 'Your three lanes and skill already match the chapter preset, so you can jump straight into defense.'
+                            zh: '当前三路与技能已经对齐，可直接开打；需要更细调装配时再去“装配”页。',
+                            en: 'Your lanes and skill are aligned, so you can defend now. Open Loadout only when you want finer tuning.'
                         })
                         : getLocalized({
-                            zh: '防线页面现在可以直接一键套用推荐编队，不用再手动回到装配页逐个调整。',
-                            en: 'You can now apply the recommended chapter setup right from the defend tab without manually rebuilding the loadout.'
+                            zh: '优先一键同步推荐编队，差距大的章节先补战力再开打。',
+                            en: 'Sync the recommended preset first, and close larger power gaps before pushing harder chapters.'
                         })}</div>
-                    <div class="reward-row">
-                        ${prepOverview.currentLanes.map((towerId, laneIndex) => `<span class="mini-chip">${prepOverview.laneMatches[laneIndex]
-                            ? getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} 已就绪`, en: `${getLaneName(laneIndex)} ${towerLabel(prepOverview.preset.lanes[laneIndex])} ready` })
-                            : getLocalized({ zh: `${getLaneName(laneIndex)} ${towerLabel(towerId)} → ${towerLabel(prepOverview.preset.lanes[laneIndex])}`, en: `${getLaneName(laneIndex)} ${towerLabel(towerId)} → ${towerLabel(prepOverview.preset.lanes[laneIndex])}` })}</span>`).join('')}
-                        <span class="mini-chip">${prepOverview.skillMatches
-                            ? getLocalized({ zh: `技能 ${prepSkillLabel} 已就绪`, en: `Skill ${prepSkillLabel} ready` })
-                            : getLocalized({ zh: `技能 ${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}`, en: `Skill ${prepSkillLabel} → ${t(SKILLS[prepOverview.preset.skill].nameKey)}` })}</span>
-                    </div>
-                    <div class="card-actions" style="margin-top:12px;">
+                    <div class="card-actions defend-card-actions">
                         <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${current.id}">
                             ${prepOverview.ready
                                 ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
                                 : getLocalized({ zh: '一键套用并开打', en: 'Apply & Defend' })}
                         </button>
                         <button class="ghost-btn" type="button" data-action="applyChapterPreset" data-value="${current.id}">
-                            ${getLocalized({ zh: '只同步推荐编队', en: 'Apply Preset' })}
+                            ${getLocalized({ zh: '同步推荐编队', en: 'Apply Preset' })}
                         </button>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
-                            ${getLocalized({ zh: '前往装配', en: 'Open Loadout' })}
+                            ${getLocalized({ zh: '去装配页', en: 'Open Loadout' })}
                         </button>
                     </div>
                 </article>
-                <article class="stat-card">
-                    <div class="card-top">
-                        <div>
-                            <div class="card-kicker">${t('previewTowerPower')}</div>
-                            <div class="card-title">${formatCompact(getPowerRating(state.save))}</div>
-                        </div>
-                        <div class="card-number">${t('statBest')} ${CHAPTERS[state.save.bestChapterIndex].id}</div>
-                    </div>
-                    <div class="card-copy">${t('chapterStateDesc')}</div>
-                </article>
-                <article class="stat-card">
-                    <div class="card-top">
-                        <div>
-                            <div class="card-kicker">${t('previewWavePressure')}</div>
-                            <div class="card-title">${getLocalized({ zh: `共 ${TOTAL_WAVES} 波`, en: `${TOTAL_WAVES} Waves` })}</div>
-                        </div>
-                        <div class="card-number">${t('chapterInfoBoss')}</div>
-                        </div>
-                        <div class="card-copy">${getChapterWavePlan(current)}</div>
+                <div class="defend-quick-grid">
+                    ${quickAccessItems.map((item) => `
+                        <button class="defend-quick-btn is-${item.tone}" type="button" data-action="${item.action}" data-value="${item.data}">
+                            <span class="defend-quick-label">${item.label}</span>
+                            <strong class="defend-quick-value">${item.value}</strong>
+                            <span class="defend-quick-meta">${item.meta}</span>
+                        </button>
+                    `).join('')}
+                    <article class="defend-quick-summary">
+                        <span class="defend-quick-label">${getLocalized({ zh: '本章节奏', en: 'Wave Plan' })}</span>
+                        <strong class="defend-quick-value">${getLocalized({ zh: `共 ${TOTAL_WAVES} 波`, en: `${TOTAL_WAVES} waves` })}</strong>
+                        <span class="defend-quick-meta">${getChapterWavePlan(current)}</span>
                     </article>
-                <article class="stat-card">
-                    <div class="card-top">
-                        <div>
-                        <div class="card-kicker">${t('previewEconomy')}</div>
-                            <div class="card-title">${economyPreview.claimableTotal > 0
-                                ? getLocalized({ zh: '开打前有资源可回收', en: 'Resources are ready before the next run' })
-                                : getLocalized({ zh: '本章节回收环已经搭好', en: 'This chapter loop is ready to fund itself' })}</div>
-                        </div>
-                        <div class="card-number">${economyPreview.claimableTotal > 0
-                            ? getLocalized({ zh: `待领 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })
-                            : economyPreview.dailyReady ? getLocalized({ zh: '可领补给', en: 'Supply ready' }) : economyPreview.dailyRemaining}</div>
-                    </div>
-                    <div class="card-copy">${economyPreview.powerGap > 0
-                        ? getLocalized({
-                            zh: `推荐先补 ${formatCompact(economyPreview.powerGap)} 战力再冲本章节，同时可先回收日常 / 任务 / 赛季资源。`,
-                            en: `You are about ${formatCompact(economyPreview.powerGap)} power short, so reclaim daily, mission, and season resources before pushing.`
-                        })
-                        : getLocalized({
-                            zh: '当前战力已经达到推荐区间，可直接开打并让资源继续回流。',
-                            en: 'Your power is inside the recommended range, so you can defend now and keep the resource loop rolling.'
-                        })}</div>
-                    <div class="reward-row">
-                        <span class="mini-chip">${getLocalized({ zh: `通关预览 ${formatCompact(economyPreview.clearPreview.gold)}G`, en: `Clear ${formatCompact(economyPreview.clearPreview.gold)}G` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `${formatCompact(economyPreview.clearPreview.cores)} C`, en: `${formatCompact(economyPreview.clearPreview.cores)} C` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `${formatCompact(economyPreview.clearPreview.fragments)} ${t('fragmentLabel')}`, en: `${formatCompact(economyPreview.clearPreview.fragments)} ${t('fragmentLabel')}` })}</span>
-                        <span class="mini-chip">${economyPreview.dailyRemaining}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `任务待领 ${economyPreview.missionReady}`, en: `Missions ${economyPreview.missionReady}` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `赛季待领 ${seasonTotalReady}`, en: `Season ${seasonTotalReady}` })}</span>
-                    </div>
-                    <div class="card-actions" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="${economyPreview.dailyReady ? 'claimDaily' : 'openTab'}" data-value="${economyPreview.dailyReady ? 'daily' : 'shop'}">
-                            ${economyPreview.dailyReady
-                                ? getLocalized({ zh: '直接领取补给', en: 'Claim Supply' })
-                                : getLocalized({ zh: '打开补给', en: 'Open Supply' })}
-                        </button>
-                        ${economyPreview.missionReady > 0
-                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="missions">${getLocalized({ zh: `任务 x${economyPreview.missionReady}`, en: `Missions x${economyPreview.missionReady}` })}</button>`
-                            : ''}
-                        ${seasonTotalReady > 0
-                            ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">${getLocalized({ zh: `赛季 x${seasonTotalReady}`, en: `Season x${seasonTotalReady}` })}</button>`
-                            : ''}
-                    </div>
-                </article>
+                    <article class="defend-quick-summary">
+                        <span class="defend-quick-label">${getLocalized({ zh: '历史推进', en: 'Progress' })}</span>
+                        <strong class="defend-quick-value">${t('statBest')} ${CHAPTERS[state.save.bestChapterIndex].id}</strong>
+                        <span class="defend-quick-meta">${getLocalized({ zh: `${current.id} 通关 ${getChapterWinCount(current.id)} 次`, en: `${current.id} cleared ${getChapterWinCount(current.id)} times` })}</span>
+                    </article>
+                </div>
             </div>
         `;
     }
@@ -2205,8 +2376,19 @@
         const preset = getChapterLoadoutPreset(chapter);
         const prepOverview = getChapterPrepOverview(chapter);
         const presetSkillLabel = t(SKILLS[preset.skill].nameKey);
+        const unlockedTowerCount = Object.values(TOWERS).filter((tower) => {
+            const level = getTowerLevel(tower.id);
+            return level > 0 || tower.unlockFragments === 0;
+        }).length;
         ui.panelContent.innerHTML = `
-            ${renderPanelHead(t('loadoutPanelTitle'), t('loadoutPanelDesc'), `<div class="mini-chip">${t('laneSelect')} · ${getLaneName(selectedLane)}</div>`)}
+            ${renderPanelHead(
+                t('loadoutPanelTitle'),
+                getLocalized({
+                    zh: '三路装配集中处理，选路后直接换塔或换技能。',
+                    en: 'Tune all three lanes here, then swap towers or skills quickly.'
+                }),
+                `<div class="mini-chip">${t('laneSelect')} · ${getLaneName(selectedLane)}</div>`
+            )}
             <article class="stat-card">
                 <div class="card-top">
                     <div>
@@ -2219,13 +2401,19 @@
                 </div>
                 <div class="card-copy">${preset.usedFallback
                     ? getLocalized({
-                        zh: '部分推荐炮台尚未解锁，系统已自动用当前可用的同定位炮台替换。',
+                        zh: '未解锁炮台已自动改为当前可用的同定位方案。',
                         en: 'Some recommended towers are still locked, so the preset automatically swaps to currently available alternatives.'
                     })
                     : getLocalized({
-                        zh: '一键应用当前章节的推荐三路编队和主动技能，可以直接开始防守。',
+                        zh: '一键套用当前章节推荐，随后就能直接开打。',
                         en: 'Apply the recommended three-lane build and active skill for the current chapter in one tap.'
                     })}</div>
+                ${renderCompactKpiGrid([
+                    { label: getLocalized({ zh: '当前选路', en: 'Selected Lane' }), value: getLaneName(selectedLane) },
+                    { label: getLocalized({ zh: '当前炮台', en: 'Current Tower' }), value: towerLabel(state.save.laneLoadout[selectedLane]) },
+                    { label: getLocalized({ zh: '已解锁', en: 'Unlocked' }), value: `${unlockedTowerCount} / ${Object.keys(TOWERS).length}` },
+                    { label: getLocalized({ zh: '待调整', en: 'Tweaks Left' }), value: String(Math.max(0, prepOverview.adjustmentsNeeded)) }
+                ])}
                 <div class="reward-row">
                     ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} · ${towerLabel(towerId)}</span>`).join('')}
                     <span class="mini-chip">${getLocalized({ zh: `技能 ${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
@@ -2327,6 +2515,8 @@
         const topAffordableResearch = researchPlan.topAffordable;
         const economyPreview = getDefenseEconomyPreview(chapter);
         const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
+        const researchReadyCount = researchPlan.list.filter((item) => item.affordable && !item.maxed).length;
+        const researchMaxedCount = researchPlan.list.filter((item) => item.maxed).length;
         const sortedResearchIds = researchPlan.list.map((item) => item.id);
         const recoveryAction = economyPreview.dailyReady
             ? {
@@ -2352,7 +2542,13 @@
                         label: getLocalized({ zh: '返回防线', en: 'Back To Defend' })
                     };
         ui.panelContent.innerHTML = `
-            ${renderPanelHead(t('researchPanelTitle'), t('researchPanelDesc'))}
+            ${renderPanelHead(
+                t('researchPanelTitle'),
+                getLocalized({
+                    zh: '这里只做升级决策，缺资源就从这里直接跳去回收。',
+                    en: 'Make upgrade decisions here, then jump straight to recovery when resources run low.'
+                })
+            )}
             <div class="card-grid">
                 <article class="stat-card">
                     <div class="card-top">
@@ -2370,9 +2566,15 @@
                     </div>
                     <div class="card-copy">${topResearch
                         ? `${topResearch.reason} ${researchPlan.powerGap > 0
-                            ? getLocalized({ zh: `当前章节还差约 ${formatCompact(researchPlan.powerGap)} 战力，优先补这个分支更容易过线。`, en: `You are still about ${formatCompact(researchPlan.powerGap)} power short for this chapter, so this branch closes the gap fastest.` })
-                            : getLocalized({ zh: '当前战力已经接近推荐值，这条分支主要负责提高容错与后续稳定度。', en: 'Your power is already near the recommended range, so this branch now improves consistency and safety.' })}`
-                        : getLocalized({ zh: '当前所有研究都已毕业，可以把资源更多投入到炮台升星、章节推进和赛季奖励上。', en: 'All research is maxed, so you can shift resources into tower growth, chapter pushes, and season rewards.' })}</div>
+                            ? getLocalized({ zh: '先补战力缺口，再冲章节。', en: 'Close the power gap first, then push chapters.' })
+                            : getLocalized({ zh: '当前更偏向补稳定度与容错。', en: 'Focus on stability and safety now.' })}`
+                        : getLocalized({ zh: '研究已满，可以把资源转去装配、赛季和推进。', en: 'Research is maxed, so shift resources into loadout, season, and chapter pushes.' })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '可升分支', en: 'Ready Upgrades' }), value: String(researchReadyCount) },
+                        { label: getLocalized({ zh: '已满分支', en: 'Maxed Branches' }), value: String(researchMaxedCount) },
+                        { label: getLocalized({ zh: '战力缺口', en: 'Power Gap' }), value: researchPlan.powerGap > 0 ? formatCompact(researchPlan.powerGap) : getLocalized({ zh: '达标', en: 'Ready' }) },
+                        { label: getLocalized({ zh: '当前金币', en: 'Current Gold' }), value: `${formatCompact(state.save.gold)}G` }
+                    ])}
                     ${topResearch ? `<div class="reward-row">
                         ${researchPlan.list.slice(0, 3).map((item, index) => `<span class="mini-chip">${getLocalized({ zh: `推荐 ${index + 1} · ${item.meta.title} +${item.nextDelta}%`, en: `Top ${index + 1} · ${item.meta.title} +${item.nextDelta}%` })}</span>`).join('')}
                     </div>` : ''}
@@ -2386,6 +2588,30 @@
                             </button>`}
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
                             ${getLocalized({ zh: '返回防线', en: 'Back To Defend' })}
+                        </button>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '资源回流', en: 'Resource Recovery' })}</div>
+                            <div class="card-title">${recoveryAction.label}</div>
+                        </div>
+                        <div class="card-number">${getLocalized({ zh: `待领 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })}</div>
+                    </div>
+                    <div class="card-copy">${economyPreview.dailyRemaining}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '任务', en: 'Missions' }), value: String(economyPreview.missionReady) },
+                        { label: getLocalized({ zh: '赛季', en: 'Season' }), value: String(economyPreview.seasonReady) },
+                        { label: getLocalized({ zh: '赞助', en: 'Sponsor' }), value: String(economyPreview.sponsorReady) },
+                        { label: getLocalized({ zh: '补给', en: 'Supply' }), value: economyPreview.dailyReady ? getLocalized({ zh: '可领', en: 'Ready' }) : getLocalized({ zh: '冷却中', en: 'Cooldown' }) }
+                    ])}
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
+                            ${recoveryAction.label}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
+                            ${getLocalized({ zh: '先回防线', en: 'Back To Defend' })}
                         </button>
                     </div>
                 </article>
@@ -2483,10 +2709,17 @@
     function renderMissionsTab() {
         const missionViews = MISSIONS.map((mission) => getMissionView(mission)).sort((a, b) => b.sort - a.sort);
         const missionBundle = getClaimableMissionBundle();
+        const missionClaimedCount = missionViews.filter((mission) => mission.claimed).length;
+        const missionActiveCount = missionViews.filter((mission) => !mission.claimed && !mission.claimable).length;
+        const missionCompletionRate = missionViews.length ? Math.round((missionClaimedCount / missionViews.length) * 100) : 0;
+        const nextMission = missionViews.find((mission) => !mission.claimed);
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('missionsPanelTitle'),
-                t('missionsPanelDesc'),
+                getLocalized({
+                    zh: '可领取置顶，未完成任务只保留关键进度与奖励。',
+                    en: 'Claimables stay pinned first, while unfinished missions keep only key progress and rewards.'
+                }),
                 `<div class="mini-chip">${missionBundle.count > 0
                     ? getLocalized({ zh: `当前可批量领取 ${missionBundle.count} 个`, en: `${missionBundle.count} ready to batch claim` })
                     : (state.lang === 'zh' ? '可领取奖励已置顶' : 'Claimables pinned first')
@@ -2505,17 +2738,48 @@
                     </div>
                     <div class="card-copy">${missionBundle.count > 0
                         ? getLocalized({
-                            zh: '把已完成任务一次性结算掉，能更快把金币、能核和碎片回流到当前防线成长。',
+                            zh: '已完成任务在这里一次结算，避免来回切页。',
                             en: 'Cash out finished missions in one tap to recycle gold, cores, and fragments into your current defense build.'
                         })
                         : getLocalized({
-                            zh: '继续推进任务目标，达到条件后这里会自动切换成一键领取入口。',
+                            zh: '继续推进目标，满足条件后这里会自动亮起。',
                             en: 'Keep advancing mission goals and this panel will switch into a one-tap claim entry as soon as rewards are ready.'
                         })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(missionBundle.count) },
+                        { label: getLocalized({ zh: '已领', en: 'Claimed' }), value: String(missionClaimedCount) },
+                        { label: getLocalized({ zh: '进行中', en: 'Active' }), value: String(missionActiveCount) },
+                        { label: getLocalized({ zh: '完成率', en: 'Progress' }), value: `${missionCompletionRate}%` }
+                    ])}
                     ${missionBundle.count > 0 ? `<div class="reward-row">${renderRewardChips(missionBundle.reward)}</div>` : ''}
                     <div class="card-actions" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="claimAllMissions" ${missionBundle.count > 0 ? '' : 'disabled'}>
                             ${getLocalized({ zh: '一键领取任务', en: 'Claim All Missions' })}
+                        </button>
+                    </div>
+                </article>
+                <article class="stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '任务概览', en: 'Mission Snapshot' })}</div>
+                            <div class="card-title">${nextMission
+                                ? nextMission.title
+                                : getLocalized({ zh: '当前任务已全部清空', en: 'All current missions cleared' })}</div>
+                        </div>
+                        <div class="card-number">${missionViews.length ? `${missionCompletionRate}%` : '0%'}</div>
+                    </div>
+                    <div class="card-copy">${nextMission
+                        ? nextMission.desc
+                        : getLocalized({ zh: '继续推进章节与战斗表现，会刷新更多任务目标。', en: 'Keep pushing chapters and battle metrics to surface more mission goals.' })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '总任务', en: 'Total' }), value: String(missionViews.length) },
+                        { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(missionBundle.count) },
+                        { label: getLocalized({ zh: '未完成', en: 'Pending' }), value: String(Math.max(0, missionViews.length - missionClaimedCount - missionBundle.count)) },
+                        { label: getLocalized({ zh: '推进建议', en: 'Next' }), value: nextMission ? `${nextMission.progress} / ${nextMission.target}` : getLocalized({ zh: '已清空', en: 'Cleared' }) }
+                    ])}
+                    <div class="card-actions" style="margin-top:12px;">
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
+                            ${getLocalized({ zh: '返回防线推进', en: 'Back To Defend' })}
                         </button>
                     </div>
                 </article>
@@ -2550,10 +2814,18 @@
         const seasonBundle = getClaimableSeasonBundle();
         const finalChapterId = CHAPTERS[CHAPTERS.length - 1].id;
         const finalChapterClears = getChapterWinCount(finalChapterId);
+        const seasonRemaining = Math.max(0, seasonInfo.required - seasonInfo.progress);
         const nodes = SEASON_NODES.map((node, index) => ({ node, index, claimable: isSeasonClaimable(node.id), claimed: state.save.seasonClaimed.includes(node.id) }))
             .sort(compareRewardNodeState);
+        const nextStandardNode = nodes.find(({ claimed }) => !claimed) || null;
         ui.panelContent.innerHTML = `
-            ${renderPanelHead(t('seasonPanelTitle'), t('seasonPanelDesc'))}
+            ${renderPanelHead(
+                t('seasonPanelTitle'),
+                getLocalized({
+                    zh: '这里只看等级、推进和待领奖励，节点列表压缩在下方。',
+                    en: 'Track level, progress, and ready rewards here, with the node list compressed below.'
+                })
+            )}
             <div class="card-grid">
                 <article class="stat-card">
                     <div class="card-top">
@@ -2564,7 +2836,12 @@
                         <div class="card-number">${formatCompact(state.save.seasonXp)} XP</div>
                     </div>
                     <div class="progress-line"><i style="width:${(rate * 100).toFixed(2)}%;"></i></div>
-                    <div class="card-copy">${t('seasonToNext')} ${formatCompact(seasonInfo.required - seasonInfo.progress)}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '距下一档', en: 'To Next' }), value: seasonInfo.required > 0 ? formatCompact(seasonRemaining) : getLocalized({ zh: '已满', en: 'Max' }) },
+                        { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(seasonBundle.count) },
+                        { label: getLocalized({ zh: '赞助', en: 'Sponsor' }), value: String(seasonBundle.sponsorCount) },
+                        { label: getLocalized({ zh: '终章通关', en: 'Final Clears' }), value: formatCompact(finalChapterClears) }
+                    ])}
                 </article>
                 <article class="stat-card">
                     <div class="card-top">
@@ -2574,7 +2851,12 @@
                         </div>
                         <div class="card-number">${t('statKills')} ${formatCompact(state.save.stats.kills)}</div>
                     </div>
-                    <div class="card-copy">${t('statRuns')} ${formatCompact(state.save.stats.runs)} · ${t('statWins')} ${formatCompact(state.save.stats.wins)} · ${t('statFinalClears')} ${formatCompact(finalChapterClears)}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '局数', en: 'Runs' }), value: formatCompact(state.save.stats.runs) },
+                        { label: getLocalized({ zh: '胜利', en: 'Wins' }), value: formatCompact(state.save.stats.wins) },
+                        { label: getLocalized({ zh: '击杀', en: 'Kills' }), value: formatCompact(state.save.stats.kills) },
+                        { label: getLocalized({ zh: '终章', en: 'Final' }), value: formatCompact(finalChapterClears) }
+                    ])}
                 </article>
                 <article class="stat-card">
                     <div class="card-top">
@@ -2590,13 +2872,19 @@
                     </div>
                     <div class="card-copy">${seasonBundle.count > 0
                         ? getLocalized({
-                            zh: '标准赛季节点和赞助轨道奖励现在可以一起批量结算，减少来回点按。',
+                            zh: '标准节点和赞助奖励都能在这里一起结算。',
                             en: 'Standard season nodes and sponsor-track rewards can now be settled together in one sweep.'
                         })
                         : getLocalized({
-                            zh: '继续推进章节、防守和赛季经验，达到节点后这里会自动出现一键领取入口。',
+                            zh: '继续推章节和赛季经验，达到节点后这里会自动亮起。',
                             en: 'Keep pushing chapters and Season XP; this panel will surface a batch-claim entry once nodes are ready.'
                         })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '标准待领', en: 'Standard' }), value: String(Math.max(0, seasonBundle.count - seasonBundle.sponsorCount)) },
+                        { label: getLocalized({ zh: '赞助待领', en: 'Sponsor' }), value: String(seasonBundle.sponsorCount) },
+                        { label: getLocalized({ zh: '下一标准档', en: 'Next Node' }), value: nextStandardNode ? formatCompact(nextStandardNode.node.xp) : getLocalized({ zh: '完成', en: 'Done' }) },
+                        { label: getLocalized({ zh: '当前 XP', en: 'Current XP' }), value: formatCompact(state.save.seasonXp) }
+                    ])}
                     ${seasonBundle.count > 0 ? `<div class="reward-row">${renderRewardChips(seasonBundle.reward)}</div>` : ''}
                     <div class="card-actions" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="claimAllSeason" ${seasonBundle.count > 0 ? '' : 'disabled'}>
@@ -2635,7 +2923,10 @@
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('shopPanelTitle'),
-                t('shopPanelDesc'),
+                getLocalized({
+                    zh: '每日补给、资源包和充值放在同页，减少来回切换。',
+                    en: 'Daily supply, resource packs, and top-up all live on one page to cut extra switching.'
+                }),
                 `<div class="mini-chip">${sponsorUnlocked
                     ? getLocalized({ zh: `赞助轨道已解锁 · 待领 ${sponsorReady}`, en: `Sponsor track unlocked · ${sponsorReady} ready` })
                     : getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道', en: 'Any verified top-up unlocks the sponsor track' })
@@ -2667,7 +2958,7 @@
                     </div>
                     <div class="card-number">Free</div>
                 </div>
-                <div class="card-copy">${t('shopFreeDesc')}</div>
+                <div class="card-copy">${getLocalized({ zh: '每天一领；首充后补给会继续抬高。', en: 'Claim once per day; first top-up boosts the supply tier.' })}</div>
                 <div class="reward-row">
                     <span class="mini-chip">${sponsorUnlocked ? getLocalized({ zh: '赞助加成已生效', en: 'Sponsor boost active' }) : getLocalized({ zh: '首充可升级每日补给', en: 'Top-up unlocks daily boost' })}</span>
                 </div>
@@ -3138,6 +3429,24 @@
                         : getLocalized({ zh: '战力达标', en: 'Power ready' })}</div>
                 </div>
                 <div class="card-copy">${paymentRoute.reason}</div>
+                <div class="shop-kpi-grid">
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '战力缺口', en: 'Power Gap' })}</span>
+                        <strong>${prepOverview.powerGap > 0 ? formatCompact(prepOverview.powerGap) : getLocalized({ zh: '达标', en: 'Ready' })}</strong>
+                    </div>
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '待领奖励', en: 'Ready Claims' })}</span>
+                        <strong>${formatCompact(paymentRoute.sponsorReady || 0)}</strong>
+                    </div>
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '金币短缺', en: 'Gold Shortage' })}</span>
+                        <strong>${goldRoute && !goldRoute.affordable ? `${formatCompact(goldRoute.shortage)}G` : getLocalized({ zh: '足够', en: 'Enough' })}</strong>
+                    </div>
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '能核短缺', en: 'Core Shortage' })}</span>
+                        <strong>${coreRoute && !coreRoute.affordable ? `${formatCompact(coreRoute.shortage)}C` : getLocalized({ zh: '足够', en: 'Enough' })}</strong>
+                    </div>
+                </div>
                 <div class="reward-row">
                     ${goldRoute ? `<span class="mini-chip">${getLocalized({ zh: `金币优先 ${getLocalized(goldRoute.offer.title)}`, en: `Gold ${getLocalized(goldRoute.offer.title)}` })}</span>` : ''}
                     ${coreRoute ? `<span class="mini-chip">${getLocalized({ zh: `能核优先 ${getLocalized(coreRoute.offer.title)}`, en: `Core ${getLocalized(coreRoute.offer.title)}` })}</span>` : ''}
@@ -3185,8 +3494,8 @@
                     <div class="card-number">${sponsorUnlocked ? getLocalized({ zh: '已解锁', en: 'Unlocked' }) : getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
                 </div>
                 <div class="card-copy">${sponsorUnlocked
-                    ? getLocalized({ zh: '链上校验成功后，充值奖励会直接到账，同时赛季页会开放赞助轨道额外节点。', en: 'Verified payments grant rewards instantly and unlock extra Sponsor nodes in Season.' })
-                    : getLocalized({ zh: '创建订单后按精确金额支付，再粘贴 txid 校验即可发奖，并永久解锁赞助轨道。', en: 'Create an order, pay the exact amount, then verify the txid to grant rewards and unlock the Sponsor track.' })
+                    ? getLocalized({ zh: '校验成功后奖励直发到账，赛季赞助节点同步开启。', en: 'Verified payments grant rewards instantly and keep Sponsor nodes live.' })
+                    : getLocalized({ zh: '下单、精确支付、粘贴 txid 校验，即可发奖并永久解锁赞助轨道。', en: 'Create an order, pay the exact amount, then verify the txid to grant rewards and unlock the Sponsor track.' })
                 }</div>
                 <div class="reward-row">
                     <span class="mini-chip">${getLocalized({ zh: `${premiumReady} 个赞助节点待领取`, en: `${premiumReady} sponsor nodes ready` })}</span>
@@ -3281,7 +3590,7 @@
                         </div>
                         <div class="card-number">${getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
                     </div>
-                    <div class="card-copy">${getLocalized({ zh: '任意一笔链上校验成功的充值都会解锁赞助轨道，随后可随赛季经验领取额外金币、能核和高阶塔台碎片。', en: 'Any verified top-up unlocks the Sponsor track so you can claim extra gold, cores, and high-tier fragments as Season XP grows.' })}</div>
+                    <div class="card-copy">${getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道，并随赛季经验追加额外奖励。', en: 'Any verified top-up unlocks the Sponsor track and adds extra rewards as Season XP grows.' })}</div>
                     ${nextSponsorNode ? `<div class="reward-row">
                         <span class="mini-chip">${getLocalized({ zh: '解锁后首个赞助节点', en: 'First Sponsor Node After Unlock' })}</span>
                         ${renderRewardChips(nextSponsorNode.node.reward)}
@@ -3306,7 +3615,7 @@
             <div class="panel-head">
                 <div>
                     <h3>${t('sponsorTrack')}</h3>
-                    <p>${getLocalized({ zh: '赞助轨道已开启。达到指定赛季经验后，可领取额外金币、能核与高阶碎片。', en: 'Sponsor track is now live. Reach the required Season XP to claim extra gold, cores, and high-tier fragments.' })}</p>
+                    <p>${getLocalized({ zh: '达到指定赛季经验后，就能在这里领取额外赞助奖励。', en: 'Reach the required Season XP here to claim extra sponsor rewards.' })}</p>
                 </div>
                 <div class="mini-chip">${getLocalized({ zh: `待领取 ${sponsorReady} 个节点`, en: `${sponsorReady} nodes ready` })}</div>
             </div>
@@ -3322,8 +3631,8 @@
                             : getLocalized({ zh: `还差 ${formatCompact(nextSponsorNode.remainingXp)} XP`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP left` })}</div>
                     </div>
                     <div class="card-copy">${nextSponsorNode.ready
-                        ? getLocalized({ zh: '这个节点已经满足条件，可以直接从当前页一键领取。', en: 'This node is ready and can be claimed directly from the current page.' })
-                        : getLocalized({ zh: '继续提升赛季经验就能拿到这一档额外赞助奖励。', en: 'Keep earning Season XP to unlock this extra sponsor reward tier.' })}</div>
+                        ? getLocalized({ zh: '这个节点已经达标，可直接从当前页领取。', en: 'This node is ready and can be claimed from the current page.' })
+                        : getLocalized({ zh: '继续抬升赛季经验，就能拿到这一档赞助奖励。', en: 'Keep raising Season XP to unlock this sponsor reward tier.' })}</div>
                     <div class="reward-row">${renderRewardChips(nextSponsorNode.node.reward)}</div>
                     <div class="card-actions" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${nextSponsorNode.ready ? 'claimAllSeason' : 'openTab'}" data-value="${nextSponsorNode.ready ? 'season' : 'shop'}">
@@ -3414,7 +3723,7 @@
         const focusPreview = getChapterFocusPreview(chapter);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(chapter)].nameKey);
         const prepOverview = getChapterPrepOverview(chapter);
-        ui.startDescription.textContent = `${t('startDescTemplate').replace('{chapter}', chapter.id)} ${getChapterOpeningGuide(chapter)} ${getChapterWavePlan(chapter)}`;
+        ui.startDescription.textContent = `${t('startDescTemplate').replace('{chapter}', chapter.id)} ${getChapterOpeningGuide(chapter)}`;
         ui.startMeta.innerHTML = `
             <span class="mini-chip">${t('startMetaReward').replace('{gold}', formatCompact(chapter.goldReward)).replace('{core}', formatCompact(chapter.coreReward)).replace('{fragment}', formatCompact(chapter.fragmentReward))}</span>
             <span class="mini-chip">${t('startMetaEnemy').replace('{enemy}', mainEnemy)}</span>
@@ -3544,18 +3853,24 @@
             state.battle.enemies.forEach((enemy) => {
                 enemy.hp -= 62 * relayBoost;
                 enemy.stun = Math.max(enemy.stun, 1.6);
+                enemy.hitFlash = Math.max(enemy.hitFlash || 0, enemy.boss ? 0.4 : 0.28);
             });
             cleanupDeadEnemies();
+            pushSkillBurst('emp');
+            state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.22);
+            state.battle.screenShakeStrength = Math.max(state.battle.screenShakeStrength, 6.4);
             showToast(t('toastSkillEmp'));
             triggerEdgeFlash('emp', 0.65);
         } else if (state.save.selectedSkill === 'overclock') {
             state.battle.skillEffect = 'overclock';
             state.battle.skillEffectTimer = 8;
+            pushSkillBurst('overclock');
             showToast(t('toastSkillOverclock'));
             triggerEdgeFlash('overclock', 0.8);
         } else {
             state.battle.shield = Math.min(getCoreShieldCap() * 1.6, state.battle.shield + 70 * relayBoost);
             state.battle.coreHp = Math.min(getCoreMaxHp(), state.battle.coreHp + 18 * relayBoost);
+            pushSkillBurst('shield');
             showToast(t('toastSkillShield'));
             triggerEdgeFlash('shield', 0.8);
         }
@@ -3654,6 +3969,8 @@
             radius: stats.radius,
             stun: 0,
             slow: 0,
+            hitFlash: 0,
+            hitFxCooldown: 0,
             spawnFx: spawn.type === 'boss' ? 1.2 : 0.9,
             split: stats.split,
             elite: stats.elite,
@@ -3720,6 +4037,8 @@
         for (let index = state.battle.enemies.length - 1; index >= 0; index -= 1) {
             const enemy = state.battle.enemies[index];
             enemy.spawnFx = Math.max(0, (Number(enemy.spawnFx) || 0) - delta * 2.4);
+            enemy.hitFlash = Math.max(0, (Number(enemy.hitFlash) || 0) - delta * 4.2);
+            enemy.hitFxCooldown = Math.max(0, (Number(enemy.hitFxCooldown) || 0) - delta);
             enemy.stun = Math.max(0, enemy.stun - delta);
             enemy.slow = Math.max(0, enemy.slow - delta * 0.5);
             if (enemy.stun > 0) continue;
@@ -3735,12 +4054,15 @@
 
     function dealCoreDamage(damage) {
         let remaining = damage;
+        let shieldAbsorbed = 0;
         if (state.battle.shield > 0) {
             const absorbed = Math.min(state.battle.shield, remaining);
             state.battle.shield -= absorbed;
             remaining -= absorbed;
+            shieldAbsorbed += absorbed;
         }
         if (remaining > 0) state.battle.coreHp -= remaining;
+        if (damage > 0) triggerCoreImpact(remaining, shieldAbsorbed);
     }
 
     function spawnSplitChildren(enemy) {
@@ -3761,6 +4083,8 @@
                 radius: 14,
                 stun: 0,
                 slow: 0,
+                hitFlash: 0,
+                hitFxCooldown: 0,
                 split: false,
                 elite: false,
                 boss: false
@@ -3790,13 +4114,25 @@
         let damage = getTowerDamagePerShot(towerId);
         if (state.battle.skillEffect === 'overclock') damage *= 1.42;
         const target = targets[0];
+        const towerX = LANE_POSITIONS[lane];
+        const towerY = 842;
+        pushTowerShotTrace(towerId, towerX, towerY, target.x, target.y, 1);
         applyDamage(target, damage, towerId);
         if (tower.splash || state.battle.modifiers.splashBonus > 0) {
             const splash = damage * ((tower.splash || 0) + state.battle.modifiers.splashBonus);
-            targets.slice(1, 3).forEach((enemy) => applyDamage(enemy, splash, towerId, true));
+            targets.slice(1, 3).forEach((enemy) => {
+                pushTowerShotTrace(towerId, towerX, towerY, enemy.x, enemy.y, 0.82);
+                applyDamage(enemy, splash, towerId, true);
+            });
         }
-        if (tower.chain) targets.slice(1, 3).forEach((enemy) => applyDamage(enemy, damage * tower.chain, towerId, true));
-        if (tower.pierce) targets.slice(1).forEach((enemy) => applyDamage(enemy, damage * 0.45, towerId, true));
+        if (tower.chain) targets.slice(1, 3).forEach((enemy, index) => {
+            pushTowerShotTrace(towerId, target.x, target.y, enemy.x, enemy.y, Math.max(0.62, 0.82 - index * 0.1), true);
+            applyDamage(enemy, damage * tower.chain, towerId, true);
+        });
+        if (tower.pierce) targets.slice(1).forEach((enemy, index) => {
+            pushTowerShotTrace(towerId, towerX, towerY, enemy.x, enemy.y, Math.max(0.58, 0.86 - index * 0.1));
+            applyDamage(enemy, damage * 0.45, towerId, true);
+        });
         if (tower.slow > 0) target.slow = Math.max(target.slow, tower.slow + state.battle.modifiers.freezeChance);
         else if (Math.random() < state.battle.modifiers.freezeChance) target.slow = Math.max(target.slow, 0.22);
         state.battle.laneFlash[lane] = 1;
@@ -3805,6 +4141,11 @@
     function applyDamage(enemy, amount, towerId, noGoldBonus) {
         if (!enemy) return;
         const finalAmount = amount * ((enemy.elite || enemy.boss) ? state.battle.modifiers.eliteDamage : 1);
+        enemy.hitFlash = Math.max(enemy.hitFlash || 0, enemy.boss ? 0.34 : 0.22);
+        if ((enemy.hitFxCooldown || 0) <= 0) {
+            pushHitBurst(enemy.x, enemy.y, getEnemyBurstTone(enemy.type), noGoldBonus ? 0.78 : 1);
+            enemy.hitFxCooldown = noGoldBonus ? 0.08 : 0.05;
+        }
         enemy.hp -= finalAmount;
         state.battle.runStats.damage += finalAmount;
         if (enemy.hp <= 0) rewardEnemyKill(enemy, towerId, noGoldBonus);
@@ -3819,6 +4160,14 @@
         let gold = Math.round(enemy.rewardGold * salvageBonus * state.battle.modifiers.gold);
         if (!noGoldBonus && towerId === 'harvest') gold += Math.round(enemy.rewardGold * TOWERS.harvest.goldBonus * salvageBonus);
         const coreGain = Math.max(1, Math.ceil(enemy.rewardCore * state.battle.modifiers.coreGain));
+        pushDefeatBurst(enemy);
+        if (enemy.boss) {
+            state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.4);
+            state.battle.screenShakeStrength = Math.max(state.battle.screenShakeStrength, 11);
+        } else if (enemy.elite) {
+            state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.16);
+            state.battle.screenShakeStrength = Math.max(state.battle.screenShakeStrength, 4.8);
+        }
         state.save.gold += gold;
         state.save.cores += coreGain;
     }
@@ -3830,6 +4179,7 @@
     function presentUpgradeChoices() {
         state.battle.awaitingUpgrade = true;
         state.battle.pendingChoices = pickUpgradeChoices();
+        triggerWaveClearCelebration();
         ui.upgradeChoiceGrid.innerHTML = state.battle.pendingChoices.map((choice) => `
             <button class="choice-card" type="button" data-upgrade-choice="${choice.id}">
                 <strong>${getLocalized(choice.label)}</strong>
@@ -4693,6 +5043,13 @@
         const ctx = ui.ctx;
         if (!ctx) return;
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        const shakeRatio = state.battle.screenShakeTimer > 0
+            ? Math.max(0.18, Math.min(1, state.battle.screenShakeTimer / 0.4))
+            : 0;
+        const shakeX = shakeRatio > 0 ? Math.sin(performance.now() * 0.05) * state.battle.screenShakeStrength * shakeRatio : 0;
+        const shakeY = shakeRatio > 0 ? Math.cos(performance.now() * 0.065) * state.battle.screenShakeStrength * 0.7 * shakeRatio : 0;
+        ctx.save();
+        ctx.translate(shakeX, shakeY);
         const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
         gradient.addColorStop(0, '#091224');
         gradient.addColorStop(0.45, '#0a1629');
@@ -4700,11 +5057,20 @@
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         drawLanes(ctx);
+        drawBossPressure(ctx);
+        drawActiveSkillField(ctx);
+        drawWaveClearCelebration(ctx);
         drawSpawnBursts(ctx);
         drawCore(ctx);
         drawTowers(ctx);
         drawEnemies(ctx);
+        drawTowerShots(ctx);
+        drawSkillBursts(ctx);
+        drawHitBursts(ctx);
+        drawDefeatBursts(ctx);
         drawCanvasTopInfo(ctx);
+        ctx.restore();
+        drawCoreImpactOverlay(ctx);
         drawBattleBanner(ctx);
         drawEdgeFlash(ctx);
     }
@@ -4765,7 +5131,231 @@
         });
     }
 
+    function drawBossPressure(ctx) {
+        const boss = state.battle.enemies.find((enemy) => enemy.boss);
+        if (!boss) return;
+        const laneWidth = 150;
+        const left = boss.x - laneWidth / 2;
+        const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.012);
+        const alpha = 0.12 + pulse * 0.08;
+        const gradient = ctx.createLinearGradient(boss.x, 0, boss.x, CANVAS_HEIGHT);
+        gradient.addColorStop(0, `rgba(255,107,137,${alpha + 0.04})`);
+        gradient.addColorStop(0.34, `rgba(255,107,137,${alpha * 0.46})`);
+        gradient.addColorStop(1, 'rgba(255,107,137,0)');
+        ctx.save();
+        ctx.fillStyle = gradient;
+        ctx.fillRect(left, 0, laneWidth, CANVAS_HEIGHT);
+        ctx.strokeStyle = `rgba(255,107,137,${0.18 + pulse * 0.12})`;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([18, 14]);
+        ctx.beginPath();
+        ctx.moveTo(boss.x, Math.max(40, boss.y - 160));
+        ctx.lineTo(boss.x, SAFE_CORE_Y - 18);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        for (let index = 0; index < 3; index += 1) {
+            const y = 120 + ((performance.now() * 0.18 + index * 150) % Math.max(220, SAFE_CORE_Y - 180));
+            ctx.strokeStyle = `rgba(255,107,137,${0.1 + pulse * 0.08})`;
+            ctx.lineWidth = 2.4;
+            ctx.beginPath();
+            ctx.moveTo(boss.x - 44, y);
+            ctx.lineTo(boss.x, y + 16);
+            ctx.lineTo(boss.x + 44, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function drawActiveSkillField(ctx) {
+        if (state.battle.skillEffect !== 'overclock' || state.battle.skillEffectTimer <= 0) return;
+        const ratio = Math.max(0, Math.min(1, state.battle.skillEffectTimer / 8));
+        const pulse = 0.45 + 0.55 * Math.sin(performance.now() * 0.01);
+        ctx.save();
+        LANE_POSITIONS.forEach((laneX) => {
+            const width = 84;
+            const gradient = ctx.createLinearGradient(laneX, 100, laneX, CANVAS_HEIGHT);
+            gradient.addColorStop(0, `rgba(255,154,90,${0.12 + ratio * 0.06 + pulse * 0.04})`);
+            gradient.addColorStop(0.35, `rgba(255,154,90,${0.04 + pulse * 0.02})`);
+            gradient.addColorStop(1, 'rgba(255,154,90,0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(laneX - width / 2, 120, width, CANVAS_HEIGHT - 120);
+        });
+        ctx.restore();
+    }
+
+    function drawTowerShots(ctx) {
+        state.battle.shotTraces.forEach((trace) => {
+            const progress = 1 - Math.max(0, Math.min(1, trace.timer / trace.duration));
+            const alpha = (1 - progress) * (trace.towerId === 'rail' ? 0.96 : 0.78);
+            const midX = (trace.fromX + trace.toX) / 2;
+            const midY = (trace.fromY + trace.toY) / 2;
+            ctx.save();
+            ctx.shadowColor = `rgba(${trace.tone}, ${alpha * 0.8})`;
+            ctx.shadowBlur = trace.towerId === 'rail' ? 26 : 16;
+            ctx.strokeStyle = `rgba(${trace.tone}, ${alpha})`;
+            ctx.lineWidth = trace.width;
+            if (trace.towerId === 'rocket') {
+                const controlX = midX + (trace.fromX <= CANVAS_WIDTH / 2 ? 26 : -26);
+                const controlY = midY - 36;
+                ctx.beginPath();
+                ctx.moveTo(trace.fromX, trace.fromY - 10);
+                ctx.quadraticCurveTo(controlX, controlY, trace.toX, trace.toY);
+                ctx.stroke();
+            } else if (trace.towerId === 'chain' || trace.chained) {
+                const zigzagCount = 4;
+                ctx.beginPath();
+                ctx.moveTo(trace.fromX, trace.fromY);
+                for (let index = 1; index < zigzagCount; index += 1) {
+                    const ratio = index / zigzagCount;
+                    const offset = index % 2 === 0 ? -14 : 14;
+                    ctx.lineTo(
+                        trace.fromX + (trace.toX - trace.fromX) * ratio + offset,
+                        trace.fromY + (trace.toY - trace.fromY) * ratio
+                    );
+                }
+                ctx.lineTo(trace.toX, trace.toY);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(trace.fromX, trace.fromY);
+                ctx.lineTo(trace.toX, trace.toY);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
+            ctx.beginPath();
+            ctx.arc(trace.toX, trace.toY, Math.max(3, trace.width * 0.7), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = `rgba(${trace.tone}, ${alpha * 0.22})`;
+            ctx.beginPath();
+            ctx.arc(trace.toX, trace.toY, trace.width * 2.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    function drawSkillBursts(ctx) {
+        state.battle.skillBursts.forEach((burst) => {
+            const progress = 1 - Math.max(0, Math.min(1, burst.timer / burst.duration));
+            const alpha = (1 - progress) * 0.72;
+            ctx.save();
+            if (burst.skillId === 'emp') {
+                const scanY = 140 + progress * (SAFE_CORE_Y - 160);
+                LANE_POSITIONS.forEach((laneX) => {
+                    ctx.fillStyle = `rgba(114,244,255,${alpha * 0.12})`;
+                    ctx.fillRect(laneX - 42, 100, 84, SAFE_CORE_Y - 120);
+                });
+                ctx.strokeStyle = `rgba(114,244,255,${alpha})`;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(60, scanY);
+                ctx.lineTo(CANVAS_WIDTH - 60, scanY);
+                ctx.stroke();
+                ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.7})`;
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(60, scanY - 14);
+                ctx.lineTo(CANVAS_WIDTH - 60, scanY - 14);
+                ctx.moveTo(60, scanY + 14);
+                ctx.lineTo(CANVAS_WIDTH - 60, scanY + 14);
+                ctx.stroke();
+            } else if (burst.skillId === 'shield') {
+                const radius = 110 + progress * 80;
+                ctx.strokeStyle = `rgba(255,210,107,${alpha})`;
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.arc(CANVAS_WIDTH / 2, SAFE_CORE_Y + 40, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = `rgba(255,210,107,${alpha * 0.16})`;
+                ctx.beginPath();
+                ctx.arc(CANVAS_WIDTH / 2, SAFE_CORE_Y + 40, radius * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (burst.skillId === 'overclock') {
+                LANE_POSITIONS.forEach((laneX, index) => {
+                    const rise = 24 + progress * 48 + index * 6;
+                    ctx.strokeStyle = `rgba(255,154,90,${alpha})`;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(laneX, 930);
+                    ctx.lineTo(laneX, 930 - rise);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(laneX, 842, 40 + progress * 18, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+            }
+            ctx.restore();
+        });
+    }
+
+    function drawHitBursts(ctx) {
+        state.battle.hitBursts.forEach((burst) => {
+            const progress = 1 - Math.max(0, Math.min(1, burst.timer / burst.duration));
+            const alpha = 0.56 * (1 - progress);
+            const tone = getBattleToneColor(burst.tone);
+            const radius = 10 * burst.scale + progress * 16 * burst.scale;
+            ctx.save();
+            ctx.fillStyle = `rgba(${tone}, ${alpha * 0.16})`;
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, radius + 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = `rgba(${tone}, ${alpha})`;
+            ctx.lineWidth = 2.8 + (1 - progress) * 1.4;
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.72})`;
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.moveTo(burst.x - radius * 0.5, burst.y - radius * 0.5);
+            ctx.lineTo(burst.x + radius * 0.5, burst.y + radius * 0.5);
+            ctx.moveTo(burst.x + radius * 0.5, burst.y - radius * 0.5);
+            ctx.lineTo(burst.x - radius * 0.5, burst.y + radius * 0.5);
+            ctx.stroke();
+            ctx.fillStyle = `rgba(255,255,255,${alpha * 0.48})`;
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, 4 + progress * 5 * burst.scale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    function drawDefeatBursts(ctx) {
+        state.battle.defeatBursts.forEach((burst) => {
+            const progress = 1 - Math.max(0, Math.min(1, burst.timer / burst.duration));
+            const tone = getBattleToneColor(burst.tone);
+            const alpha = (1 - progress) * (burst.boss ? 0.82 : 0.58);
+            const radius = burst.radius + progress * (burst.boss ? 48 : 30);
+            ctx.save();
+            ctx.fillStyle = `rgba(${tone}, ${alpha * (burst.boss ? 0.2 : 0.12)})`;
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, radius + 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = `rgba(${tone}, ${alpha})`;
+            ctx.lineWidth = burst.boss ? 5 : (burst.elite ? 3.5 : 2.5);
+            ctx.beginPath();
+            ctx.arc(burst.x, burst.y, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.62})`;
+            for (let index = 0; index < (burst.boss ? 8 : 5); index += 1) {
+                const angle = (Math.PI * 2 * index) / (burst.boss ? 8 : 5) + progress * 0.5;
+                const inner = burst.radius * 0.4;
+                const outer = radius + 14;
+                ctx.beginPath();
+                ctx.moveTo(burst.x + Math.cos(angle) * inner, burst.y + Math.sin(angle) * inner);
+                ctx.lineTo(burst.x + Math.cos(angle) * outer, burst.y + Math.sin(angle) * outer);
+                ctx.stroke();
+            }
+            ctx.restore();
+        });
+    }
+
     function drawCore(ctx) {
+        if (state.battle.coreImpactTimer > 0) {
+            const alpha = Math.min(0.32, state.battle.coreImpactSeverity * 0.12 + state.battle.coreImpactTimer * 0.08);
+            ctx.fillStyle = `rgba(255,107,137,${alpha})`;
+            ctx.fillRect(80, SAFE_CORE_Y - 10, CANVAS_WIDTH - 160, 96);
+        }
         if (state.battle.bossAlertTimer > 0) {
             const pulse = 0.18 + (state.battle.bossAlertTimer % 0.6) * 0.18;
             ctx.fillStyle = `rgba(255,107,137,${pulse})`;
@@ -4795,6 +5385,21 @@
             const y = 842;
             ctx.fillStyle = 'rgba(255,255,255,0.06)';
             ctx.fillRect(x - 38, y + 34, 76, 24);
+            if (state.battle.skillEffect === 'overclock' && state.battle.skillEffectTimer > 0) {
+                const ratio = Math.max(0, Math.min(1, state.battle.skillEffectTimer / 8));
+                const pulse = 0.55 + 0.45 * Math.sin(performance.now() * 0.013 + index * 0.8);
+                ctx.strokeStyle = `rgba(255,154,90,${0.22 + ratio * 0.16 + pulse * 0.08})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(x, y, 38 + pulse * 10, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.strokeStyle = `rgba(255,232,194,${0.2 + pulse * 0.12})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x, y - 54);
+                ctx.lineTo(x, y - 24);
+                ctx.stroke();
+            }
             if (state.battle.skillReadyPulse > 0 && state.battle.running) {
                 const pulse = state.battle.skillReadyPulse;
                 ctx.strokeStyle = `rgba(114,244,255,${Math.min(0.45, pulse * 0.22)})`;
@@ -4830,6 +5435,14 @@
             ctx.globalAlpha = spawnAlpha;
             ctx.fillStyle = colors[enemy.type] || '#ffffff';
             ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius, 0, Math.PI * 2); ctx.fill();
+            if (enemy.boss) {
+                const pulse = 0.45 + 0.55 * Math.sin(performance.now() * 0.015);
+                ctx.strokeStyle = `rgba(255,107,137,${0.32 + pulse * 0.18})`;
+                ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 16 + pulse * 8, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = `rgba(255,107,137,${0.08 + pulse * 0.05})`;
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 10, 0, Math.PI * 2); ctx.fill();
+            }
             if (enemy.elite) {
                 ctx.strokeStyle = 'rgba(255,255,255,0.4)';
                 ctx.lineWidth = enemy.boss ? 5 : 3;
@@ -4839,6 +5452,10 @@
                 ctx.strokeStyle = enemy.stun > 0 ? 'rgba(255,210,107,0.7)' : 'rgba(114,244,255,0.72)';
                 ctx.lineWidth = 3;
                 ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 14, 0, Math.PI * 2); ctx.stroke();
+            }
+            if (enemy.hitFlash > 0) {
+                ctx.fillStyle = `rgba(255,255,255,${Math.min(0.42, enemy.hitFlash)})`;
+                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, radius + 4, 0, Math.PI * 2); ctx.fill();
             }
             if (enemy.boss && state.battle.bossAlertTimer > 0) {
                 ctx.strokeStyle = `rgba(255,107,137,${0.26 + state.battle.bossAlertTimer * 0.08})`;
@@ -4880,6 +5497,53 @@
         ctx.fillText(`${t('threatLabel')}: ${t(getThreatKey())}`, 20, 56);
         ctx.fillStyle = skillReady ? 'rgba(114,244,255,0.98)' : 'rgba(145,162,192,0.96)';
         ctx.fillText(`${t(SKILLS[state.save.selectedSkill].nameKey)} · ${state.battle.skillCooldown > 0 ? state.battle.skillCooldown.toFixed(1) + 's' : getLocalized({ zh: '可释放', en: 'READY' })}`, 20, 78);
+    }
+
+    function drawCoreImpactOverlay(ctx) {
+        if (state.battle.coreImpactTimer <= 0) return;
+        const alpha = Math.min(0.18, state.battle.coreImpactSeverity * 0.08 + state.battle.coreImpactTimer * 0.04);
+        const gradient = ctx.createLinearGradient(0, SAFE_CORE_Y - 120, 0, CANVAS_HEIGHT);
+        gradient.addColorStop(0, `rgba(255,107,137,0)`);
+        gradient.addColorStop(0.45, `rgba(255,107,137,${alpha * 0.75})`);
+        gradient.addColorStop(1, `rgba(255,107,137,${alpha})`);
+        ctx.save();
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, SAFE_CORE_Y - 120, CANVAS_WIDTH, CANVAS_HEIGHT - SAFE_CORE_Y + 120);
+        ctx.restore();
+    }
+
+    function drawWaveClearCelebration(ctx) {
+        if (state.battle.waveClearTimer <= 0) return;
+        const ratio = Math.max(0, Math.min(1, state.battle.waveClearTimer / 1.2));
+        const alpha = Math.min(0.34, ratio * 0.28);
+        ctx.save();
+        LANE_POSITIONS.forEach((laneX, index) => {
+            const width = 96 + index * 10;
+            const gradient = ctx.createLinearGradient(laneX, 100, laneX, CANVAS_HEIGHT);
+            gradient.addColorStop(0, `rgba(114,244,255,${alpha})`);
+            gradient.addColorStop(0.42, 'rgba(114,244,255,0.02)');
+            gradient.addColorStop(1, 'rgba(114,244,255,0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(laneX - width / 2, 0, width, CANVAS_HEIGHT);
+        });
+        ctx.strokeStyle = `rgba(114,244,255,${alpha + 0.12})`;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(62, 160 + (1 - ratio) * 24);
+        ctx.lineTo(CANVAS_WIDTH - 62, 160 + (1 - ratio) * 24);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(114,244,255,${0.22 + alpha})`;
+        ctx.font = '800 26px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(getLocalized({ zh: '波次清空', en: 'WAVE CLEAR' }), CANVAS_WIDTH / 2, 208 + (1 - ratio) * 12);
+        ctx.fillStyle = `rgba(238,245,255,${0.28 + alpha})`;
+        ctx.font = '600 14px Inter';
+        ctx.fillText(
+            getLocalized({ zh: '强化已就绪，准备下一波', en: 'Upgrade ready. Prepare the next wave.' }),
+            CANVAS_WIDTH / 2,
+            232 + (1 - ratio) * 12
+        );
+        ctx.restore();
     }
 
     function drawBattleBanner(ctx) {
@@ -4984,6 +5648,8 @@
             radius: stats.radius,
             stun: 0,
             slow: 0,
+            hitFlash: 0,
+            hitFxCooldown: 0,
             spawnFx: 0.4,
             split: stats.split,
             elite: stats.elite,
@@ -5018,6 +5684,30 @@
                     note: ui.battleNote?.textContent || ''
                 };
             },
+            impact() {
+                setupDebugBattleScene();
+                state.battle.currentWave = 3;
+                addDebugEnemy('elite', 1, 322);
+                const enemy = state.battle.enemies[0];
+                enemy.hitFlash = 0.3;
+                pushHitBurst(enemy.x, enemy.y, 'overclock', 1);
+                renderAll();
+            },
+            coreHit() {
+                setupDebugBattleScene();
+                state.battle.currentWave = 5;
+                state.battle.shield = 12;
+                state.battle.coreHp = Math.max(12, getCoreMaxHp() - 26);
+                addDebugEnemy('boss', 1, SAFE_CORE_Y - 72);
+                triggerCoreImpact(22, 10);
+                renderAll();
+            },
+            waveClear() {
+                setupDebugBattleScene();
+                state.battle.currentWave = 2;
+                triggerWaveClearCelebration();
+                renderAll();
+            },
             wave(waveNumber = 3) {
                 setupDebugBattleScene();
                 state.battle.currentWave = Math.max(1, Math.min(TOTAL_WAVES, Number(waveNumber) || 3));
@@ -5048,6 +5738,39 @@
                 state.battle.skillReadyPulse = 1.8;
                 pushBattleAlert(getLocalized({ zh: '主动技能已就绪，现在可以处理高压路', en: 'Active skill is ready. You can answer the pressured lane now.' }), 'skill', 2.2);
                 triggerBattleBanner(t('skillReadyBanner').replace('{skill}', t(SKILLS[state.save.selectedSkill].nameKey)), 'skill', 1.2);
+                renderAll();
+            },
+            skillCast(skillId = 'emp') {
+                setupDebugBattleScene();
+                const nextSkillId = SKILLS[skillId] ? skillId : 'emp';
+                state.save.selectedSkill = nextSkillId;
+                state.battle.currentWave = 4;
+                addDebugEnemy('elite', 1, 320);
+                addDebugEnemy('shield', 2, 278);
+                addDebugEnemy('fast', 0, 264);
+                if (nextSkillId === 'shield') {
+                    state.battle.shield = 0;
+                    state.battle.coreHp = Math.max(24, getCoreMaxHp() - 34);
+                }
+                state.battle.skillCooldown = 0;
+                useSkill();
+                renderAll();
+            },
+            towerFire(towerId = 'rail') {
+                setupDebugBattleScene();
+                const nextTowerId = TOWERS[towerId] ? towerId : 'rail';
+                state.save.laneLoadout = ['pulse', nextTowerId, 'harvest'];
+                state.battle.currentWave = 5;
+                addDebugEnemy('elite', 1, 304);
+                addDebugEnemy('shield', 1, 244);
+                addDebugEnemy('grunt', 1, 198);
+                fireLaneTower(nextTowerId, 1, state.battle.enemies.filter((enemy) => enemy.lane === 1).sort((a, b) => b.y - a.y));
+                state.battle.shotTraces = state.battle.shotTraces.map((trace) => ({
+                    ...trace,
+                    timer: Math.max(trace.timer, 0.42),
+                    duration: Math.max(trace.duration, 0.42),
+                    width: trace.width * 1.18
+                }));
                 renderAll();
             },
             boss() {
