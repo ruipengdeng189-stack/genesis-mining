@@ -400,13 +400,13 @@
     ];
 
     const TOWERS = {
-        pulse: { id: 'pulse', tier: 'common', baseDamage: 16, cooldown: 0.72, upgradeGold: 220, unlockFragments: 0, color: '#72f4ff', power: 55, splash: 0, slow: 0 },
-        laser: { id: 'laser', tier: 'common', baseDamage: 10, cooldown: 0.34, upgradeGold: 260, unlockFragments: 0, color: '#ff9a5a', power: 58, splash: 0, slow: 0 },
-        frost: { id: 'frost', tier: 'rare', baseDamage: 12, cooldown: 0.62, upgradeGold: 320, unlockFragments: 36, color: '#8ad6ff', power: 78, splash: 0, slow: 0.28 },
-        rocket: { id: 'rocket', tier: 'rare', baseDamage: 24, cooldown: 1.08, upgradeGold: 380, unlockFragments: 40, color: '#ffd26b', power: 92, splash: 0.42, slow: 0 },
-        harvest: { id: 'harvest', tier: 'common', baseDamage: 8, cooldown: 0.84, upgradeGold: 210, unlockFragments: 0, color: '#65ffb2', power: 52, splash: 0, slow: 0, goldBonus: 0.55 },
-        chain: { id: 'chain', tier: 'rare', baseDamage: 15, cooldown: 0.64, upgradeGold: 460, unlockFragments: 56, color: '#b58cff', power: 112, splash: 0, slow: 0, chain: 0.42 },
-        rail: { id: 'rail', tier: 'epic', baseDamage: 44, cooldown: 1.28, upgradeGold: 720, unlockFragments: 92, color: '#ff6b89', power: 164, splash: 0, slow: 0, pierce: true }
+        pulse: { id: 'pulse', tier: 'common', baseDamage: 16, cooldown: 0.72, range: 450, upgradeGold: 220, unlockFragments: 0, color: '#72f4ff', power: 55, splash: 0, slow: 0 },
+        laser: { id: 'laser', tier: 'common', baseDamage: 10, cooldown: 0.34, range: 560, upgradeGold: 260, unlockFragments: 0, color: '#ff9a5a', power: 58, splash: 0, slow: 0 },
+        frost: { id: 'frost', tier: 'rare', baseDamage: 12, cooldown: 0.62, range: 500, upgradeGold: 320, unlockFragments: 36, color: '#8ad6ff', power: 78, splash: 0, slow: 0.28 },
+        rocket: { id: 'rocket', tier: 'rare', baseDamage: 24, cooldown: 1.08, range: 520, upgradeGold: 380, unlockFragments: 40, color: '#ffd26b', power: 92, splash: 0.42, slow: 0 },
+        harvest: { id: 'harvest', tier: 'common', baseDamage: 8, cooldown: 0.84, range: 420, upgradeGold: 210, unlockFragments: 0, color: '#65ffb2', power: 52, splash: 0, slow: 0, goldBonus: 0.55 },
+        chain: { id: 'chain', tier: 'rare', baseDamage: 15, cooldown: 0.64, range: 500, upgradeGold: 460, unlockFragments: 56, color: '#b58cff', power: 112, splash: 0, slow: 0, chain: 0.42 },
+        rail: { id: 'rail', tier: 'epic', baseDamage: 44, cooldown: 1.28, range: 620, upgradeGold: 720, unlockFragments: 92, color: '#ff6b89', power: 164, splash: 0, slow: 0, pierce: true }
     };
 
     const SKILLS = {
@@ -4043,9 +4043,9 @@
     }
 
     function getEnemySpawnY(type, waveNumber) {
-        if (type === 'boss') return -26;
-        if (type === 'elite') return 8;
-        return waveNumber <= 2 ? 26 : 10;
+        if (type === 'boss') return 42;
+        if (type === 'elite') return waveNumber <= 2 ? 118 : 96;
+        return waveNumber <= 2 ? 132 : 108;
     }
 
     function getEnemyStats(type, chapter, wave) {
@@ -4141,11 +4141,19 @@
             state.battle.laneTimers[lane] += delta;
             const cooldown = getTowerCooldown(towerId);
             if (state.battle.laneTimers[lane] < cooldown) continue;
-            const targets = enemyByLane[lane];
+            const targets = enemyByLane[lane].filter((enemy) => isEnemyInTowerRange(towerId, lane, enemy));
             if (!targets.length) continue;
             state.battle.laneTimers[lane] = 0;
             fireLaneTower(towerId, lane, targets);
         }
+    }
+
+    function isEnemyInTowerRange(towerId, lane, enemy) {
+        const tower = TOWERS[towerId];
+        if (!tower || !enemy || enemy.lane !== lane) return false;
+        const towerY = 842;
+        const reach = tower.range || 480;
+        return Math.abs(towerY - enemy.y) <= reach;
     }
 
     function fireLaneTower(towerId, lane, targets) {
