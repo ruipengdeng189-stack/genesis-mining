@@ -620,6 +620,8 @@
     ];
 
     const LANE_POSITIONS = [170, 360, 550];
+    const ENEMY_TYPE_IDS = new Set(['grunt', 'fast', 'shield', 'split', 'elite', 'boss']);
+    const CHAPTER_WAVE_SCRIPTS = Object.freeze({});
 
     const initialSave = loadSave();
     const state = {
@@ -3833,8 +3835,13 @@
         return script.map((entry, index) => ({
             at: Math.max(0.72, Number((tailAt * entry.progress + index * 0.015).toFixed(2))),
             lane: Math.max(0, Math.min(2, Number(entry.lane) || 0)),
-            type: entry.type
+            type: normalizeWaveSpawnType(entry.type, chapter, waveNumber)
         }));
+    }
+
+    function normalizeWaveSpawnType(type, chapter, waveNumber) {
+        if (ENEMY_TYPE_IDS.has(type)) return type;
+        return getEnemyPoolForWave(chapter, waveNumber)[0] || 'grunt';
     }
 
     function getEnemyPoolForWave(chapter, waveNumber) {
