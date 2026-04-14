@@ -4034,7 +4034,7 @@
                     ? getLocalized({ zh: `${getLaneName(spawn.lane)}突入`, en: `${getLaneName(spawn.lane)} breach` })
                     : '')
         });
-        const shouldShowLaneAlert = spawn.type === 'boss' || spawn.type === 'elite' || state.battle.laneAlertTimers[spawn.lane] <= 0;
+        const shouldShowLaneAlert = spawn.type === 'boss' || spawn.type === 'elite';
         if (shouldShowLaneAlert) {
             const laneAlert = getLaneSpawnAlert(spawn);
             pushBattleAlert(laneAlert.text, laneAlert.tone, laneAlert.duration);

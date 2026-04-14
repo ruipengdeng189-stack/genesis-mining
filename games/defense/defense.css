@@ -1719,6 +1719,11 @@ body:not([data-defense-tab="defend"]) .stage-card {
         padding: calc(var(--safe-top) + 12px) 12px 12px;
     }
 
+    body[data-defense-tab="defend"] #upgradeOverlay {
+        align-items: center;
+        padding: 12px;
+    }
+
     .overlay-card {
         border-radius: 18px;
         padding: 14px;
