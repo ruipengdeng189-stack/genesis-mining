@@ -3784,11 +3784,11 @@
 
     function buildWaveQueue(chapter, waveNumber) {
         const queue = [];
-        let at = 0.8;
+        let at = 0;
         const chapterIndex = clampSaveNumber(state.save.chapterIndex, 0, 0, CHAPTERS.length - 1);
         const count = 5 + waveNumber * 2 + chapterIndex;
         for (let index = 0; index < count; index += 1) {
-            at += Math.max(0.38, 1.08 - waveNumber * 0.08 - chapterIndex * 0.04 + (index % 2 === 0 ? 0.1 : 0));
+            at += getWaveSpawnSpacing(index, waveNumber, chapterIndex);
             const pool = getEnemyPoolForWave(chapter, waveNumber);
             queue.push({ at, lane: (index + waveNumber + chapterIndex) % 3, type: pool[index % pool.length] });
         }
@@ -3805,6 +3805,14 @@
         }
         queue.sort((a, b) => a.at - b.at || a.lane - b.lane);
         return queue;
+    }
+
+    function getWaveSpawnSpacing(index, waveNumber, chapterIndex) {
+        const baseSpacing = Math.max(0.38, 1.08 - waveNumber * 0.08 - chapterIndex * 0.04 + (index % 2 === 0 ? 0.1 : 0));
+        if (index === 0) return Math.max(0.26, baseSpacing - 0.82);
+        if (index === 1) return Math.max(0.48, baseSpacing - 0.48);
+        if (index === 2) return Math.max(0.62, baseSpacing - 0.34);
+        return baseSpacing;
     }
 
     function getChapterWaveQueueExtras(chapter, waveNumber, baseTailAt) {
@@ -3953,13 +3961,14 @@
     function spawnEnemy(spawn) {
         const chapter = getCurrentChapter();
         const stats = getEnemyStats(spawn.type, chapter, state.battle.currentWave);
+        const spawnY = getEnemySpawnY(spawn.type, state.battle.currentWave);
         state.battle.waveSpawnedCount += 1;
         state.battle.enemies.push({
             id: state.battle.nextEnemyId++,
             type: spawn.type,
             lane: spawn.lane,
             x: LANE_POSITIONS[spawn.lane],
-            y: -40,
+            y: spawnY,
             hp: stats.hp,
             maxHp: stats.hp,
             speed: stats.speed,
@@ -4007,6 +4016,12 @@
             triggerEdgeFlash('boss', 1.5);
             showToast(t('toastBossIncoming'));
         }
+    }
+
+    function getEnemySpawnY(type, waveNumber) {
+        if (type === 'boss') return -26;
+        if (type === 'elite') return 8;
+        return waveNumber <= 2 ? 26 : 10;
     }
 
     function getEnemyStats(type, chapter, wave) {
