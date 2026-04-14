@@ -1471,9 +1471,21 @@ body:not([data-defense-tab="defend"]) .stage-card {
         padding-right: 6px;
     }
 
+    body[data-defense-tab="defend"] .defense-shell {
+        width: min(100%, calc(100% - 8px));
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-bottom: calc(var(--safe-bottom) + var(--tabbar-height) + 18px);
+    }
+
     .topbar {
         gap: 8px;
         margin-bottom: 10px;
+    }
+
+    body[data-defense-tab="defend"] .topbar {
+        gap: 6px;
+        margin-bottom: 8px;
     }
 
     .topbar-row .ghost-btn,
@@ -1483,6 +1495,15 @@ body:not([data-defense-tab="defend"]) .stage-card {
         padding: 0 10px;
         border-radius: 12px;
         font-size: 12px;
+    }
+
+    body[data-defense-tab="defend"] .topbar-row .ghost-btn,
+    body[data-defense-tab="defend"] .topbar-actions .ghost-btn,
+    body[data-defense-tab="defend"] .topbar-actions .icon-btn {
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 11px;
+        font-size: 11px;
     }
 
     .hero-card,
@@ -1497,8 +1518,19 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body[data-defense-tab="defend"] .hero-card {
-        gap: 10px;
-        padding: 12px;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    body[data-defense-tab="defend"] .hero-copy .eyebrow,
+    body[data-defense-tab="defend"] .hero-copy p {
+        display: none;
+    }
+
+    body[data-defense-tab="defend"] .hero-copy h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1;
     }
 
     .summary-item {
@@ -1511,6 +1543,26 @@ body:not([data-defense-tab="defend"]) .stage-card {
         font-size: 15px;
     }
 
+    body[data-defense-tab="defend"] .summary-grid {
+        gap: 4px;
+    }
+
+    body[data-defense-tab="defend"] .summary-item {
+        min-height: auto;
+        padding: 6px 8px;
+        gap: 2px;
+        border-radius: 13px;
+    }
+
+    body[data-defense-tab="defend"] .summary-item span {
+        font-size: 10px;
+    }
+
+    body[data-defense-tab="defend"] .summary-item strong {
+        font-size: 13px;
+        line-height: 1.1;
+    }
+
     .stage-hud {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
@@ -1521,12 +1573,30 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body[data-defense-tab="defend"] .hud-chip {
-        padding: 8px 6px;
-        gap: 4px;
+        min-height: auto;
+        padding: 6px 5px;
+        gap: 2px;
+        border-radius: 13px;
     }
 
     body[data-defense-tab="defend"] .hud-chip span {
-        font-size: 10px;
+        font-size: 9px;
+    }
+
+    body[data-defense-tab="defend"] .hud-chip strong {
+        font-size: 12px;
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    body[data-defense-tab="defend"] #waveValue {
+        font-size: 11px;
+        letter-spacing: -0.04em;
+    }
+
+    body[data-defense-tab="defend"] .stage-card {
+        gap: 8px;
+        padding: 8px;
     }
 
     .battlefield-wrap,
@@ -1536,7 +1606,7 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     body[data-defense-tab="defend"] .battlefield-wrap,
     body[data-defense-tab="defend"] #battlefieldCanvas {
-        min-height: clamp(380px, 54dvh, 600px);
+        min-height: clamp(430px, 60dvh, 660px);
     }
 
     .lane-strip {
@@ -1945,20 +2015,37 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     body[data-defense-tab="defend"] .battlefield-wrap,
     body[data-defense-tab="defend"] #battlefieldCanvas {
-        min-height: clamp(360px, 50dvh, 520px);
+        min-height: clamp(410px, 58dvh, 560px);
     }
 
     body[data-defense-tab="defend"] .summary-item {
-        min-height: 62px;
-        padding: 8px 9px;
+        min-height: auto;
+        padding: 6px 7px;
     }
 
     body[data-defense-tab="defend"] .summary-item span {
-        font-size: 11px;
+        font-size: 9px;
     }
 
     body[data-defense-tab="defend"] .summary-item strong {
-        font-size: 14px;
+        font-size: 12px;
+    }
+
+    body[data-defense-tab="defend"] .hero-copy h1 {
+        font-size: 20px;
+    }
+
+    body[data-defense-tab="defend"] .hud-chip {
+        padding: 5px 4px;
+    }
+
+    body[data-defense-tab="defend"] .hud-chip span {
+        font-size: 8px;
+    }
+
+    body[data-defense-tab="defend"] .hud-chip strong,
+    body[data-defense-tab="defend"] #waveValue {
+        font-size: 11px;
     }
 
     .defend-chip-row .mini-chip {
