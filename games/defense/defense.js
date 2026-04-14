@@ -2284,6 +2284,18 @@
         `;
     }
 
+    function renderInlineLinkRow(items = []) {
+        const nodes = items
+            .filter((item) => item && item.label && item.action)
+            .map((item) => `
+                <button class="ghost-btn" type="button" data-action="${item.action}" data-value="${item.value || ''}">
+                    ${item.label}
+                </button>
+            `)
+            .join('');
+        return nodes ? `<div class="inline-link-row">${nodes}</div>` : '';
+    }
+
     function renderDefendTab() {
         const current = getCurrentChapter();
         const focusPreview = getChapterFocusPreview(current);
@@ -2394,7 +2406,7 @@
                         <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
                     </div>
                     <div class="defend-inline-note">${battleStatusCopy}</div>
-                    <div class="card-actions defend-card-actions">
+                    <div class="card-actions compact defend-card-actions">
                         ${primaryAction
                             ? `<button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
                                 ${primaryAction.label}
@@ -2589,7 +2601,7 @@
                             zh: '优先一键同步推荐编队，差距大的章节先补战力再开打。',
                             en: 'Sync the recommended preset first, and close larger power gaps before pushing harder chapters.'
                         })}</div>
-                    <div class="card-actions defend-card-actions">
+                    <div class="card-actions compact defend-card-actions">
                         <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${current.id}">
                             ${prepOverview.ready
                                 ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
@@ -2674,17 +2686,17 @@
                     ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} · ${towerLabel(towerId)}</span>`).join('')}
                     <span class="mini-chip">${getLocalized({ zh: `技能 ${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
                 </div>
-                <div class="card-actions" style="margin-top:12px;">
+                <div class="card-actions compact" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
-                        ${getLocalized({ zh: '一键应用推荐编队', en: 'Apply Preset' })}
+                        ${getLocalized({ zh: '套用推荐', en: 'Apply Preset' })}
                     </button>
                     <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${chapter.id}">
                         ${prepOverview.ready
-                            ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
-                            : getLocalized({ zh: '一键套用并开打', en: 'Apply & Defend' })}
+                            ? getLocalized({ zh: '开打', en: 'Defend' })
+                            : getLocalized({ zh: '套用并开打', en: 'Apply & Defend' })}
                     </button>
                     <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
-                        ${getLocalized({ zh: '只替换三路配置', en: 'Apply Lanes Only' })}
+                        ${getLocalized({ zh: '仅三路', en: 'Lanes Only' })}
                     </button>
                 </div>
             </article>
@@ -2750,7 +2762,7 @@
                     ${recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`).join('')}
                 </div>
                 <div class="progress-line"><i style="width:${(progress * 100).toFixed(2)}%;"></i></div>
-                <div class="card-actions">
+                <div class="card-actions compact">
                     ${unlocked
                         ? (equipped
                             ? `<button class="ghost-btn" type="button" disabled>${t('equipped')}</button>`
@@ -2831,19 +2843,19 @@
                         { label: getLocalized({ zh: '战力缺口', en: 'Power Gap' }), value: researchPlan.powerGap > 0 ? formatCompact(researchPlan.powerGap) : getLocalized({ zh: '达标', en: 'Ready' }) },
                         { label: getLocalized({ zh: '当前金币', en: 'Current Gold' }), value: `${formatCompact(state.save.gold)}G` }
                     ])}
-                    ${topResearch ? `<div class="reward-row">
+                    ${topResearch ? `<div class="reward-row compact">
                         ${researchPlan.list.slice(0, 3).map((item, index) => `<span class="mini-chip">${getLocalized({ zh: `推荐 ${index + 1} · ${item.meta.title} +${item.nextDelta}%`, en: `Top ${index + 1} · ${item.meta.title} +${item.nextDelta}%` })}</span>`).join('')}
                     </div>` : ''}
-                    <div class="card-actions" style="margin-top:12px;">
+                    <div class="card-actions compact" style="margin-top:12px;">
                         ${topAffordableResearch
                             ? `<button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${topAffordableResearch.id}">
-                                ${getLocalized({ zh: `优先升级 ${topAffordableResearch.meta.title}`, en: `Upgrade ${topAffordableResearch.meta.title}` })}
+                                ${getLocalized({ zh: `升 ${topAffordableResearch.meta.title}`, en: `Upgrade ${topAffordableResearch.meta.title}` })}
                             </button>`
                             : `<button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
                                 ${recoveryAction.label}
                             </button>`}
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
-                            ${getLocalized({ zh: '返回部署', en: 'Back To Setup' })}
+                            ${getLocalized({ zh: '部署', en: 'Setup' })}
                         </button>
                     </div>
                 </article>
@@ -2862,12 +2874,12 @@
                         { label: getLocalized({ zh: '赞助', en: 'Sponsor' }), value: String(economyPreview.sponsorReady) },
                         { label: getLocalized({ zh: '补给', en: 'Supply' }), value: economyPreview.dailyReady ? getLocalized({ zh: '可领', en: 'Ready' }) : getLocalized({ zh: '冷却中', en: 'Cooldown' }) }
                     ])}
-                    <div class="card-actions" style="margin-top:12px;">
+                    <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
                             ${recoveryAction.label}
                         </button>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
-                            ${getLocalized({ zh: '回部署页', en: 'Back To Setup' })}
+                            ${getLocalized({ zh: '部署', en: 'Setup' })}
                         </button>
                     </div>
                 </article>
@@ -2907,7 +2919,7 @@
                     <span class="mini-chip">${maxed ? t('researchMaxed') : `${t('researchCost')} ${formatCompact(cost)}G`}</span>
                 </div>
                 ${isRecommended ? `<div class="card-copy">${recommendation.reason}</div>` : ''}
-                <div class="card-actions">
+                <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgradeResearch(researchId) ? '' : 'disabled'}>
                         ${maxed ? t('researchMaxed') : `${t('upgradeNow')} · ${formatCompact(cost)}G`}
                     </button>
@@ -3007,10 +3019,10 @@
                         { label: getLocalized({ zh: '进行中', en: 'Active' }), value: String(missionActiveCount) },
                         { label: getLocalized({ zh: '完成率', en: 'Progress' }), value: `${missionCompletionRate}%` }
                     ])}
-                    ${missionBundle.count > 0 ? `<div class="reward-row">${renderRewardChips(missionBundle.reward)}</div>` : ''}
-                    <div class="card-actions" style="margin-top:12px;">
+                    ${missionBundle.count > 0 ? `<div class="reward-row compact">${renderRewardChips(missionBundle.reward, { limit: 4 })}</div>` : ''}
+                    <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="claimAllMissions" ${missionBundle.count > 0 ? '' : 'disabled'}>
-                            ${getLocalized({ zh: '一键领取任务', en: 'Claim All Missions' })}
+                            ${getLocalized({ zh: '一键领取', en: 'Claim All' })}
                         </button>
                     </div>
                 </article>
@@ -3033,11 +3045,18 @@
                         { label: getLocalized({ zh: '未完成', en: 'Pending' }), value: String(Math.max(0, missionViews.length - missionClaimedCount - missionBundle.count)) },
                         { label: getLocalized({ zh: '推进建议', en: 'Next' }), value: nextMission ? `${nextMission.progress} / ${nextMission.target}` : getLocalized({ zh: '已清空', en: 'Cleared' }) }
                     ])}
-                    <div class="card-actions" style="margin-top:12px;">
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
-                            ${getLocalized({ zh: '返回部署推进', en: 'Back To Setup' })}
-                        </button>
-                    </div>
+                    ${renderInlineLinkRow([
+                        {
+                            action: 'openTab',
+                            value: 'prep',
+                            label: getLocalized({ zh: '去部署', en: 'Open Setup' })
+                        },
+                        {
+                            action: 'openTab',
+                            value: 'defend',
+                            label: getLocalized({ zh: '看战斗', en: 'Battle View' })
+                        }
+                    ])}
                 </article>
             </div>
             <div class="mission-grid">
@@ -3053,7 +3072,7 @@
                         <div class="card-copy">${mission.desc}</div>
                         <div class="progress-line"><i style="width:${(mission.progressRate * 100).toFixed(2)}%;"></i></div>
                         <div class="reward-row">${mission.rewardChips}</div>
-                        <div class="card-actions">
+                        <div class="card-actions compact">
                             <button class="primary-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${mission.claimable ? '' : 'disabled'}>
                                 ${mission.claimed ? t('missionClaimed') : t('missionClaim')}
                             </button>
@@ -3141,10 +3160,10 @@
                         { label: getLocalized({ zh: '下一标准档', en: 'Next Node' }), value: nextStandardNode ? formatCompact(nextStandardNode.node.xp) : getLocalized({ zh: '完成', en: 'Done' }) },
                         { label: getLocalized({ zh: '当前 XP', en: 'Current XP' }), value: formatCompact(state.save.seasonXp) }
                     ])}
-                    ${seasonBundle.count > 0 ? `<div class="reward-row">${renderRewardChips(seasonBundle.reward)}</div>` : ''}
-                    <div class="card-actions" style="margin-top:12px;">
+                    ${seasonBundle.count > 0 ? `<div class="reward-row compact">${renderRewardChips(seasonBundle.reward, { limit: 4 })}</div>` : ''}
+                    <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="claimAllSeason" ${seasonBundle.count > 0 ? '' : 'disabled'}>
-                            ${getLocalized({ zh: '一键领取赛季', en: 'Claim All Season' })}
+                            ${getLocalized({ zh: '一键领取', en: 'Claim All' })}
                         </button>
                     </div>
                 </article>
@@ -3160,7 +3179,7 @@
                             <div class="card-number">${formatCompact(node.xp)} XP</div>
                         </div>
                         <div class="reward-row">${renderRewardChips(node.reward)}</div>
-                        <div class="card-actions">
+                        <div class="card-actions compact">
                             <button class="primary-btn" type="button" data-action="claimSeason" data-value="${node.id}" ${claimable ? '' : 'disabled'}>
                                 ${claimed ? t('seasonClaimed') : t('seasonClaim')}
                             </button>
@@ -3218,9 +3237,9 @@
                 <div class="reward-row">
                     <span class="mini-chip">${sponsorUnlocked ? getLocalized({ zh: '赞助加成已生效', en: 'Sponsor boost active' }) : getLocalized({ zh: '首充可升级每日补给', en: 'Top-up unlocks daily boost' })}</span>
                 </div>
-                <div class="reward-row">${renderRewardChips(supplyReward)}</div>
-                <div class="card-actions">
-                    <button class="primary-btn" type="button" data-action="claimDaily" data-value="daily" ${ready ? '' : 'disabled'}>${ready ? t('shopClaim') : `${t('shopSoldOut')} · ${remaining}`}</button>
+                <div class="reward-row compact">${renderRewardChips(supplyReward, { limit: 4 })}</div>
+                <div class="card-actions compact">
+                    <button class="primary-btn" type="button" data-action="claimDaily" data-value="daily" ${ready ? '' : 'disabled'}>${ready ? getLocalized({ zh: '领取', en: 'Claim' }) : `${t('shopSoldOut')} · ${remaining}`}</button>
                 </div>
             </article>
         `;
@@ -3630,11 +3649,11 @@
                     })
                     : getLocalized(offer.desc)}</div>
                 <div class="reward-row">${chips}</div>
-                <div class="reward-row">${renderRewardChips(preview)}</div>
-                <div class="card-actions">
+                <div class="reward-row compact">${renderRewardChips(preview, { limit: 4 })}</div>
+                <div class="card-actions compact">
                     ${lockedBySponsor
-                        ? `<button class="primary-btn" type="button" data-action="openPayment" data-value="${paymentOfferId}">${getLocalized({ zh: '解锁后开放', en: 'Unlock To Open' })}</button>`
-                        : `<button class="primary-btn" type="button" data-action="buyShop" data-value="${offer.id}" ${canAfford ? '' : 'disabled'}>${t('shopBuy')} · ${formatCompact(cost)} ${priceSuffix}</button>`}
+                        ? `<button class="primary-btn" type="button" data-action="openPayment" data-value="${paymentOfferId}">${getLocalized({ zh: '去解锁', en: 'Unlock' })}</button>`
+                        : `<button class="primary-btn" type="button" data-action="buyShop" data-value="${offer.id}" ${canAfford ? '' : 'disabled'}>${getLocalized({ zh: `购买 · ${formatCompact(cost)} ${priceSuffix}`, en: `Buy · ${formatCompact(cost)} ${priceSuffix}` })}</button>`}
                 </div>
             </article>
         `;
@@ -3647,29 +3666,29 @@
             ? {
                 action: 'claimAllSeason',
                 value: 'season',
-                label: getLocalized({ zh: '商城内直接领取', en: 'Claim From Shop' })
+                label: getLocalized({ zh: '领赞助', en: 'Claim Sponsor' })
             }
             : {
                 action: 'openPayment',
                 value: paymentRoute.offer.id,
-                label: getLocalized({ zh: `打开 ${getLocalized(paymentRoute.offer.name)}`, en: `Open ${getLocalized(paymentRoute.offer.name)}` })
+                label: getLocalized({ zh: '开礼包', en: 'Open Pack' })
             };
         const supportAction = goldRoute?.affordable
             ? {
                 action: 'buyShop',
                 value: goldRoute.offer.id,
-                label: getLocalized({ zh: `买 ${getLocalized(goldRoute.offer.title)}`, en: `Buy ${getLocalized(goldRoute.offer.title)}` })
+                label: getLocalized({ zh: '买金币包', en: 'Buy Gold Pack' })
             }
             : coreRoute?.affordable
                 ? {
                     action: 'buyShop',
                     value: coreRoute.offer.id,
-                    label: getLocalized({ zh: `买 ${getLocalized(coreRoute.offer.title)}`, en: `Buy ${getLocalized(coreRoute.offer.title)}` })
+                    label: getLocalized({ zh: '买能核包', en: 'Buy Core Pack' })
                 }
                 : {
                     action: 'openTab',
                     value: 'defend',
-                    label: getLocalized({ zh: '返回防线推进', en: 'Back To Defend' })
+                    label: getLocalized({ zh: '去防线', en: 'Battle View' })
                 };
         return `
             <article class="shop-card premium topup-overview-card">
@@ -3719,11 +3738,11 @@
                     ${goldRoute && !goldRoute.affordable ? `<span class="mini-chip">${getLocalized({ zh: `金币还差 ${formatCompact(goldRoute.shortage)}`, en: `Need ${formatCompact(goldRoute.shortage)}G` })}</span>` : ''}
                     ${coreRoute && !coreRoute.affordable ? `<span class="mini-chip">${getLocalized({ zh: `能核还差 ${formatCompact(coreRoute.shortage)}`, en: `Need ${formatCompact(coreRoute.shortage)}C` })}</span>` : ''}
                 </div>
-                ${nextSponsorNode ? `<div class="reward-row">
+                ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点预览', en: 'Next Sponsor Reward' })}</span>
-                    ${renderRewardChips(nextSponsorNode.node.reward)}
+                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}
                 </div>` : ''}
-                <div class="card-actions" style="margin-top:12px;">
+                <div class="card-actions compact" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
                         ${primaryAction.label}
                     </button>
@@ -3765,9 +3784,9 @@
                             : getLocalized({ zh: '首充后开启赞助节点', en: 'First top-up unlocks sponsor nodes' })}</span>`
                         : ''}
                 </div>
-                ${nextSponsorNode ? `<div class="reward-row">
+                ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点奖励', en: 'Next Sponsor Reward' })}</span>
-                    ${renderRewardChips(nextSponsorNode.node.reward)}
+                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}
                 </div>` : ''}
                 <div class="shop-kpi-grid">
                     <div class="shop-kpi">
@@ -3787,14 +3806,14 @@
                         <strong>Lv.${seasonInfo.level}</strong>
                     </div>
                 </div>
-                <div class="card-actions">
+                <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="${sponsorUnlocked && premiumReady > 0 ? 'claimAllSeason' : 'openPayment'}" data-value="${sponsorUnlocked && premiumReady > 0 ? 'season' : strategyPlan.paymentRoute.offer.id}">
                         ${sponsorUnlocked && premiumReady > 0
-                            ? getLocalized({ zh: '商城内领取待奖', en: 'Claim Ready Rewards' })
-                            : getLocalized({ zh: '打开推荐礼包', en: 'Open Recommended Pack' })}
+                            ? getLocalized({ zh: '领待奖', en: 'Claim Ready' })
+                            : getLocalized({ zh: '开礼包', en: 'Open Pack' })}
                     </button>
                     ${sponsorUnlocked && premiumReady > 0 ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">
-                        ${getLocalized({ zh: '查看赛季轨道', en: 'Open Season Track' })}
+                        ${getLocalized({ zh: '赛季', en: 'Season' })}
                     </button>` : ''}
                 </div>
             </article>
@@ -3820,10 +3839,10 @@
                     ${!sponsorUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '首充解锁赞助', en: 'Unlocks Sponsor' })}</span>` : ''}
                     ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''}
                 </div>
-                <div class="reward-row">${renderRewardChips(offer.reward)}</div>
-                <div class="card-actions">
+                <div class="reward-row compact">${renderRewardChips(offer.reward, { limit: 4 })}</div>
+                <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">
-                        ${getLocalized({ zh: '创建订单并支付', en: 'Create Order & Pay' })}
+                        ${getLocalized({ zh: '立即支付', en: 'Pay Now' })}
                     </button>
                 </div>
             </article>
@@ -3847,11 +3866,11 @@
                         <div class="card-number">${getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
                     </div>
                     <div class="card-copy">${getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道，并随赛季经验追加额外奖励。', en: 'Any verified top-up unlocks the Sponsor track and adds extra rewards as Season XP grows.' })}</div>
-                    ${nextSponsorNode ? `<div class="reward-row">
+                    ${nextSponsorNode ? `<div class="reward-row compact">
                         <span class="mini-chip">${getLocalized({ zh: '解锁后首个赞助节点', en: 'First Sponsor Node After Unlock' })}</span>
-                        ${renderRewardChips(nextSponsorNode.node.reward)}
-                    </div>` : `<div class="reward-row">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } })}</div>`}
-                    <div class="card-actions">
+                        ${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}
+                    </div>` : `<div class="reward-row compact">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } }, { limit: 4 })}</div>`}
+                    <div class="card-actions compact">
                         <button class="primary-btn" type="button" data-action="openPayment" data-value="${strategyPlan.paymentRoute.offer.id}">${getLocalized({ zh: '立即解锁', en: 'Unlock Now' })}</button>
                     </div>
                 </article>
@@ -3889,12 +3908,12 @@
                     <div class="card-copy">${nextSponsorNode.ready
                         ? getLocalized({ zh: '这个节点已经达标，可直接从当前页领取。', en: 'This node is ready and can be claimed from the current page.' })
                         : getLocalized({ zh: '继续抬升赛季经验，就能拿到这一档赞助奖励。', en: 'Keep raising Season XP to unlock this sponsor reward tier.' })}</div>
-                    <div class="reward-row">${renderRewardChips(nextSponsorNode.node.reward)}</div>
-                    <div class="card-actions" style="margin-top:12px;">
+                    <div class="reward-row compact">${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}</div>
+                    <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${nextSponsorNode.ready ? 'claimAllSeason' : 'openTab'}" data-value="${nextSponsorNode.ready ? 'season' : 'shop'}">
                             ${nextSponsorNode.ready
-                                ? getLocalized({ zh: '一键领取待奖', en: 'Claim Ready Rewards' })
-                                : getLocalized({ zh: '返回商城补强', en: 'Open Shop Route' })}
+                                ? getLocalized({ zh: '一键领取', en: 'Claim Ready' })
+                                : getLocalized({ zh: '商城补强', en: 'Shop Route' })}
                         </button>
                     </div>
                 </article>
@@ -3910,7 +3929,7 @@
                             <div class="card-number">${formatCompact(node.xp)} XP</div>
                         </div>
                         <div class="reward-row">${renderRewardChips(node.reward)}</div>
-                        <div class="card-actions">
+                        <div class="card-actions compact">
                             <button class="primary-btn" type="button" data-action="claimSponsorSeason" data-value="${node.id}" ${claimable ? '' : 'disabled'}>
                                 ${claimed ? t('seasonClaimed') : t('seasonClaim')}
                             </button>
@@ -3921,7 +3940,9 @@
         `;
     }
 
-    function renderRewardChips(reward) {
+    function renderRewardChips(reward, options = {}) {
+        const limit = Number.isFinite(options.limit) ? options.limit : Infinity;
+        reward = reward || {};
         const chips = [];
         if (reward.gold) chips.push(`<span class="mini-chip">${formatCompact(reward.gold)} G</span>`);
         if (reward.cores) chips.push(`<span class="mini-chip">${formatCompact(reward.cores)} C</span>`);
@@ -3930,6 +3951,13 @@
             Object.entries(reward.fragments).forEach(([towerId, amount]) => {
                 if ((Number(amount) || 0) > 0) chips.push(`<span class="mini-chip">${towerLabel(towerId)} +${formatCompact(amount)}</span>`);
             });
+        }
+        if (chips.length > limit) {
+            const hiddenCount = chips.length - limit;
+            return [
+                ...chips.slice(0, limit),
+                `<span class="mini-chip is-muted">${getLocalized({ zh: `+${hiddenCount} 项`, en: `+${hiddenCount} more` })}</span>`
+            ].join('');
         }
         return chips.join('');
     }

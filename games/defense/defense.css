@@ -921,6 +921,22 @@ body:not([data-defense-tab="defend"]) .stage-card {
     font-size: 11px;
 }
 
+.mini-chip.is-muted {
+    opacity: 0.76;
+}
+
+.reward-row.compact,
+.chip-row.compact {
+    gap: 6px;
+}
+
+.reward-row.compact .mini-chip,
+.chip-row.compact .mini-chip {
+    min-height: 24px;
+    padding: 0 8px;
+    font-size: 10px;
+}
+
 .chapter-row,
 .lane-picker,
 .skill-picker {
@@ -1033,10 +1049,38 @@ body:not([data-defense-tab="defend"]) .stage-card {
     gap: 8px;
 }
 
+.card-actions.compact {
+    gap: 6px;
+}
+
 .card-actions > .primary-btn,
 .card-actions > .ghost-btn {
     flex: 1 1 180px;
     min-height: 44px;
+}
+
+.card-actions.compact > .primary-btn,
+.card-actions.compact > .ghost-btn {
+    flex: 1 1 132px;
+    min-height: 38px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.inline-link-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.inline-link-row > .ghost-btn {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 11px;
 }
 
 .season-track {
@@ -1950,6 +1994,25 @@ body:not([data-defense-tab="defend"]) .stage-card {
     .card-actions > .ghost-btn {
         flex: 1 1 96px;
         min-height: 40px;
+    }
+
+    .card-actions.compact > .primary-btn,
+    .card-actions.compact > .ghost-btn {
+        min-height: 34px;
+        padding: 8px 10px;
+        font-size: 11px;
+        border-radius: 10px;
+    }
+
+    .inline-link-row {
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .inline-link-row > .ghost-btn {
+        min-height: 28px;
+        padding: 6px 10px;
+        font-size: 10px;
     }
 
     .defend-mini-stat-grid {
