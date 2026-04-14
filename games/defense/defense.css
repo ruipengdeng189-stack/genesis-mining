@@ -655,6 +655,70 @@ body:not([data-defense-tab="defend"]) .stage-card {
     gap: 12px;
 }
 
+.defend-battle-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
+    gap: 12px;
+}
+
+.defend-side-grid {
+    align-content: start;
+}
+
+.defend-side-card {
+    min-width: 0;
+}
+
+.defend-side-copy {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.prep-guide-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.prep-guide-card {
+    display: grid;
+    gap: 8px;
+}
+
+.prep-guide-card strong {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.prep-guide-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-width: 36px;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(255, 154, 90, 0.16);
+    color: var(--gold);
+    font-family: "Roboto Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+}
+
+.prep-guide-copy,
+.prep-guide-note {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.prep-guide-note {
+    margin: 0 0 12px;
+}
+
 .defend-compact-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
@@ -1093,7 +1157,7 @@ body:not([data-defense-tab="defend"]) .stage-card {
     transform: translateX(-50%);
     width: min(calc(100vw - 20px), calc(var(--content-width) - 20px));
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
     padding: 8px;
     border-radius: 24px;
@@ -1443,7 +1507,12 @@ body:not([data-defense-tab="defend"]) .stage-card {
         grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
     }
 
+    .defend-battle-layout,
     .defend-compact-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .prep-guide-grid {
         grid-template-columns: 1fr;
     }
 
@@ -1755,16 +1824,16 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     .app-tab-bar {
-        width: calc(100vw - 10px);
-        gap: 4px;
-        padding: 4px;
+        width: calc(100vw - 8px);
+        gap: 3px;
+        padding: 4px 3px;
         border-radius: 18px;
     }
 
     .tab-btn {
-        min-height: 44px;
-        padding: 6px 3px;
-        font-size: 10px;
+        min-height: 42px;
+        padding: 6px 2px;
+        font-size: 9px;
         border-radius: 12px;
     }
 
@@ -1905,8 +1974,14 @@ body:not([data-defense-tab="defend"]) .stage-card {
         gap: 8px;
     }
 
+    .defend-side-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
     .defend-quick-btn,
-    .defend-quick-summary {
+    .defend-quick-summary,
+    .prep-guide-card {
         min-height: 76px;
         padding: 10px;
         border-radius: 14px;
@@ -1916,7 +1991,10 @@ body:not([data-defense-tab="defend"]) .stage-card {
         font-size: 15px;
     }
 
-    .defend-quick-meta {
+    .defend-quick-meta,
+    .defend-side-copy,
+    .prep-guide-copy,
+    .prep-guide-note {
         font-size: 11px;
         line-height: 1.35;
     }

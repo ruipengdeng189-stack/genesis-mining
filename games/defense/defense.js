@@ -50,6 +50,7 @@
             loadoutShortcut: '前往装配',
             pauseBtn: '暂停',
             tabDefend: '防线',
+            tabPrep: '部署',
             tabLoadout: '装配',
             tabResearch: '研究',
             tabMissions: '任务',
@@ -61,8 +62,10 @@
             threatStable: '稳定',
             threatRising: '升温',
             threatDanger: '危险',
-            defendPanelTitle: '章节部署',
-            defendPanelDesc: '选择章节、查看敌潮构成，并围绕三路炮台配置决定本局节奏。',
+            defendPanelTitle: '前线防守',
+            defendPanelDesc: '这里专注战斗状态与快速开战，章节选择与部署建议已挪到“部署”页。',
+            prepPanelTitle: '章节部署',
+            prepPanelDesc: '选章节、看敌潮、对照推荐编队，再决定是否直接开打。',
             loadoutPanelTitle: '三路装配',
             loadoutPanelDesc: '每条通道可独立装配炮台，主动技能决定关键波次的翻盘空间。',
             researchPanelTitle: '研究实验室',
@@ -254,6 +257,7 @@
             loadoutShortcut: 'Open Loadout',
             pauseBtn: 'Pause',
             tabDefend: 'Defend',
+            tabPrep: 'Setup',
             tabLoadout: 'Loadout',
             tabResearch: 'Research',
             tabMissions: 'Missions',
@@ -265,8 +269,10 @@
             threatStable: 'Stable',
             threatRising: 'Rising',
             threatDanger: 'Critical',
-            defendPanelTitle: 'Chapter Setup',
-            defendPanelDesc: 'Pick a chapter, inspect the enemy mix, and decide how your three lanes should carry the run.',
+            defendPanelTitle: 'Frontline Defense',
+            defendPanelDesc: 'This page now focuses on live battle status and fast entry. Chapter setup moved to Setup.',
+            prepPanelTitle: 'Chapter Setup',
+            prepPanelDesc: 'Pick a chapter, inspect the enemy mix, compare your gap, then decide whether to deploy now.',
             loadoutPanelTitle: 'Tri-Lane Loadout',
             loadoutPanelDesc: 'Each lane equips its own tower, while your active skill defines wave-saving moments.',
             researchPanelTitle: 'Research Lab',
@@ -881,6 +887,9 @@
                 break;
             case 'startChapter':
                 startBattle(false);
+                break;
+            case 'resumeBattle':
+                resumeBattle();
                 break;
             case 'claimSponsorSeason':
                 claimSponsorSeason(value);
@@ -1516,6 +1525,7 @@
 
     function renderPanel() {
         switch (state.activeTab) {
+            case 'prep': renderPrepTab(); break;
             case 'loadout': renderLoadoutTab(); break;
             case 'research': renderResearchTab(); break;
             case 'missions': renderMissionsTab(); break;
@@ -2281,16 +2291,251 @@
         const economyPreview = getDefenseEconomyPreview(current);
         const prepOverview = getChapterPrepOverview(current);
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
-        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview);
+        const researchReadyCount = Object.keys(RESEARCH).filter((researchId) => canUpgradeResearch(researchId)).length;
+        const battleActive = state.battle.running && !state.battle.finished;
+        const battlePaused = battleActive && state.battle.paused;
+        const battleWave = battleActive ? Math.max(1, state.battle.currentWave || 1) : 0;
+        const currentSkillId = state.save.selectedSkill || prepOverview.currentSkill || prepOverview.preset.skill;
+        const currentSkillLabel = t(SKILLS[currentSkillId].nameKey);
+        const laneSummary = prepOverview.currentLanes
+            .map((towerId, laneIndex) => `${getLaneName(laneIndex)}·${towerLabel(towerId)}`)
+            .join(' / ');
+        const battleStatusLabel = state.battle.finished
+            ? getLocalized({ zh: '本局已结束', en: 'Run finished' })
+            : battlePaused
+                ? getLocalized({ zh: '战斗已暂停', en: 'Battle paused' })
+                : battleActive
+                    ? getLocalized({ zh: `第 ${battleWave}/${TOTAL_WAVES} 波进行中`, en: `Wave ${battleWave}/${TOTAL_WAVES} live` })
+                    : prepOverview.ready
+                        ? getLocalized({ zh: '部署完成，可直接开战', en: 'Ready to defend' })
+                        : getLocalized({ zh: `还差 ${prepOverview.adjustmentsNeeded} 项部署`, en: `${prepOverview.adjustmentsNeeded} setup items left` });
+        const statusChipLabel = state.battle.finished
+            ? getLocalized({ zh: '已结算', en: 'Finished' })
+            : battlePaused
+                ? getLocalized({ zh: '已暂停', en: 'Paused' })
+                : battleActive
+                    ? getLocalized({ zh: `第${battleWave}波`, en: `Wave ${battleWave}` })
+                    : prepOverview.ready
+                        ? getLocalized({ zh: '可开战', en: 'Ready' })
+                        : getLocalized({ zh: `待调 ${prepOverview.adjustmentsNeeded}`, en: `${prepOverview.adjustmentsNeeded} left` });
+        const battleStatusCopy = state.battle.finished
+            ? getLocalized({
+                zh: '本局已经结算完成。想继续推进时，可先去“部署”页切章节，再返回这里开打。',
+                en: 'The run is complete. Open Setup to choose the next chapter, then come back here to start again.'
+            })
+            : battlePaused
+                ? getLocalized({
+                    zh: '你刚离开战斗页时系统已自动暂停；回到这里后可直接继续，不会丢失本局进度。',
+                    en: 'The battle auto-paused when you left the combat view, so you can safely resume from here.'
+                })
+                : battleActive
+                    ? getLocalized({
+                        zh: '战斗已经在上方主视野中进行，这里只保留关键信息与快捷操作，尽量不打扰战场视野。',
+                        en: 'The fight is already live in the main battlefield above. This panel keeps only compact status and quick actions.'
+                    })
+                    : prepOverview.ready
+                        ? getLocalized({
+                            zh: '当前章节、三路装配和主动技能已经达标，点击开始即可直接进入战斗界面。',
+                            en: 'Your current chapter, lane setup, and active skill are aligned. Start when you are ready.'
+                        })
+                        : getLocalized({
+                            zh: '如果你还看不清该怎么配，直接进“部署”页按顺序看章节说明、推荐技能和一键编队即可。',
+                            en: 'If the setup still feels unclear, open Setup and follow the chapter guide, skill suggestion, and one-tap preset.'
+                        });
+        const primaryAction = battlePaused
+            ? {
+                action: 'resumeBattle',
+                value: 'resume',
+                label: getLocalized({ zh: '继续战斗', en: 'Resume Battle' })
+            }
+            : battleActive
+                ? null
+                : prepOverview.ready
+                    ? {
+                        action: 'startChapter',
+                        value: current.id,
+                        label: getLocalized({ zh: '开始防守', en: 'Start Defense' })
+                    }
+                    : {
+                        action: 'openTab',
+                        value: 'prep',
+                        label: getLocalized({ zh: '前往部署', en: 'Open Setup' })
+                    };
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('defendPanelTitle'),
                 getLocalized({
-                    zh: '这里只保留章节、开打和快速跳转；装配、研究、领奖、补给都去对应页签处理。',
-                    en: 'This tab only keeps chapter selection, battle start, and quick jumps. Build, upgrades, claims, and shop live in their own tabs.'
+                    zh: '这里只看战斗状态、当前章节和快捷入口；章节选择、敌潮说明与推荐部署已独立到“部署”页。',
+                    en: 'This view now focuses on battle status, the current chapter, and fast actions. Chapter selection and prep details live in Setup.'
+                }),
+                `<div class="mini-chip">${current.id} · ${statusChipLabel}</div>`
+            )}
+            <div class="defend-battle-layout">
+                <article class="defend-primary-card stat-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '战斗总览', en: 'Battle Overview' })}</div>
+                            <div class="card-title">${battleStatusLabel}</div>
+                        </div>
+                        <div class="card-number">${prepOverview.powerGap > 0
+                            ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                            : getLocalized({ zh: '已达标', en: 'On target' })}</div>
+                    </div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '当前章节', en: 'Chapter' }), value: current.id },
+                        { label: getLocalized({ zh: '波次', en: 'Wave' }), value: battleActive ? `${battleWave}/${TOTAL_WAVES}` : `0/${TOTAL_WAVES}` },
+                        { label: getLocalized({ zh: '待领奖励', en: 'Claims' }), value: String(economyPreview.claimableTotal) },
+                        { label: t('seasonLabel'), value: `Lv.${seasonInfo.level}` }
+                    ])}
+                    <div class="chip-row defend-chip-row">
+                        <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前技能 ${currentSkillLabel}`, en: `Skill ${currentSkillLabel}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `掉落倾向 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
+                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
+                    </div>
+                    <div class="defend-inline-note">${battleStatusCopy}</div>
+                    <div class="card-actions defend-card-actions">
+                        ${primaryAction
+                            ? `<button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
+                                ${primaryAction.label}
+                            </button>`
+                            : `<button class="primary-btn" type="button" disabled>
+                                ${getLocalized({ zh: '战斗进行中', en: 'Battle Live' })}
+                            </button>`}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                            ${getLocalized({ zh: '章节部署', en: 'Open Setup' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '去装配页', en: 'Open Loadout' })}
+                        </button>
+                    </div>
+                </article>
+                <div class="card-grid defend-side-grid">
+                    <article class="stat-card defend-side-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '当前部署', en: 'Current Setup' })}</div>
+                                <div class="card-title">${prepOverview.ready
+                                    ? getLocalized({ zh: '编队已就绪', en: 'Preset ready' })
+                                    : getLocalized({ zh: `待调整 ${prepOverview.adjustmentsNeeded} 项`, en: `${prepOverview.adjustmentsNeeded} tweaks left` })}</div>
+                            </div>
+                            <div class="card-number">${formatCompact(getPowerRating(state.save))}</div>
+                        </div>
+                        <div class="card-copy">${laneSummary}</div>
+                        <div class="defend-side-copy">${getLocalized({
+                            zh: `推荐主动技能：${recommendedSkill}`,
+                            en: `Recommended skill: ${recommendedSkill}`
+                        })}</div>
+                    </article>
+                    <article class="stat-card defend-side-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '敌潮焦点', en: 'Enemy Focus' })}</div>
+                                <div class="card-title">${getLocalized({ zh: '本章威胁', en: 'Pressure Mix' })}</div>
+                            </div>
+                            <div class="card-number">${getLocalized({ zh: `${current.enemies.length}类`, en: `${current.enemies.length} types` })}</div>
+                        </div>
+                        <div class="card-copy">${getChapterWavePlan(current)}</div>
+                        <div class="defend-side-copy">${getChapterOpeningGuide(current)}</div>
+                    </article>
+                    <article class="stat-card defend-side-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '成长入口', en: 'Progression' })}</div>
+                                <div class="card-title">${researchReadyCount > 0
+                                    ? getLocalized({ zh: `研究可升 ${researchReadyCount} 项`, en: `${researchReadyCount} research upgrades ready` })
+                                    : getLocalized({ zh: '成长平稳', en: 'Stable growth' })}</div>
+                            </div>
+                            <div class="card-number">${getLocalized({ zh: `最佳 ${CHAPTERS[state.save.bestChapterIndex].id}`, en: `Best ${CHAPTERS[state.save.bestChapterIndex].id}` })}</div>
+                        </div>
+                        <div class="card-copy">${getLocalized({
+                            zh: `本章累计通关 ${getChapterWinCount(current.id)} 次`,
+                            en: `${current.id} cleared ${getChapterWinCount(current.id)} times`
+                        })}</div>
+                        <div class="defend-side-copy">${getLocalized({
+                            zh: '若战力不足，优先回部署页看推荐，再到装配 / 研究页补强。',
+                            en: 'If your power is short, check Setup first and then strengthen via Loadout or Research.'
+                        })}</div>
+                    </article>
+                    <article class="stat-card defend-side-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '资源回流', en: 'Resource Loop' })}</div>
+                                <div class="card-title">${economyPreview.claimableTotal > 0
+                                    ? getLocalized({ zh: `${economyPreview.claimableTotal} 份待领`, en: `${economyPreview.claimableTotal} rewards ready` })
+                                    : getLocalized({ zh: '当前无待领', en: 'No pending claims' })}</div>
+                            </div>
+                            <div class="card-number">Lv.${seasonInfo.level}</div>
+                        </div>
+                        <div class="card-copy">${economyPreview.dailyRemaining}</div>
+                        <div class="defend-side-copy">${getLocalized({
+                            zh: '任务、赛季与补给都保留在各自页签中处理，战斗页只保留结果和入口。',
+                            en: 'Missions, season, and supply stay in their own tabs so the battle page remains clean.'
+                        })}</div>
+                    </article>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPrepTab() {
+        const current = getCurrentChapter();
+        const focusPreview = getChapterFocusPreview(current);
+        const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
+        const economyPreview = getDefenseEconomyPreview(current);
+        const prepOverview = getChapterPrepOverview(current);
+        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview);
+        const prepGuideCards = [
+            {
+                step: '01',
+                title: getLocalized({ zh: '先选章节', en: 'Pick the chapter' }),
+                copy: getLocalized({
+                    zh: '先确认你要推哪一章。章节越高，敌潮组合、推荐战力和波次压力都会同步提高。',
+                    en: 'Choose the chapter you want to push. Higher chapters raise enemy mix, recommended power, and wave pressure.'
+                })
+            },
+            {
+                step: '02',
+                title: getLocalized({ zh: '看差距与推荐', en: 'Check the gap' }),
+                copy: getLocalized({
+                    zh: '重点看推荐战力、推荐技能、敌潮预览和掉落倾向；看不懂时直接照推荐编队来。',
+                    en: 'Read the recommended power, suggested skill, enemy preview, and drop focus. If unsure, simply follow the preset.'
+                })
+            },
+            {
+                step: '03',
+                title: getLocalized({ zh: '同步后开打', en: 'Sync and deploy' }),
+                copy: getLocalized({
+                    zh: '差距小就一键套用并开打；差距大时先去装配或研究补强，再回这里继续推进。',
+                    en: 'If the gap is small, apply and deploy immediately. If it is large, strengthen via Loadout or Research first.'
+                })
+            }
+        ];
+        ui.panelContent.innerHTML = `
+            ${renderPanelHead(
+                t('prepPanelTitle'),
+                getLocalized({
+                    zh: '“部署”页负责选章节、读敌潮、看推荐与决定是否直接开打。看不懂时，就按下方 3 步走即可。',
+                    en: 'Setup is where you choose the chapter, read the enemy plan, and decide whether you are ready to deploy. If unsure, just follow the 3 steps below.'
                 }),
                 `<div class="mini-chip">${current.id} · ${formatCompact(current.recommended)}</div>`
             )}
+            <div class="prep-guide-grid">
+                ${prepGuideCards.map((item) => `
+                    <article class="prep-guide-card">
+                        <span class="prep-guide-step">${item.step}</span>
+                        <strong>${item.title}</strong>
+                        <p class="prep-guide-copy">${item.copy}</p>
+                    </article>
+                `).join('')}
+            </div>
+            <div class="prep-guide-note">
+                ${getLocalized({
+                    zh: '简单理解：这里就是“打哪一章、需要多少战力、推荐带什么、现在能不能直接开”的决策页。',
+                    en: 'In plain words: this is the decision page for which chapter to push, how much power you need, what to bring, and whether you can start now.'
+                })}
+            </div>
             <div class="chapter-row defend-chapter-row">
                 ${CHAPTERS.map((chapter, index) => `
                     <button class="chapter-btn ${index === state.save.chapterIndex ? 'active' : ''}" type="button" data-action="chapter" data-value="${index}" ${index > state.save.bestChapterIndex ? 'disabled' : ''}>
@@ -2597,8 +2842,8 @@
                             : `<button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
                                 ${recoveryAction.label}
                             </button>`}
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
-                            ${getLocalized({ zh: '返回防线', en: 'Back To Defend' })}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                            ${getLocalized({ zh: '返回部署', en: 'Back To Setup' })}
                         </button>
                     </div>
                 </article>
@@ -2621,8 +2866,8 @@
                         <button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
                             ${recoveryAction.label}
                         </button>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
-                            ${getLocalized({ zh: '先回防线', en: 'Back To Defend' })}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                            ${getLocalized({ zh: '回部署页', en: 'Back To Setup' })}
                         </button>
                     </div>
                 </article>
@@ -2789,8 +3034,8 @@
                         { label: getLocalized({ zh: '推进建议', en: 'Next' }), value: nextMission ? `${nextMission.progress} / ${nextMission.target}` : getLocalized({ zh: '已清空', en: 'Cleared' }) }
                     ])}
                     <div class="card-actions" style="margin-top:12px;">
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
-                            ${getLocalized({ zh: '返回防线推进', en: 'Back To Defend' })}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                            ${getLocalized({ zh: '返回部署推进', en: 'Back To Setup' })}
                         </button>
                     </div>
                 </article>
@@ -3692,7 +3937,7 @@
     function renderTabState() {
         document.body.dataset.defenseTab = state.activeTab;
         document.querySelectorAll('.tab-btn[data-tab]').forEach((node) => node.classList.toggle('is-active', node.dataset.tab === state.activeTab));
-        const redDots = { defend: false, loadout: hasLoadoutRedDot(), research: hasResearchRedDot(), missions: hasMissionRedDot(), season: hasSeasonRedDot(), shop: hasShopRedDot() };
+        const redDots = { defend: false, prep: false, loadout: hasLoadoutRedDot(), research: hasResearchRedDot(), missions: hasMissionRedDot(), season: hasSeasonRedDot(), shop: hasShopRedDot() };
         Object.entries(redDots).forEach(([tab, active]) => {
             const dot = document.querySelector(`[data-tab-dot="${tab}"]`);
             if (dot) dot.classList.toggle('active', !!active);
@@ -3710,7 +3955,7 @@
     }
 
     function switchTab(tab) {
-        const nextTab = ['defend', 'loadout', 'research', 'missions', 'season', 'shop'].includes(tab) ? tab : 'defend';
+        const nextTab = ['defend', 'prep', 'loadout', 'research', 'missions', 'season', 'shop'].includes(tab) ? tab : 'defend';
         const changed = state.activeTab !== nextTab;
         if (changed && nextTab !== 'defend' && state.battle.running && !state.battle.finished && !state.battle.paused) {
             pauseBattle();
@@ -3750,6 +3995,7 @@
         if (!restart && state.battle.running && !state.battle.finished) return;
         startLoop();
         state.battle = createEmptyBattle();
+        state.activeTab = 'defend';
         state.battle.running = true;
         state.battle.coreHp = getCoreMaxHp();
         state.battle.shield = getCoreShieldCap();
@@ -3764,6 +4010,7 @@
         hideOverlay(ui.startOverlay);
         startWave(1);
         renderAll();
+        scrollToActiveSection('defend');
     }
 
     function startWave(waveNumber) {
