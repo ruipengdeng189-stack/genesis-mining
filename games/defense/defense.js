@@ -629,6 +629,7 @@
         activeTab: 'defend',
         toastTimer: 0,
         renderQueued: false,
+        battleLoopStarted: false,
         battle: createEmptyBattle(initialSave)
     };
 
@@ -1424,6 +1425,7 @@
     }
 
     function renderAll() {
+        syncStartOverlayState();
         renderSummary();
         renderHud();
         renderActionBar();
@@ -1437,6 +1439,13 @@
             refreshPaymentVerificationState();
         }
         drawBattlefield();
+    }
+
+    function syncStartOverlayState() {
+        if (!ui.startOverlay) return;
+        const shouldShow = !state.battle.running && !state.battle.finished && !state.battle.awaitingUpgrade && !state.battle.paused;
+        if (shouldShow) showOverlay(ui.startOverlay);
+        else hideOverlay(ui.startOverlay);
     }
 
     function queueRender() {
@@ -3737,6 +3746,7 @@
 
     function startBattle(restart) {
         if (!restart && state.battle.running && !state.battle.finished) return;
+        startLoop();
         state.battle = createEmptyBattle();
         state.battle.running = true;
         state.battle.coreHp = getCoreMaxHp();
@@ -3780,6 +3790,7 @@
             waveNumber >= TOTAL_WAVES ? 'boss' : 'wave',
             waveNumber >= TOTAL_WAVES ? 2.8 : 2.3
         );
+        seedOpeningEnemy();
     }
 
     function buildWaveQueue(chapter, waveNumber) {
@@ -3890,10 +3901,23 @@
         renderAll();
     }
 
+    function seedOpeningEnemy() {
+        if (!state.battle.spawnQueue.length) return;
+        const openingSpawn = state.battle.spawnQueue.shift();
+        spawnEnemy(openingSpawn);
+        state.battle.currentWaveElapsed = Math.max(state.battle.currentWaveElapsed, Math.max(0, openingSpawn.at - 0.16));
+    }
+
     function startLoop() {
+        if (state.battleLoopStarted) return;
+        state.battleLoopStarted = true;
         const step = (timestamp) => {
-            updateBattle(timestamp);
-            drawBattlefield();
+            try {
+                updateBattle(timestamp);
+                drawBattlefield();
+            } catch (error) {
+                console.error('[defense] battle loop error', error);
+            }
             requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
@@ -5494,6 +5518,9 @@
 
     function drawCanvasTopInfo(ctx) {
         const skillReady = state.battle.skillCooldown <= 0;
+        const displayWaveText = state.battle.running || state.battle.finished || state.battle.awaitingUpgrade
+            ? t('waveText').replace('{wave}', String(Math.max(1, state.battle.currentWave || 1)))
+            : `0 / ${TOTAL_WAVES}`;
         if (skillReady && state.battle.running) {
             ctx.fillStyle = 'rgba(114,244,255,0.12)';
             fillRoundRect(ctx, 14, 10, 260, 78, 18);
@@ -5506,7 +5533,7 @@
         ctx.fillStyle = 'rgba(255,255,255,0.82)';
         ctx.font = '600 18px Inter';
         ctx.textAlign = 'left';
-        ctx.fillText(`${getCurrentChapter().id} · ${t('waveText').replace('{wave}', String(Math.max(1, state.battle.currentWave || 1)))}`, 20, 34);
+        ctx.fillText(`${getCurrentChapter().id} · ${displayWaveText}`, 20, 34);
         ctx.font = '500 14px Inter';
         ctx.fillStyle = 'rgba(145,162,192,0.96)';
         ctx.fillText(`${t('threatLabel')}: ${t(getThreatKey())}`, 20, 56);
