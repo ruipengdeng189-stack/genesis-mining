@@ -2383,7 +2383,7 @@
                 `<div class="mini-chip">${current.id} · ${statusChipLabel}</div>`
             )}
             <div class="defend-battle-layout">
-                <article class="defend-primary-card stat-card">
+                <article class="defend-primary-card stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '战斗总览', en: 'Battle Overview' })}</div>
@@ -2556,7 +2556,7 @@
                 `).join('')}
             </div>
             <div class="defend-compact-layout">
-                <article class="defend-primary-card">
+                <article class="defend-primary-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '开战面板', en: 'Frontline Ready' })}</div>
@@ -2657,7 +2657,7 @@
                 }),
                 `<div class="mini-chip">${t('laneSelect')} · ${getLaneName(selectedLane)}</div>`
             )}
-            <article class="stat-card">
+            <article class="stat-card compact-overview-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${getLocalized({ zh: '章节推荐编队', en: 'Chapter Preset' })}</div>
@@ -2707,7 +2707,7 @@
                     </button>
                 `).join('')}
             </div>
-            <article>
+            <article class="compact-overview-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${t('skillSelect')}</div>
@@ -2817,8 +2817,8 @@
                     en: 'Make upgrade decisions here, then jump straight to recovery when resources run low.'
                 })
             )}
-            <div class="card-grid">
-                <article class="stat-card">
+            <div class="card-grid tab-overview-grid">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '当前研究路线', en: 'Current Research Route' })}</div>
@@ -2859,7 +2859,7 @@
                         </button>
                     </div>
                 </article>
-                <article class="stat-card">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '资源回流', en: 'Resource Recovery' })}</div>
@@ -2993,8 +2993,8 @@
                     : (state.lang === 'zh' ? '可领取奖励已置顶' : 'Claimables pinned first')
                 }</div>`
             )}
-            <div class="card-grid">
-                <article class="stat-card">
+            <div class="card-grid tab-overview-grid">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '任务回收', en: 'Mission Sweep' })}</div>
@@ -3026,7 +3026,7 @@
                         </button>
                     </div>
                 </article>
-                <article class="stat-card">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '任务概览', en: 'Mission Snapshot' })}</div>
@@ -3101,8 +3101,8 @@
                     en: 'Track level, progress, and ready rewards here, with the node list compressed below.'
                 })
             )}
-            <div class="card-grid">
-                <article class="stat-card">
+            <div class="card-grid tab-overview-grid">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${t('seasonLabel')}</div>
@@ -3118,7 +3118,7 @@
                         { label: getLocalized({ zh: '终章通关', en: 'Final Clears' }), value: formatCompact(finalChapterClears) }
                     ])}
                 </article>
-                <article class="stat-card">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${t('statDamage')}</div>
@@ -3133,7 +3133,7 @@
                         { label: getLocalized({ zh: '终章', en: 'Final' }), value: formatCompact(finalChapterClears) }
                     ])}
                 </article>
-                <article class="stat-card">
+                <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '赛季回收', en: 'Season Sweep' })}</div>
@@ -3207,7 +3207,7 @@
                     : getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道', en: 'Any verified top-up unlocks the sponsor track' })
                 }</div>`
             )}
-            <div class="card-grid">
+            <div class="card-grid tab-overview-grid">
                 ${renderShopStrategyCard(strategyPlan)}
                 ${renderTopupOverviewCard(strategyPlan)}
                 ${renderDailyCard()}
@@ -3225,7 +3225,7 @@
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const remaining = ready ? '' : formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt));
         return `
-            <article class="shop-card ${ready ? 'mission-card claimable' : ''}">
+            <article class="shop-card compact-overview-card ${ready ? 'mission-card claimable' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${ready ? t('dailyReadyDot') : remaining}</div>
@@ -3691,7 +3691,7 @@
                     label: getLocalized({ zh: '去防线', en: 'Battle View' })
                 };
         return `
-            <article class="shop-card premium topup-overview-card">
+            <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${getLocalized({ zh: '当前商城路线', en: 'Current Shop Route' })}</div>
@@ -3760,7 +3760,7 @@
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
         const nextSponsorNode = strategyPlan.paymentRoute.nextSponsorNode;
         return `
-            <article class="shop-card premium topup-overview-card">
+            <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">VERIFIED TOP-UP</div>

@@ -655,6 +655,51 @@ body:not([data-defense-tab="defend"]) .stage-card {
     gap: 12px;
 }
 
+.tab-overview-grid {
+    align-items: stretch;
+}
+
+.compact-overview-card {
+    gap: 8px;
+}
+
+.compact-overview-card .card-top {
+    gap: 8px;
+}
+
+.compact-overview-card .card-title {
+    font-size: 18px;
+}
+
+.compact-overview-card .card-copy {
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.compact-overview-card .compact-kpi {
+    padding: 8px 10px;
+    border-radius: 12px;
+}
+
+.compact-overview-card .compact-kpi strong {
+    font-size: 14px;
+}
+
+.compact-overview-card .reward-row:not(.compact) .mini-chip {
+    min-height: 24px;
+    padding: 0 8px;
+    font-size: 10px;
+}
+
+.compact-overview-card .shop-kpi {
+    padding: 10px;
+    border-radius: 14px;
+}
+
+.compact-overview-card .shop-kpi strong {
+    font-size: 16px;
+}
+
 .defend-battle-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
@@ -1551,6 +1596,25 @@ body:not([data-defense-tab="defend"]) .stage-card {
         grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
     }
 
+    .tab-overview-grid {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+
+    .tab-overview-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-overview-grid > article {
+        flex: 0 0 min(82vw, 320px);
+        scroll-snap-align: start;
+    }
+
     .defend-battle-layout,
     .defend-compact-layout {
         grid-template-columns: 1fr;
@@ -1576,6 +1640,20 @@ body:not([data-defense-tab="defend"]) .stage-card {
 @media (max-width: 760px) {
     :root {
         --tabbar-height: 72px;
+    }
+
+    .panel-head {
+        gap: 8px;
+    }
+
+    .panel-head h3 {
+        font-size: 18px;
+    }
+
+    .panel-head p {
+        margin-top: 2px;
+        font-size: 12px;
+        line-height: 1.4;
     }
 
     .defense-shell {
@@ -1973,6 +2051,56 @@ body:not([data-defense-tab="defend"]) .stage-card {
     .choice-card {
         padding: 12px;
         border-radius: 16px;
+    }
+
+    .prep-guide-grid {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+    }
+
+    .prep-guide-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .prep-guide-card {
+        flex: 0 0 min(82vw, 280px);
+        scroll-snap-align: start;
+    }
+
+    .compact-overview-card {
+        gap: 7px;
+    }
+
+    .compact-overview-card .card-top {
+        gap: 6px;
+    }
+
+    .compact-overview-card .card-title {
+        font-size: 15px;
+    }
+
+    .compact-overview-card .card-number {
+        font-size: 12px;
+    }
+
+    .compact-overview-card .compact-kpi {
+        padding: 7px 8px;
+        border-radius: 10px;
+    }
+
+    .compact-overview-card .compact-kpi strong,
+    .compact-overview-card .shop-kpi strong {
+        font-size: 13px;
+    }
+
+    .compact-overview-card .shop-kpi {
+        padding: 8px;
+        border-radius: 12px;
     }
 
     .panel-head p,
