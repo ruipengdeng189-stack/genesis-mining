@@ -2296,6 +2296,19 @@
         return nodes ? `<div class="inline-link-row">${nodes}</div>` : '';
     }
 
+    function renderLimitedChipMarkup(chips = [], options = {}) {
+        const limit = Number.isFinite(options.limit) ? options.limit : Infinity;
+        const visible = chips.filter(Boolean);
+        if (visible.length > limit) {
+            const hiddenCount = visible.length - limit;
+            return [
+                ...visible.slice(0, limit),
+                `<span class="mini-chip is-muted">${getLocalized({ zh: `+${hiddenCount} 项`, en: `+${hiddenCount} more` })}</span>`
+            ].join('');
+        }
+        return visible.join('');
+    }
+
     function renderDefendTab() {
         const current = getCurrentChapter();
         const focusPreview = getChapterFocusPreview(current);
@@ -2746,7 +2759,7 @@
             .filter(Boolean);
         const focusRecommended = chapter.fragmentFocus.includes(tower.id);
         return `
-            <article class="tower-card ${(canUpgrade || canUnlock) ? 'ready' : ''} ${!unlocked ? 'locked' : ''}">
+            <article class="tower-card compact-list-card ${(canUpgrade || canUnlock) ? 'ready' : ''} ${!unlocked ? 'locked' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${rarityLabel(tower.tier)}</div>
@@ -2755,11 +2768,13 @@
                     <div class="card-number">${t('levelText')} ${level || 0}</div>
                 </div>
                 <div class="card-copy">${getTowerDescription(tower.id)}</div>
-                <div class="tower-tags">
-                    <span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>
-                    <span class="tag-chip">${formatCompact(state.save.towerFragments[tower.id] || 0)} ${t('fragmentLabel')}</span>
-                    ${focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '章节掉落倾向', en: 'Focus Drop' })}</span>` : ''}
-                    ${recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`).join('')}
+                <div class="tower-tags compact">
+                    ${renderLimitedChipMarkup([
+                        `<span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>`,
+                        `<span class="tag-chip">${formatCompact(state.save.towerFragments[tower.id] || 0)} ${t('fragmentLabel')}</span>`,
+                        focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '章节掉落倾向', en: 'Focus Drop' })}</span>` : '',
+                        ...recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`)
+                    ], { limit: 4 })}
                 </div>
                 <div class="progress-line"><i style="width:${(progress * 100).toFixed(2)}%;"></i></div>
                 <div class="card-actions compact">
@@ -2903,7 +2918,7 @@
         const nextDelta = Math.max(0, nextEffect - currentEffect);
         const isRecommended = !!recommendation && !recommendation.maxed;
         return `
-            <article class="research-card ${canUpgradeResearch(researchId) ? 'ready' : ''}">
+            <article class="research-card compact-list-card ${canUpgradeResearch(researchId) ? 'ready' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${t('researchPanelTitle')}</div>
@@ -2912,11 +2927,13 @@
                     <div class="card-number">Lv.${level} / ${maxLevel}</div>
                 </div>
                 <div class="card-copy">${meta.desc}</div>
-                <div class="chip-row">
-                    <span class="mini-chip">${t('researchEffect')} ${currentEffect}%</span>
-                    ${!maxed ? `<span class="mini-chip">${getLocalized({ zh: `下一级 +${nextDelta}%`, en: `Next +${nextDelta}%` })}</span>` : ''}
-                    ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: `推荐位 ${researchPlanIndexLabel(recommendation, state.lang)}`, en: `Priority ${researchPlanIndexLabel(recommendation, state.lang)}` })}</span>` : ''}
-                    <span class="mini-chip">${maxed ? t('researchMaxed') : `${t('researchCost')} ${formatCompact(cost)}G`}</span>
+                <div class="chip-row compact">
+                    ${renderLimitedChipMarkup([
+                        `<span class="mini-chip">${t('researchEffect')} ${currentEffect}%</span>`,
+                        !maxed ? `<span class="mini-chip">${getLocalized({ zh: `下一级 +${nextDelta}%`, en: `Next +${nextDelta}%` })}</span>` : '',
+                        isRecommended ? `<span class="mini-chip">${getLocalized({ zh: `推荐位 ${researchPlanIndexLabel(recommendation, state.lang)}`, en: `Priority ${researchPlanIndexLabel(recommendation, state.lang)}` })}</span>` : '',
+                        `<span class="mini-chip">${maxed ? t('researchMaxed') : `${t('researchCost')} ${formatCompact(cost)}G`}</span>`
+                    ], { limit: 3 })}
                 </div>
                 ${isRecommended ? `<div class="card-copy">${recommendation.reason}</div>` : ''}
                 <div class="card-actions compact">
@@ -3061,7 +3078,7 @@
             </div>
             <div class="mission-grid">
                 ${missionViews.map((mission) => `
-                    <article class="mission-card ${mission.claimable ? 'claimable' : ''} ${mission.claimed ? 'claimed' : ''}">
+                    <article class="mission-card compact-list-card ${mission.claimable ? 'claimable' : ''} ${mission.claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
                                 <div class="card-kicker">${mission.claimable ? t('missionReadyDot') : t(mission.claimed ? 'missionClaimed' : 'missionLocked')}</div>
@@ -3071,7 +3088,7 @@
                         </div>
                         <div class="card-copy">${mission.desc}</div>
                         <div class="progress-line"><i style="width:${(mission.progressRate * 100).toFixed(2)}%;"></i></div>
-                        <div class="reward-row">${mission.rewardChips}</div>
+                        <div class="reward-row compact">${mission.rewardChips}</div>
                         <div class="card-actions compact">
                             <button class="primary-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${mission.claimable ? '' : 'disabled'}>
                                 ${mission.claimed ? t('missionClaimed') : t('missionClaim')}
@@ -3170,7 +3187,7 @@
             </div>
             <div class="season-grid">
                 ${nodes.map(({ node, index, claimable, claimed }) => `
-                    <article class="season-node ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
+                    <article class="season-node compact-list-card ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
                                 <div class="card-kicker">${claimable ? t('seasonReadyDot') : `XP ${node.xp}`}</div>
@@ -3178,7 +3195,7 @@
                             </div>
                             <div class="card-number">${formatCompact(node.xp)} XP</div>
                         </div>
-                        <div class="reward-row">${renderRewardChips(node.reward)}</div>
+                        <div class="reward-row compact">${renderRewardChips(node.reward, { limit: 3 })}</div>
                         <div class="card-actions compact">
                             <button class="primary-btn" type="button" data-action="claimSeason" data-value="${node.id}" ${claimable ? '' : 'disabled'}>
                                 ${claimed ? t('seasonClaimed') : t('seasonClaim')}
@@ -3247,7 +3264,7 @@
 
     function renderGoldShopCard() {
         return `
-            <article class="shop-card">
+            <article class="shop-card compact-list-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">920 G</div>
@@ -3256,8 +3273,8 @@
                     <div class="card-number">${t('fragmentLabel')}</div>
                 </div>
                 <div class="card-copy">${t('shopGoldDesc')}</div>
-                <div class="reward-row">${renderRewardChips({ fragments: { frost: 10, rocket: 10, chain: 6 }, gold: 120 })}</div>
-                <div class="card-actions">
+                <div class="reward-row compact">${renderRewardChips({ fragments: { frost: 10, rocket: 10, chain: 6 }, gold: 120 }, { limit: 3 })}</div>
+                <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="buyShop" data-value="goldCrate" ${state.save.gold >= 920 ? '' : 'disabled'}>${t('shopBuy')}</button>
                 </div>
             </article>
@@ -3266,7 +3283,7 @@
 
     function renderCoreShopCard() {
         return `
-            <article class="shop-card">
+            <article class="shop-card compact-list-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">34 C</div>
@@ -3275,8 +3292,8 @@
                     <div class="card-number">${state.lang === 'zh' ? '稀有箱' : 'Rare Box'}</div>
                 </div>
                 <div class="card-copy">${t('shopCoreDesc')}</div>
-                <div class="reward-row">${renderRewardChips({ gold: 280, fragments: { chain: 12, rail: 8 } })}</div>
-                <div class="card-actions">
+                <div class="reward-row compact">${renderRewardChips({ gold: 280, fragments: { chain: 12, rail: 8 } }, { limit: 3 })}</div>
+                <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="buyShop" data-value="coreCrate" ${state.save.cores >= 34 ? '' : 'disabled'}>${t('shopBuy')}</button>
                 </div>
             </article>
@@ -3626,15 +3643,15 @@
                 `<span class="mini-chip">${getLocalized({ zh: '赞助专供', en: 'Sponsor Only' })}</span>`,
                 `<span class="mini-chip">${getLocalized({ zh: '首充后开放', en: 'Unlocks After First Top-Up' })}</span>`,
                 isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '后期高价值', en: 'Late-Game Value' })}</span>` : ''
-            ].filter(Boolean).join('')
+            ].filter(Boolean)
             : [
                 `<span class="mini-chip">${getLocalized({ zh: `已购买 ${purchases} 次`, en: `${purchases} bought` })}</span>`,
                 `<span class="mini-chip">${offer.priceType === 'gold' ? getLocalized({ zh: '金币消耗点', en: 'Gold sink' }) : getLocalized({ zh: '能核消耗点', en: 'Core sink' })}</span>`,
                 offer.requiresSponsor ? `<span class="mini-chip">${getLocalized({ zh: '赞助专供', en: 'Sponsor Only' })}</span>` : '',
                 isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''
-            ].filter(Boolean).join('');
+            ].filter(Boolean);
         return `
-            <article class="shop-card ${lockedBySponsor ? 'premium' : ''} ${canAfford ? 'mission-card claimable' : ''}">
+            <article class="shop-card compact-list-card ${lockedBySponsor ? 'premium' : ''} ${canAfford ? 'mission-card claimable' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${formatCompact(cost)} ${priceSuffix}</div>
@@ -3648,8 +3665,8 @@
                         en: `Unlocks after your first verified payment. ${getLocalized(offer.desc)}`
                     })
                     : getLocalized(offer.desc)}</div>
-                <div class="reward-row">${chips}</div>
-                <div class="reward-row compact">${renderRewardChips(preview, { limit: 4 })}</div>
+                <div class="reward-row compact">${renderLimitedChipMarkup(chips, { limit: 3 })}</div>
+                <div class="reward-row compact">${renderRewardChips(preview, { limit: 3 })}</div>
                 <div class="card-actions compact">
                     ${lockedBySponsor
                         ? `<button class="primary-btn" type="button" data-action="openPayment" data-value="${paymentOfferId}">${getLocalized({ zh: '去解锁', en: 'Unlock' })}</button>`
@@ -3824,7 +3841,7 @@
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const isRecommended = strategyPlan?.paymentRoute?.offer.id === offer.id;
         return `
-            <article class="shop-card paypack" style="--offer-accent:${offer.accent};">
+            <article class="shop-card compact-list-card paypack" style="--offer-accent:${offer.accent};">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${getLocalized(offer.badge)}</div>
@@ -3833,13 +3850,15 @@
                     <div class="card-number">$${offer.price.toFixed(2)}</div>
                 </div>
                 <div class="card-copy">${getLocalized(offer.desc)}</div>
-                <div class="reward-row">
-                    <span class="mini-chip">${getLocalized({ zh: '链上校验发奖', en: 'On-chain verified' })}</span>
-                    <span class="mini-chip">TRON (TRC20)</span>
-                    ${!sponsorUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '首充解锁赞助', en: 'Unlocks Sponsor' })}</span>` : ''}
-                    ${isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''}
+                <div class="reward-row compact">
+                    ${renderLimitedChipMarkup([
+                        `<span class="mini-chip">${getLocalized({ zh: '链上校验发奖', en: 'On-chain verified' })}</span>`,
+                        `<span class="mini-chip">TRON (TRC20)</span>`,
+                        !sponsorUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '首充解锁赞助', en: 'Unlocks Sponsor' })}</span>` : '',
+                        isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''
+                    ], { limit: 3 })}
                 </div>
-                <div class="reward-row compact">${renderRewardChips(offer.reward, { limit: 4 })}</div>
+                <div class="reward-row compact">${renderRewardChips(offer.reward, { limit: 3 })}</div>
                 <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">
                         ${getLocalized({ zh: '立即支付', en: 'Pay Now' })}
@@ -3920,7 +3939,7 @@
             ` : ''}
             <div class="season-grid">
                 ${sponsorNodes.map(({ node, index, claimable, claimed }) => `
-                    <article class="season-node ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
+                    <article class="season-node compact-list-card ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
                                 <div class="card-kicker">${claimable ? getLocalized({ zh: '可领取', en: 'Ready' }) : `XP ${node.xp}`}</div>
@@ -3928,7 +3947,7 @@
                             </div>
                             <div class="card-number">${formatCompact(node.xp)} XP</div>
                         </div>
-                        <div class="reward-row">${renderRewardChips(node.reward)}</div>
+                        <div class="reward-row compact">${renderRewardChips(node.reward, { limit: 3 })}</div>
                         <div class="card-actions compact">
                             <button class="primary-btn" type="button" data-action="claimSponsorSeason" data-value="${node.id}" ${claimable ? '' : 'disabled'}>
                                 ${claimed ? t('seasonClaimed') : t('seasonClaim')}
@@ -4889,7 +4908,23 @@
         };
         return state.lang === 'zh' ? mapZh[towerId] : mapEn[towerId];
     }
-    function getMissionView(mission) { const progress = Math.min(mission.target, mission.metric(state.save)); const claimed = state.save.missionClaimed.includes(mission.id); const claimable = !claimed && progress >= mission.target; return { id: mission.id, title: getLocalized(mission.title), desc: getLocalized(mission.desc), target: mission.target, progress, progressRate: mission.target <= 0 ? 1 : progress / mission.target, rewardChips: renderRewardChips(mission.reward), claimable, claimed, sort: claimable ? 4000 : claimed ? 100 : 1000 + progress }; }
+    function getMissionView(mission) {
+        const progress = Math.min(mission.target, mission.metric(state.save));
+        const claimed = state.save.missionClaimed.includes(mission.id);
+        const claimable = !claimed && progress >= mission.target;
+        return {
+            id: mission.id,
+            title: getLocalized(mission.title),
+            desc: getLocalized(mission.desc),
+            target: mission.target,
+            progress,
+            progressRate: mission.target <= 0 ? 1 : progress / mission.target,
+            rewardChips: renderRewardChips(mission.reward, { limit: 3 }),
+            claimable,
+            claimed,
+            sort: claimable ? 4000 : claimed ? 100 : 1000 + progress
+        };
+    }
     function getTowerSortScore(towerId) { const level = getTowerLevel(towerId); const equipped = state.save.laneLoadout.includes(towerId) ? 1000 : 0; const ready = (level <= 0 && (state.save.towerFragments[towerId] || 0) >= getUnlockNeed(towerId)) || (level > 0 && level < 8 && state.save.gold >= getTowerUpgradeCost(towerId)) ? 400 : 0; return equipped + ready + level * 20 + (state.save.towerFragments[towerId] || 0); }
     function capitalize(value) { return value ? value.charAt(0).toUpperCase() + value.slice(1) : ''; }
     function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
