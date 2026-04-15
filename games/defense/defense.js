@@ -3036,7 +3036,7 @@
                         { label: getLocalized({ zh: '进行中', en: 'Active' }), value: String(missionActiveCount) },
                         { label: getLocalized({ zh: '完成率', en: 'Progress' }), value: `${missionCompletionRate}%` }
                     ])}
-                    ${missionBundle.count > 0 ? `<div class="reward-row compact">${renderRewardChips(missionBundle.reward, { limit: 4 })}</div>` : ''}
+                    ${missionBundle.count > 0 ? `<div class="reward-row compact">${renderRewardChips(missionBundle.reward, { limit: 3 })}</div>` : ''}
                     <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="claimAllMissions" ${missionBundle.count > 0 ? '' : 'disabled'}>
                             ${getLocalized({ zh: '一键领取', en: 'Claim All' })}
@@ -3177,7 +3177,7 @@
                         { label: getLocalized({ zh: '下一标准档', en: 'Next Node' }), value: nextStandardNode ? formatCompact(nextStandardNode.node.xp) : getLocalized({ zh: '完成', en: 'Done' }) },
                         { label: getLocalized({ zh: '当前 XP', en: 'Current XP' }), value: formatCompact(state.save.seasonXp) }
                     ])}
-                    ${seasonBundle.count > 0 ? `<div class="reward-row compact">${renderRewardChips(seasonBundle.reward, { limit: 4 })}</div>` : ''}
+                    ${seasonBundle.count > 0 ? `<div class="reward-row compact">${renderRewardChips(seasonBundle.reward, { limit: 3 })}</div>` : ''}
                     <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="claimAllSeason" ${seasonBundle.count > 0 ? '' : 'disabled'}>
                             ${getLocalized({ zh: '一键领取', en: 'Claim All' })}
@@ -3254,7 +3254,7 @@
                 <div class="reward-row">
                     <span class="mini-chip">${sponsorUnlocked ? getLocalized({ zh: '赞助加成已生效', en: 'Sponsor boost active' }) : getLocalized({ zh: '首充可升级每日补给', en: 'Top-up unlocks daily boost' })}</span>
                 </div>
-                <div class="reward-row compact">${renderRewardChips(supplyReward, { limit: 4 })}</div>
+                <div class="reward-row compact">${renderRewardChips(supplyReward, { limit: 3 })}</div>
                 <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="claimDaily" data-value="daily" ${ready ? '' : 'disabled'}>${ready ? getLocalized({ zh: '领取', en: 'Claim' }) : `${t('shopSoldOut')} · ${remaining}`}</button>
                 </div>
@@ -3757,7 +3757,7 @@
                 </div>
                 ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点预览', en: 'Next Sponsor Reward' })}</span>
-                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}
+                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
                 </div>` : ''}
                 <div class="card-actions compact" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
@@ -3803,7 +3803,7 @@
                 </div>
                 ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点奖励', en: 'Next Sponsor Reward' })}</span>
-                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}
+                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
                 </div>` : ''}
                 <div class="shop-kpi-grid">
                     <div class="shop-kpi">
@@ -3887,8 +3887,8 @@
                     <div class="card-copy">${getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道，并随赛季经验追加额外奖励。', en: 'Any verified top-up unlocks the Sponsor track and adds extra rewards as Season XP grows.' })}</div>
                     ${nextSponsorNode ? `<div class="reward-row compact">
                         <span class="mini-chip">${getLocalized({ zh: '解锁后首个赞助节点', en: 'First Sponsor Node After Unlock' })}</span>
-                        ${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}
-                    </div>` : `<div class="reward-row compact">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } }, { limit: 4 })}</div>`}
+                        ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
+                    </div>` : `<div class="reward-row compact">${renderRewardChips({ gold: 1800, cores: 20, fragments: { chain: 12, rail: 8 } }, { limit: 3 })}</div>`}
                     <div class="card-actions compact">
                         <button class="primary-btn" type="button" data-action="openPayment" data-value="${strategyPlan.paymentRoute.offer.id}">${getLocalized({ zh: '立即解锁', en: 'Unlock Now' })}</button>
                     </div>
@@ -3927,7 +3927,7 @@
                     <div class="card-copy">${nextSponsorNode.ready
                         ? getLocalized({ zh: '这个节点已经达标，可直接从当前页领取。', en: 'This node is ready and can be claimed from the current page.' })
                         : getLocalized({ zh: '继续抬升赛季经验，就能拿到这一档赞助奖励。', en: 'Keep raising Season XP to unlock this sponsor reward tier.' })}</div>
-                    <div class="reward-row compact">${renderRewardChips(nextSponsorNode.node.reward, { limit: 4 })}</div>
+                    <div class="reward-row compact">${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}</div>
                     <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${nextSponsorNode.ready ? 'claimAllSeason' : 'openTab'}" data-value="${nextSponsorNode.ready ? 'season' : 'shop'}">
                             ${nextSponsorNode.ready

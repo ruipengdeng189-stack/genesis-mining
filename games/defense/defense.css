@@ -1681,17 +1681,21 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     .panel-head {
-        gap: 8px;
+        gap: 6px;
     }
 
     .panel-head h3 {
-        font-size: 18px;
+        font-size: 17px;
     }
 
     .panel-head p {
         margin-top: 2px;
-        font-size: 12px;
-        line-height: 1.4;
+        font-size: 11px;
+        line-height: 1.32;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        overflow: hidden;
     }
 
     .defense-shell {
@@ -2291,13 +2295,22 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body:not([data-defense-tab="defend"]) .topbar {
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    body:not([data-defense-tab="defend"]) .topbar-row .ghost-btn,
+    body:not([data-defense-tab="defend"]) .topbar-actions .ghost-btn,
+    body:not([data-defense-tab="defend"]) .topbar-actions .icon-btn {
+        min-height: 34px;
+        padding: 0 8px;
+        border-radius: 10px;
+        font-size: 11px;
     }
 
     body:not([data-defense-tab="defend"]) .hero-card {
-        gap: 10px;
-        padding: 12px;
+        gap: 8px;
+        padding: 10px;
     }
 
     body:not([data-defense-tab="defend"]) .eyebrow {
@@ -2305,18 +2318,18 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body:not([data-defense-tab="defend"]) .hero-copy h1 {
-        margin: 0 0 4px;
-        font-size: 24px;
+        margin: 0;
+        font-size: 22px;
     }
 
     body:not([data-defense-tab="defend"]) .hero-copy p {
-        font-size: 12px;
+        display: none;
     }
 
     body:not([data-defense-tab="defend"]) .summary-grid {
         display: flex;
         flex-wrap: nowrap;
-        gap: 8px;
+        gap: 6px;
         overflow-x: auto;
         padding-bottom: 2px;
         scrollbar-width: none;
@@ -2328,18 +2341,105 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     body:not([data-defense-tab="defend"]) .summary-item {
-        flex: 0 0 108px;
+        flex: 0 0 92px;
         min-height: 0;
-        padding: 8px 10px;
-        gap: 4px;
+        padding: 7px 8px;
+        gap: 3px;
+        border-radius: 12px;
     }
 
     body:not([data-defense-tab="defend"]) .summary-item span {
-        font-size: 10px;
+        font-size: 9px;
     }
 
     body:not([data-defense-tab="defend"]) .summary-item strong {
+        font-size: 13px;
+    }
+
+    .tab-overview-grid > article {
+        flex: 0 0 min(74vw, 250px);
+    }
+
+    .compact-overview-card {
+        gap: 6px;
+    }
+
+    .compact-overview-card .card-top {
+        gap: 6px;
+    }
+
+    .compact-overview-card .card-title {
         font-size: 14px;
+    }
+
+    .compact-overview-card .card-number {
+        font-size: 11px;
+    }
+
+    .compact-overview-card .card-copy {
+        font-size: 10px;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .compact-overview-card .compact-kpi-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .compact-overview-card .compact-kpi {
+        padding: 6px 7px;
+        border-radius: 10px;
+        gap: 3px;
+    }
+
+    .compact-overview-card .compact-kpi span {
+        font-size: 9px;
+    }
+
+    .compact-overview-card .compact-kpi strong,
+    .compact-overview-card .shop-kpi strong {
+        font-size: 12px;
+    }
+
+    .compact-overview-card .reward-row,
+    .compact-overview-card .chip-row {
+        gap: 5px;
+    }
+
+    .compact-overview-card .reward-row .mini-chip,
+    .compact-overview-card .chip-row .mini-chip {
+        min-height: 22px;
+        padding: 0 7px;
+        font-size: 9px;
+    }
+
+    .compact-overview-card .shop-kpi {
+        padding: 7px 8px;
+        border-radius: 11px;
+    }
+
+    .prep-guide-card {
+        flex: 0 0 min(68vw, 220px);
+        padding: 9px 10px;
+    }
+
+    .prep-guide-card strong {
+        font-size: 13px;
+    }
+
+    .prep-guide-step {
+        min-width: 30px;
+        min-height: 20px;
+        padding: 0 8px;
+        font-size: 10px;
+    }
+
+    .prep-guide-note {
+        display: none;
     }
 }
 
@@ -2394,6 +2494,31 @@ body:not([data-defense-tab="defend"]) .stage-card {
     body[data-defense-tab="defend"] .hud-chip strong,
     body[data-defense-tab="defend"] #waveValue {
         font-size: 11px;
+    }
+
+    body:not([data-defense-tab="defend"]) .hero-card {
+        padding: 8px;
+    }
+
+    body:not([data-defense-tab="defend"]) .hero-copy h1 {
+        font-size: 20px;
+    }
+
+    body:not([data-defense-tab="defend"]) .summary-item {
+        flex-basis: 86px;
+        padding: 6px 7px;
+    }
+
+    body:not([data-defense-tab="defend"]) .summary-item strong {
+        font-size: 12px;
+    }
+
+    .tab-overview-grid > article {
+        flex-basis: min(78vw, 232px);
+    }
+
+    .compact-overview-card .compact-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .defend-chip-row .mini-chip {
