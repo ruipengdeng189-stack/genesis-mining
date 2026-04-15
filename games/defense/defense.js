@@ -2974,6 +2974,12 @@
             || (!!focusResearch && (!prepOverview.ready || researchPlan.powerGap > 0))
         );
         const primaryStep = loadoutBlocked ? 'loadout' : (researchBlocked ? 'research' : 'defend');
+        const strategyPlan = getShopStrategyPlan(chapter, saveSnapshot);
+        const paymentRoute = strategyPlan.paymentRoute;
+        const paymentImpact = paymentRoute?.impact || (paymentRoute?.offer ? getPaymentOfferImpact(paymentRoute.offer, chapter, saveSnapshot) : null);
+        const preferredResourceRoute = [strategyPlan.goldRoute, strategyPlan.coreRoute]
+            .filter(Boolean)
+            .sort((a, b) => Number(!!b.affordable) - Number(!!a.affordable) || b.score - a.score)[0] || null;
         const refillAction = economyPreview.dailyReady
             ? { action: 'claimDaily', value: 'daily', label: getLocalized({ zh: '先领补给', en: 'Claim Supply' }) }
             : economyPreview.claimableTotal > 0
@@ -3060,11 +3066,145 @@
                 tone: primaryStep === 'defend' ? 'ready' : 'neutral'
             }
         ];
+        const freeRoute = economyPreview.claimableTotal > 0
+            ? {
+                title: getLocalized({ zh: '免费线', en: 'Free Route' }),
+                summary: refillAction.label,
+                detail: getLocalized({
+                    zh: `当前可回收 ${economyPreview.claimableTotal} 个奖励，先把补给 / 任务 / 赛季奖励收掉，再继续补当前卡点。`,
+                    en: `${economyPreview.claimableTotal} rewards are ready. Claim supply, mission, and season rewards first, then continue fixing the current wall.`
+                }),
+                meta: getLocalized({
+                    zh: `任务 ${economyPreview.missionReady} · 赛季 ${economyPreview.seasonReady + economyPreview.sponsorReady} · 日常 ${economyPreview.dailyReady ? '可领' : '冷却中'}`,
+                    en: `Missions ${economyPreview.missionReady} · Season ${economyPreview.seasonReady + economyPreview.sponsorReady} · Daily ${economyPreview.dailyReady ? 'ready' : 'cooldown'}`
+                }),
+                action: refillAction.action,
+                value: refillAction.value,
+                tone: 'ready'
+            }
+            : preferredResourceRoute && preferredResourceRoute.affordable
+                ? {
+                    title: getLocalized({ zh: '资源线', en: 'Resource Route' }),
+                    summary: getLocalized({
+                        zh: `${getLocalized(preferredResourceRoute.offer.title)} 可直接补`,
+                        en: `${getLocalized(preferredResourceRoute.offer.title)} is ready`
+                    }),
+                    detail: preferredResourceRoute.reason,
+                    meta: preferredResourceRoute.offer.priceType === 'core'
+                        ? getLocalized({ zh: `${formatCompact(preferredResourceRoute.cost)}C 可买`, en: `${formatCompact(preferredResourceRoute.cost)}C ready` })
+                        : getLocalized({ zh: `${formatCompact(preferredResourceRoute.cost)}G 可买`, en: `${formatCompact(preferredResourceRoute.cost)}G ready` }),
+                    action: 'openTab',
+                    value: 'shop',
+                    tone: 'neutral'
+                }
+                : primaryStep === 'loadout'
+                    ? {
+                        title: getLocalized({ zh: '免费线', en: 'Free Route' }),
+                        summary: getLocalized({ zh: '先补装配', en: 'Fix loadout first' }),
+                        detail: steps[0].detail,
+                        meta: steps[0].meta,
+                        action: steps[0].action,
+                        value: steps[0].value,
+                        tone: 'neutral'
+                    }
+                    : primaryStep === 'research'
+                        ? {
+                            title: getLocalized({ zh: '免费线', en: 'Free Route' }),
+                            summary: getLocalized({ zh: '先补研究', en: 'Fix research first' }),
+                            detail: steps[1].detail,
+                            meta: steps[1].meta,
+                            action: steps[1].action,
+                            value: steps[1].value,
+                            tone: 'neutral'
+                        }
+                        : {
+                            title: getLocalized({ zh: '免费线', en: 'Free Route' }),
+                            summary: getLocalized({ zh: '直接回防线刷资源', en: 'Farm the chapter' }),
+                            detail: getLocalized({
+                                zh: `${chapter.id} 每局可回收 ${formatCompact(chapter.goldReward)}G / ${formatCompact(chapter.fragmentReward)} 焦点碎片，继续滚资源即可。`,
+                                en: `${chapter.id} returns ${formatCompact(chapter.goldReward)}G and ${formatCompact(chapter.fragmentReward)} focus fragments per run, so keep the resource loop going.`
+                            }),
+                            meta: getLocalized({ zh: `当前差 ${formatCompact(roadmap.powerGap)} 战力`, en: `Gap ${formatCompact(roadmap.powerGap)}` }),
+                            action: steps[2].action,
+                            value: steps[2].value,
+                            tone: 'ready'
+                        };
+        const paidRoute = !paymentRoute || !paymentImpact
+            ? {
+                title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                summary: getLocalized({ zh: '当前暂无推荐', en: 'No current recommendation' }),
+                detail: getLocalized({
+                    zh: '等出现更明确卡点时，再结合商城和赞助路线做判断。',
+                    en: 'Wait for a clearer wall before using the shop and sponsor route for a stronger recommendation.'
+                }),
+                meta: getLocalized({ zh: '先走免费线', en: 'Free route first' }),
+                action: 'openTab',
+                value: 'shop',
+                tone: 'neutral'
+            }
+            : paymentImpact.currentGap <= 0
+                ? {
+                    title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                    summary: getLocalized({ zh: '当前无需充值', en: 'No top-up needed' }),
+                    detail: paymentRoute.sponsorUnlocked
+                        ? getLocalized({
+                            zh: `当前已经达标，充值更偏向赞助常驻成长；若要继续拉长期收益，可看 ${getLocalized(paymentRoute.offer.name)}。`,
+                            en: `You are already ready, so top-up now is mainly about long-term Sponsor growth; ${getLocalized(paymentRoute.offer.name)} is the next optional lane.`
+                        })
+                        : getLocalized({
+                            zh: '当前已经达标，首充的主要价值转为解锁赞助轨道和后续赛季额外奖励。',
+                            en: 'You are already ready, so a first top-up is now mostly about unlocking the Sponsor track and future season rewards.'
+                        }),
+                    meta: paymentRoute.sponsorUnlocked ? getLocalized({ zh: '偏长期成长', en: 'Long-term growth' }) : getLocalized({ zh: '首充解锁赞助', en: 'First top-up unlocks Sponsor' }),
+                    action: 'openPayment',
+                    value: paymentRoute.offer.id,
+                    tone: 'neutral'
+                }
+                : paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
+                    ? {
+                        title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                        summary: getLocalized({ zh: '先领赞助奖励', en: 'Claim sponsor rewards first' }),
+                        detail: getLocalized({
+                            zh: `赛季页已有 ${paymentRoute.sponsorReady} 个赞助奖励可领，先回收再判断要不要继续追 ${getLocalized(paymentRoute.offer.name)}。`,
+                            en: `${paymentRoute.sponsorReady} sponsor rewards are already ready in Season. Claim them before deciding whether to chase ${getLocalized(paymentRoute.offer.name)}.`
+                        }),
+                        meta: getLocalized({ zh: '先领奖励再补包', en: 'Claim before topping up' }),
+                        action: 'openTab',
+                        value: 'season',
+                        tone: 'ready'
+                    }
+                    : {
+                        title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                        summary: paymentImpact.breaksWall
+                            ? getLocalized({ zh: `${getLocalized(paymentRoute.offer.name)} 可直过`, en: `${getLocalized(paymentRoute.offer.name)} breaks the wall` })
+                            : getLocalized({ zh: `推荐 ${getLocalized(paymentRoute.offer.name)}`, en: `${getLocalized(paymentRoute.offer.name)} recommended` }),
+                        detail: paymentImpact.breaksWall
+                            ? getLocalized({
+                                zh: `按当前卡点估算，这档总补强约 +${formatCompact(paymentImpact.totalPowerGain)}，可直接抹平本章缺口。`,
+                                en: `At the current wall, this pack adds about +${formatCompact(paymentImpact.totalPowerGain)} total and can erase the chapter gap outright.`
+                            })
+                            : paymentRoute.reason,
+                        meta: paymentImpact.breaksWall
+                            ? getLocalized({ zh: `总补强 +${formatCompact(paymentImpact.totalPowerGain)}`, en: `+${formatCompact(paymentImpact.totalPowerGain)} total` })
+                            : getLocalized({ zh: `还剩 ${formatCompact(paymentImpact.remainingGap)} 缺口`, en: `${formatCompact(paymentImpact.remainingGap)} gap left` }),
+                        action: 'openPayment',
+                        value: paymentRoute.offer.id,
+                        tone: paymentImpact.breaksWall ? 'ready' : 'warn'
+                    };
         return {
             primaryStep,
             steps,
             refillAction,
             wallMeta,
+            gapStatus: {
+                label: getLocalized({ zh: '当前卡点', en: 'Current Wall' }),
+                value: roadmap.powerGap > 0 ? formatCompact(roadmap.powerGap) : getLocalized({ zh: '已达标', en: 'Ready' }),
+                detail: roadmap.powerGap > 0
+                    ? getLocalized({ zh: `${wallMeta.label} · 推荐 ${formatCompact(chapter.recommended)} / 当前 ${formatCompact(roadmap.currentPower)}`, en: `${wallMeta.label} · target ${formatCompact(chapter.recommended)} / current ${formatCompact(roadmap.currentPower)}` })
+                    : getLocalized({ zh: `推荐 ${formatCompact(chapter.recommended)} / 当前 ${formatCompact(roadmap.currentPower)}`, en: `target ${formatCompact(chapter.recommended)} / current ${formatCompact(roadmap.currentPower)}` })
+            },
+            freeRoute,
+            paidRoute,
             summaryTitle: primaryStep === 'loadout'
                 ? getLocalized({ zh: '现在先补装配', en: 'Loadout first' })
                 : primaryStep === 'research'
@@ -3298,6 +3438,23 @@
                             <div class="card-number">${growthFlow.wallMeta.shortLabel}</div>
                         </div>
                         <div class="card-copy">${growthFlow.summaryCopy}</div>
+                        <div class="growth-route-kpi-grid">
+                            <div class="growth-route-kpi">
+                                <span>${growthFlow.gapStatus.label}</span>
+                                <strong>${growthFlow.gapStatus.value}</strong>
+                                <small>${growthFlow.gapStatus.detail}</small>
+                            </div>
+                            <div class="growth-route-kpi">
+                                <span>${getLocalized({ zh: '免费替代', en: 'Free Alternative' })}</span>
+                                <strong>${growthFlow.freeRoute.summary}</strong>
+                                <small>${growthFlow.freeRoute.meta}</small>
+                            </div>
+                            <div class="growth-route-kpi">
+                                <span>${getLocalized({ zh: '充值刺激', en: 'Top-up Push' })}</span>
+                                <strong>${growthFlow.paidRoute.summary}</strong>
+                                <small>${growthFlow.paidRoute.meta}</small>
+                            </div>
+                        </div>
                         <div class="growth-route-grid">
                             ${growthFlow.steps.map((step) => `
                                 <button class="growth-route-step is-${step.tone}" type="button" data-action="${step.action}" data-value="${step.value}">
@@ -3309,6 +3466,24 @@
                                     <i>${step.meta}</i>
                                 </button>
                             `).join('')}
+                        </div>
+                        <div class="growth-route-lane-grid">
+                            <button class="growth-route-lane is-${growthFlow.freeRoute.tone}" type="button" data-action="${growthFlow.freeRoute.action}" data-value="${growthFlow.freeRoute.value}">
+                                <div class="growth-route-top">
+                                    <span>${growthFlow.freeRoute.title}</span>
+                                    <strong>${growthFlow.freeRoute.summary}</strong>
+                                </div>
+                                <small>${growthFlow.freeRoute.detail}</small>
+                                <i>${growthFlow.freeRoute.meta}</i>
+                            </button>
+                            <button class="growth-route-lane is-${growthFlow.paidRoute.tone}" type="button" data-action="${growthFlow.paidRoute.action}" data-value="${growthFlow.paidRoute.value}">
+                                <div class="growth-route-top">
+                                    <span>${growthFlow.paidRoute.title}</span>
+                                    <strong>${growthFlow.paidRoute.summary}</strong>
+                                </div>
+                                <small>${growthFlow.paidRoute.detail}</small>
+                                <i>${growthFlow.paidRoute.meta}</i>
+                            </button>
                         </div>
                         <div class="reward-row compact">
                             <span class="mini-chip">${growthFlow.supportMeta}</span>

@@ -1024,6 +1024,80 @@ body:not([data-defense-tab="defend"]) .stage-card {
     gap: 8px;
 }
 
+.growth-route-kpi-grid,
+.growth-route-lane-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.growth-route-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.growth-route-kpi {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+}
+
+.growth-route-kpi span {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.growth-route-kpi strong {
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.growth-route-kpi small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.growth-route-lane-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.growth-route-lane {
+    appearance: none;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.growth-route-lane.is-ready {
+    border-color: rgba(101, 255, 178, 0.32);
+    background: rgba(101, 255, 178, 0.08);
+}
+
+.growth-route-lane.is-warn {
+    border-color: rgba(255, 210, 107, 0.3);
+    background: rgba(255, 210, 107, 0.08);
+}
+
+.growth-route-lane small,
+.growth-route-lane i {
+    font-style: normal;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .growth-route-step {
     appearance: none;
     width: 100%;
@@ -2542,6 +2616,33 @@ body:not([data-defense-tab="defend"]) .stage-card {
         padding: 9px 10px;
         border-radius: 14px;
         gap: 4px;
+    }
+
+    .growth-route-kpi-grid,
+    .growth-route-lane-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .growth-route-kpi,
+    .growth-route-lane {
+        padding: 9px 10px;
+        border-radius: 14px;
+    }
+
+    .growth-route-kpi span {
+        font-size: 9px;
+    }
+
+    .growth-route-kpi strong {
+        font-size: 12px;
+    }
+
+    .growth-route-kpi small,
+    .growth-route-lane small,
+    .growth-route-lane i {
+        font-size: 10px;
+        line-height: 1.32;
     }
 
     .growth-route-top span {
