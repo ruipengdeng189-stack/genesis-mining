@@ -133,6 +133,7 @@
                         <div class="overlay-card">
                             <div class="overlay-kicker" id="resultKicker">RUN COMPLETE</div>
                             <h2 id="resultTitle">防线结算</h2>
+                            <p class="overlay-result-note" id="resultSummary">本局收益已结算，准备决定下一步推进。</p>
                             <div class="result-grid">
                                 <div>
                                     <span data-i18n="goldGainLabel">金币收益</span>
@@ -147,10 +148,23 @@
                                     <strong id="resultSeason">0</strong>
                                 </div>
                                 <div>
-                                    <span data-i18n="chapterProgressLabel">章节进度</span>
-                                    <strong id="resultProgress">1-1</strong>
+                                    <span data-i18n="resultWavesLabel">完成波次</span>
+                                    <strong id="resultProgress">0 / 6</strong>
                                 </div>
                             </div>
+                            <div class="result-flow-grid">
+                                <div class="result-flow-card">
+                                    <span data-i18n="resultOutcomeLabel">推进结果</span>
+                                    <strong id="resultOutcome">守住 1-1 · 解锁 1-2</strong>
+                                    <small id="resultOutcomeMeta">击杀 0 · 伤害 0</small>
+                                </div>
+                                <div class="result-flow-card">
+                                    <span data-i18n="resultNextStepLabel">下一步</span>
+                                    <strong id="resultNextStep">前往 1-2 部署</strong>
+                                    <small id="resultNextStepMeta">先看敌潮与推荐线路，再决定是否直接开打。</small>
+                                </div>
+                            </div>
+                            <div class="reward-list-title" data-i18n="resultFragmentsTitle">本局碎片回流</div>
                             <div class="reward-list" id="resultFragments"></div>
                             <div class="result-meta" id="resultMeta"></div>
                             <div class="overlay-actions">

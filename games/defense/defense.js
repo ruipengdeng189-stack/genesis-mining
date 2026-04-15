@@ -48,7 +48,11 @@
             seasonGainLabel: '赛季经验',
             chapterProgressLabel: '章节进度',
             restartRun: '再守一局',
-            nextChapter: '挑战下一章',
+            nextChapter: '前往下一章部署',
+            resultWavesLabel: '完成波次',
+            resultOutcomeLabel: '推进结果',
+            resultNextStepLabel: '下一步',
+            resultFragmentsTitle: '本局碎片回流',
             loadoutShortcut: '前往装配',
             pauseBtn: '暂停',
             tabDefend: '防线',
@@ -257,7 +261,11 @@
             seasonGainLabel: 'Season XP',
             chapterProgressLabel: 'Chapter Progress',
             restartRun: 'Run Again',
-            nextChapter: 'Next Chapter',
+            nextChapter: 'Prep Next Chapter',
+            resultWavesLabel: 'Waves Cleared',
+            resultOutcomeLabel: 'Outcome',
+            resultNextStepLabel: 'Next Step',
+            resultFragmentsTitle: 'Fragment Returns',
             loadoutShortcut: 'Open Loadout',
             pauseBtn: 'Pause',
             tabDefend: 'Defend',
@@ -705,10 +713,15 @@
         ui.resultOverlay = document.getElementById('resultOverlay');
         ui.resultKicker = document.getElementById('resultKicker');
         ui.resultTitle = document.getElementById('resultTitle');
+        ui.resultSummary = document.getElementById('resultSummary');
         ui.resultGold = document.getElementById('resultGold');
         ui.resultCore = document.getElementById('resultCore');
         ui.resultSeason = document.getElementById('resultSeason');
         ui.resultProgress = document.getElementById('resultProgress');
+        ui.resultOutcome = document.getElementById('resultOutcome');
+        ui.resultOutcomeMeta = document.getElementById('resultOutcomeMeta');
+        ui.resultNextStep = document.getElementById('resultNextStep');
+        ui.resultNextStepMeta = document.getElementById('resultNextStepMeta');
         ui.resultFragments = document.getElementById('resultFragments');
         ui.resultMeta = document.getElementById('resultMeta');
         ui.waveValue = document.getElementById('waveValue');
@@ -776,15 +789,7 @@
         ui.resumeBtn.addEventListener('click', resumeBattle);
         ui.quitRunBtn.addEventListener('click', () => finishBattle(false, true));
         ui.restartRunBtn.addEventListener('click', () => startBattle(true));
-        ui.nextChapterBtn.addEventListener('click', () => {
-            if (state.save.chapterIndex < CHAPTERS.length - 1) {
-                state.save.chapterIndex = Math.min(state.save.chapterIndex + 1, state.save.bestChapterIndex);
-            }
-            saveProgress();
-            hideOverlay(ui.resultOverlay);
-            updateStartPanel();
-            renderAll();
-        });
+        ui.nextChapterBtn.addEventListener('click', openNextChapterSetupFromResult);
 
         ui.pauseBtn.addEventListener('click', pauseBattle);
         ui.loadoutShortcutBtn.addEventListener('click', () => switchTab('loadout'));
@@ -1493,7 +1498,7 @@
 
     function syncStartOverlayState() {
         if (!ui.startOverlay) return;
-        const shouldShow = !state.battle.running && !state.battle.finished && !state.battle.awaitingUpgrade && !state.battle.paused;
+        const shouldShow = state.activeTab === 'defend' && !state.battle.running && !state.battle.finished && !state.battle.awaitingUpgrade && !state.battle.paused;
         if (shouldShow) showOverlay(ui.startOverlay);
         else hideOverlay(ui.startOverlay);
     }
@@ -5877,6 +5882,28 @@
         renderAll();
     }
 
+    function clearFinishedBattleState(nextTab = state.activeTab) {
+        state.battle = createEmptyBattle();
+        state.activeTab = nextTab;
+        lastBattleInsightStamp = '';
+        hideOverlay(ui.startOverlay);
+        hideOverlay(ui.resultOverlay);
+        hideOverlay(ui.pauseOverlay);
+        hideOverlay(ui.upgradeOverlay);
+    }
+
+    function openNextChapterSetupFromResult() {
+        const nextIndex = Math.min(state.save.chapterIndex + 1, state.save.bestChapterIndex);
+        if (nextIndex !== state.save.chapterIndex) {
+            state.save.chapterIndex = nextIndex;
+        }
+        clearFinishedBattleState('prep');
+        saveProgress();
+        updateStartPanel();
+        renderAll();
+        scrollToActiveSection('prep');
+    }
+
     function updateStartPanel() {
         const chapter = getCurrentChapter();
         const mainEnemy = chapter.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ');
@@ -6475,6 +6502,7 @@
         const chapter = getCurrentChapter();
         const sponsorTier = getSponsorTierSummary();
         const finalChapterId = CHAPTERS[CHAPTERS.length - 1].id;
+        const currentChapterIndex = state.save.chapterIndex;
         let finishToastKey = win ? 'toastRunWin' : 'toastRunLose';
         state.battle.running = false;
         state.battle.finished = true;
@@ -6507,7 +6535,25 @@
             if (chapter.id === finalChapterId && chapterWins[chapter.id] === 1) finishToastKey = 'toastFinalChapterClear';
             else if (prevBest !== state.save.bestChapterIndex) finishToastKey = 'toastChapterUnlocked';
         }
-        state.battle.result = { win, forcedQuit: !!forcedQuit, goldGain, coreGain, seasonGain, fragmentGain, chapterProgress: CHAPTERS[state.save.bestChapterIndex].id };
+        const nextChapterIndex = win
+            ? Math.min(currentChapterIndex + 1, state.save.bestChapterIndex)
+            : currentChapterIndex;
+        const nextChapterReady = win && nextChapterIndex > currentChapterIndex;
+        state.battle.result = {
+            win,
+            forcedQuit: !!forcedQuit,
+            goldGain,
+            coreGain,
+            seasonGain,
+            fragmentGain,
+            chapterId: chapter.id,
+            chapterRecommended: chapter.recommended,
+            clearedWaves,
+            chapterProgress: CHAPTERS[state.save.bestChapterIndex].id,
+            nextChapterId: nextChapterReady ? CHAPTERS[nextChapterIndex].id : '',
+            nextChapterReady,
+            powerRating: getPowerRating(state.save)
+        };
         saveProgress();
         renderResultOverlay();
         renderAll();
@@ -6517,18 +6563,47 @@
     function renderResultOverlay() {
         const result = state.battle.result;
         if (!result) return;
+        const statsLine = t('resultStats')
+            .replace('{kills}', formatCompact(state.battle.runStats.kills))
+            .replace('{damage}', formatCompact(Math.round(state.battle.runStats.damage)));
+        const outcomeText = result.win
+            ? (result.nextChapterReady && result.nextChapterId
+                ? getLocalized({ zh: `${result.chapterId} 守住 · 解锁 ${result.nextChapterId}`, en: `${result.chapterId} held · unlocked ${result.nextChapterId}` })
+                : getLocalized({ zh: `${result.chapterId} 守住 · 当前已到最高已解锁章节`, en: `${result.chapterId} held · already at the highest unlocked chapter` }))
+            : getLocalized({ zh: `${result.chapterId} 失守 · 先补短板再冲`, en: `${result.chapterId} failed · patch weak points first` });
+        const nextStepText = result.win
+            ? (result.nextChapterReady && result.nextChapterId
+                ? getLocalized({ zh: `前往 ${result.nextChapterId} 部署`, en: `Prep ${result.nextChapterId}` })
+                : getLocalized({ zh: '继续刷当前章攒资源', en: 'Farm the current chapter' }))
+            : getLocalized({ zh: `继续补强再冲 ${result.chapterId}`, en: `Power up, then retry ${result.chapterId}` });
+        const nextStepMeta = result.win
+            ? (result.nextChapterReady && result.nextChapterId
+                ? getLocalized({ zh: '先看敌潮、推荐战力和三路装配，再决定是否直接开打。', en: 'Review enemies, target power, and lane loadout before starting.' })
+                : getLocalized({ zh: '当前章节已经稳定，建议回部署/装配/研究补资源，为更高章提前备货。', en: 'This chapter is stable now, so shift to setup, loadout, and research to stockpile for later.' }))
+            : getLocalized({ zh: '优先补最弱一路或关键研究，再回来会更稳。', en: 'Patch the weakest lane or key research first for a cleaner retry.' });
+        const fragmentEntries = Object.entries(result.fragmentGain || {}).filter(([, amount]) => Number(amount) > 0);
         ui.resultKicker.textContent = t(result.win ? 'resultWinKicker' : 'resultLoseKicker');
         ui.resultTitle.textContent = t(result.win ? 'resultWinTitle' : 'resultLoseTitle');
+        ui.resultSummary.textContent = result.win
+            ? getLocalized({ zh: `本局成功守住 ${result.chapterId}，收益已经结算，可以决定是继续推下一章还是先回收资源。`, en: `You cleared ${result.chapterId}. Rewards are settled, so now decide between pushing onward or consolidating resources.` })
+            : getLocalized({ zh: `本局止步 ${result.chapterId}，已发放保底收益，先看短板再决定怎么补。`, en: `This run stopped at ${result.chapterId}. Floor rewards are settled, so review the weak point before the next move.` });
         ui.resultGold.textContent = formatCompact(result.goldGain);
         ui.resultCore.textContent = formatCompact(result.coreGain);
         ui.resultSeason.textContent = formatCompact(result.seasonGain);
-        ui.resultProgress.textContent = result.chapterProgress;
-        ui.resultFragments.innerHTML = Object.entries(result.fragmentGain).map(([towerId, amount]) => `<span class="reward-chip">${t('fragmentsGain').replace('{name}', towerLabel(towerId)).replace('{value}', formatCompact(amount))}</span>`).join('');
+        ui.resultProgress.textContent = `${result.clearedWaves} / ${TOTAL_WAVES}`;
+        ui.resultOutcome.textContent = outcomeText;
+        ui.resultOutcomeMeta.textContent = `${statsLine} · ${getLocalized({ zh: `推荐 ${formatCompact(result.chapterRecommended)} · 当前 ${formatCompact(result.powerRating)}`, en: `Target ${formatCompact(result.chapterRecommended)} · Current ${formatCompact(result.powerRating)}` })}`;
+        ui.resultNextStep.textContent = nextStepText;
+        ui.resultNextStepMeta.textContent = nextStepMeta;
+        ui.resultFragments.innerHTML = fragmentEntries.length
+            ? fragmentEntries.map(([towerId, amount]) => `<span class="reward-chip">${t('fragmentsGain').replace('{name}', towerLabel(towerId)).replace('{value}', formatCompact(amount))}</span>`).join('')
+            : `<span class="reward-chip">${getLocalized({ zh: '本局没有额外碎片掉落', en: 'No bonus fragments this run' })}</span>`;
         ui.resultMeta.innerHTML = `
+            <span class="mini-chip">${getLocalized({ zh: `结算章节 ${result.chapterId}`, en: `Settled Chapter ${result.chapterId}` })}</span>
             <span class="mini-chip">${(result.win ? t('chapterProgressWin') : t('chapterProgressLose')).replace('{chapter}', result.chapterProgress)}</span>
-            <span class="mini-chip">${t('resultStats').replace('{kills}', formatCompact(state.battle.runStats.kills)).replace('{damage}', formatCompact(Math.round(state.battle.runStats.damage)))}</span>
+            <span class="mini-chip">${statsLine}</span>
         `;
-        ui.nextChapterBtn.style.display = result.win && state.save.chapterIndex < state.save.bestChapterIndex ? '' : 'none';
+        ui.nextChapterBtn.style.display = result.nextChapterReady ? '' : 'none';
         showOverlay(ui.resultOverlay);
     }
 
