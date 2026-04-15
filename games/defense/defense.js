@@ -559,7 +559,7 @@
             badge: { zh: '首充推荐', en: 'Starter' },
             name: { zh: '前线补给', en: 'Frontline Cache' },
             desc: { zh: '补开荒资源，同时永久开启赞助轨道和首档战斗增益。', en: 'Stabilizes the opener while permanently unlocking the Sponsor track and the first combat perk tier.' },
-            reward: { gold: 4200, cores: 36, seasonXp: 160, fragments: { pulse: 24, laser: 22, harvest: 18 } }
+            reward: { gold: 5600, cores: 48, seasonXp: 220, fragments: { pulse: 30, laser: 28, harvest: 24 } }
         },
         {
             id: 'accelerator',
@@ -568,7 +568,7 @@
             badge: { zh: '中期提速', en: 'Value' },
             name: { zh: '中继加速箱', en: 'Relay Booster' },
             desc: { zh: '补强中期卡点，帮助把减速、爆裂和连锁一路抬起来。', en: 'A mid-loop spike that pushes slow, splash, and chain setups through common chapter walls.' },
-            reward: { gold: 11800, cores: 102, seasonXp: 360, fragments: { frost: 28, rocket: 28, chain: 16 } }
+            reward: { gold: 15600, cores: 136, seasonXp: 480, fragments: { frost: 34, rocket: 34, chain: 20 } }
         },
         {
             id: 'rush',
@@ -577,7 +577,7 @@
             badge: { zh: '冲关实装', en: 'Rush' },
             name: { zh: '压制突围包', en: 'Pressure Breaker' },
             desc: { zh: '专为卡章节点准备，兼顾金币、能核和高压章节需要的高阶碎片。', en: 'Designed for hard chapter walls with extra economy and higher-tier fragments.' },
-            reward: { gold: 18200, cores: 154, seasonXp: 540, fragments: { rocket: 34, chain: 24, rail: 14 } }
+            reward: { gold: 24800, cores: 210, seasonXp: 720, fragments: { rocket: 42, chain: 30, rail: 20 } }
         },
         {
             id: 'sovereign',
@@ -586,7 +586,7 @@
             badge: { zh: '核心成长', en: 'Core' },
             name: { zh: '指挥中枢包', en: 'Command Relay' },
             desc: { zh: '同步补强战力与赛季收益，适合开始冲击中后期章节。', en: 'A stronger growth bundle for deeper chapter pushes and season progress.' },
-            reward: { gold: 28600, cores: 240, seasonXp: 860, fragments: { frost: 34, rocket: 34, chain: 28, rail: 20 } }
+            reward: { gold: 39200, cores: 332, seasonXp: 1120, fragments: { frost: 44, rocket: 44, chain: 34, rail: 26 } }
         },
         {
             id: 'nexus',
@@ -595,7 +595,7 @@
             badge: { zh: '后期核心', en: 'Endgame' },
             name: { zh: '堡垒核心包', en: 'Citadel Core' },
             desc: { zh: '围绕后期阵容补给，直接提高能核储备和连锁 / 轨炮成长速度。', en: 'An endgame pack that boosts core stock and high-tier tower growth.' },
-            reward: { gold: 48800, cores: 410, seasonXp: 1360, fragments: { frost: 38, rocket: 38, chain: 40, rail: 34 } }
+            reward: { gold: 68800, cores: 590, seasonXp: 1780, fragments: { frost: 52, rocket: 52, chain: 52, rail: 44 } }
         },
         {
             id: 'throne',
@@ -604,16 +604,16 @@
             badge: { zh: '终局整备', en: 'Summit' },
             name: { zh: '创世军械库', en: 'Genesis Arsenal' },
             desc: { zh: '覆盖整套塔台成长所需，适合准备长期守线与冲赛季奖励。', en: 'A full arsenal bundle built for long-term defense and season chasing.' },
-            reward: { gold: 72800, cores: 560, seasonXp: 1980, fragments: { pulse: 44, laser: 44, harvest: 44, frost: 40, rocket: 40, chain: 36, rail: 30 } }
+            reward: { gold: 108000, cores: 860, seasonXp: 2680, fragments: { pulse: 56, laser: 56, harvest: 56, frost: 52, rocket: 52, chain: 48, rail: 42 } }
         }
     ];
 
     const DEFENSE_SPONSOR_TIERS = [
-        { id: 'locked', threshold: 0, title: { zh: '未激活', en: 'Locked' }, damageBoost: 0, speedBoost: 0, goldBoost: 0, coreHpBonus: 0, shieldBonus: 0, powerBonus: 0 },
-        { id: 'signal', threshold: 1, title: { zh: '前线赞助', en: 'Frontline Sponsor' }, damageBoost: 0.08, speedBoost: 0.03, goldBoost: 0.12, coreHpBonus: 18, shieldBonus: 14, powerBonus: 120 },
-        { id: 'command', threshold: 6, title: { zh: '指挥赞助', en: 'Command Sponsor' }, damageBoost: 0.16, speedBoost: 0.06, goldBoost: 0.22, coreHpBonus: 34, shieldBonus: 28, powerBonus: 300 },
-        { id: 'dominion', threshold: 16, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, damageBoost: 0.25, speedBoost: 0.1, goldBoost: 0.34, coreHpBonus: 52, shieldBonus: 44, powerBonus: 560 },
-        { id: 'genesis', threshold: 30, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, damageBoost: 0.35, speedBoost: 0.14, goldBoost: 0.48, coreHpBonus: 72, shieldBonus: 60, powerBonus: 860 }
+        { id: 'locked', threshold: 0, title: { zh: '未激活', en: 'Locked' }, damageBoost: 0, speedBoost: 0, goldBoost: 0, coreHpBonus: 0, shieldBonus: 0, powerBonus: 0, eliteDamageBoost: 0, seasonXpBoost: 0, fragmentBoost: 0, coreGainBoost: 0, openingShieldBonus: 0, bossBountyBoost: 0, upgradeChoiceCount: 3, upgradeRerollCount: 0 },
+        { id: 'signal', threshold: 1, title: { zh: '前线赞助', en: 'Frontline Sponsor' }, damageBoost: 0.1, speedBoost: 0.04, goldBoost: 0.16, coreHpBonus: 24, shieldBonus: 18, powerBonus: 180, eliteDamageBoost: 0.14, seasonXpBoost: 0.12, fragmentBoost: 0.1, coreGainBoost: 0.08, openingShieldBonus: 18, bossBountyBoost: 0.12, upgradeChoiceCount: 4, upgradeRerollCount: 1 },
+        { id: 'command', threshold: 6, title: { zh: '指挥赞助', en: 'Command Sponsor' }, damageBoost: 0.19, speedBoost: 0.08, goldBoost: 0.3, coreHpBonus: 42, shieldBonus: 32, powerBonus: 420, eliteDamageBoost: 0.28, seasonXpBoost: 0.22, fragmentBoost: 0.18, coreGainBoost: 0.16, openingShieldBonus: 34, bossBountyBoost: 0.22, upgradeChoiceCount: 4, upgradeRerollCount: 1 },
+        { id: 'dominion', threshold: 16, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, damageBoost: 0.3, speedBoost: 0.13, goldBoost: 0.46, coreHpBonus: 64, shieldBonus: 50, powerBonus: 720, eliteDamageBoost: 0.46, seasonXpBoost: 0.34, fragmentBoost: 0.28, coreGainBoost: 0.26, openingShieldBonus: 54, bossBountyBoost: 0.36, upgradeChoiceCount: 5, upgradeRerollCount: 2 },
+        { id: 'genesis', threshold: 30, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, damageBoost: 0.42, speedBoost: 0.18, goldBoost: 0.64, coreHpBonus: 90, shieldBonus: 70, powerBonus: 1040, eliteDamageBoost: 0.62, seasonXpBoost: 0.48, fragmentBoost: 0.4, coreGainBoost: 0.38, openingShieldBonus: 76, bossBountyBoost: 0.52, upgradeChoiceCount: 5, upgradeRerollCount: 2 }
     ];
 
     const SPONSOR_SEASON_NODES = [
@@ -688,6 +688,8 @@
         ui.startDescription = document.getElementById('startDescription');
         ui.upgradeOverlay = document.getElementById('upgradeOverlay');
         ui.upgradeChoiceGrid = document.getElementById('upgradeChoiceGrid');
+        ui.upgradeActionRow = document.getElementById('upgradeActionRow');
+        ui.upgradeRerollBtn = document.getElementById('upgradeRerollBtn');
         ui.pauseOverlay = document.getElementById('pauseOverlay');
         ui.resultOverlay = document.getElementById('resultOverlay');
         ui.resultKicker = document.getElementById('resultKicker');
@@ -798,6 +800,7 @@
             const button = event.target.closest('[data-upgrade-choice]');
             if (button && state.battle.awaitingUpgrade) applyUpgradeChoice(button.dataset.upgradeChoice);
         });
+        ui.upgradeRerollBtn?.addEventListener('click', rerollUpgradeChoices);
 
         ui.paymentCloseBtn?.addEventListener('click', closePaymentModal);
         ui.paymentModal?.addEventListener('click', (event) => {
@@ -911,6 +914,7 @@
     }
 
     function createEmptyBattle(saveSnapshot = state.save) {
+        const sponsorTier = getSponsorTierSummary(saveSnapshot);
         return {
             running: false,
             paused: false,
@@ -949,8 +953,9 @@
             waveQueueSafetyRetries: 0,
             nextEnemyId: 1,
             nextAlertId: 1,
+            upgradeRerollsLeft: Math.max(0, Number(sponsorTier.upgradeRerollCount) || 0),
             coreHp: getCoreMaxHp(saveSnapshot),
-            shield: 0,
+            shield: Math.max(0, Number(sponsorTier.openingShieldBonus) || 0),
             skillCooldown: 0,
             skillEffectTimer: 0,
             skillEffect: null,
@@ -958,8 +963,9 @@
                 damage: 1,
                 attackSpeed: 1,
                 gold: 1,
-                eliteDamage: 1,
-                coreGain: 1,
+                eliteDamage: 1 + (Number(sponsorTier.eliteDamageBoost) || 0),
+                bossBounty: 1 + (Number(sponsorTier.bossBountyBoost) || 0),
+                coreGain: 1 + (Number(sponsorTier.coreGainBoost) || 0),
                 freezeChance: 0,
                 splashBonus: 0
             },
@@ -1444,6 +1450,7 @@
             const key = node.getAttribute('data-i18n');
             node.textContent = t(key);
         });
+        refreshUpgradeOverlayActions();
     }
 
     function renderAll() {
@@ -1453,6 +1460,7 @@
         renderActionBar();
         renderLaneStrip();
         renderBattleAlerts();
+        refreshUpgradeOverlayActions();
         renderPanel();
         renderTabState();
         if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
@@ -2125,6 +2133,92 @@
         };
     }
 
+    function estimateRewardPowerGain(reward, chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const focusSet = new Set(chapter?.fragmentFocus || []);
+        let totalFragments = 0;
+        let focusFragments = 0;
+        let epicFragments = 0;
+        Object.entries(reward?.fragments || {}).forEach(([towerId, amount]) => {
+            const value = Math.max(0, Number(amount) || 0);
+            totalFragments += value;
+            if (focusSet.has(towerId)) focusFragments += value;
+            if (TOWERS[towerId]?.tier === 'epic') epicFragments += value;
+        });
+        const gold = Math.max(0, Number(reward?.gold) || 0);
+        const cores = Math.max(0, Number(reward?.cores) || 0);
+        const seasonXp = Math.max(0, Number(reward?.seasonXp) || 0);
+        return Math.round(
+            gold / 230
+            + cores * 0.48
+            + seasonXp * 0.05
+            + totalFragments * 1.35
+            + focusFragments * 1.8
+            + epicFragments * 0.7
+        );
+    }
+
+    function getPaymentOfferImpact(offer, chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const currentTier = getSponsorTierSummary(saveSnapshot);
+        const projectedSave = getProjectedPaymentSave(offer, saveSnapshot);
+        const projectedTier = getSponsorTierSummary(projectedSave);
+        const currentGap = Math.max(0, chapter.recommended - getPowerRating(saveSnapshot));
+        const permanentPowerGain = Math.max(0, (projectedTier.powerBonus || 0) - (currentTier.powerBonus || 0));
+        const permanentDamageGain = Math.max(0, Math.round(((projectedTier.damageBoost || 0) - (currentTier.damageBoost || 0)) * 100));
+        const permanentEliteDamageGain = Math.max(0, Math.round(((projectedTier.eliteDamageBoost || 0) - (currentTier.eliteDamageBoost || 0)) * 100));
+        const seasonBoostGain = Math.max(0, Math.round(((projectedTier.seasonXpBoost || 0) - (currentTier.seasonXpBoost || 0)) * 100));
+        const fragmentBoostGain = Math.max(0, Math.round(((projectedTier.fragmentBoost || 0) - (currentTier.fragmentBoost || 0)) * 100));
+        const bossBountyGain = Math.max(0, Math.round(((projectedTier.bossBountyBoost || 0) - (currentTier.bossBountyBoost || 0)) * 100));
+        const choiceCountGain = Math.max(0, (projectedTier.upgradeChoiceCount || 3) - (currentTier.upgradeChoiceCount || 3));
+        const rerollGain = Math.max(0, (projectedTier.upgradeRerollCount || 0) - (currentTier.upgradeRerollCount || 0));
+        const instantPowerGain = estimateRewardPowerGain(offer.reward, chapter, saveSnapshot);
+        const utilityPowerGain = choiceCountGain * 70 + rerollGain * 90 + bossBountyGain * 3;
+        const totalPowerGain = permanentPowerGain + instantPowerGain + utilityPowerGain;
+        const remainingGap = Math.max(0, currentGap - totalPowerGain);
+        const overkill = Math.max(0, totalPowerGain - currentGap);
+        return {
+            offer,
+            currentTier,
+            projectedTier,
+            currentGap,
+            permanentPowerGain,
+            permanentDamageGain,
+            permanentEliteDamageGain,
+            seasonBoostGain,
+            fragmentBoostGain,
+            bossBountyGain,
+            choiceCountGain,
+            rerollGain,
+            instantPowerGain,
+            utilityPowerGain,
+            totalPowerGain,
+            remainingGap,
+            overkill,
+            tierPromotion: projectedTier.id !== currentTier.id,
+            breaksWall: currentGap > 0 && remainingGap <= 0
+        };
+    }
+
+    function renderPaymentGapChip(impact) {
+        if ((impact?.currentGap || 0) <= 0) {
+            return `<span class="mini-chip">${getLocalized({ zh: '当前已达标', en: 'Already ready' })}</span>`;
+        }
+        if (impact?.breaksWall) {
+            return `<span class="mini-chip">${getLocalized({ zh: '可直接过当前卡点', en: 'Breaks the current wall' })}</span>`;
+        }
+        return `<span class="mini-chip">${getLocalized({ zh: `剩余缺口 ${formatCompact(impact.remainingGap)}`, en: `${formatCompact(impact.remainingGap)} gap left` })}</span>`;
+    }
+
+    function renderPaymentUpgradeChip(tier) {
+        if (!tier) return '';
+        const choiceCount = Math.max(3, Number(tier.upgradeChoiceCount) || 3);
+        const rerollCount = Math.max(0, Number(tier.upgradeRerollCount) || 0);
+        if (choiceCount <= 3 && rerollCount <= 0) return '';
+        return `<span class="mini-chip">${getLocalized({
+            zh: `波次强化 ${choiceCount}选1${rerollCount > 0 ? ` · 重抽${rerollCount}` : ''}`,
+            en: `${choiceCount} upgrade picks${rerollCount > 0 ? ` · ${rerollCount} rerolls` : ''}`
+        })}</span>`;
+    }
+
     function renderSponsorTierBoostChips(tier, options = {}) {
         if (!tier) return '';
         const diffFrom = options.diffFrom || null;
@@ -2135,15 +2229,58 @@
         const coreHpBonus = Math.max(0, (tier.coreHpBonus || 0) - (diffFrom?.coreHpBonus || 0));
         const shieldBonus = Math.max(0, (tier.shieldBonus || 0) - (diffFrom?.shieldBonus || 0));
         const powerBonus = Math.max(0, (tier.powerBonus || 0) - (diffFrom?.powerBonus || 0));
+        const eliteDamageBoost = Math.max(0, (tier.eliteDamageBoost || 0) - (diffFrom?.eliteDamageBoost || 0));
+        const seasonXpBoost = Math.max(0, (tier.seasonXpBoost || 0) - (diffFrom?.seasonXpBoost || 0));
+        const fragmentBoost = Math.max(0, (tier.fragmentBoost || 0) - (diffFrom?.fragmentBoost || 0));
+        const coreGainBoost = Math.max(0, (tier.coreGainBoost || 0) - (diffFrom?.coreGainBoost || 0));
+        const openingShieldBonus = Math.max(0, (tier.openingShieldBonus || 0) - (diffFrom?.openingShieldBonus || 0));
+        const bossBountyBoost = Math.max(0, (tier.bossBountyBoost || 0) - (diffFrom?.bossBountyBoost || 0));
+        const upgradeChoiceCount = Math.max(0, (tier.upgradeChoiceCount || 3) - (diffFrom?.upgradeChoiceCount || 3));
+        const upgradeRerollCount = Math.max(0, (tier.upgradeRerollCount || 0) - (diffFrom?.upgradeRerollCount || 0));
         const chips = [
+            openingShieldBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `开局护盾 +${formatCompact(openingShieldBonus)}`, en: `Starting shield +${formatCompact(openingShieldBonus)}` })}</span>` : '',
+            upgradeChoiceCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `波次强化 ${tier.upgradeChoiceCount}选1`, en: `${tier.upgradeChoiceCount} upgrade picks` })}</span>` : '',
+            upgradeRerollCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `本局重抽 ${formatCompact(upgradeRerollCount)} 次`, en: `${formatCompact(upgradeRerollCount)} rerolls per run` })}</span>` : '',
             damageBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `永久火力 +${Math.round(damageBoost * 100)}%`, en: `Permanent damage +${Math.round(damageBoost * 100)}%` })}</span>` : '',
+            eliteDamageBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `精英/Boss伤害 +${Math.round(eliteDamageBoost * 100)}%`, en: `Elite/Boss damage +${Math.round(eliteDamageBoost * 100)}%` })}</span>` : '',
+            bossBountyBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `精英/Boss赏金 +${Math.round(bossBountyBoost * 100)}%`, en: `Elite/Boss bounty +${Math.round(bossBountyBoost * 100)}%` })}</span>` : '',
             speedBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `永久攻速 +${Math.round(speedBoost * 100)}%`, en: `Permanent speed +${Math.round(speedBoost * 100)}%` })}</span>` : '',
             goldBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `金币收益 +${Math.round(goldBoost * 100)}%`, en: `Gold gain +${Math.round(goldBoost * 100)}%` })}</span>` : '',
+            seasonXpBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `赛季经验 +${Math.round(seasonXpBoost * 100)}%`, en: `Season XP +${Math.round(seasonXpBoost * 100)}%` })}</span>` : '',
+            fragmentBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `章节碎片 +${Math.round(fragmentBoost * 100)}%`, en: `Chapter fragments +${Math.round(fragmentBoost * 100)}%` })}</span>` : '',
+            coreGainBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `能核掉落 +${Math.round(coreGainBoost * 100)}%`, en: `Core drops +${Math.round(coreGainBoost * 100)}%` })}</span>` : '',
             powerBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `战力 +${formatCompact(powerBonus)}`, en: `Power +${formatCompact(powerBonus)}` })}</span>` : '',
             coreHpBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `核心 +${formatCompact(coreHpBonus)}`, en: `Core +${formatCompact(coreHpBonus)}` })}</span>` : '',
             shieldBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `护盾 +${formatCompact(shieldBonus)}`, en: `Shield +${formatCompact(shieldBonus)}` })}</span>` : ''
         ];
         return renderLimitedChipMarkup(chips, { limit });
+    }
+
+    function getSponsorBattleIntroText(tier) {
+        if (!tier?.unlocked) return '';
+        const zh = [];
+        const en = [];
+        if (tier.openingShieldBonus > 0) {
+            zh.push(`开局护盾 +${formatCompact(tier.openingShieldBonus)}`);
+            en.push(`starting shield +${formatCompact(tier.openingShieldBonus)}`);
+        }
+        if (tier.upgradeChoiceCount > 3) {
+            zh.push(`强化 ${tier.upgradeChoiceCount}选1`);
+            en.push(`${tier.upgradeChoiceCount} upgrade picks`);
+        }
+        if (tier.upgradeRerollCount > 0) {
+            zh.push(`重抽 ${tier.upgradeRerollCount} 次`);
+            en.push(`${tier.upgradeRerollCount} rerolls`);
+        }
+        if (tier.bossBountyBoost > 0) {
+            zh.push(`精英/Boss赏金 +${Math.round(tier.bossBountyBoost * 100)}%`);
+            en.push(`elite/boss bounty +${Math.round(tier.bossBountyBoost * 100)}%`);
+        }
+        if (!zh.length) return '';
+        return getLocalized({
+            zh: `赞助特权生效：${zh.join(' · ')}`,
+            en: `Sponsor boosts active: ${en.join(' · ')}`
+        });
     }
 
     function getProjectedPowerRating({ lanes = null, skill = null, saveSnapshot = state.save } = {}) {
@@ -2571,6 +2708,7 @@
         const economyPreview = getDefenseEconomyPreview(current);
         const prepOverview = getChapterPrepOverview(current);
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const sponsorTier = getSponsorTierSummary();
         const researchReadyCount = Object.keys(RESEARCH).filter((researchId) => canUpgradeResearch(researchId)).length;
         const battleActive = state.battle.running && !state.battle.finished;
         const battlePaused = battleActive && state.battle.paused;
@@ -2672,6 +2810,7 @@
                         <span class="mini-chip">${getLocalized({ zh: `当前技能 ${currentSkillLabel}`, en: `Skill ${currentSkillLabel}` })}</span>
                         <span class="mini-chip">${getLocalized({ zh: `掉落倾向 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
                         <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
+                        ${sponsorTier.unlocked ? renderSponsorTierBoostChips(sponsorTier, { limit: 3 }) : ''}
                     </div>
                     <div class="defend-inline-note">${battleStatusCopy}</div>
                     <div class="card-actions compact defend-card-actions">
@@ -2764,22 +2903,21 @@
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
         const economyPreview = getDefenseEconomyPreview(current);
         const prepOverview = getChapterPrepOverview(current);
-        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
-        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview).slice(0, 4);
-        const sponsorTier = getSponsorTierSummary();
+        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview).slice(0, 3);
         const roadmap = getDefenseGrowthRoadmap(current);
+        const chapterClears = getChapterWinCount(current.id);
         const startAction = prepOverview.ready || prepOverview.nearReady ? 'startChapter' : 'applyChapterPresetStart';
         const startLabel = prepOverview.ready
             ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
             : prepOverview.nearReady
-                ? getLocalized({ zh: '试打当前编队', en: 'Test Current Build' })
+                ? getLocalized({ zh: '先试当前编队', en: 'Test Current Build' })
                 : getLocalized({ zh: '套用推荐开打', en: 'Apply & Defend' });
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('prepPanelTitle'),
                 getLocalized({
-                    zh: '看当前卡点、差多少战力、下一步该补哪里。',
-                    en: 'Read the current wall, the power gap, and the next best upgrade path.'
+                    zh: '这里只保留本章卡点、推荐战力和一键开打入口。',
+                    en: 'This view keeps only the current wall, target power, and the one-tap battle entry.'
                 }),
                 `<div class="mini-chip">${current.id} · ${roadmap.currentBand.title}</div>`
             )}
@@ -2788,8 +2926,12 @@
                     <article class="prep-guide-card ${band.id === roadmap.currentBand.id ? 'is-current' : ''}">
                         <span class="prep-guide-step">0${index + 1}</span>
                         <strong>${band.title}</strong>
-                        <p class="prep-guide-copy">${band.copy}</p>
-                        <p class="prep-guide-note">${band.range} · ${getLocalized({ zh: `建议战力 ${formatCompact(band.targetPower)}`, en: `Target ${formatCompact(band.targetPower)}` })}</p>
+                        <p class="prep-guide-copy">${band.id === roadmap.currentBand.id
+                            ? band.copy
+                            : getLocalized({ zh: `建议战力 ${formatCompact(band.targetPower)}`, en: `Target ${formatCompact(band.targetPower)}` })}</p>
+                        <p class="prep-guide-note">${band.range}${band.id === roadmap.currentBand.id
+                            ? ` · ${getLocalized({ zh: '当前阶段', en: 'Current band' })}`
+                            : ''}</p>
                     </article>
                 `).join('')}
             </div>
@@ -2830,7 +2972,7 @@
                             <strong>${prepOverview.laneMatchCount}/3</strong>
                         </div>
                         <div class="defend-mini-stat">
-                            <span>${getLocalized({ zh: '下一门槛', en: 'Next Gate' })}</span>
+                            <span>${getLocalized({ zh: '下一档位', en: 'Next Gate' })}</span>
                             <strong>${roadmap.nextBand ? formatCompact(roadmap.nextBand.targetPower) : getLocalized({ zh: '终章', en: 'Final' })}</strong>
                         </div>
                     </div>
@@ -2838,12 +2980,11 @@
                         <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
                         <span class="mini-chip">${getLocalized({ zh: `掉落倾向 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
                         <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Skill ${recommendedSkill}` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `永久增益 ${getLocalized(sponsorTier.title)}`, en: `Permanent ${getLocalized(sponsorTier.title)}` })}</span>
                     </div>
                     <div class="reward-row compact">
-                        <span class="mini-chip">${getLocalized({ zh: `${economyPreview.claimableTotal} 个奖励待回收`, en: `${economyPreview.claimableTotal} claims ready` })}</span>
-                        <span class="mini-chip">${prepOverview.skillMatches ? getLocalized({ zh: '主动技已对位', en: 'Skill aligned' }) : getLocalized({ zh: '主动技待调整', en: 'Skill mismatch' })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `赛季 Lv.${seasonInfo.level}`, en: `Season Lv.${seasonInfo.level}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `${economyPreview.claimableTotal} 个奖励待领`, en: `${economyPreview.claimableTotal} claims ready` })}</span>
+                        <span class="mini-chip">${prepOverview.skillMatches ? getLocalized({ zh: '主动技能已对位', en: 'Skill aligned' }) : getLocalized({ zh: '主动技能待调整', en: 'Skill mismatch' })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `${current.id} 已通关 ${chapterClears} 次`, en: `${current.id} cleared ${chapterClears} times` })}</span>
                     </div>
                     <div class="card-actions compact defend-card-actions">
                         <button class="primary-btn" type="button" data-action="${startAction}" data-value="${current.id}">
@@ -2851,9 +2992,6 @@
                         </button>
                         <button class="ghost-btn" type="button" data-action="applyChapterPreset" data-value="${current.id}">
                             ${getLocalized({ zh: '同步推荐编队', en: 'Apply Preset' })}
-                        </button>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
-                            ${getLocalized({ zh: '去装配页', en: 'Open Loadout' })}
                         </button>
                     </div>
                 </article>
@@ -2865,17 +3003,10 @@
                             <span class="defend-quick-meta">${item.meta}</span>
                         </button>
                     `).join('')}
-                    <article class="defend-quick-summary">
-                        <span class="defend-quick-label">${getLocalized({ zh: '当前档位', en: 'Current Band' })}</span>
-                        <strong class="defend-quick-value">${roadmap.currentBand.title}</strong>
-                        <span class="defend-quick-meta">${roadmap.currentBand.copy}</span>
-                    </article>
-                    <article class="defend-quick-summary">
-                        <span class="defend-quick-label">${getLocalized({ zh: '突破目标', en: 'Breakthrough' })}</span>
-                        <strong class="defend-quick-value">${roadmap.nextBand ? roadmap.nextBand.title : getLocalized({ zh: '终章稳定刷', en: 'Endgame Farm' })}</strong>
-                        <span class="defend-quick-meta">${roadmap.nextBand
-                            ? getLocalized({ zh: `还差 ${formatCompact(roadmap.nextBand.targetPower - roadmap.currentPower)} 战力`, en: `${formatCompact(roadmap.nextBand.targetPower - roadmap.currentPower)} power to next band` })
-                            : getLocalized({ zh: `${current.id} 通关 ${getChapterWinCount(current.id)} 次`, en: `${current.id} cleared ${getChapterWinCount(current.id)} times` })}</span>
+                    <article class="defend-quick-summary is-wide">
+                        <span class="defend-quick-label">${getLocalized({ zh: '本章打法', en: 'Chapter Plan' })}</span>
+                        <strong class="defend-quick-value">${getChapterWavePlan(current)}</strong>
+                        <span class="defend-quick-meta">${getChapterOpeningGuide(current)}</span>
                     </article>
                 </div>
             </div>
@@ -2887,40 +3018,46 @@
         const chapter = getCurrentChapter();
         const prepOverview = getChapterPrepOverview(chapter);
         const impact = getLoadoutImpactSummary(chapter);
-        const presetSkillLabel = t(SKILLS[impact.preset.skill].nameKey);
         const laneInfo = impact.laneStats[selectedLane];
+        const alignedLaneCount = impact.laneStats.filter((lane) => lane.matched).length;
+        const currentSkillId = state.save.selectedSkill || impact.preset.skill;
+        const currentSkillLabel = t(SKILLS[currentSkillId].nameKey);
+        const presetSkillLabel = t(SKILLS[impact.preset.skill].nameKey);
         const startAction = prepOverview.ready || prepOverview.nearReady ? 'startChapter' : 'applyChapterPresetStart';
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('loadoutPanelTitle'),
                 getLocalized({
-                    zh: '先看总战力，再改单路，不必反复来回切。',
-                    en: 'Read the total power first, then adjust a single lane without extra switching.'
+                    zh: '先看总编队，再微调单路，减少来回切页。',
+                    en: 'Read the full build first, then tune a single lane without extra switching.'
                 }),
-                `<div class="mini-chip">${t('laneSelect')} · ${getLaneName(selectedLane)}</div>`
+                `<div class="mini-chip">${getLaneName(selectedLane)} · ${t('laneSelect')}</div>`
             )}
             <div class="card-grid tab-overview-grid">
                 <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${getLocalized({ zh: '当前编队', en: 'Current Build' })}</div>
-                            <div class="card-title">${chapter.id} · ${prepOverview.ready ? getLocalized({ zh: '可直接开战', en: 'Ready Now' }) : getLocalized({ zh: '仍有提升空间', en: 'Still Room To Improve' })}</div>
+                            <div class="card-title">${chapter.id} · ${prepOverview.ready ? getLocalized({ zh: '可直接开打', en: 'Ready Now' }) : getLocalized({ zh: '仍有优化空间', en: 'Still Room To Improve' })}</div>
                         </div>
-                        <div class="card-number">${impact.powerDelta > 0 ? getLocalized({ zh: `推荐 +${formatCompact(impact.powerDelta)}`, en: `Preset +${formatCompact(impact.powerDelta)}` }) : getLocalized({ zh: '已接近推荐', en: 'Near preset' })}</div>
+                        <div class="card-number">${impact.powerDelta > 0 ? getLocalized({ zh: `推荐 +${formatCompact(impact.powerDelta)}`, en: `Preset +${formatCompact(impact.powerDelta)}` }) : getLocalized({ zh: '已接近推荐线', en: 'Near preset' })}</div>
                     </div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '当前战力', en: 'Power' }), value: formatCompact(impact.currentPower) },
-                        { label: getLocalized({ zh: '推荐编队', en: 'Preset Power' }), value: formatCompact(impact.presetPower) },
+                        { label: getLocalized({ zh: '推荐战力', en: 'Preset Power' }), value: formatCompact(impact.presetPower) },
                         { label: getLocalized({ zh: '当前总 DPS', en: 'Current DPS' }), value: formatCompact(impact.currentDpsTotal) },
-                        { label: getLocalized({ zh: '永久增益', en: 'Permanent' }), value: `+${Math.round(impact.sponsorTier.damageBoost * 100)}%` }
+                        { label: getLocalized({ zh: '推荐总 DPS', en: 'Preset DPS' }), value: formatCompact(impact.presetDpsTotal) }
                     ])}
-                    <div class="reward-row">
-                        ${impact.laneStats.map((lane) => `<span class="mini-chip">${lane.laneName} · ${lane.currentTower}</span>`).join('')}
-                        <span class="mini-chip">${getLocalized({ zh: `技能 ${t(SKILLS[state.save.selectedSkill].nameKey)}`, en: `Skill ${t(SKILLS[state.save.selectedSkill].nameKey)}` })}</span>
+                    <div class="chip-row">
+                        <span class="mini-chip">${getLocalized({ zh: `对位 ${alignedLaneCount}/3`, en: `Aligned ${alignedLaneCount}/3` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前技能 ${currentSkillLabel}`, en: `Skill ${currentSkillLabel}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${presetSkillLabel}`, en: `Preset ${presetSkillLabel}` })}</span>
                     </div>
                     <div class="reward-row compact">
                         <span class="mini-chip">${getLocalized({ zh: `${impact.totalDpsDelta > 0 ? '+' : ''}${formatCompact(impact.totalDpsDelta)} DPS 对比推荐`, en: `${impact.totalDpsDelta > 0 ? '+' : ''}${formatCompact(impact.totalDpsDelta)} DPS vs preset` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `${prepOverview.laneMatchCount}/3 路已对位`, en: `${prepOverview.laneMatchCount}/3 lanes aligned` })}</span>
+                        <span class="mini-chip">${impact.powerDelta > 0
+                            ? getLocalized({ zh: `还差 ${formatCompact(impact.powerDelta)} 战力`, en: `${formatCompact(impact.powerDelta)} power to preset` })
+                            : getLocalized({ zh: '当前已接近推荐线', en: 'Current build is near preset' })}</span>
                     </div>
                     <div class="card-actions compact">
                         <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
@@ -2929,31 +3066,28 @@
                         <button class="primary-btn" type="button" data-action="${startAction}" data-value="${chapter.id}">
                             ${getLocalized({ zh: '直接开打', en: 'Defend' })}
                         </button>
-                        <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
-                            ${getLocalized({ zh: '只同步三路', en: 'Lanes Only' })}
-                        </button>
                     </div>
                 </article>
                 <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${laneInfo.laneName}</div>
-                            <div class="card-title">${laneInfo.currentTower} → ${laneInfo.recommendedTower}</div>
+                            <div class="card-title">${laneInfo.matched ? laneInfo.currentTower : `${laneInfo.currentTower} → ${laneInfo.recommendedTower}`}</div>
                         </div>
                         <div class="card-number">${laneInfo.matched ? getLocalized({ zh: '已对位', en: 'Aligned' }) : getLocalized({ zh: `差 ${formatCompact(laneInfo.dpsDelta)}`, en: `Gap ${formatCompact(laneInfo.dpsDelta)}` })}</div>
                     </div>
                     <div class="card-copy">${laneInfo.matched
                         ? laneInfo.currentRole.detail
-                        : getLocalized({ zh: `这一条路推荐改成 ${laneInfo.recommendedTower}，会更贴合本章敌潮。`, en: `This lane is better on ${laneInfo.recommendedTower} for the current enemy mix.` })}</div>
+                        : getLocalized({ zh: `这一路优先换成 ${laneInfo.recommendedTower}，会更贴合本章敌潮。`, en: `This lane is better on ${laneInfo.recommendedTower} for the current enemy mix.` })}</div>
                     ${renderCompactKpiGrid([
-                        { label: getLocalized({ zh: '当前塔', en: 'Current' }), value: formatCompact(laneInfo.currentDps) },
-                        { label: getLocalized({ zh: '推荐塔', en: 'Preset' }), value: formatCompact(laneInfo.recommendedDps) },
+                        { label: getLocalized({ zh: '当前 DPS', en: 'Current' }), value: formatCompact(laneInfo.currentDps) },
+                        { label: getLocalized({ zh: '推荐 DPS', en: 'Preset' }), value: formatCompact(laneInfo.recommendedDps) },
                         { label: getLocalized({ zh: '当前定位', en: 'Role' }), value: laneInfo.currentRole.short },
-                        { label: getLocalized({ zh: '推荐定位', en: 'Preset Role' }), value: laneInfo.recommendedRole.short }
+                        { label: getLocalized({ zh: '推荐塔', en: 'Preset Tower' }), value: laneInfo.recommendedTower }
                     ])}
                     <div class="reward-row compact">
-                        <span class="mini-chip">${getLocalized({ zh: `当前主动 ${getSkillRoleMeta(state.save.selectedSkill)}`, en: `Current ${getSkillRoleMeta(state.save.selectedSkill)}` })}</span>
-                        <span class="mini-chip">${getLocalized({ zh: `推荐主动 ${getSkillRoleMeta(impact.preset.skill)}`, en: `Preset ${getSkillRoleMeta(impact.preset.skill)}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前技能定位 ${getSkillRoleMeta(currentSkillId)}`, en: `Current ${getSkillRoleMeta(currentSkillId)}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `推荐技能定位 ${getSkillRoleMeta(impact.preset.skill)}`, en: `Preset ${getSkillRoleMeta(impact.preset.skill)}` })}</span>
                     </div>
                     <div class="skill-picker" style="margin-top:12px;">
                         ${Object.values(SKILLS).map((skill) => `
@@ -2964,7 +3098,7 @@
                     </div>
                     <div class="card-actions compact">
                         <button class="primary-btn" type="button" data-action="applyRecommendedLane" data-value="${selectedLane}">
-                            ${laneInfo.matched ? getLocalized({ zh: '已是推荐塔', en: 'Already Set' }) : getLocalized({ zh: '改单路推荐', en: 'Apply Lane Preset' })}
+                            ${laneInfo.matched ? getLocalized({ zh: '当前已是推荐塔', en: 'Already Set' }) : getLocalized({ zh: '改单路推荐', en: 'Apply Lane Preset' })}
                         </button>
                     </div>
                 </article>
@@ -3893,21 +4027,33 @@
         const prepOverview = getChapterPrepOverview(chapter, saveSnapshot);
         const nextSponsorNode = getNextSponsorSeasonNode(saveSnapshot);
         const sponsorReady = SPONSOR_SEASON_NODES.filter((node) => !!saveSnapshot.payment.passUnlocked && !saveSnapshot.payment.premiumSeasonClaims[node.id] && (Number(saveSnapshot.seasonXp) || 0) >= node.xp).length;
-        const targetOfferId = !sponsorUnlocked
-            ? (prepOverview.powerGap <= 220 ? 'starter'
-                : prepOverview.powerGap <= 420 ? 'accelerator'
-                    : prepOverview.powerGap <= 680 ? 'rush'
-                        : prepOverview.powerGap <= 980 ? 'sovereign'
-                            : prepOverview.powerGap <= 1320 ? 'nexus'
-                                : 'throne')
-            : (prepOverview.powerGap <= 240 ? 'accelerator'
-                : prepOverview.powerGap <= 620 ? 'rush'
-                    : prepOverview.powerGap <= 980 ? 'sovereign'
-                        : prepOverview.powerGap <= 1360 ? 'nexus'
-                            : 'throne');
-        const offer = DEFENSE_PAYMENT_OFFERS.find((item) => item.id === targetOfferId) || DEFENSE_PAYMENT_OFFERS[0];
+        const rankedImpacts = DEFENSE_PAYMENT_OFFERS
+            .map((offer) => {
+                const impact = getPaymentOfferImpact(offer, chapter, saveSnapshot);
+                let score = impact.totalPowerGain - offer.price * 18;
+                if (impact.currentGap <= 0) {
+                    score = impact.instantPowerGain * 0.18 - offer.price * 95;
+                    if (impact.tierPromotion) score += 240 + impact.permanentPowerGain * 0.06;
+                    score += impact.choiceCountGain * 90;
+                } else {
+                    score -= impact.remainingGap * 0.28;
+                    if (impact.breaksWall) score += 2200 - impact.overkill * (impact.currentGap < 260 ? 1.8 : 0.6);
+                    if (impact.currentGap < 260) score -= Math.max(0, impact.totalPowerGain - impact.currentGap) * 1.25;
+                }
+                if (!sponsorUnlocked && offer.id === 'starter') score += impact.currentGap <= 260 ? 140 : 40;
+                if (impact.currentGap > 0 && impact.tierPromotion) score += 260 + impact.permanentPowerGain * 0.25;
+                if (impact.currentGap > 0) score += impact.choiceCountGain * 120;
+                score += impact.rerollGain * 120;
+                score += impact.permanentEliteDamageGain * 4;
+                score += impact.bossBountyGain * 5;
+                return { ...impact, score };
+            })
+            .sort((a, b) => b.score - a.score || a.offer.price - b.offer.price);
+        const bestImpact = rankedImpacts[0] || getPaymentOfferImpact(DEFENSE_PAYMENT_OFFERS[0], chapter, saveSnapshot);
+        const offer = bestImpact.offer;
         return {
             offer,
+            impact: bestImpact,
             sponsorUnlocked,
             sponsorReady,
             nextSponsorNode,
@@ -3915,15 +4061,25 @@
                 ? getLocalized({
                     zh: '首笔校验充值会永久解锁赞助轨道，所以现在不仅是在买资源，也是在打开后续赛季额外奖励。',
                     en: 'Your first verified payment permanently unlocks the Sponsor track, so you are buying both resources and a future reward lane.'
-                })
+                    })
                 : sponsorReady > 0
                     ? getLocalized({
                         zh: '赞助节点已经有可领奖励，建议先去赛季页结算，再决定是否继续补包。',
                         en: 'Sponsor rewards are already ready, so claim them in Season first before deciding on another pack.'
                     })
+                    : bestImpact.breaksWall
+                        ? getLocalized({
+                            zh: `按当前缺口估算，这档总补强约 +${formatCompact(bestImpact.totalPowerGain)}，足够直接抹平本章卡点。`,
+                            en: `At the current wall, this pack is worth about +${formatCompact(bestImpact.totalPowerGain)} total power and can break the chapter gap outright.`
+                        })
+                        : bestImpact.tierPromotion
+                            ? getLocalized({
+                                zh: `这档会把你升到 ${getLocalized(bestImpact.projectedTier.title)}，同时把当前缺口压到只剩 ${formatCompact(bestImpact.remainingGap)} 左右。`,
+                                en: `This pack promotes you to ${getLocalized(bestImpact.projectedTier.title)} and cuts the current gap to about ${formatCompact(bestImpact.remainingGap)}.`
+                            })
                     : getLocalized({
-                        zh: '当前推荐礼包会更贴近本章节缺口，并继续抬高赞助轨道的回收价值。',
-                        en: 'This pack best matches your current chapter gap while increasing the value of your Sponsor track.'
+                        zh: `当前推荐礼包预计可补强 +${formatCompact(bestImpact.totalPowerGain)}，并继续抬高赞助轨道的回收价值。`,
+                        en: `The current recommendation is worth about +${formatCompact(bestImpact.totalPowerGain)} and keeps increasing the value of your Sponsor track.`
                     })
         };
     }
@@ -4124,11 +4280,11 @@
         const premiumReady = getSponsorSeasonReadyCount();
         const currentTier = getSponsorTierSummary();
         const recommendedOffer = strategyPlan.paymentRoute.offer;
-        const projectedSave = getProjectedPaymentSave(recommendedOffer);
-        const projectedTier = getSponsorTierSummary(projectedSave);
+        const impact = strategyPlan.paymentRoute.impact || getPaymentOfferImpact(recommendedOffer);
+        const projectedTier = impact.projectedTier;
         const nextSponsorNode = strategyPlan.paymentRoute.nextSponsorNode;
-        const tierPromotion = projectedTier.id !== currentTier.id;
-        const permanentPowerGain = Math.max(0, (projectedTier.powerBonus || 0) - (currentTier.powerBonus || 0));
+        const tierPromotion = impact.tierPromotion;
+        const permanentPowerGain = impact.permanentPowerGain;
         return `
             <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
@@ -4142,24 +4298,42 @@
                 </div>
                 <div class="card-copy">${!sponsorUnlocked
                     ? getLocalized({
-                        zh: `首充后会永久解锁赞助轨道，并直接获得 ${getLocalized(projectedTier.title)} 常驻增益。`,
-                        en: `Your first top-up permanently unlocks the sponsor track and immediately grants ${getLocalized(projectedTier.title)} permanent bonuses.`
+                        zh: `首充后会永久解锁赞助轨道，并直接获得 ${getLocalized(projectedTier.title)} 常驻增益；按当前章节估算，还能立刻补强约 +${formatCompact(impact.instantPowerGain)}。`,
+                        en: `Your first top-up permanently unlocks the sponsor track, grants ${getLocalized(projectedTier.title)} permanent bonuses, and is worth about +${formatCompact(impact.instantPowerGain)} immediately.`
                     })
                     : tierPromotion
                         ? getLocalized({
-                            zh: `购买推荐档 ${getLocalized(recommendedOffer.name)} 后，会从 ${getLocalized(currentTier.title)} 升到 ${getLocalized(projectedTier.title)}。`,
-                            en: `Buying the recommended ${getLocalized(recommendedOffer.name)} moves you from ${getLocalized(currentTier.title)} to ${getLocalized(projectedTier.title)}.`
+                            zh: `购买推荐档 ${getLocalized(recommendedOffer.name)} 后，会从 ${getLocalized(currentTier.title)} 升到 ${getLocalized(projectedTier.title)}，总补强约 +${formatCompact(impact.totalPowerGain)}。`,
+                            en: `Buying the recommended ${getLocalized(recommendedOffer.name)} moves you from ${getLocalized(currentTier.title)} to ${getLocalized(projectedTier.title)} with about +${formatCompact(impact.totalPowerGain)} total impact.`
                         })
+                        : impact.currentGap <= 0
+                            ? getLocalized({
+                                zh: '当前章节已经达标，这档更偏向把资源提前转成下一章储备，并继续抬高赞助阶位价值。',
+                                en: 'The current chapter is already ready, so this pack mainly preloads next-chapter progress and raises Sponsor value.'
+                            })
+                        : impact.breaksWall
+                            ? getLocalized({
+                                zh: `这档资源 + 常驻加成合计约 +${formatCompact(impact.totalPowerGain)}，已经足够直接抹平当前卡点。`,
+                                en: `This pack is worth about +${formatCompact(impact.totalPowerGain)} total and is enough to break the current wall outright.`
+                            })
                         : currentTier.next
                             ? getLocalized({
-                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}。`,
-                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}.`
+                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}；当前卡点估算还会剩 ${formatCompact(impact.remainingGap)}。`,
+                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}; it leaves about ${formatCompact(impact.remainingGap)} gap.`
                             })
                             : getLocalized({ zh: '你已经在最高赞助阶位，充值主要体现为资源直充和赛季加速。', en: 'You are already at the highest sponsor tier, so top-up now mainly translates into direct resources and faster season progress.' })}</div>
                 <div class="reward-row">
-                    ${renderSponsorTierBoostChips(sponsorUnlocked ? currentTier : projectedTier, { limit: 4 })}
+                    ${renderSponsorTierBoostChips(sponsorUnlocked ? currentTier : projectedTier, { limit: 5 })}
                 </div>
-                ${tierPromotion ? `<div class="reward-row compact">${renderSponsorTierBoostChips(projectedTier, { diffFrom: currentTier, limit: 4 })}</div>` : ''}
+                ${tierPromotion ? `<div class="reward-row compact">${renderSponsorTierBoostChips(projectedTier, { diffFrom: currentTier, limit: 5 })}</div>` : ''}
+                <div class="reward-row compact">
+                    ${renderLimitedChipMarkup([
+                        `<span class="mini-chip">${getLocalized({ zh: `即时补强 +${formatCompact(impact.instantPowerGain)}`, en: `Instant +${formatCompact(impact.instantPowerGain)}` })}</span>`,
+                        `<span class="mini-chip">${getLocalized({ zh: `总补强 +${formatCompact(impact.totalPowerGain)}`, en: `Total +${formatCompact(impact.totalPowerGain)}` })}</span>`,
+                        renderPaymentGapChip(impact),
+                        renderPaymentUpgradeChip(projectedTier)
+                    ], { limit: 4 })}
+                </div>
                 ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点奖励', en: 'Next Sponsor Reward' })}</span>
                     ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
@@ -4170,16 +4344,16 @@
                         <strong>${getLocalized(recommendedOffer.name)}</strong>
                     </div>
                     <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '即时补强', en: 'Instant Spike' })}</span>
+                        <strong>+${formatCompact(impact.instantPowerGain)}</strong>
+                    </div>
+                    <div class="shop-kpi">
                         <span>${getLocalized({ zh: '永久战力', en: 'Permanent Power' })}</span>
                         <strong>${formatCompact(sponsorUnlocked ? currentTier.powerBonus : projectedTier.powerBonus)}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '待升下一阶', en: 'To Next Tier' })}</span>
-                        <strong>${projectedTier.next ? `$${Number(projectedTier.remainingToNext || 0).toFixed(2)}` : getLocalized({ zh: '已封顶', en: 'Maxed' })}</strong>
-                    </div>
-                    <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '待领赞助', en: 'Sponsor Ready' })}</span>
-                        <strong>${premiumReady}${permanentPowerGain > 0 ? ` · +${formatCompact(permanentPowerGain)}` : ''}</strong>
+                        <span>${getLocalized({ zh: '波次强化', en: 'Upgrade Picks' })}</span>
+                        <strong>${projectedTier.upgradeChoiceCount || 3}选1${projectedTier.upgradeRerollCount > 0 ? ` · 重抽${projectedTier.upgradeRerollCount}` : ''}${permanentPowerGain > 0 ? ` · +${formatCompact(permanentPowerGain)}` : ''}</strong>
                     </div>
                 </div>
                 <div class="card-actions compact">
@@ -4199,11 +4373,12 @@
     function renderPaymentOfferCard(offer, strategyPlan = null) {
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const isRecommended = strategyPlan?.paymentRoute?.offer.id === offer.id;
-        const currentTier = getSponsorTierSummary();
-        const projectedTier = getSponsorTierSummary(getProjectedPaymentSave(offer));
-        const tierPromotion = projectedTier.id !== currentTier.id;
-        const permanentPowerGain = Math.max(0, (projectedTier.powerBonus || 0) - (currentTier.powerBonus || 0));
-        const permanentDamageGain = Math.max(0, Math.round(((projectedTier.damageBoost || 0) - (currentTier.damageBoost || 0)) * 100));
+        const impact = getPaymentOfferImpact(offer);
+        const currentTier = impact.currentTier;
+        const projectedTier = impact.projectedTier;
+        const tierPromotion = impact.tierPromotion;
+        const permanentPowerGain = impact.permanentPowerGain;
+        const permanentDamageGain = impact.permanentDamageGain;
         const nextTierLabel = projectedTier.next ? getLocalized(projectedTier.next.title) : getLocalized({ zh: '最高档', en: 'Max Tier' });
         return `
             <article class="shop-card compact-list-card paypack" style="--offer-accent:${offer.accent};">
@@ -4216,17 +4391,22 @@
                 </div>
                 <div class="card-copy">${!sponsorUnlocked
                     ? getLocalized({
-                        zh: `首充后永久解锁赞助轨道，并直接进入 ${getLocalized(projectedTier.title)}。`,
-                        en: `Your first top-up permanently unlocks the sponsor track and immediately enters ${getLocalized(projectedTier.title)}.`
+                        zh: `首充后永久解锁赞助轨道，并直接进入 ${getLocalized(projectedTier.title)}；当前章节估算可立刻补强约 +${formatCompact(impact.instantPowerGain)}。`,
+                        en: `Your first top-up permanently unlocks the sponsor track, enters ${getLocalized(projectedTier.title)}, and is worth about +${formatCompact(impact.instantPowerGain)} immediately.`
                     })
                     : tierPromotion
                         ? getLocalized({
-                            zh: `购买后升到 ${getLocalized(projectedTier.title)}，永久战力 +${formatCompact(permanentPowerGain)}${permanentDamageGain > 0 ? `，火力再 +${permanentDamageGain}%` : ''}。`,
-                            en: `This pack promotes you to ${getLocalized(projectedTier.title)} with +${formatCompact(permanentPowerGain)} permanent power${permanentDamageGain > 0 ? ` and +${permanentDamageGain}% damage` : ''}.`
+                            zh: `购买后升到 ${getLocalized(projectedTier.title)}，永久战力 +${formatCompact(permanentPowerGain)}${permanentDamageGain > 0 ? `，火力再 +${permanentDamageGain}%` : ''}；总补强约 +${formatCompact(impact.totalPowerGain)}。`,
+                            en: `This pack promotes you to ${getLocalized(projectedTier.title)} with +${formatCompact(permanentPowerGain)} permanent power${permanentDamageGain > 0 ? ` and +${permanentDamageGain}% damage` : ''}; about +${formatCompact(impact.totalPowerGain)} total impact.`
                         })
+                        : impact.currentGap <= 0
+                            ? getLocalized({
+                                zh: `当前章节已达标，这档会把资源提前转成下一章储备，并继续推进到下一阶 ${nextTierLabel}。`,
+                                en: `The current chapter is already ready, so this pack preloads the next chapter and keeps pushing toward ${nextTierLabel}.`
+                            })
                         : getLocalized({
-                            zh: `资源会立即到账，并继续把你推进到下一阶 ${nextTierLabel}。`,
-                            en: `Resources arrive instantly and keep moving you toward the next tier ${nextTierLabel}.`
+                            zh: `资源会立即到账，并继续把你推进到下一阶 ${nextTierLabel}；按当前章节估算可补强 +${formatCompact(impact.totalPowerGain)}。`,
+                            en: `Resources arrive instantly and keep moving you toward the next tier ${nextTierLabel}; about +${formatCompact(impact.totalPowerGain)} at the current wall.`
                         })}</div>
                 <div class="reward-row compact">
                     ${renderLimitedChipMarkup([
@@ -4238,7 +4418,13 @@
                     ], { limit: 3 })}
                 </div>
                 <div class="reward-row compact">${renderRewardChips(offer.reward, { limit: 3 })}</div>
-                <div class="reward-row compact">${renderSponsorTierBoostChips(tierPromotion ? projectedTier : currentTier, tierPromotion ? { diffFrom: currentTier, limit: 3 } : { limit: 3 })}</div>
+                <div class="reward-row compact">${renderLimitedChipMarkup([
+                    `<span class="mini-chip">${getLocalized({ zh: `即时 +${formatCompact(impact.instantPowerGain)}`, en: `Instant +${formatCompact(impact.instantPowerGain)}` })}</span>`,
+                    `<span class="mini-chip">${getLocalized({ zh: `总补强 +${formatCompact(impact.totalPowerGain)}`, en: `Total +${formatCompact(impact.totalPowerGain)}` })}</span>`,
+                    renderPaymentGapChip(impact),
+                    renderPaymentUpgradeChip(projectedTier)
+                ], { limit: 4 })}</div>
+                <div class="reward-row compact">${renderSponsorTierBoostChips(tierPromotion ? projectedTier : currentTier, tierPromotion ? { diffFrom: currentTier, limit: 4 } : { limit: 4 })}</div>
                 <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">
                         ${getLocalized({ zh: '立即支付', en: 'Pay Now' })}
@@ -4455,6 +4641,7 @@
         const focusPreview = getChapterFocusPreview(chapter);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(chapter)].nameKey);
         const prepOverview = getChapterPrepOverview(chapter);
+        const sponsorTier = getSponsorTierSummary();
         ui.startDescription.textContent = `${t('startDescTemplate').replace('{chapter}', chapter.id)} ${getChapterOpeningGuide(chapter)}`;
         ui.startMeta.innerHTML = `
             <span class="mini-chip">${t('startMetaReward').replace('{gold}', formatCompact(chapter.goldReward)).replace('{core}', formatCompact(chapter.coreReward)).replace('{fragment}', formatCompact(chapter.fragmentReward))}</span>
@@ -4464,6 +4651,7 @@
             <span class="mini-chip">${prepOverview.ready
                 ? getLocalized({ zh: '推荐编队已就绪', en: 'Preset ready' })
                 : getLocalized({ zh: `还有 ${prepOverview.adjustmentsNeeded} 项待调整`, en: `${prepOverview.adjustmentsNeeded} prep tweaks` })}</span>
+            ${sponsorTier.unlocked ? renderSponsorTierBoostChips(sponsorTier, { limit: 4 }) : ''}
         `;
     }
 
@@ -4471,10 +4659,11 @@
         if (!restart && state.battle.running && !state.battle.finished) return;
         startLoop();
         state.battle = createEmptyBattle();
+        const sponsorTier = getSponsorTierSummary();
         state.activeTab = 'defend';
         state.battle.running = true;
         state.battle.coreHp = getCoreMaxHp();
-        state.battle.shield = getCoreShieldCap();
+        state.battle.shield = getCoreShieldCap() + (Number(sponsorTier.openingShieldBonus) || 0);
         state.battle.lastFrame = performance.now();
         state.battle.skillReadyPulse = 1.8;
         lastBattleInsightStamp = '';
@@ -4485,6 +4674,10 @@
         hideOverlay(ui.upgradeOverlay);
         hideOverlay(ui.startOverlay);
         startWave(1);
+        const sponsorIntroText = getSponsorBattleIntroText(sponsorTier);
+        if (sponsorIntroText) {
+            pushBattleAlert(sponsorIntroText, 'skill', 2.8);
+        }
         renderAll();
         scrollToActiveSection('defend');
     }
@@ -4936,7 +5129,11 @@
         const salvageBonus = 1 + getResearchLevel('salvage') * 0.1;
         let gold = Math.round(enemy.rewardGold * salvageBonus * state.battle.modifiers.gold);
         if (!noGoldBonus && towerId === 'harvest') gold += Math.round(enemy.rewardGold * TOWERS.harvest.goldBonus * salvageBonus);
-        const coreGain = Math.max(1, Math.ceil(enemy.rewardCore * state.battle.modifiers.coreGain));
+        let coreGain = Math.max(1, Math.ceil(enemy.rewardCore * state.battle.modifiers.coreGain));
+        if (enemy.elite || enemy.boss) {
+            gold = Math.round(gold * (state.battle.modifiers.bossBounty || 1));
+            coreGain = Math.max(1, Math.ceil(coreGain * (state.battle.modifiers.bossBounty || 1)));
+        }
         pushDefeatBurst(enemy);
         if (enemy.boss) {
             state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.4);
@@ -4953,26 +5150,71 @@
         state.battle.enemies = state.battle.enemies.filter((enemy) => enemy.hp > 0);
     }
 
-    function presentUpgradeChoices() {
-        state.battle.awaitingUpgrade = true;
-        state.battle.pendingChoices = pickUpgradeChoices();
-        triggerWaveClearCelebration();
+    function renderUpgradeChoiceGrid() {
+        if (!ui.upgradeChoiceGrid) return;
         ui.upgradeChoiceGrid.innerHTML = state.battle.pendingChoices.map((choice) => `
             <button class="choice-card" type="button" data-upgrade-choice="${choice.id}">
                 <strong>${getLocalized(choice.label)}</strong>
                 <span class="card-copy">${getLocalized(choice.hint)}</span>
             </button>
         `).join('');
+        refreshUpgradeOverlayActions();
+    }
+
+    function refreshUpgradeOverlayActions() {
+        if (!ui.upgradeActionRow || !ui.upgradeRerollBtn) return;
+        const rerollsLeft = Math.max(0, Number(state.battle.upgradeRerollsLeft) || 0);
+        const canShow = !!state.battle.awaitingUpgrade && rerollsLeft > 0;
+        ui.upgradeActionRow.style.display = canShow ? 'flex' : 'none';
+        ui.upgradeRerollBtn.disabled = !canShow;
+        ui.upgradeRerollBtn.textContent = getLocalized({
+            zh: `重抽强化 · 剩 ${rerollsLeft} 次`,
+            en: `Reroll upgrades · ${rerollsLeft} left`
+        });
+    }
+
+    function presentUpgradeChoices() {
+        state.battle.awaitingUpgrade = true;
+        state.battle.pendingChoices = pickUpgradeChoices();
+        triggerWaveClearCelebration();
+        renderUpgradeChoiceGrid();
         showOverlay(ui.upgradeOverlay);
         showToast(t('toastWaveClear'));
         renderHud();
     }
 
-    function pickUpgradeChoices() {
-        const seed = [...UPGRADE_CHOICES];
+    function pickUpgradeChoices(options = {}) {
+        const excludedIds = new Set(Array.isArray(options.excludeIds) ? options.excludeIds.filter(Boolean) : []);
         const picked = [];
-        while (seed.length && picked.length < 3) picked.push(seed.splice(Math.floor(Math.random() * seed.length), 1)[0]);
+        const pickCount = Math.max(3, getSponsorTierSummary().upgradeChoiceCount || 3);
+        let seed = [...UPGRADE_CHOICES];
+        if (excludedIds.size > 0 && seed.length - excludedIds.size >= pickCount) {
+            seed = seed.filter((choice) => !excludedIds.has(choice.id));
+        }
+        while (seed.length && picked.length < pickCount) picked.push(seed.splice(Math.floor(Math.random() * seed.length), 1)[0]);
         return picked;
+    }
+
+    function rerollUpgradeChoices() {
+        if (!state.battle.awaitingUpgrade) return;
+        if ((state.battle.upgradeRerollsLeft || 0) <= 0) return;
+        const currentChoiceIds = (state.battle.pendingChoices || []).map((choice) => choice.id);
+        state.battle.upgradeRerollsLeft = Math.max(0, (Number(state.battle.upgradeRerollsLeft) || 0) - 1);
+        state.battle.pendingChoices = pickUpgradeChoices({ excludeIds: currentChoiceIds });
+        renderUpgradeChoiceGrid();
+        showToast(getLocalized({
+            zh: `已重抽强化，剩余 ${state.battle.upgradeRerollsLeft} 次`,
+            en: `Upgrades rerolled, ${state.battle.upgradeRerollsLeft} left`
+        }));
+        pushBattleAlert(
+            getLocalized({
+                zh: `强化列表已重组 · 剩余重抽 ${state.battle.upgradeRerollsLeft} 次`,
+                en: `Upgrade choices refreshed · ${state.battle.upgradeRerollsLeft} rerolls left`
+            }),
+            'overclock',
+            2
+        );
+        renderHud();
     }
 
     function applyUpgradeChoice(choiceId) {
@@ -4989,6 +5231,7 @@
 
     function finishBattle(win, forcedQuit) {
         const chapter = getCurrentChapter();
+        const sponsorTier = getSponsorTierSummary();
         const finalChapterId = CHAPTERS[CHAPTERS.length - 1].id;
         let finishToastKey = win ? 'toastRunWin' : 'toastRunLose';
         state.battle.running = false;
@@ -5001,7 +5244,7 @@
         const baseCores = chapter.coreReward + Math.floor(state.battle.runStats.kills / 12);
         const goldGain = Math.round(baseGold * rewardMultiplier * getGoldMultiplier() * state.battle.modifiers.gold);
         const coreGain = Math.round(baseCores * rewardMultiplier);
-        const seasonGain = Math.round((50 + clearedWaves * 18 + (win ? 36 : 0)) * (1 + getResearchLevel('relay') * 0.03));
+        const seasonGain = Math.round((50 + clearedWaves * 18 + (win ? 36 : 0)) * (1 + getResearchLevel('relay') * 0.03) * (1 + (sponsorTier.seasonXpBoost || 0)));
         const fragmentGain = rewardFragmentsForChapter(chapter, win);
         grantReward({ gold: goldGain, cores: coreGain, fragments: fragmentGain });
         state.save.seasonXp += seasonGain;
@@ -5188,7 +5431,8 @@
     }
 
     function rewardFragmentsForChapter(chapter, win) {
-        const total = win ? chapter.fragmentReward : Math.max(8, Math.round(chapter.fragmentReward * 0.55));
+        const sponsorTier = getSponsorTierSummary();
+        const total = Math.round((win ? chapter.fragmentReward : Math.max(8, Math.round(chapter.fragmentReward * 0.55))) * (1 + (sponsorTier.fragmentBoost || 0)));
         const rewards = {};
         const targets = chapter.fragmentFocus.slice();
         for (let index = 0; index < total; index += 1) {
@@ -5538,21 +5782,30 @@
     function renderPaymentOfferGrid() {
         if (!ui.paymentOfferGrid) return;
         const recommendedOfferId = getRecommendedPaymentOfferId();
-        ui.paymentOfferGrid.innerHTML = DEFENSE_PAYMENT_OFFERS.map((offer) => `
-            <button
-                class="defense-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
-                type="button"
-                data-select-payment-offer="${offer.id}"
-                style="--offer-accent:${offer.accent};"
-            >
-                <span class="pill defense-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${getLocalized(offer.badge)}</span>
-                ${offer.id === recommendedOfferId ? `<span class="pill defense-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${getLocalized({ zh: '当前推荐', en: 'Recommended' })}</span>` : ''}
-                <div class="defense-payment-offer-price">$${offer.price.toFixed(2)}</div>
-                <h3>${getLocalized(offer.name)}</h3>
-                <p>${getLocalized(offer.desc)}</p>
-                <div class="reward-row">${renderRewardChips(offer.reward)}</div>
-            </button>
-        `).join('');
+        ui.paymentOfferGrid.innerHTML = DEFENSE_PAYMENT_OFFERS.map((offer) => {
+            const impact = getPaymentOfferImpact(offer);
+            return `
+                <button
+                    class="defense-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
+                    type="button"
+                    data-select-payment-offer="${offer.id}"
+                    style="--offer-accent:${offer.accent};"
+                >
+                    <span class="pill defense-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${getLocalized(offer.badge)}</span>
+                    ${offer.id === recommendedOfferId ? `<span class="pill defense-payment-offer-badge" style="color:${offer.accent};border-color:${offer.accent}55;">${getLocalized({ zh: '当前推荐', en: 'Recommended' })}</span>` : ''}
+                    <div class="defense-payment-offer-price">$${offer.price.toFixed(2)}</div>
+                    <h3>${getLocalized(offer.name)}</h3>
+                    <p>${getLocalized(offer.desc)}</p>
+                    <div class="reward-row">${renderRewardChips(offer.reward, { limit: 3 })}</div>
+                    <div class="reward-row compact">${renderLimitedChipMarkup([
+                        `<span class="mini-chip">${getLocalized({ zh: `总补强 +${formatCompact(impact.totalPowerGain)}`, en: `Total +${formatCompact(impact.totalPowerGain)}` })}</span>`,
+                        renderPaymentGapChip(impact),
+                        impact.tierPromotion ? `<span class="mini-chip">${getLocalized({ zh: `升到 ${getLocalized(impact.projectedTier.title)}`, en: `Promotes to ${getLocalized(impact.projectedTier.title)}` })}</span>` : '',
+                        renderPaymentUpgradeChip(impact.projectedTier)
+                    ], { limit: 4 })}</div>
+                </button>
+            `;
+        }).join('');
     }
 
     function renderPaymentOrderUI() {
@@ -5781,6 +6034,7 @@
     function grantPaymentRewards({ orderId, txid, offerId }) {
         const offer = DEFENSE_PAYMENT_OFFERS.find((item) => item.id === offerId) || getSelectedPaymentOffer();
         if (!offer || state.save.payment.claimedOrders[orderId]) return false;
+        const beforeTier = getSponsorTierSummary();
 
         grantReward(offer.reward);
         state.save.payment.purchaseCount += 1;
@@ -5789,8 +6043,18 @@
         state.save.payment.claimedOrders[orderId] = true;
         state.save.payment.pendingClaims[orderId] = txid;
         state.save.payment.verifiedTxids = [txid, ...(state.save.payment.verifiedTxids || []).filter((item) => item !== txid)].slice(0, 100);
+        const afterTier = getSponsorTierSummary();
+        const tierPromotion = afterTier.id !== beforeTier.id;
+        const permanentPowerGain = Math.max(0, (afterTier.powerBonus || 0) - (beforeTier.powerBonus || 0));
+        const rerollGain = Math.max(0, (afterTier.upgradeRerollCount || 0) - (beforeTier.upgradeRerollCount || 0));
+        const bossBountyGain = Math.max(0, Math.round(((afterTier.bossBountyBoost || 0) - (beforeTier.bossBountyBoost || 0)) * 100));
         saveProgress();
-        showToast(getLocalized({ zh: `充值成功：${getLocalized(offer.name)} 奖励已到账`, en: `Top-up complete: ${getLocalized(offer.name)} rewards granted` }));
+        showToast(tierPromotion
+            ? getLocalized({
+                zh: `充值成功：${getLocalized(offer.name)} 已到账 · 晋升 ${getLocalized(afterTier.title)} · 常驻战力 +${formatCompact(permanentPowerGain)}${afterTier.upgradeChoiceCount > (beforeTier.upgradeChoiceCount || 3) ? ` · 强化改为 ${afterTier.upgradeChoiceCount}选1` : ''}${rerollGain > 0 ? ` · 重抽 +${rerollGain}` : ''}${bossBountyGain > 0 ? ` · 赏金 +${bossBountyGain}%` : ''}`,
+                en: `Top-up complete: ${getLocalized(offer.name)} granted · promoted to ${getLocalized(afterTier.title)} · permanent power +${formatCompact(permanentPowerGain)}${afterTier.upgradeChoiceCount > (beforeTier.upgradeChoiceCount || 3) ? ` · upgrades become ${afterTier.upgradeChoiceCount} picks` : ''}${rerollGain > 0 ? ` · rerolls +${rerollGain}` : ''}${bossBountyGain > 0 ? ` · bounty +${bossBountyGain}%` : ''}`
+            })
+            : getLocalized({ zh: `充值成功：${getLocalized(offer.name)} 奖励已到账`, en: `Top-up complete: ${getLocalized(offer.name)} rewards granted` }));
         renderAll();
         return true;
     }
