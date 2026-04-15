@@ -297,7 +297,7 @@
     const CHAPTERS = [
         {
             id: '1-1',
-            recommended: 160,
+            recommended: 210,
             baseHp: 46,
             baseSpeed: 62,
             goldReward: 420,
@@ -309,10 +309,10 @@
         },
         {
             id: '1-2',
-            recommended: 240,
-            baseHp: 56,
+            recommended: 320,
+            baseHp: 60,
             baseSpeed: 68,
-            goldReward: 560,
+            goldReward: 520,
             coreReward: 12,
             fragmentReward: 20,
             trait: { zh: '高速怪明显增多，优先准备激光塔与控场技能。', en: 'Fast enemies show up more often, making laser and control tools more valuable.' },
@@ -321,11 +321,11 @@
         },
         {
             id: '1-3',
-            recommended: 360,
-            baseHp: 72,
+            recommended: 470,
+            baseHp: 78,
             baseSpeed: 74,
-            goldReward: 740,
-            coreReward: 16,
+            goldReward: 680,
+            coreReward: 15,
             fragmentReward: 24,
             trait: { zh: '分裂怪与精英开始进入主波次，需要更稳的减速与爆裂伤害。', en: 'Split enemies and elites enter the main waves, pushing for slows and splash damage.' },
             enemies: ['grunt', 'fast', 'split', 'elite'],
@@ -333,11 +333,11 @@
         },
         {
             id: '2-1',
-            recommended: 520,
-            baseHp: 92,
-            baseSpeed: 78,
-            goldReward: 930,
-            coreReward: 20,
+            recommended: 660,
+            baseHp: 104,
+            baseSpeed: 79,
+            goldReward: 880,
+            coreReward: 19,
             fragmentReward: 28,
             trait: { zh: '护盾怪血量成长明显，链击塔与轨炮塔开始展现价值。', en: 'Shield units grow tougher, and chain / rail tools start to matter.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
@@ -345,11 +345,11 @@
         },
         {
             id: '2-2',
-            recommended: 720,
-            baseHp: 118,
+            recommended: 910,
+            baseHp: 134,
             baseSpeed: 84,
-            goldReward: 1180,
-            coreReward: 24,
+            goldReward: 1120,
+            coreReward: 23,
             fragmentReward: 34,
             trait: { zh: '中后期章节，经济与输出要同步抬高，否则会被精英波拖垮。', en: 'Mid-late chapter where economy and damage must scale together.' },
             enemies: ['fast', 'shield', 'elite', 'boss'],
@@ -357,11 +357,11 @@
         },
         {
             id: '2-3',
-            recommended: 940,
-            baseHp: 148,
+            recommended: 1240,
+            baseHp: 168,
             baseSpeed: 88,
-            goldReward: 1520,
-            coreReward: 30,
+            goldReward: 1440,
+            coreReward: 29,
             fragmentReward: 40,
             trait: { zh: '第二章终局章节，Boss 波极重，建议优先准备史诗轨炮塔。', en: 'Final chapter of Arc 2 with a brutal boss wave. Epic rail setups shine here.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
@@ -369,11 +369,11 @@
         },
         {
             id: '3-1',
-            recommended: 1220,
-            baseHp: 178,
+            recommended: 1600,
+            baseHp: 208,
             baseSpeed: 92,
-            goldReward: 1860,
-            coreReward: 36,
+            goldReward: 1740,
+            coreReward: 35,
             fragmentReward: 46,
             trait: { zh: '进入第 3 章后，三路会同时承受快怪与精英怪压力，必须保证至少两路具备稳定收线能力。', en: 'Chapter 3 opens with simultaneous pressure from fast and elite enemies, so at least two lanes must clear reliably.' },
             enemies: ['fast', 'split', 'elite', 'boss'],
@@ -381,11 +381,11 @@
         },
         {
             id: '3-2',
-            recommended: 1520,
-            baseHp: 214,
+            recommended: 1980,
+            baseHp: 252,
             baseSpeed: 96,
-            goldReward: 2260,
-            coreReward: 42,
+            goldReward: 2080,
+            coreReward: 41,
             fragmentReward: 54,
             trait: { zh: '护盾怪、分裂怪与 Boss 会连续叠压，护盾技能与链击 / 火箭的联动会明显更稳。', en: 'Shield units, split enemies, and the boss stack together here, making shield timing and Chain/Rocket synergy much more reliable.' },
             enemies: ['shield', 'split', 'elite', 'boss'],
@@ -393,10 +393,10 @@
         },
         {
             id: '3-3',
-            recommended: 1880,
-            baseHp: 258,
+            recommended: 2420,
+            baseHp: 304,
             baseSpeed: 100,
-            goldReward: 2780,
+            goldReward: 2460,
             coreReward: 48,
             fragmentReward: 62,
             trait: { zh: '当前开放内容的终章，最终 Boss 波会把三路一起压满，建议至少拥有 1 路高等级轨炮与 1 路稳定减速。', en: 'This is the current end chapter. The final boss wave saturates all three lanes, so you want one high-level Rail lane plus one stable slow lane.' },
@@ -406,13 +406,13 @@
     ];
 
     const TOWERS = {
-        pulse: { id: 'pulse', tier: 'common', baseDamage: 16, cooldown: 0.72, range: 450, upgradeGold: 220, unlockFragments: 0, color: '#72f4ff', power: 55, splash: 0, slow: 0 },
-        laser: { id: 'laser', tier: 'common', baseDamage: 10, cooldown: 0.34, range: 560, upgradeGold: 260, unlockFragments: 0, color: '#ff9a5a', power: 58, splash: 0, slow: 0 },
-        frost: { id: 'frost', tier: 'rare', baseDamage: 12, cooldown: 0.62, range: 500, upgradeGold: 320, unlockFragments: 36, color: '#8ad6ff', power: 78, splash: 0, slow: 0.28 },
-        rocket: { id: 'rocket', tier: 'rare', baseDamage: 24, cooldown: 1.08, range: 520, upgradeGold: 380, unlockFragments: 40, color: '#ffd26b', power: 92, splash: 0.42, slow: 0 },
-        harvest: { id: 'harvest', tier: 'common', baseDamage: 8, cooldown: 0.84, range: 420, upgradeGold: 210, unlockFragments: 0, color: '#65ffb2', power: 52, splash: 0, slow: 0, goldBonus: 0.55 },
-        chain: { id: 'chain', tier: 'rare', baseDamage: 15, cooldown: 0.64, range: 500, upgradeGold: 460, unlockFragments: 56, color: '#b58cff', power: 112, splash: 0, slow: 0, chain: 0.42 },
-        rail: { id: 'rail', tier: 'epic', baseDamage: 44, cooldown: 1.28, range: 620, upgradeGold: 720, unlockFragments: 92, color: '#ff6b89', power: 164, splash: 0, slow: 0, pierce: true }
+        pulse: { id: 'pulse', tier: 'common', baseDamage: 17, cooldown: 0.7, range: 450, upgradeGold: 260, unlockFragments: 0, color: '#72f4ff', power: 58, splash: 0, slow: 0 },
+        laser: { id: 'laser', tier: 'common', baseDamage: 10, cooldown: 0.32, range: 560, upgradeGold: 300, unlockFragments: 0, color: '#ff9a5a', power: 62, splash: 0, slow: 0 },
+        frost: { id: 'frost', tier: 'rare', baseDamage: 13, cooldown: 0.6, range: 500, upgradeGold: 380, unlockFragments: 48, color: '#8ad6ff', power: 88, splash: 0, slow: 0.3 },
+        rocket: { id: 'rocket', tier: 'rare', baseDamage: 28, cooldown: 1.04, range: 520, upgradeGold: 460, unlockFragments: 52, color: '#ffd26b', power: 108, splash: 0.44, slow: 0 },
+        harvest: { id: 'harvest', tier: 'common', baseDamage: 8, cooldown: 0.82, range: 420, upgradeGold: 250, unlockFragments: 0, color: '#65ffb2', power: 50, splash: 0, slow: 0, goldBonus: 0.72 },
+        chain: { id: 'chain', tier: 'rare', baseDamage: 18, cooldown: 0.6, range: 500, upgradeGold: 620, unlockFragments: 74, color: '#b58cff', power: 136, splash: 0, slow: 0, chain: 0.46 },
+        rail: { id: 'rail', tier: 'epic', baseDamage: 52, cooldown: 1.18, range: 620, upgradeGold: 980, unlockFragments: 128, color: '#ff6b89', power: 198, splash: 0, slow: 0, pierce: true }
     };
 
     const SKILLS = {
@@ -492,8 +492,8 @@
         {
             id: 'goldCrate',
             priceType: 'gold',
-            basePrice: 920,
-            kicker: { zh: '920 G', en: '920 G' },
+            basePrice: 1260,
+            kicker: { zh: '1260 G', en: '1260 G' },
             slot: { zh: '成长碎片', en: 'Growth Fragments' },
             title: { zh: '蓝图补给箱', en: 'Blueprint Crate' },
             desc: { zh: '金币向基础资源箱，偏向霜冻 / 火箭 / 链击的中期成长。', en: 'A gold sink for mid-game fragment growth focused on Frost, Rocket, and Chain.' }
@@ -501,8 +501,8 @@
         {
             id: 'forgeCrate',
             priceType: 'gold',
-            basePrice: 2480,
-            kicker: { zh: '2480 G', en: '2480 G' },
+            basePrice: 3360,
+            kicker: { zh: '3360 G', en: '3360 G' },
             slot: { zh: '推进军械', en: 'Push Arsenal' },
             title: { zh: '前线军械箱', en: 'Frontline Arsenal' },
             desc: { zh: '为卡章节准备的高阶金币箱，会补充能核、赛季经验和高压章节常用碎片。', en: 'A heavier gold sink for chapter walls with cores, Season XP, and higher-tier fragments.' }
@@ -510,8 +510,8 @@
         {
             id: 'coreCrate',
             priceType: 'core',
-            basePrice: 34,
-            kicker: { zh: '34 C', en: '34 C' },
+            basePrice: 44,
+            kicker: { zh: '44 C', en: '44 C' },
             slot: { zh: '稀有箱', en: 'Rare Box' },
             title: { zh: '高能中继箱', en: 'High-Energy Relay' },
             desc: { zh: '能核向补给箱，主要补连锁 / 轨炮碎片，并带回一部分金币与赛季经验。', en: 'A core sink that feeds Chain and Rail growth while refunding some gold and Season XP.' }
@@ -519,8 +519,8 @@
         {
             id: 'relayCrate',
             priceType: 'core',
-            basePrice: 72,
-            kicker: { zh: '72 C', en: '72 C' },
+            basePrice: 92,
+            kicker: { zh: '92 C', en: '92 C' },
             slot: { zh: '后期核心', en: 'Late Core' },
             title: { zh: '矩阵中枢箱', en: 'Matrix Nexus Crate' },
             desc: { zh: '偏后期的高阶能核箱，专门提高赛季推进与轨炮 / 链击收集效率。', en: 'A late-game core sink built to speed up Season progress and Rail/Chain collection.' }
@@ -528,11 +528,11 @@
         {
             id: 'sponsorSupply',
             priceType: 'gold',
-            basePrice: 6800,
+            basePrice: 9200,
             repeatGrowth: 0.26,
             milestoneGrowth: 0.1,
             requiresSponsor: true,
-            kicker: { zh: '6800 G', en: '6800 G' },
+            kicker: { zh: '9200 G', en: '9200 G' },
             slot: { zh: '赞助专供', en: 'Sponsor Only' },
             title: { zh: '赞助军备箱', en: 'Sponsor Arsenal Crate' },
             desc: { zh: '赞助轨道解锁后开放的高阶金币箱，主补能核、赛季经验与轨炮 / 链击碎片。', en: 'A sponsor-only gold sink focused on cores, Season XP, and Rail/Chain growth.' }
@@ -540,11 +540,11 @@
         {
             id: 'sponsorPrism',
             priceType: 'core',
-            basePrice: 128,
+            basePrice: 168,
             repeatGrowth: 0.22,
             milestoneGrowth: 0.08,
             requiresSponsor: true,
-            kicker: { zh: '128 C', en: '128 C' },
+            kicker: { zh: '168 C', en: '168 C' },
             slot: { zh: '终局赞助', en: 'Sponsor Endgame' },
             title: { zh: '创世棱镜箱', en: 'Genesis Prism Crate' },
             desc: { zh: '赞助专属终局能核箱，可把能核直接转成大量金币、赛季经验与高阶碎片。', en: 'A sponsor-exclusive endgame core sink that converts cores into big gold, Season XP, and high-tier fragments.' }
@@ -558,8 +558,8 @@
             accent: '#57e5ff',
             badge: { zh: '首充推荐', en: 'Starter' },
             name: { zh: '前线补给', en: 'Frontline Cache' },
-            desc: { zh: '快速补足前期金币、能核和基础塔台碎片，让前三章推进更平稳。', en: 'A light first pack that stabilizes gold, cores, and starter tower fragments.' },
-            reward: { gold: 3200, cores: 28, seasonXp: 120, fragments: { pulse: 20, laser: 18, harvest: 16 } }
+            desc: { zh: '补开荒资源，同时永久开启赞助轨道和首档战斗增益。', en: 'Stabilizes the opener while permanently unlocking the Sponsor track and the first combat perk tier.' },
+            reward: { gold: 4200, cores: 36, seasonXp: 160, fragments: { pulse: 24, laser: 22, harvest: 18 } }
         },
         {
             id: 'accelerator',
@@ -567,8 +567,8 @@
             accent: '#ff8fe8',
             badge: { zh: '中期提速', en: 'Value' },
             name: { zh: '中继加速箱', en: 'Relay Booster' },
-            desc: { zh: '适合补强中期波次压力，提供更实用的冻结、火箭和连锁碎片。', en: 'A mid-loop power spike with more practical fragments for dangerous waves.' },
-            reward: { gold: 9800, cores: 86, seasonXp: 320, fragments: { frost: 24, rocket: 24, chain: 12 } }
+            desc: { zh: '补强中期卡点，帮助把减速、爆裂和连锁一路抬起来。', en: 'A mid-loop spike that pushes slow, splash, and chain setups through common chapter walls.' },
+            reward: { gold: 11800, cores: 102, seasonXp: 360, fragments: { frost: 28, rocket: 28, chain: 16 } }
         },
         {
             id: 'rush',
@@ -576,8 +576,8 @@
             accent: '#ffb168',
             badge: { zh: '冲关实装', en: 'Rush' },
             name: { zh: '压制突围包', en: 'Pressure Breaker' },
-            desc: { zh: '专为卡章节点准备，兼顾金币、能核和高压章节需要的高阶碎片。', en: 'Designed for chapter walls with extra economy and higher-tier fragments.' },
-            reward: { gold: 14800, cores: 132, seasonXp: 480, fragments: { rocket: 28, chain: 18, rail: 10 } }
+            desc: { zh: '专为卡章节点准备，兼顾金币、能核和高压章节需要的高阶碎片。', en: 'Designed for hard chapter walls with extra economy and higher-tier fragments.' },
+            reward: { gold: 18200, cores: 154, seasonXp: 540, fragments: { rocket: 34, chain: 24, rail: 14 } }
         },
         {
             id: 'sovereign',
@@ -586,7 +586,7 @@
             badge: { zh: '核心成长', en: 'Core' },
             name: { zh: '指挥中枢包', en: 'Command Relay' },
             desc: { zh: '同步补强战力与赛季收益，适合开始冲击中后期章节。', en: 'A stronger growth bundle for deeper chapter pushes and season progress.' },
-            reward: { gold: 24000, cores: 210, seasonXp: 760, fragments: { frost: 28, rocket: 28, chain: 22, rail: 16 } }
+            reward: { gold: 28600, cores: 240, seasonXp: 860, fragments: { frost: 34, rocket: 34, chain: 28, rail: 20 } }
         },
         {
             id: 'nexus',
@@ -595,7 +595,7 @@
             badge: { zh: '后期核心', en: 'Endgame' },
             name: { zh: '堡垒核心包', en: 'Citadel Core' },
             desc: { zh: '围绕后期阵容补给，直接提高能核储备和连锁 / 轨炮成长速度。', en: 'An endgame pack that boosts core stock and high-tier tower growth.' },
-            reward: { gold: 42000, cores: 360, seasonXp: 1200, fragments: { frost: 32, rocket: 32, chain: 34, rail: 28 } }
+            reward: { gold: 48800, cores: 410, seasonXp: 1360, fragments: { frost: 38, rocket: 38, chain: 40, rail: 34 } }
         },
         {
             id: 'throne',
@@ -604,8 +604,16 @@
             badge: { zh: '终局整备', en: 'Summit' },
             name: { zh: '创世军械库', en: 'Genesis Arsenal' },
             desc: { zh: '覆盖整套塔台成长所需，适合准备长期守线与冲赛季奖励。', en: 'A full arsenal bundle built for long-term defense and season chasing.' },
-            reward: { gold: 62000, cores: 520, seasonXp: 1800, fragments: { pulse: 40, laser: 40, harvest: 40, frost: 36, rocket: 36, chain: 30, rail: 24 } }
+            reward: { gold: 72800, cores: 560, seasonXp: 1980, fragments: { pulse: 44, laser: 44, harvest: 44, frost: 40, rocket: 40, chain: 36, rail: 30 } }
         }
+    ];
+
+    const DEFENSE_SPONSOR_TIERS = [
+        { id: 'locked', threshold: 0, title: { zh: '未激活', en: 'Locked' }, damageBoost: 0, speedBoost: 0, goldBoost: 0, coreHpBonus: 0, shieldBonus: 0, powerBonus: 0 },
+        { id: 'signal', threshold: 1, title: { zh: '前线赞助', en: 'Frontline Sponsor' }, damageBoost: 0.08, speedBoost: 0.03, goldBoost: 0.12, coreHpBonus: 18, shieldBonus: 14, powerBonus: 120 },
+        { id: 'command', threshold: 6, title: { zh: '指挥赞助', en: 'Command Sponsor' }, damageBoost: 0.16, speedBoost: 0.06, goldBoost: 0.22, coreHpBonus: 34, shieldBonus: 28, powerBonus: 300 },
+        { id: 'dominion', threshold: 16, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, damageBoost: 0.25, speedBoost: 0.1, goldBoost: 0.34, coreHpBonus: 52, shieldBonus: 44, powerBonus: 560 },
+        { id: 'genesis', threshold: 30, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, damageBoost: 0.35, speedBoost: 0.14, goldBoost: 0.48, coreHpBonus: 72, shieldBonus: 60, powerBonus: 860 }
     ];
 
     const SPONSOR_SEASON_NODES = [
@@ -845,6 +853,9 @@
                 break;
             case 'applyChapterLanePreset':
                 applyChapterPreset(value || getCurrentChapter().id, false);
+                break;
+            case 'applyRecommendedLane':
+                applyRecommendedLanePreset(Number(value) || 0, getCurrentChapter());
                 break;
             case 'applyChapterPresetStart':
                 startChapterWithPreset(value || getCurrentChapter().id);
@@ -2008,19 +2019,263 @@
         const currentLanes = [0, 1, 2].map((laneIndex) => saveSnapshot.laneLoadout?.[laneIndex] || preset.lanes[laneIndex] || 'pulse');
         const currentSkill = saveSnapshot.selectedSkill || preset.skill;
         const laneMatches = preset.lanes.map((towerId, laneIndex) => currentLanes[laneIndex] === towerId);
+        const laneMatchCount = laneMatches.filter(Boolean).length;
         const skillMatches = currentSkill === preset.skill;
         const powerGap = Math.max(0, Math.round(chapter.recommended - getPowerRating(saveSnapshot)));
         const adjustmentsNeeded = laneMatches.filter((matched) => !matched).length + (skillMatches ? 0 : 1);
+        const nearReady = powerGap <= Math.max(80, chapter.recommended * 0.06) && laneMatchCount >= 2;
         return {
             preset,
             currentLanes,
             currentSkill,
             laneMatches,
+            laneMatchCount,
             skillMatches,
             powerGap,
             adjustmentsNeeded,
-            ready: adjustmentsNeeded === 0 && powerGap <= 0
+            nearReady,
+            ready: powerGap <= 0 && laneMatchCount >= 2 && skillMatches
         };
+    }
+
+    function getTowerRoleMeta(towerId) {
+        const map = {
+            pulse: {
+                short: { zh: '均衡主火力', en: 'Balanced DPS' },
+                detail: { zh: '适合补稳任意一路。', en: 'A stable answer for any lane.' }
+            },
+            laser: {
+                short: { zh: '快怪清线', en: 'Fast Clear' },
+                detail: { zh: '专门处理前排快压。', en: 'Built to shave down fast rushes.' }
+            },
+            frost: {
+                short: { zh: '减速稳线', en: 'Slow Control' },
+                detail: { zh: '稳住高压波与终章侧路。', en: 'Stabilizes dangerous waves and side lanes.' }
+            },
+            rocket: {
+                short: { zh: '爆裂清群', en: 'Splash Burst' },
+                detail: { zh: '密集怪与精英混压时更强。', en: 'Stronger when lanes stack clusters and elites.' }
+            },
+            harvest: {
+                short: { zh: '经济回收', en: 'Economy Loop' },
+                detail: { zh: '牺牲火力换更快金币循环。', en: 'Trades power for faster gold cycling.' }
+            },
+            chain: {
+                short: { zh: '连锁压场', en: 'Chain Pressure' },
+                detail: { zh: '适合护盾怪和多目标波次。', en: 'Great into shields and multi-target waves.' }
+            },
+            rail: {
+                short: { zh: 'Boss 终结', en: 'Boss Finisher' },
+                detail: { zh: '高价值单发，打 Boss 与精英最狠。', en: 'Premium single-shot pressure for elites and bosses.' }
+            }
+        };
+        return {
+            short: getLocalized(map[towerId]?.short || { zh: '通用火力', en: 'General Power' }),
+            detail: getLocalized(map[towerId]?.detail || { zh: '适合当前防线。', en: 'Fits the current defense.' })
+        };
+    }
+
+    function getSkillRoleMeta(skillId) {
+        const map = {
+            emp: { zh: '控场开节奏', en: 'Tempo Control' },
+            overclock: { zh: '爆发冲线', en: 'Burst Push' },
+            shield: { zh: '保底容错', en: 'Safety Net' }
+        };
+        return getLocalized(map[skillId] || { zh: '主动技能', en: 'Active Skill' });
+    }
+
+    function getSponsorTierSummary(saveSnapshot = state.save) {
+        const totalSpent = Math.max(0, Number(saveSnapshot.payment?.totalSpent) || 0);
+        const unlocked = !!saveSnapshot.payment?.passUnlocked;
+        let current = DEFENSE_SPONSOR_TIERS[0];
+        if (unlocked) {
+            DEFENSE_SPONSOR_TIERS.slice(1).forEach((tier) => {
+                if (totalSpent >= tier.threshold) current = tier;
+            });
+        }
+        const next = unlocked
+            ? (DEFENSE_SPONSOR_TIERS.slice(1).find((tier) => tier.threshold > totalSpent) || null)
+            : DEFENSE_SPONSOR_TIERS[1];
+        const tierIndex = DEFENSE_SPONSOR_TIERS.findIndex((tier) => tier.id === current.id);
+        const previousThreshold = current.threshold || 0;
+        const nextThreshold = next?.threshold || previousThreshold;
+        const progressRate = nextThreshold > previousThreshold
+            ? Math.max(0, Math.min(1, (totalSpent - previousThreshold) / (nextThreshold - previousThreshold)))
+            : 1;
+        return {
+            ...current,
+            unlocked,
+            totalSpent,
+            next,
+            tierIndex,
+            progressRate,
+            remainingToNext: next ? Math.max(0, next.threshold - totalSpent) : 0
+        };
+    }
+
+    function getProjectedPaymentSave(offer, saveSnapshot = state.save) {
+        const payment = saveSnapshot.payment || {};
+        return {
+            ...saveSnapshot,
+            payment: {
+                ...payment,
+                passUnlocked: true,
+                totalSpent: Math.max(0, Number(payment.totalSpent) || 0) + Math.max(0, Number(offer?.price) || 0)
+            }
+        };
+    }
+
+    function renderSponsorTierBoostChips(tier, options = {}) {
+        if (!tier) return '';
+        const diffFrom = options.diffFrom || null;
+        const limit = Number.isFinite(options.limit) ? options.limit : 4;
+        const damageBoost = Math.max(0, (tier.damageBoost || 0) - (diffFrom?.damageBoost || 0));
+        const speedBoost = Math.max(0, (tier.speedBoost || 0) - (diffFrom?.speedBoost || 0));
+        const goldBoost = Math.max(0, (tier.goldBoost || 0) - (diffFrom?.goldBoost || 0));
+        const coreHpBonus = Math.max(0, (tier.coreHpBonus || 0) - (diffFrom?.coreHpBonus || 0));
+        const shieldBonus = Math.max(0, (tier.shieldBonus || 0) - (diffFrom?.shieldBonus || 0));
+        const powerBonus = Math.max(0, (tier.powerBonus || 0) - (diffFrom?.powerBonus || 0));
+        const chips = [
+            damageBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `永久火力 +${Math.round(damageBoost * 100)}%`, en: `Permanent damage +${Math.round(damageBoost * 100)}%` })}</span>` : '',
+            speedBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `永久攻速 +${Math.round(speedBoost * 100)}%`, en: `Permanent speed +${Math.round(speedBoost * 100)}%` })}</span>` : '',
+            goldBoost > 0 ? `<span class="mini-chip">${getLocalized({ zh: `金币收益 +${Math.round(goldBoost * 100)}%`, en: `Gold gain +${Math.round(goldBoost * 100)}%` })}</span>` : '',
+            powerBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `战力 +${formatCompact(powerBonus)}`, en: `Power +${formatCompact(powerBonus)}` })}</span>` : '',
+            coreHpBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `核心 +${formatCompact(coreHpBonus)}`, en: `Core +${formatCompact(coreHpBonus)}` })}</span>` : '',
+            shieldBonus > 0 ? `<span class="mini-chip">${getLocalized({ zh: `护盾 +${formatCompact(shieldBonus)}`, en: `Shield +${formatCompact(shieldBonus)}` })}</span>` : ''
+        ];
+        return renderLimitedChipMarkup(chips, { limit });
+    }
+
+    function getProjectedPowerRating({ lanes = null, skill = null, saveSnapshot = state.save } = {}) {
+        const snapshot = {
+            ...saveSnapshot,
+            laneLoadout: Array.isArray(lanes) ? lanes.slice(0, 3) : (saveSnapshot.laneLoadout || []).slice(0, 3),
+            selectedSkill: skill || saveSnapshot.selectedSkill
+        };
+        while ((snapshot.laneLoadout || []).length < 3) snapshot.laneLoadout.push('pulse');
+        return getPowerRating(snapshot);
+    }
+
+    function getDefenseGrowthBands() {
+        return [
+            {
+                id: 'starter',
+                start: 0,
+                end: 2,
+                range: '1-1 ~ 1-3',
+                targetPower: 520,
+                title: getLocalized({ zh: '新手打底', en: 'Starter Route' }),
+                copy: getLocalized({ zh: '先做 2 条稳线，再决定要不要保留经济塔。', en: 'Build two stable lanes first, then decide if Harvest can stay.' })
+            },
+            {
+                id: 'push',
+                start: 3,
+                end: 5,
+                range: '2-1 ~ 2-3',
+                targetPower: 1320,
+                title: getLocalized({ zh: '卡章突破', en: 'Wall Break' }),
+                copy: getLocalized({ zh: '火箭 / 连锁 / 霜冻开始主导通关，研究也要同步抬。', en: 'Rocket, Chain, and Frost start to carry, and research must rise with them.' })
+            },
+            {
+                id: 'hardcore',
+                start: 6,
+                end: 8,
+                range: '3-1 ~ 3-3',
+                targetPower: 2380,
+                title: getLocalized({ zh: '骨灰冲层', en: 'Hardcore Push' }),
+                copy: getLocalized({ zh: '终章重点是三路都不崩，轨炮位与减速位必须成型。', en: 'Endgame is about preventing any lane collapse, with real Rail and Slow lanes online.' })
+            }
+        ];
+    }
+
+    function getDefenseGrowthRoadmap(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const chapterIndex = CHAPTERS.findIndex((item) => item.id === chapter.id);
+        const bands = getDefenseGrowthBands();
+        const currentBand = bands.find((band) => chapterIndex >= band.start && chapterIndex <= band.end) || bands[bands.length - 1];
+        const nextBand = bands.find((band) => band.start > currentBand.start) || null;
+        const currentPower = getPowerRating(saveSnapshot);
+        const powerGap = Math.max(0, chapter.recommended - currentPower);
+        const bandGap = Math.max(0, currentBand.targetPower - currentPower);
+        const wallSeverity = powerGap > 480 ? 'hard' : powerGap > 180 ? 'mid' : 'light';
+        let nextAction = getLocalized({ zh: '继续推图，优先补当前最弱的一条路。', en: 'Keep pushing and reinforce the weakest lane first.' });
+        if (powerGap > 420) {
+            nextAction = getLocalized({ zh: '先补装配和研究，再决定是否用商城或充值强行突破。', en: 'Fix loadout and research first, then decide whether shop or top-up is needed to force the wall.' });
+        } else if (powerGap > 120) {
+            nextAction = getLocalized({ zh: '当前是轻卡点，优先补推荐塔等级和关键研究。', en: 'This is a soft wall, so upgrade the recommended tower and key research first.' });
+        } else if (bandGap > 0) {
+            nextAction = getLocalized({ zh: '已经接近本档毕业，可以提前准备下一档核心塔。', en: 'You are close to clearing this band, so start building the next core tower early.' });
+        }
+        return {
+            bands,
+            currentBand,
+            nextBand,
+            currentPower,
+            powerGap,
+            bandGap,
+            wallSeverity,
+            nextAction
+        };
+    }
+
+    function getLoadoutImpactSummary(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const preset = getChapterLoadoutPreset(chapter, saveSnapshot);
+        const currentLanes = [0, 1, 2].map((laneIndex) => saveSnapshot.laneLoadout?.[laneIndex] || preset.lanes[laneIndex] || 'pulse');
+        const laneStats = [0, 1, 2].map((laneIndex) => {
+            const currentTowerId = currentLanes[laneIndex];
+            const recommendedTowerId = preset.lanes[laneIndex];
+            const currentDps = Math.round(getTowerPreviewDps(currentTowerId, saveSnapshot));
+            const recommendedDps = Math.round(getTowerPreviewDps(recommendedTowerId, saveSnapshot));
+            return {
+                laneIndex,
+                laneName: getLaneName(laneIndex),
+                currentTowerId,
+                recommendedTowerId,
+                currentTower: towerLabel(currentTowerId),
+                recommendedTower: towerLabel(recommendedTowerId),
+                matched: currentTowerId === recommendedTowerId,
+                currentDps,
+                recommendedDps,
+                dpsDelta: recommendedDps - currentDps,
+                currentRole: getTowerRoleMeta(currentTowerId),
+                recommendedRole: getTowerRoleMeta(recommendedTowerId)
+            };
+        });
+        const currentDpsTotal = laneStats.reduce((sum, lane) => sum + lane.currentDps, 0);
+        const presetDpsTotal = laneStats.reduce((sum, lane) => sum + lane.recommendedDps, 0);
+        const currentPower = getProjectedPowerRating({ lanes: currentLanes, skill: saveSnapshot.selectedSkill, saveSnapshot });
+        const presetPower = getProjectedPowerRating({ lanes: preset.lanes, skill: preset.skill, saveSnapshot });
+        return {
+            preset,
+            laneStats,
+            currentDpsTotal,
+            presetDpsTotal,
+            totalDpsDelta: presetDpsTotal - currentDpsTotal,
+            currentPower,
+            presetPower,
+            powerDelta: presetPower - currentPower,
+            sponsorTier: getSponsorTierSummary(saveSnapshot)
+        };
+    }
+
+    function applyRecommendedLanePreset(laneIndex = state.save.selectedLane, chapter = getCurrentChapter()) {
+        const preset = getChapterLoadoutPreset(chapter);
+        const nextTowerId = preset.lanes[laneIndex];
+        if (!nextTowerId) return;
+        if (!isTowerUnlockedForSave(nextTowerId)) {
+            showToast(getLocalized({
+                zh: `${towerLabel(nextTowerId)} 仍未解锁，先补碎片再替换。`,
+                en: `${towerLabel(nextTowerId)} is still locked. Get fragments first.`
+            }));
+            return;
+        }
+        state.save.selectedLane = laneIndex;
+        state.save.laneLoadout[laneIndex] = nextTowerId;
+        saveProgress();
+        showToast(getLocalized({
+            zh: `${getLaneName(laneIndex)} 已切到推荐 ${towerLabel(nextTowerId)}`,
+            en: `${getLaneName(laneIndex)} now uses recommended ${towerLabel(nextTowerId)}`
+        }));
+        renderAll();
     }
 
     function getResearchMeta(researchId) {
@@ -2510,56 +2765,33 @@
         const economyPreview = getDefenseEconomyPreview(current);
         const prepOverview = getChapterPrepOverview(current);
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
-        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview);
-        const prepGuideCards = [
-            {
-                step: '01',
-                title: getLocalized({ zh: '先选章节', en: 'Pick the chapter' }),
-                copy: getLocalized({
-                    zh: '先确认你要推哪一章。章节越高，敌潮组合、推荐战力和波次压力都会同步提高。',
-                    en: 'Choose the chapter you want to push. Higher chapters raise enemy mix, recommended power, and wave pressure.'
-                })
-            },
-            {
-                step: '02',
-                title: getLocalized({ zh: '看差距与推荐', en: 'Check the gap' }),
-                copy: getLocalized({
-                    zh: '重点看推荐战力、推荐技能、敌潮预览和掉落倾向；看不懂时直接照推荐编队来。',
-                    en: 'Read the recommended power, suggested skill, enemy preview, and drop focus. If unsure, simply follow the preset.'
-                })
-            },
-            {
-                step: '03',
-                title: getLocalized({ zh: '同步后开打', en: 'Sync and deploy' }),
-                copy: getLocalized({
-                    zh: '差距小就一键套用并开打；差距大时先去装配或研究补强，再回这里继续推进。',
-                    en: 'If the gap is small, apply and deploy immediately. If it is large, strengthen via Loadout or Research first.'
-                })
-            }
-        ];
+        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview).slice(0, 4);
+        const sponsorTier = getSponsorTierSummary();
+        const roadmap = getDefenseGrowthRoadmap(current);
+        const startAction = prepOverview.ready || prepOverview.nearReady ? 'startChapter' : 'applyChapterPresetStart';
+        const startLabel = prepOverview.ready
+            ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
+            : prepOverview.nearReady
+                ? getLocalized({ zh: '试打当前编队', en: 'Test Current Build' })
+                : getLocalized({ zh: '套用推荐开打', en: 'Apply & Defend' });
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('prepPanelTitle'),
                 getLocalized({
-                    zh: '“部署”页负责选章节、读敌潮、看推荐与决定是否直接开打。看不懂时，就按下方 3 步走即可。',
-                    en: 'Setup is where you choose the chapter, read the enemy plan, and decide whether you are ready to deploy. If unsure, just follow the 3 steps below.'
+                    zh: '看当前卡点、差多少战力、下一步该补哪里。',
+                    en: 'Read the current wall, the power gap, and the next best upgrade path.'
                 }),
-                `<div class="mini-chip">${current.id} · ${formatCompact(current.recommended)}</div>`
+                `<div class="mini-chip">${current.id} · ${roadmap.currentBand.title}</div>`
             )}
             <div class="prep-guide-grid">
-                ${prepGuideCards.map((item) => `
-                    <article class="prep-guide-card">
-                        <span class="prep-guide-step">${item.step}</span>
-                        <strong>${item.title}</strong>
-                        <p class="prep-guide-copy">${item.copy}</p>
+                ${roadmap.bands.map((band, index) => `
+                    <article class="prep-guide-card ${band.id === roadmap.currentBand.id ? 'is-current' : ''}">
+                        <span class="prep-guide-step">0${index + 1}</span>
+                        <strong>${band.title}</strong>
+                        <p class="prep-guide-copy">${band.copy}</p>
+                        <p class="prep-guide-note">${band.range} · ${getLocalized({ zh: `建议战力 ${formatCompact(band.targetPower)}`, en: `Target ${formatCompact(band.targetPower)}` })}</p>
                     </article>
                 `).join('')}
-            </div>
-            <div class="prep-guide-note">
-                ${getLocalized({
-                    zh: '简单理解：这里就是“打哪一章、需要多少战力、推荐带什么、现在能不能直接开”的决策页。',
-                    en: 'In plain words: this is the decision page for which chapter to push, how much power you need, what to bring, and whether you can start now.'
-                })}
             </div>
             <div class="chapter-row defend-chapter-row">
                 ${CHAPTERS.map((chapter, index) => `
@@ -2572,53 +2804,50 @@
                 <article class="defend-primary-card compact-overview-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${getLocalized({ zh: '开战面板', en: 'Frontline Ready' })}</div>
+                            <div class="card-kicker">${roadmap.currentBand.title}</div>
                             <div class="card-title">${prepOverview.ready
-                                ? getLocalized({ zh: `${current.id} 可直接开打`, en: `${current.id} is ready` })
-                                : getLocalized({ zh: `${current.id} 还差 ${prepOverview.adjustmentsNeeded} 项调整`, en: `${current.id} needs ${prepOverview.adjustmentsNeeded} tweaks` })}</div>
+                                ? getLocalized({ zh: `${current.id} 已达标，可直接开打`, en: `${current.id} is ready to defend` })
+                                : prepOverview.nearReady
+                                    ? getLocalized({ zh: `${current.id} 轻卡点，可先试打`, en: `${current.id} is near-ready` })
+                                    : getLocalized({ zh: `${current.id} 还在卡点期`, en: `${current.id} is at a wall` })}</div>
                         </div>
                         <div class="card-number">${prepOverview.powerGap > 0
                             ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
                             : getLocalized({ zh: '达标', en: 'Ready' })}</div>
                     </div>
+                    <div class="card-copy">${roadmap.nextAction}</div>
                     <div class="defend-mini-stat-grid">
                         <div class="defend-mini-stat">
-                            <span>${t('previewTowerPower')}</span>
-                            <strong>${formatCompact(getPowerRating(state.save))}</strong>
+                            <span>${getLocalized({ zh: '当前战力', en: 'Current Power' })}</span>
+                            <strong>${formatCompact(roadmap.currentPower)}</strong>
                         </div>
                         <div class="defend-mini-stat">
                             <span>${t('recommendRating')}</span>
                             <strong>${formatCompact(current.recommended)}</strong>
                         </div>
                         <div class="defend-mini-stat">
-                            <span>${getLocalized({ zh: '待领总数', en: 'Claims Ready' })}</span>
-                            <strong>${economyPreview.claimableTotal}</strong>
+                            <span>${getLocalized({ zh: '装配对位', en: 'Lane Match' })}</span>
+                            <strong>${prepOverview.laneMatchCount}/3</strong>
                         </div>
                         <div class="defend-mini-stat">
-                            <span>${t('seasonLabel')}</span>
-                            <strong>Lv.${seasonInfo.level}</strong>
+                            <span>${getLocalized({ zh: '下一门槛', en: 'Next Gate' })}</span>
+                            <strong>${roadmap.nextBand ? formatCompact(roadmap.nextBand.targetPower) : getLocalized({ zh: '终章', en: 'Final' })}</strong>
                         </div>
                     </div>
                     <div class="chip-row defend-chip-row">
-                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
                         <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
                         <span class="mini-chip">${getLocalized({ zh: `掉落倾向 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
                         <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Skill ${recommendedSkill}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `永久增益 ${getLocalized(sponsorTier.title)}`, en: `Permanent ${getLocalized(sponsorTier.title)}` })}</span>
                     </div>
-                    <div class="defend-inline-note">${prepOverview.ready
-                        ? getLocalized({
-                            zh: '当前三路与技能已经对齐，可直接开打；需要更细调装配时再去“装配”页。',
-                            en: 'Your lanes and skill are aligned, so you can defend now. Open Loadout only when you want finer tuning.'
-                        })
-                        : getLocalized({
-                            zh: '优先一键同步推荐编队，差距大的章节先补战力再开打。',
-                            en: 'Sync the recommended preset first, and close larger power gaps before pushing harder chapters.'
-                        })}</div>
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${getLocalized({ zh: `${economyPreview.claimableTotal} 个奖励待回收`, en: `${economyPreview.claimableTotal} claims ready` })}</span>
+                        <span class="mini-chip">${prepOverview.skillMatches ? getLocalized({ zh: '主动技已对位', en: 'Skill aligned' }) : getLocalized({ zh: '主动技待调整', en: 'Skill mismatch' })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `赛季 Lv.${seasonInfo.level}`, en: `Season Lv.${seasonInfo.level}` })}</span>
+                    </div>
                     <div class="card-actions compact defend-card-actions">
-                        <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${current.id}">
-                            ${prepOverview.ready
-                                ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
-                                : getLocalized({ zh: '一键套用并开打', en: 'Apply & Defend' })}
+                        <button class="primary-btn" type="button" data-action="${startAction}" data-value="${current.id}">
+                            ${startLabel}
                         </button>
                         <button class="ghost-btn" type="button" data-action="applyChapterPreset" data-value="${current.id}">
                             ${getLocalized({ zh: '同步推荐编队', en: 'Apply Preset' })}
@@ -2637,14 +2866,16 @@
                         </button>
                     `).join('')}
                     <article class="defend-quick-summary">
-                        <span class="defend-quick-label">${getLocalized({ zh: '本章节奏', en: 'Wave Plan' })}</span>
-                        <strong class="defend-quick-value">${getLocalized({ zh: `共 ${TOTAL_WAVES} 波`, en: `${TOTAL_WAVES} waves` })}</strong>
-                        <span class="defend-quick-meta">${getChapterWavePlan(current)}</span>
+                        <span class="defend-quick-label">${getLocalized({ zh: '当前档位', en: 'Current Band' })}</span>
+                        <strong class="defend-quick-value">${roadmap.currentBand.title}</strong>
+                        <span class="defend-quick-meta">${roadmap.currentBand.copy}</span>
                     </article>
                     <article class="defend-quick-summary">
-                        <span class="defend-quick-label">${getLocalized({ zh: '历史推进', en: 'Progress' })}</span>
-                        <strong class="defend-quick-value">${t('statBest')} ${CHAPTERS[state.save.bestChapterIndex].id}</strong>
-                        <span class="defend-quick-meta">${getLocalized({ zh: `${current.id} 通关 ${getChapterWinCount(current.id)} 次`, en: `${current.id} cleared ${getChapterWinCount(current.id)} times` })}</span>
+                        <span class="defend-quick-label">${getLocalized({ zh: '突破目标', en: 'Breakthrough' })}</span>
+                        <strong class="defend-quick-value">${roadmap.nextBand ? roadmap.nextBand.title : getLocalized({ zh: '终章稳定刷', en: 'Endgame Farm' })}</strong>
+                        <span class="defend-quick-meta">${roadmap.nextBand
+                            ? getLocalized({ zh: `还差 ${formatCompact(roadmap.nextBand.targetPower - roadmap.currentPower)} 战力`, en: `${formatCompact(roadmap.nextBand.targetPower - roadmap.currentPower)} power to next band` })
+                            : getLocalized({ zh: `${current.id} 通关 ${getChapterWinCount(current.id)} 次`, en: `${current.id} cleared ${getChapterWinCount(current.id)} times` })}</span>
                     </article>
                 </div>
             </div>
@@ -2654,88 +2885,102 @@
     function renderLoadoutTab() {
         const selectedLane = state.save.selectedLane;
         const chapter = getCurrentChapter();
-        const preset = getChapterLoadoutPreset(chapter);
         const prepOverview = getChapterPrepOverview(chapter);
-        const presetSkillLabel = t(SKILLS[preset.skill].nameKey);
-        const unlockedTowerCount = Object.values(TOWERS).filter((tower) => {
-            const level = getTowerLevel(tower.id);
-            return level > 0 || tower.unlockFragments === 0;
-        }).length;
+        const impact = getLoadoutImpactSummary(chapter);
+        const presetSkillLabel = t(SKILLS[impact.preset.skill].nameKey);
+        const laneInfo = impact.laneStats[selectedLane];
+        const startAction = prepOverview.ready || prepOverview.nearReady ? 'startChapter' : 'applyChapterPresetStart';
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('loadoutPanelTitle'),
                 getLocalized({
-                    zh: '三路装配集中处理，选路后直接换塔或换技能。',
-                    en: 'Tune all three lanes here, then swap towers or skills quickly.'
+                    zh: '先看总战力，再改单路，不必反复来回切。',
+                    en: 'Read the total power first, then adjust a single lane without extra switching.'
                 }),
                 `<div class="mini-chip">${t('laneSelect')} · ${getLaneName(selectedLane)}</div>`
             )}
-            <article class="stat-card compact-overview-card">
-                <div class="card-top">
-                    <div>
-                        <div class="card-kicker">${getLocalized({ zh: '章节推荐编队', en: 'Chapter Preset' })}</div>
-                        <div class="card-title">${chapter.id} · ${presetSkillLabel}</div>
+            <div class="card-grid tab-overview-grid">
+                <article class="stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '当前编队', en: 'Current Build' })}</div>
+                            <div class="card-title">${chapter.id} · ${prepOverview.ready ? getLocalized({ zh: '可直接开战', en: 'Ready Now' }) : getLocalized({ zh: '仍有提升空间', en: 'Still Room To Improve' })}</div>
+                        </div>
+                        <div class="card-number">${impact.powerDelta > 0 ? getLocalized({ zh: `推荐 +${formatCompact(impact.powerDelta)}`, en: `Preset +${formatCompact(impact.powerDelta)}` }) : getLocalized({ zh: '已接近推荐', en: 'Near preset' })}</div>
                     </div>
-                    <div class="card-number">${preset.usedFallback
-                        ? getLocalized({ zh: '已自动适配', en: 'Auto adjusted' })
-                        : getLocalized({ zh: '标准编队', en: 'Standard preset' })}</div>
-                </div>
-                <div class="card-copy">${preset.usedFallback
-                    ? getLocalized({
-                        zh: '未解锁炮台已自动改为当前可用的同定位方案。',
-                        en: 'Some recommended towers are still locked, so the preset automatically swaps to currently available alternatives.'
-                    })
-                    : getLocalized({
-                        zh: '一键套用当前章节推荐，随后就能直接开打。',
-                        en: 'Apply the recommended three-lane build and active skill for the current chapter in one tap.'
-                    })}</div>
-                ${renderCompactKpiGrid([
-                    { label: getLocalized({ zh: '当前选路', en: 'Selected Lane' }), value: getLaneName(selectedLane) },
-                    { label: getLocalized({ zh: '当前炮台', en: 'Current Tower' }), value: towerLabel(state.save.laneLoadout[selectedLane]) },
-                    { label: getLocalized({ zh: '已解锁', en: 'Unlocked' }), value: `${unlockedTowerCount} / ${Object.keys(TOWERS).length}` },
-                    { label: getLocalized({ zh: '待调整', en: 'Tweaks Left' }), value: String(Math.max(0, prepOverview.adjustmentsNeeded)) }
-                ])}
-                <div class="reward-row">
-                    ${preset.lanes.map((towerId, laneIndex) => `<span class="mini-chip">${getLaneName(laneIndex)} · ${towerLabel(towerId)}</span>`).join('')}
-                    <span class="mini-chip">${getLocalized({ zh: `技能 ${presetSkillLabel}`, en: `Skill ${presetSkillLabel}` })}</span>
-                </div>
-                <div class="card-actions compact" style="margin-top:12px;">
-                    <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
-                        ${getLocalized({ zh: '套用推荐', en: 'Apply Preset' })}
-                    </button>
-                    <button class="primary-btn" type="button" data-action="${prepOverview.ready ? 'startChapter' : 'applyChapterPresetStart'}" data-value="${chapter.id}">
-                        ${prepOverview.ready
-                            ? getLocalized({ zh: '开打', en: 'Defend' })
-                            : getLocalized({ zh: '套用并开打', en: 'Apply & Defend' })}
-                    </button>
-                    <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
-                        ${getLocalized({ zh: '仅三路', en: 'Lanes Only' })}
-                    </button>
-                </div>
-            </article>
-            <div class="lane-picker">
-                ${[0, 1, 2].map((lane) => `
-                    <button class="lane-picker-btn ${selectedLane === lane ? 'active' : ''}" type="button" data-action="lane" data-value="${lane}">
-                        ${getLaneName(lane)}
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '当前战力', en: 'Power' }), value: formatCompact(impact.currentPower) },
+                        { label: getLocalized({ zh: '推荐编队', en: 'Preset Power' }), value: formatCompact(impact.presetPower) },
+                        { label: getLocalized({ zh: '当前总 DPS', en: 'Current DPS' }), value: formatCompact(impact.currentDpsTotal) },
+                        { label: getLocalized({ zh: '永久增益', en: 'Permanent' }), value: `+${Math.round(impact.sponsorTier.damageBoost * 100)}%` }
+                    ])}
+                    <div class="reward-row">
+                        ${impact.laneStats.map((lane) => `<span class="mini-chip">${lane.laneName} · ${lane.currentTower}</span>`).join('')}
+                        <span class="mini-chip">${getLocalized({ zh: `技能 ${t(SKILLS[state.save.selectedSkill].nameKey)}`, en: `Skill ${t(SKILLS[state.save.selectedSkill].nameKey)}` })}</span>
+                    </div>
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${getLocalized({ zh: `${impact.totalDpsDelta > 0 ? '+' : ''}${formatCompact(impact.totalDpsDelta)} DPS 对比推荐`, en: `${impact.totalDpsDelta > 0 ? '+' : ''}${formatCompact(impact.totalDpsDelta)} DPS vs preset` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `${prepOverview.laneMatchCount}/3 路已对位`, en: `${prepOverview.laneMatchCount}/3 lanes aligned` })}</span>
+                    </div>
+                    <div class="card-actions compact">
+                        <button class="primary-btn" type="button" data-action="applyChapterPreset" data-value="${chapter.id}">
+                            ${getLocalized({ zh: '一键套用', en: 'Apply Preset' })}
+                        </button>
+                        <button class="primary-btn" type="button" data-action="${startAction}" data-value="${chapter.id}">
+                            ${getLocalized({ zh: '直接开打', en: 'Defend' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="applyChapterLanePreset" data-value="${chapter.id}">
+                            ${getLocalized({ zh: '只同步三路', en: 'Lanes Only' })}
+                        </button>
+                    </div>
+                </article>
+                <article class="stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${laneInfo.laneName}</div>
+                            <div class="card-title">${laneInfo.currentTower} → ${laneInfo.recommendedTower}</div>
+                        </div>
+                        <div class="card-number">${laneInfo.matched ? getLocalized({ zh: '已对位', en: 'Aligned' }) : getLocalized({ zh: `差 ${formatCompact(laneInfo.dpsDelta)}`, en: `Gap ${formatCompact(laneInfo.dpsDelta)}` })}</div>
+                    </div>
+                    <div class="card-copy">${laneInfo.matched
+                        ? laneInfo.currentRole.detail
+                        : getLocalized({ zh: `这一条路推荐改成 ${laneInfo.recommendedTower}，会更贴合本章敌潮。`, en: `This lane is better on ${laneInfo.recommendedTower} for the current enemy mix.` })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '当前塔', en: 'Current' }), value: formatCompact(laneInfo.currentDps) },
+                        { label: getLocalized({ zh: '推荐塔', en: 'Preset' }), value: formatCompact(laneInfo.recommendedDps) },
+                        { label: getLocalized({ zh: '当前定位', en: 'Role' }), value: laneInfo.currentRole.short },
+                        { label: getLocalized({ zh: '推荐定位', en: 'Preset Role' }), value: laneInfo.recommendedRole.short }
+                    ])}
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${getLocalized({ zh: `当前主动 ${getSkillRoleMeta(state.save.selectedSkill)}`, en: `Current ${getSkillRoleMeta(state.save.selectedSkill)}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `推荐主动 ${getSkillRoleMeta(impact.preset.skill)}`, en: `Preset ${getSkillRoleMeta(impact.preset.skill)}` })}</span>
+                    </div>
+                    <div class="skill-picker" style="margin-top:12px;">
+                        ${Object.values(SKILLS).map((skill) => `
+                            <button class="skill-picker-btn ${state.save.selectedSkill === skill.id ? 'active' : ''}" type="button" data-action="skill" data-value="${skill.id}">
+                                ${t(skill.nameKey)}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="card-actions compact">
+                        <button class="primary-btn" type="button" data-action="applyRecommendedLane" data-value="${selectedLane}">
+                            ${laneInfo.matched ? getLocalized({ zh: '已是推荐塔', en: 'Already Set' }) : getLocalized({ zh: '改单路推荐', en: 'Apply Lane Preset' })}
+                        </button>
+                    </div>
+                </article>
+            </div>
+            <div class="lane-summary-grid">
+                ${impact.laneStats.map((lane) => `
+                    <button class="lane-summary-card ${selectedLane === lane.laneIndex ? 'active' : ''} ${lane.matched ? 'matched' : ''}" type="button" data-action="lane" data-value="${lane.laneIndex}">
+                        <div class="lane-summary-top">
+                            <span>${lane.laneName}</span>
+                            <strong>${lane.currentTower}</strong>
+                        </div>
+                        <div class="lane-summary-meta">${lane.currentRole.short}</div>
+                        <div class="lane-summary-meta">${getLocalized({ zh: `DPS ${formatCompact(lane.currentDps)}`, en: `DPS ${formatCompact(lane.currentDps)}` })}</div>
                     </button>
                 `).join('')}
             </div>
-            <article class="compact-overview-card">
-                <div class="card-top">
-                    <div>
-                        <div class="card-kicker">${t('skillSelect')}</div>
-                        <div class="card-title">${t(SKILLS[state.save.selectedSkill].nameKey)}</div>
-                    </div>
-                    <div class="card-number">${state.lang === 'zh' ? '主动位' : 'Active Slot'}</div>
-                </div>
-                <div class="skill-picker" style="margin-top:12px;">
-                    ${Object.values(SKILLS).map((skill) => `
-                        <button class="skill-picker-btn ${state.save.selectedSkill === skill.id ? 'active' : ''}" type="button" data-action="skill" data-value="${skill.id}">
-                            ${t(skill.nameKey)}
-                        </button>
-                    `).join('')}
-                </div>
-            </article>
             <div class="tower-grid">
                 ${Object.values(TOWERS)
                     .sort((a, b) => getTowerSortScore(b.id) - getTowerSortScore(a.id))
@@ -2754,6 +2999,7 @@
         const progress = unlocked ? Math.min(1, level / 8) : Math.min(1, (state.save.towerFragments[tower.id] || 0) / getUnlockNeed(tower.id));
         const chapter = getCurrentChapter();
         const preset = getChapterLoadoutPreset(chapter);
+        const role = getTowerRoleMeta(tower.id);
         const recommendedLanes = preset.lanes
             .map((towerId, laneIndex) => towerId === tower.id ? getLaneName(laneIndex) : '')
             .filter(Boolean);
@@ -2767,11 +3013,13 @@
                     </div>
                     <div class="card-number">${t('levelText')} ${level || 0}</div>
                 </div>
-                <div class="card-copy">${getTowerDescription(tower.id)}</div>
+                <div class="card-copy">${role.detail}</div>
                 <div class="tower-tags compact">
                     ${renderLimitedChipMarkup([
                         `<span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>`,
+                        `<span class="tag-chip">${role.short}</span>`,
                         `<span class="tag-chip">${formatCompact(state.save.towerFragments[tower.id] || 0)} ${t('fragmentLabel')}</span>`,
+                        tower.id === 'harvest' ? `<span class="tag-chip">${getLocalized({ zh: `击杀金币 +${Math.round((tower.goldBonus || 0) * 100)}%`, en: `Kill gold +${Math.round((tower.goldBonus || 0) * 100)}%` })}</span>` : '',
                         focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '章节掉落倾向', en: 'Focus Drop' })}</span>` : '',
                         ...recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`)
                     ], { limit: 4 })}
@@ -2800,7 +3048,7 @@
         const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
         const researchReadyCount = researchPlan.list.filter((item) => item.affordable && !item.maxed).length;
         const researchMaxedCount = researchPlan.list.filter((item) => item.maxed).length;
-        const sortedResearchIds = researchPlan.list.map((item) => item.id);
+        const prioritizedResearch = researchPlan.list.filter((item) => !item.maxed).slice(0, 3);
         const recoveryAction = economyPreview.dailyReady
             ? {
                 action: 'claimDaily',
@@ -2824,22 +3072,29 @@
                         value: 'defend',
                         label: getLocalized({ zh: '返回防线', en: 'Back To Defend' })
                     };
+        const topResearchTitle = topResearch
+            ? getLocalized({ zh: `先升 ${topResearch.meta.title}`, en: `Upgrade ${topResearch.meta.title}` })
+            : getLocalized({ zh: '研究已毕业', en: 'Research maxed' });
+        const topResearchCopy = topResearch
+            ? `${topResearch.reason}${researchPlan.powerGap > 0
+                ? getLocalized({ zh: ' 当前优先把章节缺口补平。', en: ' Patch the chapter gap first.' })
+                : getLocalized({ zh: ' 现在更偏向稳线和容错。', en: ' Focus more on stability now.' })}`
+            : getLocalized({ zh: '研究已经成型，资源可以更多转去装配、赛季和冲关。', en: 'Research is already built out, so shift more resources into loadout, season, and chapter pushes.' });
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('researchPanelTitle'),
                 getLocalized({
-                    zh: '这里只做升级决策，缺资源就从这里直接跳去回收。',
-                    en: 'Make upgrade decisions here, then jump straight to recovery when resources run low.'
-                })
+                    zh: '这里只保留两件事：现在先升什么，以及金币不够时先去哪里补。',
+                    en: 'This tab keeps only two decisions: what to upgrade now, and where to refill when gold runs short.'
+                }),
+                `<div class="mini-chip">${chapter.id} · ${topResearchTitle}</div>`
             )}
             <div class="card-grid tab-overview-grid">
                 <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${getLocalized({ zh: '当前研究路线', en: 'Current Research Route' })}</div>
-                            <div class="card-title">${topResearch
-                                ? topResearch.meta.title
-                                : getLocalized({ zh: '研究已全部满级', en: 'All research maxed' })}</div>
+                            <div class="card-kicker">${getLocalized({ zh: '现在先升', en: 'Upgrade Now' })}</div>
+                            <div class="card-title">${topResearchTitle}</div>
                         </div>
                         <div class="card-number">${topResearch
                             ? (topResearch.affordable
@@ -2847,19 +3102,15 @@
                                 : getLocalized({ zh: `还差 ${formatCompact(topResearch.shortage)}G`, en: `Need ${formatCompact(topResearch.shortage)}G` }))
                             : getLocalized({ zh: '已毕业', en: 'Maxed' })}</div>
                     </div>
-                    <div class="card-copy">${topResearch
-                        ? `${topResearch.reason} ${researchPlan.powerGap > 0
-                            ? getLocalized({ zh: '先补战力缺口，再冲章节。', en: 'Close the power gap first, then push chapters.' })
-                            : getLocalized({ zh: '当前更偏向补稳定度与容错。', en: 'Focus on stability and safety now.' })}`
-                        : getLocalized({ zh: '研究已满，可以把资源转去装配、赛季和推进。', en: 'Research is maxed, so shift resources into loadout, season, and chapter pushes.' })}</div>
+                    <div class="card-copy">${topResearchCopy}</div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '可升分支', en: 'Ready Upgrades' }), value: String(researchReadyCount) },
                         { label: getLocalized({ zh: '已满分支', en: 'Maxed Branches' }), value: String(researchMaxedCount) },
                         { label: getLocalized({ zh: '战力缺口', en: 'Power Gap' }), value: researchPlan.powerGap > 0 ? formatCompact(researchPlan.powerGap) : getLocalized({ zh: '达标', en: 'Ready' }) },
                         { label: getLocalized({ zh: '当前金币', en: 'Current Gold' }), value: `${formatCompact(state.save.gold)}G` }
                     ])}
-                    ${topResearch ? `<div class="reward-row compact">
-                        ${researchPlan.list.slice(0, 3).map((item, index) => `<span class="mini-chip">${getLocalized({ zh: `推荐 ${index + 1} · ${item.meta.title} +${item.nextDelta}%`, en: `Top ${index + 1} · ${item.meta.title} +${item.nextDelta}%` })}</span>`).join('')}
+                    ${prioritizedResearch.length ? `<div class="reward-row compact">
+                        ${prioritizedResearch.map((item, index) => `<span class="mini-chip">${getLocalized({ zh: `优先 ${index + 1} · ${item.meta.title} +${item.nextDelta}%`, en: `Top ${index + 1} · ${item.meta.title} +${item.nextDelta}%` })}</span>`).join('')}
                     </div>` : ''}
                     <div class="card-actions compact" style="margin-top:12px;">
                         ${topAffordableResearch
@@ -2877,31 +3128,38 @@
                 <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${getLocalized({ zh: '资源回流', en: 'Resource Recovery' })}</div>
+                            <div class="card-kicker">${getLocalized({ zh: '缺资源时', en: 'Resource Refill' })}</div>
                             <div class="card-title">${recoveryAction.label}</div>
                         </div>
                         <div class="card-number">${getLocalized({ zh: `待领 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })}</div>
                     </div>
-                    <div class="card-copy">${economyPreview.dailyRemaining}</div>
+                    <div class="card-copy">${economyPreview.claimableTotal > 0
+                        ? getLocalized({ zh: '优先把可领奖励回收掉，再回来补研究，节奏最顺。', en: 'Sweep ready rewards first, then come back to research for the smoothest loop.' })
+                        : economyPreview.dailyRemaining}</div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '任务', en: 'Missions' }), value: String(economyPreview.missionReady) },
                         { label: getLocalized({ zh: '赛季', en: 'Season' }), value: String(economyPreview.seasonReady) },
                         { label: getLocalized({ zh: '赞助', en: 'Sponsor' }), value: String(economyPreview.sponsorReady) },
                         { label: getLocalized({ zh: '补给', en: 'Supply' }), value: economyPreview.dailyReady ? getLocalized({ zh: '可领', en: 'Ready' }) : getLocalized({ zh: '冷却中', en: 'Cooldown' }) }
                     ])}
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${getLocalized({ zh: `任务待领 ${economyPreview.missionReady}`, en: `Mission ready ${economyPreview.missionReady}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `赛季待领 ${seasonTotalReady}`, en: `Season ready ${seasonTotalReady}` })}</span>
+                        <span class="mini-chip">${economyPreview.dailyRemaining}</span>
+                    </div>
                     <div class="card-actions compact" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
                             ${recoveryAction.label}
                         </button>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
-                            ${getLocalized({ zh: '部署', en: 'Setup' })}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '看装配', en: 'Loadout' })}
                         </button>
                     </div>
                 </article>
             </div>
             <div class="research-grid">
-                ${sortedResearchIds
-                    .map((researchId) => renderResearchCard(researchId, researchPlan.list.find((item) => item.id === researchId) || null))
+                ${researchPlan.list
+                    .map((item) => renderResearchCard(item.id, item))
                     .join('')}
             </div>
         `;
@@ -2917,28 +3175,36 @@
         const nextEffect = RESEARCH[researchId].effect(Math.min(maxLevel, level + 1));
         const nextDelta = Math.max(0, nextEffect - currentEffect);
         const isRecommended = !!recommendation && !recommendation.maxed;
+        const canUpgrade = canUpgradeResearch(researchId);
+        const shortage = Math.max(0, cost - state.save.gold);
+        const stateLabel = maxed
+            ? getLocalized({ zh: '已满级', en: 'Maxed' })
+            : canUpgrade
+                ? getLocalized({ zh: '可立即升级', en: 'Ready' })
+                : getLocalized({ zh: `差 ${formatCompact(shortage)}G`, en: `Need ${formatCompact(shortage)}G` });
         return `
-            <article class="research-card compact-list-card ${canUpgradeResearch(researchId) ? 'ready' : ''}">
+            <article class="research-card compact-list-card ${canUpgrade ? 'ready' : ''}">
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">${t('researchPanelTitle')}</div>
+                        <div class="card-kicker">${isRecommended
+                            ? getLocalized({ zh: `优先 ${researchPlanIndexLabel(recommendation, state.lang)}`, en: `Priority ${researchPlanIndexLabel(recommendation, state.lang)}` })
+                            : t('researchPanelTitle')}</div>
                         <div class="card-title">${meta.title}</div>
                     </div>
-                    <div class="card-number">Lv.${level} / ${maxLevel}</div>
+                    <div class="card-number">${stateLabel}</div>
                 </div>
-                <div class="card-copy">${meta.desc}</div>
+                <div class="card-copy">${isRecommended ? recommendation.reason : meta.desc}</div>
                 <div class="chip-row compact">
                     ${renderLimitedChipMarkup([
+                        `<span class="mini-chip">Lv.${level} / ${maxLevel}</span>`,
                         `<span class="mini-chip">${t('researchEffect')} ${currentEffect}%</span>`,
-                        !maxed ? `<span class="mini-chip">${getLocalized({ zh: `下一级 +${nextDelta}%`, en: `Next +${nextDelta}%` })}</span>` : '',
-                        isRecommended ? `<span class="mini-chip">${getLocalized({ zh: `推荐位 ${researchPlanIndexLabel(recommendation, state.lang)}`, en: `Priority ${researchPlanIndexLabel(recommendation, state.lang)}` })}</span>` : '',
-                        `<span class="mini-chip">${maxed ? t('researchMaxed') : `${t('researchCost')} ${formatCompact(cost)}G`}</span>`
+                        !maxed ? `<span class="mini-chip">${getLocalized({ zh: `下一档 +${nextDelta}%`, en: `Next +${nextDelta}%` })}</span>` : '',
+                        `<span class="mini-chip">${maxed ? t('researchMaxed') : `${formatCompact(cost)}G`}</span>`
                     ], { limit: 3 })}
                 </div>
-                ${isRecommended ? `<div class="card-copy">${recommendation.reason}</div>` : ''}
                 <div class="card-actions compact">
-                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgradeResearch(researchId) ? '' : 'disabled'}>
-                        ${maxed ? t('researchMaxed') : `${t('upgradeNow')} · ${formatCompact(cost)}G`}
+                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgrade ? '' : 'disabled'}>
+                        ${maxed ? t('researchMaxed') : `${getLocalized({ zh: '升级', en: 'Upgrade' })} · ${formatCompact(cost)}G`}
                     </button>
                 </div>
             </article>
@@ -2994,20 +3260,26 @@
     function renderMissionsTab() {
         const missionViews = MISSIONS.map((mission) => getMissionView(mission)).sort((a, b) => b.sort - a.sort);
         const missionBundle = getClaimableMissionBundle();
+        const claimableMissions = missionViews.filter((mission) => mission.claimable);
+        const pendingMissions = missionViews.filter((mission) => !mission.claimed && !mission.claimable);
+        const claimedMissions = missionViews.filter((mission) => mission.claimed);
+        const visiblePendingMissions = pendingMissions.slice(0, Math.max(4, 6 - claimableMissions.length));
+        const visibleMissions = [...claimableMissions, ...visiblePendingMissions];
+        const hiddenPendingCount = Math.max(0, pendingMissions.length - visiblePendingMissions.length);
         const missionClaimedCount = missionViews.filter((mission) => mission.claimed).length;
         const missionActiveCount = missionViews.filter((mission) => !mission.claimed && !mission.claimable).length;
         const missionCompletionRate = missionViews.length ? Math.round((missionClaimedCount / missionViews.length) * 100) : 0;
-        const nextMission = missionViews.find((mission) => !mission.claimed);
+        const focusMission = claimableMissions[0] || pendingMissions[0] || null;
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('missionsPanelTitle'),
                 getLocalized({
-                    zh: '可领取置顶，未完成任务只保留关键进度与奖励。',
-                    en: 'Claimables stay pinned first, while unfinished missions keep only key progress and rewards.'
+                    zh: '这里只保留可领取任务和最近几条推进目标，远期任务折叠到汇总里。',
+                    en: 'This view keeps only claimables and the nearest goals, while distant missions collapse into a summary.'
                 }),
                 `<div class="mini-chip">${missionBundle.count > 0
                     ? getLocalized({ zh: `当前可批量领取 ${missionBundle.count} 个`, en: `${missionBundle.count} ready to batch claim` })
-                    : (state.lang === 'zh' ? '可领取奖励已置顶' : 'Claimables pinned first')
+                    : getLocalized({ zh: `本页显示 ${visibleMissions.length} 条`, en: `${visibleMissions.length} visible now` })
                 }</div>`
             )}
             <div class="card-grid tab-overview-grid">
@@ -3023,12 +3295,12 @@
                     </div>
                     <div class="card-copy">${missionBundle.count > 0
                         ? getLocalized({
-                            zh: '已完成任务在这里一次结算，避免来回切页。',
-                            en: 'Cash out finished missions in one tap to recycle gold, cores, and fragments into your current defense build.'
+                            zh: '完成的任务都先集中在这里，先一键回收，再继续推进下一条。',
+                            en: 'Finished missions stay concentrated here so you can sweep them first, then move to the next objective.'
                         })
                         : getLocalized({
-                            zh: '继续推进目标，满足条件后这里会自动亮起。',
-                            en: 'Keep advancing mission goals and this panel will switch into a one-tap claim entry as soon as rewards are ready.'
+                            zh: '当前没有可领奖励，就盯最近目标即可，不必刷完整长列表。',
+                            en: 'When nothing is ready, just focus on the nearest goals instead of scanning the full list.'
                         })}</div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(missionBundle.count) },
@@ -3046,21 +3318,23 @@
                 <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${getLocalized({ zh: '任务概览', en: 'Mission Snapshot' })}</div>
-                            <div class="card-title">${nextMission
-                                ? nextMission.title
+                            <div class="card-kicker">${getLocalized({ zh: '最近目标', en: 'Nearest Goal' })}</div>
+                            <div class="card-title">${focusMission
+                                ? focusMission.title
                                 : getLocalized({ zh: '当前任务已全部清空', en: 'All current missions cleared' })}</div>
                         </div>
                         <div class="card-number">${missionViews.length ? `${missionCompletionRate}%` : '0%'}</div>
                     </div>
-                    <div class="card-copy">${nextMission
-                        ? nextMission.desc
+                    <div class="card-copy">${focusMission
+                        ? (focusMission.claimable
+                            ? getLocalized({ zh: '这条已经完成，直接领取即可。', en: 'This one is already done and ready to claim.' })
+                            : `${focusMission.desc}${getLocalized({ zh: ` 还差 ${formatCompact(Math.max(0, focusMission.target - focusMission.progress))}。`, en: ` ${formatCompact(Math.max(0, focusMission.target - focusMission.progress))} left.` })}`)
                         : getLocalized({ zh: '继续推进章节与战斗表现，会刷新更多任务目标。', en: 'Keep pushing chapters and battle metrics to surface more mission goals.' })}</div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '总任务', en: 'Total' }), value: String(missionViews.length) },
                         { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(missionBundle.count) },
                         { label: getLocalized({ zh: '未完成', en: 'Pending' }), value: String(Math.max(0, missionViews.length - missionClaimedCount - missionBundle.count)) },
-                        { label: getLocalized({ zh: '推进建议', en: 'Next' }), value: nextMission ? `${nextMission.progress} / ${nextMission.target}` : getLocalized({ zh: '已清空', en: 'Cleared' }) }
+                        { label: getLocalized({ zh: '当前进度', en: 'Current' }), value: focusMission ? `${focusMission.progress} / ${focusMission.target}` : getLocalized({ zh: '已清空', en: 'Cleared' }) }
                     ])}
                     ${renderInlineLinkRow([
                         {
@@ -3077,16 +3351,22 @@
                 </article>
             </div>
             <div class="mission-grid">
-                ${missionViews.map((mission) => `
+                ${visibleMissions.map((mission) => `
                     <article class="mission-card compact-list-card ${mission.claimable ? 'claimable' : ''} ${mission.claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
-                                <div class="card-kicker">${mission.claimable ? t('missionReadyDot') : t(mission.claimed ? 'missionClaimed' : 'missionLocked')}</div>
+                                <div class="card-kicker">${mission.claimable
+                                    ? getLocalized({ zh: '可领取', en: 'Ready' })
+                                    : mission.claimed
+                                        ? getLocalized({ zh: '已领取', en: 'Claimed' })
+                                        : getLocalized({ zh: '推进中', en: 'In Progress' })}</div>
                                 <div class="card-title">${mission.title}</div>
                             </div>
                             <div class="card-number">${mission.progress} / ${mission.target}</div>
                         </div>
-                        <div class="card-copy">${mission.desc}</div>
+                        <div class="card-copy">${mission.claimable
+                            ? getLocalized({ zh: '奖励已就绪，直接领取即可。', en: 'Reward is ready to collect now.' })
+                            : mission.desc}</div>
                         <div class="progress-line"><i style="width:${(mission.progressRate * 100).toFixed(2)}%;"></i></div>
                         <div class="reward-row compact">${mission.rewardChips}</div>
                         <div class="card-actions compact">
@@ -3096,6 +3376,27 @@
                         </div>
                     </article>
                 `).join('')}
+                ${(hiddenPendingCount > 0 || claimedMissions.length > 0) ? `
+                    <article class="stat-card compact-list-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '已折叠任务', en: 'Collapsed Missions' })}</div>
+                                <div class="card-title">${getLocalized({ zh: '其余任务已收起', en: 'Remaining missions collapsed' })}</div>
+                            </div>
+                            <div class="card-number">${getLocalized({ zh: `${hiddenPendingCount + claimedMissions.length} 条`, en: `${hiddenPendingCount + claimedMissions.length}` })}</div>
+                        </div>
+                        <div class="card-copy">${getLocalized({
+                            zh: `已完成 ${claimedMissions.length} 条，远期目标 ${hiddenPendingCount} 条。当前页只保留最近最该做的任务。`,
+                            en: `${claimedMissions.length} claimed and ${hiddenPendingCount} distant goals are hidden so this page stays focused.`
+                        })}</div>
+                        ${renderCompactKpiGrid([
+                            { label: getLocalized({ zh: '已完成', en: 'Claimed' }), value: String(claimedMissions.length) },
+                            { label: getLocalized({ zh: '远期', en: 'Hidden' }), value: String(hiddenPendingCount) },
+                            { label: getLocalized({ zh: '显示中', en: 'Visible' }), value: String(visibleMissions.length) },
+                            { label: getLocalized({ zh: '完成率', en: 'Progress' }), value: `${missionCompletionRate}%` }
+                        ])}
+                    </article>
+                ` : ''}
             </div>
         `;
     }
@@ -3104,19 +3405,27 @@
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
         const rate = seasonInfo.required <= 0 ? 1 : seasonInfo.progress / seasonInfo.required;
         const seasonBundle = getClaimableSeasonBundle();
+        const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const finalChapterId = CHAPTERS[CHAPTERS.length - 1].id;
         const finalChapterClears = getChapterWinCount(finalChapterId);
         const seasonRemaining = Math.max(0, seasonInfo.required - seasonInfo.progress);
         const nodes = SEASON_NODES.map((node, index) => ({ node, index, claimable: isSeasonClaimable(node.id), claimed: state.save.seasonClaimed.includes(node.id) }))
             .sort(compareRewardNodeState);
-        const nextStandardNode = nodes.find(({ claimed }) => !claimed) || null;
+        const claimableNodes = nodes.filter((item) => item.claimable);
+        const pendingNodes = nodes.filter((item) => !item.claimed && !item.claimable);
+        const claimedNodes = nodes.filter((item) => item.claimed);
+        const visiblePendingNodes = pendingNodes.slice(0, Math.max(4, 6 - claimableNodes.length));
+        const visibleNodes = [...claimableNodes, ...visiblePendingNodes];
+        const hiddenNodeCount = Math.max(0, pendingNodes.length - visiblePendingNodes.length);
+        const nextStandardNode = pendingNodes[0] || claimableNodes[0] || null;
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('seasonPanelTitle'),
                 getLocalized({
-                    zh: '这里只看等级、推进和待领奖励，节点列表压缩在下方。',
-                    en: 'Track level, progress, and ready rewards here, with the node list compressed below.'
-                })
+                    zh: '这里只看赛季等级、最近奖励和赞助轨道，远处节点全部折叠。',
+                    en: 'This tab now focuses on season level, nearby rewards, and the sponsor track while distant nodes stay collapsed.'
+                }),
+                `<div class="mini-chip">${getLocalized({ zh: `Lv.${seasonInfo.level} · 待领 ${seasonBundle.count}`, en: `Lv.${seasonInfo.level} · ${seasonBundle.count} ready` })}</div>`
             )}
             <div class="card-grid tab-overview-grid">
                 <article class="stat-card compact-overview-card">
@@ -3128,6 +3437,12 @@
                         <div class="card-number">${formatCompact(state.save.seasonXp)} XP</div>
                     </div>
                     <div class="progress-line"><i style="width:${(rate * 100).toFixed(2)}%;"></i></div>
+                    <div class="card-copy">${nextStandardNode
+                        ? getLocalized({
+                            zh: `下一标准节点在 ${formatCompact(nextStandardNode.node.xp)} XP，继续打当前章节也能稳步推进。`,
+                            en: `The next standard node is at ${formatCompact(nextStandardNode.node.xp)} XP, so staying on your current chapter still pushes the track.`
+                        })
+                        : getLocalized({ zh: '标准赛季轨道已全部打穿，后续重点转到赞助节点和终章刷取。', en: 'The standard track is cleared, so focus on sponsor nodes and endgame farming next.' })}</div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '距下一档', en: 'To Next' }), value: seasonInfo.required > 0 ? formatCompact(seasonRemaining) : getLocalized({ zh: '已满', en: 'Max' }) },
                         { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(seasonBundle.count) },
@@ -3138,25 +3453,10 @@
                 <article class="stat-card compact-overview-card">
                     <div class="card-top">
                         <div>
-                            <div class="card-kicker">${t('statDamage')}</div>
-                            <div class="card-title">${formatCompact(state.save.stats.totalDamage)}</div>
-                        </div>
-                        <div class="card-number">${t('statKills')} ${formatCompact(state.save.stats.kills)}</div>
-                    </div>
-                    ${renderCompactKpiGrid([
-                        { label: getLocalized({ zh: '局数', en: 'Runs' }), value: formatCompact(state.save.stats.runs) },
-                        { label: getLocalized({ zh: '胜利', en: 'Wins' }), value: formatCompact(state.save.stats.wins) },
-                        { label: getLocalized({ zh: '击杀', en: 'Kills' }), value: formatCompact(state.save.stats.kills) },
-                        { label: getLocalized({ zh: '终章', en: 'Final' }), value: formatCompact(finalChapterClears) }
-                    ])}
-                </article>
-                <article class="stat-card compact-overview-card">
-                    <div class="card-top">
-                        <div>
-                            <div class="card-kicker">${getLocalized({ zh: '赛季回收', en: 'Season Sweep' })}</div>
+                            <div class="card-kicker">${getLocalized({ zh: '最近奖励', en: 'Reward Sweep' })}</div>
                             <div class="card-title">${seasonBundle.count > 0
-                                ? getLocalized({ zh: `${seasonBundle.count} 个节点待领取`, en: `${seasonBundle.count} nodes ready` })
-                                : getLocalized({ zh: '当前暂无待领取', en: 'Nothing ready yet' })}</div>
+                                ? getLocalized({ zh: `${seasonBundle.count} 个节点可一起领取`, en: `${seasonBundle.count} nodes ready to claim` })
+                                : getLocalized({ zh: '本页只保留最近节点', en: 'Only nearby nodes are shown' })}</div>
                         </div>
                         <div class="card-number">${seasonBundle.sponsorCount > 0
                             ? getLocalized({ zh: `赞助 ${seasonBundle.sponsorCount}`, en: `Sponsor ${seasonBundle.sponsorCount}` })
@@ -3164,12 +3464,12 @@
                     </div>
                     <div class="card-copy">${seasonBundle.count > 0
                         ? getLocalized({
-                            zh: '标准节点和赞助奖励都能在这里一起结算。',
-                            en: 'Standard season nodes and sponsor-track rewards can now be settled together in one sweep.'
+                            zh: '标准节点和赞助节点都支持一键结算，不用来回翻完整长轨道。',
+                            en: 'Standard and sponsor nodes can be settled together, without paging through the full track.'
                         })
                         : getLocalized({
-                            zh: '继续推章节和赛季经验，达到节点后这里会自动亮起。',
-                            en: 'Keep pushing chapters and Season XP; this panel will surface a batch-claim entry once nodes are ready.'
+                            zh: '继续打当前卡点章节即可。等节点达标后，这里会直接亮起。',
+                            en: 'Keep farming your current chapter. This card lights up as soon as the next node is ready.'
                         })}</div>
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '标准待领', en: 'Standard' }), value: String(Math.max(0, seasonBundle.count - seasonBundle.sponsorCount)) },
@@ -3186,7 +3486,7 @@
                 </article>
             </div>
             <div class="season-grid">
-                ${nodes.map(({ node, index, claimable, claimed }) => `
+                ${visibleNodes.map(({ node, index, claimable, claimed }) => `
                     <article class="season-node compact-list-card ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
@@ -3203,6 +3503,27 @@
                         </div>
                     </article>
                 `).join('')}
+                ${(hiddenNodeCount > 0 || claimedNodes.length > 0 || sponsorUnlocked) ? `
+                    <article class="stat-card compact-list-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '轨道汇总', en: 'Track Summary' })}</div>
+                                <div class="card-title">${getLocalized({ zh: '其余节点已折叠', en: 'Remaining nodes collapsed' })}</div>
+                            </div>
+                            <div class="card-number">${getLocalized({ zh: `${hiddenNodeCount + claimedNodes.length} 个`, en: `${hiddenNodeCount + claimedNodes.length}` })}</div>
+                        </div>
+                        <div class="card-copy">${getLocalized({
+                            zh: `已领取 ${claimedNodes.length} 个标准节点，远期标准节点 ${hiddenNodeCount} 个。赞助轨道在下方单独显示。`,
+                            en: `${claimedNodes.length} standard nodes are claimed, ${hiddenNodeCount} distant ones are hidden, and the sponsor track is separated below.`
+                        })}</div>
+                        ${renderCompactKpiGrid([
+                            { label: getLocalized({ zh: '已领标准', en: 'Claimed' }), value: String(claimedNodes.length) },
+                            { label: getLocalized({ zh: '隐藏标准', en: 'Hidden' }), value: String(hiddenNodeCount) },
+                            { label: getLocalized({ zh: '显示中', en: 'Visible' }), value: String(visibleNodes.length) },
+                            { label: getLocalized({ zh: '赞助轨道', en: 'Sponsor' }), value: sponsorUnlocked ? getLocalized({ zh: '已开启', en: 'Open' }) : getLocalized({ zh: '未开启', en: 'Locked' }) }
+                        ])}
+                    </article>
+                ` : ''}
             </div>
             ${renderSponsorSeasonSection()}
         `;
@@ -3212,12 +3533,28 @@
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const sponsorReady = getSponsorSeasonReadyCount();
         const strategyPlan = getShopStrategyPlan();
+        const recommendedShopIds = new Set([
+            strategyPlan.goldRoute?.offer.id,
+            strategyPlan.coreRoute?.offer.id
+        ].filter(Boolean));
+        const orderedShopOffers = SHOP_ITEMS.slice().sort((a, b) => {
+            const scoreA = (recommendedShopIds.has(a.id) ? 100 : 0) + (canAffordShopOffer(a) ? 20 : 0) + (a.requiresSponsor ? 0 : 5);
+            const scoreB = (recommendedShopIds.has(b.id) ? 100 : 0) + (canAffordShopOffer(b) ? 20 : 0) + (b.requiresSponsor ? 0 : 5);
+            return scoreB - scoreA
+                || Number(a.priceType === 'gold') - Number(b.priceType === 'gold')
+                || getShopOfferCost(a.id) - getShopOfferCost(b.id);
+        });
+        const recommendedPaymentId = strategyPlan.paymentRoute?.offer?.id;
+        const orderedPaymentOffers = DEFENSE_PAYMENT_OFFERS.slice().sort((a, b) => {
+            return Number(b.id === recommendedPaymentId) - Number(a.id === recommendedPaymentId)
+                || a.price - b.price;
+        });
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('shopPanelTitle'),
                 getLocalized({
-                    zh: '每日补给、资源包和充值放在同页，减少来回切换。',
-                    en: 'Daily supply, resource packs, and top-up all live on one page to cut extra switching.'
+                    zh: '商城只留三块：补给、资源包、充值成长，所有推荐都直接围绕当前卡点。',
+                    en: 'The shop now keeps only three lanes: supply, resource packs, and top-up growth, all tuned to your current wall.'
                 }),
                 `<div class="mini-chip">${sponsorUnlocked
                     ? getLocalized({ zh: `赞助轨道已解锁 · 待领 ${sponsorReady}`, en: `Sponsor track unlocked · ${sponsorReady} ready` })
@@ -3230,8 +3567,8 @@
                 ${renderDailyCard()}
             </div>
             <div class="shop-grid">
-                ${SHOP_ITEMS.map((offer) => renderShopOfferCard(offer, strategyPlan)).join('')}
-                ${DEFENSE_PAYMENT_OFFERS.map((offer) => renderPaymentOfferCard(offer, strategyPlan)).join('')}
+                ${orderedShopOffers.map((offer) => renderShopOfferCard(offer, strategyPlan)).join('')}
+                ${orderedPaymentOffers.map((offer) => renderPaymentOfferCard(offer, strategyPlan)).join('')}
             </div>
         `;
     }
@@ -3679,6 +4016,11 @@
     function renderShopStrategyCard(strategyPlan = getShopStrategyPlan()) {
         const { prepOverview, goldRoute, coreRoute, paymentRoute } = strategyPlan;
         const nextSponsorNode = paymentRoute.nextSponsorNode;
+        const recommendedActions = [
+            goldRoute ? getLocalized({ zh: `金币线：${getLocalized(goldRoute.offer.title)}`, en: `Gold: ${getLocalized(goldRoute.offer.title)}` }) : '',
+            coreRoute ? getLocalized({ zh: `能核线：${getLocalized(coreRoute.offer.title)}`, en: `Core: ${getLocalized(coreRoute.offer.title)}` }) : '',
+            getLocalized({ zh: `充值线：${getLocalized(paymentRoute.offer.name)}`, en: `Top-up: ${getLocalized(paymentRoute.offer.name)}` })
+        ].filter(Boolean);
         const primaryAction = paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
             ? {
                 action: 'claimAllSeason',
@@ -3711,16 +4053,24 @@
             <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">${getLocalized({ zh: '当前商城路线', en: 'Current Shop Route' })}</div>
+                        <div class="card-kicker">${getLocalized({ zh: '当前补强路线', en: 'Current Upgrade Route' })}</div>
                         <div class="card-title">${paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
                             ? getLocalized({ zh: '先回收赞助，再决定补包', en: 'Claim sponsor first, then repack' })
-                            : getLocalized({ zh: '按当前章节缺口给出推荐', en: 'Routes tuned to your chapter gap' })}</div>
+                            : getLocalized({ zh: '三条消费线都对准当前卡点', en: 'All three spending routes point at your current wall' })}</div>
                     </div>
                     <div class="card-number">${prepOverview.powerGap > 0
                         ? getLocalized({ zh: `缺口 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
                         : getLocalized({ zh: '战力达标', en: 'Power ready' })}</div>
                 </div>
-                <div class="card-copy">${paymentRoute.reason}</div>
+                <div class="card-copy">${prepOverview.powerGap > 0
+                    ? getLocalized({
+                        zh: '先看缺口，再决定用金币包、能核包还是充值档来补。页面内已把最该买的方案排到最前。',
+                        en: 'Read the gap first, then decide whether gold, cores, or top-up closes it best. The best-fit options are already sorted to the front.'
+                    })
+                    : getLocalized({
+                        zh: '当前更适合把资源转去赛季、赞助和终局塔成长，而不是盲目堆低阶包。',
+                        en: 'You are better off turning resources into season, sponsor, and endgame tower growth instead of overbuying low-tier packs.'
+                    })}</div>
                 <div class="shop-kpi-grid">
                     <div class="shop-kpi">
                         <span>${getLocalized({ zh: '战力缺口', en: 'Power Gap' })}</span>
@@ -3740,9 +4090,7 @@
                     </div>
                 </div>
                 <div class="reward-row">
-                    ${goldRoute ? `<span class="mini-chip">${getLocalized({ zh: `金币优先 ${getLocalized(goldRoute.offer.title)}`, en: `Gold ${getLocalized(goldRoute.offer.title)}` })}</span>` : ''}
-                    ${coreRoute ? `<span class="mini-chip">${getLocalized({ zh: `能核优先 ${getLocalized(coreRoute.offer.title)}`, en: `Core ${getLocalized(coreRoute.offer.title)}` })}</span>` : ''}
-                    <span class="mini-chip">${getLocalized({ zh: `充值优先 ${getLocalized(paymentRoute.offer.name)}`, en: `Top-up ${getLocalized(paymentRoute.offer.name)}` })}</span>
+                    ${recommendedActions.map((label) => `<span class="mini-chip">${label}</span>`).join('')}
                 </div>
                 <div class="reward-row">
                     ${nextSponsorNode
@@ -3774,53 +4122,64 @@
     function renderTopupOverviewCard(strategyPlan = getShopStrategyPlan()) {
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const premiumReady = getSponsorSeasonReadyCount();
-        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const currentTier = getSponsorTierSummary();
+        const recommendedOffer = strategyPlan.paymentRoute.offer;
+        const projectedSave = getProjectedPaymentSave(recommendedOffer);
+        const projectedTier = getSponsorTierSummary(projectedSave);
         const nextSponsorNode = strategyPlan.paymentRoute.nextSponsorNode;
+        const tierPromotion = projectedTier.id !== currentTier.id;
+        const permanentPowerGain = Math.max(0, (projectedTier.powerBonus || 0) - (currentTier.powerBonus || 0));
         return `
             <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">VERIFIED TOP-UP</div>
-                        <div class="card-title">${getLocalized({ zh: '防线充值中心', en: 'Defense Top-Up Center' })}</div>
+                        <div class="card-title">${getLocalized({ zh: '充值 = 永久成长', en: 'Top-up = Permanent Growth' })}</div>
                     </div>
-                    <div class="card-number">${sponsorUnlocked ? getLocalized({ zh: '已解锁', en: 'Unlocked' }) : getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
+                    <div class="card-number">${sponsorUnlocked
+                        ? getLocalized(currentTier.title)
+                        : getLocalized({ zh: '首充未激活', en: 'First top-up locked' })}</div>
                 </div>
-                <div class="card-copy">${sponsorUnlocked
-                    ? getLocalized({ zh: '校验成功后奖励直发到账，赛季赞助节点同步开启。', en: 'Verified payments grant rewards instantly and keep Sponsor nodes live.' })
-                    : getLocalized({ zh: '下单、精确支付、粘贴 txid 校验，即可发奖并永久解锁赞助轨道。', en: 'Create an order, pay the exact amount, then verify the txid to grant rewards and unlock the Sponsor track.' })
-                }</div>
+                <div class="card-copy">${!sponsorUnlocked
+                    ? getLocalized({
+                        zh: `首充后会永久解锁赞助轨道，并直接获得 ${getLocalized(projectedTier.title)} 常驻增益。`,
+                        en: `Your first top-up permanently unlocks the sponsor track and immediately grants ${getLocalized(projectedTier.title)} permanent bonuses.`
+                    })
+                    : tierPromotion
+                        ? getLocalized({
+                            zh: `购买推荐档 ${getLocalized(recommendedOffer.name)} 后，会从 ${getLocalized(currentTier.title)} 升到 ${getLocalized(projectedTier.title)}。`,
+                            en: `Buying the recommended ${getLocalized(recommendedOffer.name)} moves you from ${getLocalized(currentTier.title)} to ${getLocalized(projectedTier.title)}.`
+                        })
+                        : currentTier.next
+                            ? getLocalized({
+                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}。`,
+                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}.`
+                            })
+                            : getLocalized({ zh: '你已经在最高赞助阶位，充值主要体现为资源直充和赛季加速。', en: 'You are already at the highest sponsor tier, so top-up now mainly translates into direct resources and faster season progress.' })}</div>
                 <div class="reward-row">
-                    <span class="mini-chip">${getLocalized({ zh: `${premiumReady} 个赞助节点待领取`, en: `${premiumReady} sponsor nodes ready` })}</span>
-                    <span class="mini-chip">OKX Wallet · TRON (TRC20)</span>
-                    <span class="mini-chip">${getLocalized({ zh: `推荐礼包 ${getLocalized(strategyPlan.paymentRoute.offer.name)}`, en: `Recommended ${getLocalized(strategyPlan.paymentRoute.offer.name)}` })}</span>
-                    ${nextSponsorNode
-                        ? `<span class="mini-chip">${sponsorUnlocked
-                            ? (nextSponsorNode.ready
-                                ? getLocalized({ zh: '下个赞助节点可领', en: 'Next sponsor node ready' })
-                                : getLocalized({ zh: `下个赞助节点差 ${formatCompact(nextSponsorNode.remainingXp)} XP`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP to next sponsor node` }))
-                            : getLocalized({ zh: '首充后开启赞助节点', en: 'First top-up unlocks sponsor nodes' })}</span>`
-                        : ''}
+                    ${renderSponsorTierBoostChips(sponsorUnlocked ? currentTier : projectedTier, { limit: 4 })}
                 </div>
+                ${tierPromotion ? `<div class="reward-row compact">${renderSponsorTierBoostChips(projectedTier, { diffFrom: currentTier, limit: 4 })}</div>` : ''}
                 ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点奖励', en: 'Next Sponsor Reward' })}</span>
                     ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
                 </div>` : ''}
                 <div class="shop-kpi-grid">
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '已校验订单', en: 'Verified Orders' })}</span>
-                        <strong>${formatCompact(state.save.payment.purchaseCount || 0)}</strong>
+                        <span>${getLocalized({ zh: '推荐档', en: 'Recommended' })}</span>
+                        <strong>${getLocalized(recommendedOffer.name)}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '赞助轨道', en: 'Sponsor Track' })}</span>
-                        <strong>${sponsorUnlocked ? getLocalized({ zh: '已解锁', en: 'Unlocked' }) : getLocalized({ zh: '待解锁', en: 'Locked' })}</strong>
+                        <span>${getLocalized({ zh: '永久战力', en: 'Permanent Power' })}</span>
+                        <strong>${formatCompact(sponsorUnlocked ? currentTier.powerBonus : projectedTier.powerBonus)}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '累计充值', en: 'Total Spent' })}</span>
-                        <strong>$${Number(state.save.payment.totalSpent || 0).toFixed(2)}</strong>
+                        <span>${getLocalized({ zh: '待升下一阶', en: 'To Next Tier' })}</span>
+                        <strong>${projectedTier.next ? `$${Number(projectedTier.remainingToNext || 0).toFixed(2)}` : getLocalized({ zh: '已封顶', en: 'Maxed' })}</strong>
                     </div>
                     <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '赛季等级', en: 'Season Level' })}</span>
-                        <strong>Lv.${seasonInfo.level}</strong>
+                        <span>${getLocalized({ zh: '待领赞助', en: 'Sponsor Ready' })}</span>
+                        <strong>${premiumReady}${permanentPowerGain > 0 ? ` · +${formatCompact(permanentPowerGain)}` : ''}</strong>
                     </div>
                 </div>
                 <div class="card-actions compact">
@@ -3829,9 +4188,9 @@
                             ? getLocalized({ zh: '领待奖', en: 'Claim Ready' })
                             : getLocalized({ zh: '开礼包', en: 'Open Pack' })}
                     </button>
-                    ${sponsorUnlocked && premiumReady > 0 ? `<button class="ghost-btn" type="button" data-action="openTab" data-value="season">
-                        ${getLocalized({ zh: '赛季', en: 'Season' })}
-                    </button>` : ''}
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="season">
+                        ${getLocalized({ zh: '赞助轨道', en: 'Sponsor Track' })}
+                    </button>
                 </div>
             </article>
         `;
@@ -3840,6 +4199,12 @@
     function renderPaymentOfferCard(offer, strategyPlan = null) {
         const sponsorUnlocked = !!state.save.payment.passUnlocked;
         const isRecommended = strategyPlan?.paymentRoute?.offer.id === offer.id;
+        const currentTier = getSponsorTierSummary();
+        const projectedTier = getSponsorTierSummary(getProjectedPaymentSave(offer));
+        const tierPromotion = projectedTier.id !== currentTier.id;
+        const permanentPowerGain = Math.max(0, (projectedTier.powerBonus || 0) - (currentTier.powerBonus || 0));
+        const permanentDamageGain = Math.max(0, Math.round(((projectedTier.damageBoost || 0) - (currentTier.damageBoost || 0)) * 100));
+        const nextTierLabel = projectedTier.next ? getLocalized(projectedTier.next.title) : getLocalized({ zh: '最高档', en: 'Max Tier' });
         return `
             <article class="shop-card compact-list-card paypack" style="--offer-accent:${offer.accent};">
                 <div class="card-top">
@@ -3847,18 +4212,33 @@
                         <div class="card-kicker">${getLocalized(offer.badge)}</div>
                         <div class="card-title">${getLocalized(offer.name)}</div>
                     </div>
-                    <div class="card-number">$${offer.price.toFixed(2)}</div>
+                        <div class="card-number">$${offer.price.toFixed(2)}</div>
                 </div>
-                <div class="card-copy">${getLocalized(offer.desc)}</div>
+                <div class="card-copy">${!sponsorUnlocked
+                    ? getLocalized({
+                        zh: `首充后永久解锁赞助轨道，并直接进入 ${getLocalized(projectedTier.title)}。`,
+                        en: `Your first top-up permanently unlocks the sponsor track and immediately enters ${getLocalized(projectedTier.title)}.`
+                    })
+                    : tierPromotion
+                        ? getLocalized({
+                            zh: `购买后升到 ${getLocalized(projectedTier.title)}，永久战力 +${formatCompact(permanentPowerGain)}${permanentDamageGain > 0 ? `，火力再 +${permanentDamageGain}%` : ''}。`,
+                            en: `This pack promotes you to ${getLocalized(projectedTier.title)} with +${formatCompact(permanentPowerGain)} permanent power${permanentDamageGain > 0 ? ` and +${permanentDamageGain}% damage` : ''}.`
+                        })
+                        : getLocalized({
+                            zh: `资源会立即到账，并继续把你推进到下一阶 ${nextTierLabel}。`,
+                            en: `Resources arrive instantly and keep moving you toward the next tier ${nextTierLabel}.`
+                        })}</div>
                 <div class="reward-row compact">
                     ${renderLimitedChipMarkup([
                         `<span class="mini-chip">${getLocalized({ zh: '链上校验发奖', en: 'On-chain verified' })}</span>`,
                         `<span class="mini-chip">TRON (TRC20)</span>`,
                         !sponsorUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '首充解锁赞助', en: 'Unlocks Sponsor' })}</span>` : '',
+                        tierPromotion ? `<span class="mini-chip">${getLocalized({ zh: `升到 ${getLocalized(projectedTier.title)}`, en: `Promotes to ${getLocalized(projectedTier.title)}` })}</span>` : '',
                         isRecommended ? `<span class="mini-chip">${getLocalized({ zh: '当前推荐', en: 'Recommended now' })}</span>` : ''
                     ], { limit: 3 })}
                 </div>
                 <div class="reward-row compact">${renderRewardChips(offer.reward, { limit: 3 })}</div>
+                <div class="reward-row compact">${renderSponsorTierBoostChips(tierPromotion ? projectedTier : currentTier, tierPromotion ? { diffFrom: currentTier, limit: 3 } : { limit: 3 })}</div>
                 <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">
                         ${getLocalized({ zh: '立即支付', en: 'Pay Now' })}
@@ -3873,10 +4253,12 @@
         const nextSponsorNode = getNextSponsorSeasonNode();
         const strategyPlan = getShopStrategyPlan();
         const sponsorReady = getSponsorSeasonReadyCount();
+        const sponsorTier = getSponsorTierSummary();
 
         if (!sponsorUnlocked) {
+            const unlockTier = getSponsorTierSummary(getProjectedPaymentSave(strategyPlan.paymentRoute.offer));
             return `
-                <article class="shop-card premium topup-overview-card">
+                <article class="shop-card premium topup-overview-card compact-overview-card">
                     <div class="card-top">
                         <div>
                             <div class="card-kicker">${t('sponsorTrack')}</div>
@@ -3884,7 +4266,11 @@
                         </div>
                         <div class="card-number">${getLocalized({ zh: '待解锁', en: 'Locked' })}</div>
                     </div>
-                    <div class="card-copy">${getLocalized({ zh: '任意一笔校验成功的充值都会解锁赞助轨道，并随赛季经验追加额外奖励。', en: 'Any verified top-up unlocks the Sponsor track and adds extra rewards as Season XP grows.' })}</div>
+                    <div class="card-copy">${getLocalized({
+                        zh: '任意一笔校验成功的充值都会解锁赞助轨道。首充后，赞助节点和常驻增益会一起生效。',
+                        en: 'Any verified top-up unlocks the sponsor track. Your first top-up activates both sponsor nodes and permanent bonuses.'
+                    })}</div>
+                    <div class="reward-row compact">${renderSponsorTierBoostChips(unlockTier, { limit: 4 })}</div>
                     ${nextSponsorNode ? `<div class="reward-row compact">
                         <span class="mini-chip">${getLocalized({ zh: '解锁后首个赞助节点', en: 'First Sponsor Node After Unlock' })}</span>
                         ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
@@ -3904,41 +4290,63 @@
                 claimed: !!state.save.payment.premiumSeasonClaims[node.id]
             }))
             .sort(compareRewardNodeState);
+        const claimableSponsorNodes = sponsorNodes.filter((item) => item.claimable);
+        const pendingSponsorNodes = sponsorNodes.filter((item) => !item.claimed && !item.claimable);
+        const claimedSponsorNodes = sponsorNodes.filter((item) => item.claimed);
+        const visiblePendingSponsorNodes = pendingSponsorNodes.slice(0, Math.max(3, 5 - claimableSponsorNodes.length));
+        const visibleSponsorNodes = [...claimableSponsorNodes, ...visiblePendingSponsorNodes];
+        const hiddenSponsorCount = Math.max(0, pendingSponsorNodes.length - visiblePendingSponsorNodes.length);
 
         return `
-            <div class="panel-head">
-                <div>
-                    <h3>${t('sponsorTrack')}</h3>
-                    <p>${getLocalized({ zh: '达到指定赛季经验后，就能在这里领取额外赞助奖励。', en: 'Reach the required Season XP here to claim extra sponsor rewards.' })}</p>
+            <article class="shop-card premium topup-overview-card compact-overview-card" style="margin-bottom:14px;">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${t('sponsorTrack')}</div>
+                        <div class="card-title">${getLocalized(sponsorTier.title)}</div>
+                    </div>
+                    <div class="card-number">${getLocalized({ zh: `待领 ${sponsorReady}`, en: `${sponsorReady} ready` })}</div>
                 </div>
-                <div class="mini-chip">${getLocalized({ zh: `待领取 ${sponsorReady} 个节点`, en: `${sponsorReady} nodes ready` })}</div>
-            </div>
-            ${nextSponsorNode ? `
-                <article class="shop-card premium topup-overview-card" style="margin-bottom:14px;">
-                    <div class="card-top">
-                        <div>
-                            <div class="card-kicker">${getLocalized({ zh: '下一赞助节点', en: 'Next Sponsor Node' })}</div>
-                            <div class="card-title">${getLocalized({ zh: `赞助节点 ${SPONSOR_SEASON_NODES.findIndex((item) => item.id === nextSponsorNode.node.id) + 1}`, en: `Sponsor Node ${SPONSOR_SEASON_NODES.findIndex((item) => item.id === nextSponsorNode.node.id) + 1}` })}</div>
-                        </div>
-                        <div class="card-number">${nextSponsorNode.ready
-                            ? getLocalized({ zh: '可直接领取', en: 'Ready Now' })
-                            : getLocalized({ zh: `还差 ${formatCompact(nextSponsorNode.remainingXp)} XP`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP left` })}</div>
+                <div class="card-copy">${nextSponsorNode
+                    ? (nextSponsorNode.ready
+                        ? getLocalized({ zh: '当前最近的赞助节点已经达标，直接领取即可。', en: 'Your nearest sponsor node is already ready to claim.' })
+                        : getLocalized({ zh: `离下个赞助节点还差 ${formatCompact(nextSponsorNode.remainingXp)} XP。`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP left to the next sponsor node.` }))
+                    : getLocalized({ zh: '赞助轨道已全部吃满，后续充值主要体现为即时资源和阶位常驻增益。', en: 'The sponsor track is fully cleared, so future top-ups mainly show up as direct resources and permanent tier power.' })}</div>
+                <div class="reward-row compact">${renderSponsorTierBoostChips(sponsorTier, { limit: 4 })}</div>
+                ${nextSponsorNode ? `<div class="reward-row compact">
+                    <span class="mini-chip">${getLocalized({ zh: '最近赞助节点', en: 'Nearest Sponsor Node' })}</span>
+                    ${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}
+                </div>` : ''}
+                <div class="shop-kpi-grid">
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '当前阶位', en: 'Current Tier' })}</span>
+                        <strong>${getLocalized(sponsorTier.title)}</strong>
                     </div>
-                    <div class="card-copy">${nextSponsorNode.ready
-                        ? getLocalized({ zh: '这个节点已经达标，可直接从当前页领取。', en: 'This node is ready and can be claimed from the current page.' })
-                        : getLocalized({ zh: '继续抬升赛季经验，就能拿到这一档赞助奖励。', en: 'Keep raising Season XP to unlock this sponsor reward tier.' })}</div>
-                    <div class="reward-row compact">${renderRewardChips(nextSponsorNode.node.reward, { limit: 3 })}</div>
-                    <div class="card-actions compact" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="${nextSponsorNode.ready ? 'claimAllSeason' : 'openTab'}" data-value="${nextSponsorNode.ready ? 'season' : 'shop'}">
-                            ${nextSponsorNode.ready
-                                ? getLocalized({ zh: '一键领取', en: 'Claim Ready' })
-                                : getLocalized({ zh: '商城补强', en: 'Shop Route' })}
-                        </button>
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '永久战力', en: 'Permanent Power' })}</span>
+                        <strong>${formatCompact(sponsorTier.powerBonus || 0)}</strong>
                     </div>
-                </article>
-            ` : ''}
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '金币增益', en: 'Gold Boost' })}</span>
+                        <strong>+${Math.round((sponsorTier.goldBoost || 0) * 100)}%</strong>
+                    </div>
+                    <div class="shop-kpi">
+                        <span>${getLocalized({ zh: '到下一阶', en: 'To Next Tier' })}</span>
+                        <strong>${sponsorTier.next ? `$${Number(sponsorTier.remainingToNext || 0).toFixed(2)}` : getLocalized({ zh: '封顶', en: 'Maxed' })}</strong>
+                    </div>
+                </div>
+                <div class="card-actions compact" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="${nextSponsorNode?.ready ? 'claimAllSeason' : 'openPayment'}" data-value="${nextSponsorNode?.ready ? 'season' : strategyPlan.paymentRoute.offer.id}">
+                        ${nextSponsorNode?.ready
+                            ? getLocalized({ zh: '一键领取', en: 'Claim Ready' })
+                            : getLocalized({ zh: '继续补强', en: 'Open Pack' })}
+                    </button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="shop">
+                        ${getLocalized({ zh: '回商城', en: 'Back To Shop' })}
+                    </button>
+                </div>
+            </article>
             <div class="season-grid">
-                ${sponsorNodes.map(({ node, index, claimable, claimed }) => `
+                ${visibleSponsorNodes.map(({ node, index, claimable, claimed }) => `
                     <article class="season-node compact-list-card ${claimable ? 'claimable' : ''} ${claimed ? 'claimed' : ''}">
                         <div class="card-top">
                             <div>
@@ -3955,6 +4363,27 @@
                         </div>
                     </article>
                 `).join('')}
+                ${(hiddenSponsorCount > 0 || claimedSponsorNodes.length > 0) ? `
+                    <article class="stat-card compact-list-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '赞助汇总', en: 'Sponsor Summary' })}</div>
+                                <div class="card-title">${getLocalized({ zh: '其余赞助节点已折叠', en: 'Remaining sponsor nodes collapsed' })}</div>
+                            </div>
+                            <div class="card-number">${getLocalized({ zh: `${hiddenSponsorCount + claimedSponsorNodes.length} 个`, en: `${hiddenSponsorCount + claimedSponsorNodes.length}` })}</div>
+                        </div>
+                        <div class="card-copy">${getLocalized({
+                            zh: `已领取 ${claimedSponsorNodes.length} 个赞助节点，远期节点 ${hiddenSponsorCount} 个。页面只保留最近一批。`,
+                            en: `${claimedSponsorNodes.length} sponsor nodes are claimed and ${hiddenSponsorCount} distant ones are hidden to keep this page focused.`
+                        })}</div>
+                        ${renderCompactKpiGrid([
+                            { label: getLocalized({ zh: '已领', en: 'Claimed' }), value: String(claimedSponsorNodes.length) },
+                            { label: getLocalized({ zh: '隐藏', en: 'Hidden' }), value: String(hiddenSponsorCount) },
+                            { label: getLocalized({ zh: '显示中', en: 'Visible' }), value: String(visibleSponsorNodes.length) },
+                            { label: getLocalized({ zh: '待领', en: 'Ready' }), value: String(sponsorReady) }
+                        ])}
+                    </article>
+                ` : ''}
             </div>
         `;
     }
@@ -4787,63 +5216,94 @@
         return Number(saveSnapshot.researches[researchId]) || 0;
     }
 
-    function getTowerLevel(towerId) {
+    function getTowerLevel(towerId, saveSnapshot = state.save) {
         const tower = TOWERS[towerId];
-        const level = Number(state.save.towerLevels[towerId]) || 0;
+        const level = Number(saveSnapshot.towerLevels?.[towerId]) || 0;
         if (tower && tower.unlockFragments === 0 && level <= 0) return 1;
         return level;
     }
 
-    function getTowerUpgradeCost(towerId) {
+    function getTowerUpgradeCost(towerId, saveSnapshot = state.save) {
         const tower = TOWERS[towerId];
-        const level = getTowerLevel(towerId);
-        const baseCost = tower.upgradeGold * (1 + (level - 1) * 0.42);
-        const midRamp = level >= 4 ? tower.upgradeGold * (level - 3) * 0.14 : 0;
-        const lateRamp = level >= 6 ? tower.upgradeGold * (level - 5) * 0.18 : 0;
-        return Math.round(baseCost + midRamp + lateRamp);
+        const level = getTowerLevel(towerId, saveSnapshot);
+        const baseCost = tower.upgradeGold * (1 + (level - 1) * 0.56);
+        const midRamp = level >= 3 ? tower.upgradeGold * (level - 2) * 0.16 : 0;
+        const lateRamp = level >= 5 ? tower.upgradeGold * (level - 4) * 0.24 : 0;
+        const endRamp = level >= 7 ? tower.upgradeGold * (level - 6) * 0.32 : 0;
+        return Math.round(baseCost + midRamp + lateRamp + endRamp);
     }
 
     function getUnlockNeed(towerId) {
         return TOWERS[towerId]?.unlockFragments || 0;
     }
 
-    function getTowerDamagePerShot(towerId) {
+    function getTowerDamagePerShot(towerId, options = {}) {
+        const saveSnapshot = options.saveSnapshot || state.save;
+        const useBattleModifiers = options.useBattleModifiers !== false;
         const tower = TOWERS[towerId];
-        const level = Math.max(1, getTowerLevel(towerId));
-        const attackBoost = 1 + getResearchLevel('attack') * 0.08;
-        return tower.baseDamage * (1 + (level - 1) * 0.24) * attackBoost * state.battle.modifiers.damage;
+        const sponsorTier = getSponsorTierSummary(saveSnapshot);
+        const level = Math.max(1, getTowerLevel(towerId, saveSnapshot));
+        const attackBoost = 1 + getResearchLevel('attack', saveSnapshot) * 0.08;
+        const tierGrowth = tower.tier === 'epic' ? 0.32 : tower.tier === 'rare' ? 0.28 : 0.24;
+        const tierScalar = tower.tier === 'epic' ? 1.08 : tower.tier === 'rare' ? 1.04 : 1;
+        const battleDamage = useBattleModifiers ? state.battle.modifiers.damage : 1;
+        return tower.baseDamage * (1 + (level - 1) * tierGrowth) * attackBoost * tierScalar * (1 + sponsorTier.damageBoost) * battleDamage;
     }
 
-    function getTowerCooldown(towerId) {
+    function getTowerCooldown(towerId, options = {}) {
+        const saveSnapshot = options.saveSnapshot || state.save;
+        const useBattleModifiers = options.useBattleModifiers !== false;
         const tower = TOWERS[towerId];
-        const fireBoost = 1 + getResearchLevel('cadence') * 0.06;
-        const overclockBoost = state.battle.skillEffect === 'overclock' ? 1.3 : 1;
-        return Math.max(0.12, tower.cooldown / (fireBoost * state.battle.modifiers.attackSpeed * overclockBoost));
+        const sponsorTier = getSponsorTierSummary(saveSnapshot);
+        const fireBoost = 1 + getResearchLevel('cadence', saveSnapshot) * 0.06;
+        const battleSpeed = useBattleModifiers ? state.battle.modifiers.attackSpeed : 1;
+        const overclockBoost = useBattleModifiers && state.battle.skillEffect === 'overclock' ? 1.3 : 1;
+        return Math.max(0.12, tower.cooldown / (fireBoost * (1 + sponsorTier.speedBoost) * battleSpeed * overclockBoost));
     }
 
-    function getTowerPreviewDps(towerId) {
-        return getTowerLevel(towerId) <= 0 ? 0 : getTowerDamagePerShot(towerId) / getTowerCooldown(towerId);
+    function getTowerPreviewDps(towerId, saveSnapshot = state.save) {
+        return getTowerLevel(towerId, saveSnapshot) <= 0
+            ? 0
+            : getTowerDamagePerShot(towerId, { saveSnapshot, useBattleModifiers: false }) / getTowerCooldown(towerId, { saveSnapshot, useBattleModifiers: false });
     }
 
     function getPowerRating(save) {
-        const towerPower = Object.entries(TOWERS).reduce((sum, [towerId, tower]) => {
-            const level = Number(save.towerLevels[towerId]) || (tower.unlockFragments === 0 ? 1 : 0);
-            return level <= 0 ? sum : sum + tower.power * (1 + (level - 1) * 0.26);
+        const sponsorTier = getSponsorTierSummary(save);
+        const currentLanes = Array.isArray(save.laneLoadout) ? save.laneLoadout.slice(0, 3) : ['pulse', 'laser', 'harvest'];
+        while (currentLanes.length < 3) currentLanes.push('pulse');
+        const ownedPower = Object.entries(TOWERS).reduce((sum, [towerId, tower]) => {
+            const level = Number(save.towerLevels?.[towerId]) || (tower.unlockFragments === 0 ? 1 : 0);
+            if (level <= 0) return sum;
+            const growth = 1 + (level - 1) * (tower.tier === 'epic' ? 0.24 : tower.tier === 'rare' ? 0.22 : 0.18);
+            return sum + tower.power * growth * 0.38;
         }, 0);
-        const researchPower = Object.values(save.researches).reduce((sum, level) => sum + (Number(level) || 0) * 38, 0);
-        return Math.round(towerPower + researchPower + (save.bestChapterIndex + 1) * 56);
+        const equippedPower = currentLanes.reduce((sum, towerId, laneIndex) => {
+            const tower = TOWERS[towerId];
+            if (!tower) return sum;
+            const level = Math.max(1, Number(save.towerLevels?.[towerId]) || (tower.unlockFragments === 0 ? 1 : 0));
+            const growth = 1 + (level - 1) * (tower.tier === 'epic' ? 0.34 : tower.tier === 'rare' ? 0.3 : 0.26);
+            return sum + tower.power * growth * (0.86 + laneIndex * 0.02);
+        }, 0);
+        const uniqueBonus = new Set(currentLanes).size * 34;
+        const selectedSkill = save.selectedSkill || 'emp';
+        const skillPower = ({ emp: 54, overclock: 68, shield: 72 }[selectedSkill] || 60) + getResearchLevel('relay', save) * 10;
+        const researchPower = Object.values(save.researches || {}).reduce((sum, level) => sum + (Number(level) || 0) * 42, 0);
+        return Math.round(ownedPower + equippedPower + uniqueBonus + skillPower + researchPower + (save.bestChapterIndex + 1) * 62 + sponsorTier.powerBonus);
     }
 
-    function getGoldMultiplier() {
-        return 1 + getResearchLevel('salvage') * 0.1;
+    function getGoldMultiplier(saveSnapshot = state.save) {
+        const sponsorTier = getSponsorTierSummary(saveSnapshot);
+        return (1 + getResearchLevel('salvage', saveSnapshot) * 0.1) * (1 + sponsorTier.goldBoost);
     }
 
     function getCoreMaxHp(saveSnapshot = state.save) {
-        return 100 + getResearchLevel('fortify', saveSnapshot) * 12;
+        const sponsorTier = getSponsorTierSummary(saveSnapshot);
+        return 100 + getResearchLevel('fortify', saveSnapshot) * 12 + sponsorTier.coreHpBonus;
     }
 
     function getCoreShieldCap(saveSnapshot = state.save) {
-        return 38 + getResearchLevel('fortify', saveSnapshot) * 10;
+        const sponsorTier = getSponsorTierSummary(saveSnapshot);
+        return 38 + getResearchLevel('fortify', saveSnapshot) * 10 + sponsorTier.shieldBonus;
     }
 
     function getSeasonLevelInfo(xp) {
