@@ -24,6 +24,8 @@
             goldLabel: '金币',
             coreLabel: '能核',
             fragmentLabel: '碎片',
+            fragmentStockLabel: '总碎片',
+            fragmentStockHint: '分塔累计，不通用',
             seasonLabel: '赛季',
             ratingLabel: '战力',
             bestStageLabel: '最高章节',
@@ -67,9 +69,9 @@
             prepPanelTitle: '章节部署',
             prepPanelDesc: '选章节、看敌潮、对照推荐编队，再决定是否直接开打。',
             loadoutPanelTitle: '三路装配',
-            loadoutPanelDesc: '每条通道可独立装配炮台，主动技能决定关键波次的翻盘空间。',
+            loadoutPanelDesc: '装配看的是单塔专属碎片与当前三路编队；顶部总碎片只是所有炮台库存合计。',
             researchPanelTitle: '研究实验室',
-            researchPanelDesc: '研究是长期成长主轴，会同时抬高稳定通关率和后续章节战力门槛。',
+            researchPanelDesc: '研究会直接写进防线公式：火力、攻速、核心和技能冷却都会实时影响战斗。',
             missionsPanelTitle: '任务中心',
             missionsPanelDesc: '把可领取奖励置顶，帮助你快速获得短线反馈与资源回流。',
             seasonPanelTitle: '赛季轨道',
@@ -231,6 +233,8 @@
             goldLabel: 'Gold',
             coreLabel: 'Cores',
             fragmentLabel: 'Fragments',
+            fragmentStockLabel: 'Total Frags',
+            fragmentStockHint: 'Per-tower, not shared',
             seasonLabel: 'Season',
             ratingLabel: 'Power',
             bestStageLabel: 'Best Stage',
@@ -274,9 +278,9 @@
             prepPanelTitle: 'Chapter Setup',
             prepPanelDesc: 'Pick a chapter, inspect the enemy mix, compare your gap, then decide whether to deploy now.',
             loadoutPanelTitle: 'Tri-Lane Loadout',
-            loadoutPanelDesc: 'Each lane equips its own tower, while your active skill defines wave-saving moments.',
+            loadoutPanelDesc: 'Loadout uses tower-specific fragments and your current three-lane build; the top total is only all tower stock added together.',
             researchPanelTitle: 'Research Lab',
-            researchPanelDesc: 'Research is the long-term progression spine for both stability and difficulty gates.',
+            researchPanelDesc: 'Research is written directly into combat: damage, fire rate, core durability, and skill cooldown all update the frontline live.',
             missionsPanelTitle: 'Mission Center',
             missionsPanelDesc: 'Claimable rewards are pinned to the top so your feedback loop stays visible.',
             seasonPanelTitle: 'Season Track',
@@ -2467,6 +2471,152 @@
         };
     }
 
+    function getFragmentInventorySummary(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const entries = Object.keys(TOWERS).map((towerId) => {
+            const owned = Math.max(0, Number(saveSnapshot.towerFragments?.[towerId]) || 0);
+            const need = Math.max(0, getUnlockNeed(towerId));
+            const level = getTowerLevel(towerId, saveSnapshot);
+            const locked = level <= 0;
+            const shortage = locked ? Math.max(0, need - owned) : 0;
+            const progressRate = need > 0 ? Math.max(0, Math.min(1, owned / need)) : 1;
+            return {
+                towerId,
+                owned,
+                need,
+                level,
+                locked,
+                shortage,
+                progressRate
+            };
+        });
+        const total = entries.reduce((sum, entry) => sum + entry.owned, 0);
+        const lockedEntries = entries
+            .filter((entry) => entry.locked && entry.need > 0)
+            .sort((a, b) => a.shortage - b.shortage || b.progressRate - a.progressRate || b.owned - a.owned || a.need - b.need);
+        const unlockableEntries = lockedEntries.filter((entry) => entry.shortage <= 0);
+        const focusEntries = (chapter?.fragmentFocus || [])
+            .map((towerId) => entries.find((entry) => entry.towerId === towerId))
+            .filter(Boolean);
+        const focusTotal = focusEntries.reduce((sum, entry) => sum + entry.owned, 0);
+        return {
+            entries,
+            total,
+            lockedEntries,
+            focusEntries,
+            focusTotal,
+            unlockableCount: unlockableEntries.length,
+            nextUnlockEntry: lockedEntries[0] || null,
+            closestEntries: lockedEntries.slice(0, 3)
+        };
+    }
+
+    function getProjectedResearchSave(researchId, saveSnapshot = state.save) {
+        const research = RESEARCH[researchId];
+        if (!research) return saveSnapshot;
+        const currentLevel = getResearchLevel(researchId, saveSnapshot);
+        return {
+            ...saveSnapshot,
+            researches: {
+                ...(saveSnapshot.researches || {}),
+                [researchId]: Math.min(research.maxLevel, currentLevel + 1)
+            }
+        };
+    }
+
+    function getSkillCooldownDuration(skillId = state.save.selectedSkill || 'emp', saveSnapshot = state.save) {
+        const baseCooldown = Number(SKILLS[skillId]?.cooldown) || 20;
+        return Math.max(6, baseCooldown * (1 - getResearchLevel('relay', saveSnapshot) * 0.06));
+    }
+
+    function getResearchFrontlineSummary(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const prepOverview = getChapterPrepOverview(chapter, saveSnapshot);
+        const currentLanes = prepOverview.currentLanes || [];
+        const selectedSkillId = saveSnapshot.selectedSkill || prepOverview.currentSkill || prepOverview.preset.skill;
+        const laneDps = Math.round(currentLanes.reduce((sum, towerId) => sum + getTowerPreviewDps(towerId, saveSnapshot), 0));
+        const researchPower = Object.values(saveSnapshot.researches || {}).reduce((sum, level) => sum + (Number(level) || 0) * 42, 0);
+        return {
+            selectedSkillId,
+            selectedSkillLabel: t(SKILLS[selectedSkillId]?.nameKey || 'skillEmp'),
+            attackPct: getResearchLevel('attack', saveSnapshot) * 8,
+            cadencePct: getResearchLevel('cadence', saveSnapshot) * 6,
+            salvagePct: getResearchLevel('salvage', saveSnapshot) * 10,
+            relayCooldownPct: getResearchLevel('relay', saveSnapshot) * 6,
+            relaySkillPowerPct: getResearchLevel('relay', saveSnapshot) * 8,
+            coreHp: getCoreMaxHp(saveSnapshot),
+            shieldCap: getCoreShieldCap(saveSnapshot),
+            laneDps,
+            researchPower,
+            skillCooldown: getSkillCooldownDuration(selectedSkillId, saveSnapshot)
+        };
+    }
+
+    function getResearchFrontlineImpact(researchId, chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const current = getResearchFrontlineSummary(chapter, saveSnapshot);
+        const next = getResearchFrontlineSummary(chapter, getProjectedResearchSave(researchId, saveSnapshot));
+        switch (researchId) {
+            case 'attack':
+                return {
+                    summary: getLocalized({ zh: `全部炮台伤害 +${current.attackPct}%`, en: `All tower damage +${current.attackPct}%` }),
+                    detail: getLocalized({
+                        zh: `当前三路约 ${formatCompact(current.laneDps)} DPS；下一级预计再抬 +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS。`,
+                        en: `Current lanes run about ${formatCompact(current.laneDps)} DPS; the next level adds roughly +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS.`
+                    }),
+                    nextChip: getLocalized({ zh: `下一级再加 +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS`, en: `Next +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS` })
+                };
+            case 'cadence':
+                return {
+                    summary: getLocalized({ zh: `全部炮台攻速 +${current.cadencePct}%`, en: `All tower fire rate +${current.cadencePct}%` }),
+                    detail: getLocalized({
+                        zh: `直接提高清线速度；当前三路约 ${formatCompact(current.laneDps)} DPS，下一级预计再抬 +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS。`,
+                        en: `This directly boosts clear speed; current lanes run about ${formatCompact(current.laneDps)} DPS and the next level adds roughly +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS.`
+                    }),
+                    nextChip: getLocalized({ zh: `下一级再加 +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS`, en: `Next +${formatCompact(Math.max(0, next.laneDps - current.laneDps))} DPS` })
+                };
+            case 'fortify':
+                return {
+                    summary: getLocalized({ zh: `核心 ${formatCompact(current.coreHp)} · 护盾 ${formatCompact(current.shieldCap)}`, en: `Core ${formatCompact(current.coreHp)} · Shield ${formatCompact(current.shieldCap)}` }),
+                    detail: getLocalized({
+                        zh: `直接提高漏怪容错；下一级会再加 +${formatCompact(Math.max(0, next.coreHp - current.coreHp))} 核心与 +${formatCompact(Math.max(0, next.shieldCap - current.shieldCap))} 护盾。`,
+                        en: `This directly raises leak tolerance; the next level adds +${formatCompact(Math.max(0, next.coreHp - current.coreHp))} core HP and +${formatCompact(Math.max(0, next.shieldCap - current.shieldCap))} shield.`
+                    }),
+                    nextChip: getLocalized({
+                        zh: `下一级 +${formatCompact(Math.max(0, next.coreHp - current.coreHp))} 核心 · +${formatCompact(Math.max(0, next.shieldCap - current.shieldCap))} 护盾`,
+                        en: `Next +${formatCompact(Math.max(0, next.coreHp - current.coreHp))} core · +${formatCompact(Math.max(0, next.shieldCap - current.shieldCap))} shield`
+                    })
+                };
+            case 'salvage':
+                return {
+                    summary: getLocalized({ zh: `通关 / 击杀金币 +${current.salvagePct}%`, en: `Win / kill gold +${current.salvagePct}%` }),
+                    detail: getLocalized({
+                        zh: '这条不直接加伤害，但会提高通关回收、击杀金币与采集塔经济循环，让后续研究和装配更快成型。',
+                        en: 'This does not raise damage directly, but it boosts clear income, kill gold, and Harvest loops so later research and loadout come online faster.'
+                    }),
+                    nextChip: getLocalized({ zh: '下一级再加 +10% 金币收益', en: 'Next +10% gold gain' })
+                };
+            case 'relay':
+                return {
+                    summary: getLocalized({
+                        zh: `${current.selectedSkillLabel} ${current.skillCooldown.toFixed(1)}s · 强度 +${current.relaySkillPowerPct}%`,
+                        en: `${current.selectedSkillLabel} ${current.skillCooldown.toFixed(1)}s · Power +${current.relaySkillPowerPct}%`
+                    }),
+                    detail: getLocalized({
+                        zh: `直接影响主动技能冷却与技能强度；下一级会把冷却压到 ${next.skillCooldown.toFixed(1)}s，并再加 +8% 技能强度。`,
+                        en: `This directly changes active skill cooldown and skill strength; the next level drops cooldown to ${next.skillCooldown.toFixed(1)}s and adds another +8% skill power.`
+                    }),
+                    nextChip: getLocalized({
+                        zh: `下一级 ${current.selectedSkillLabel} ${next.skillCooldown.toFixed(1)}s`,
+                        en: `Next ${current.selectedSkillLabel} ${next.skillCooldown.toFixed(1)}s`
+                    })
+                };
+            default:
+                return {
+                    summary: getLocalized({ zh: '已作用于当前防线', en: 'Applied to the frontline' }),
+                    detail: getLocalized({ zh: '该研究会直接影响当前防守表现。', en: 'This research directly affects the current defense.' }),
+                    nextChip: ''
+                };
+        }
+    }
+
     function applyRecommendedLanePreset(laneIndex = state.save.selectedLane, chapter = getCurrentChapter()) {
         const preset = getChapterLoadoutPreset(chapter);
         const nextTowerId = preset.lanes[laneIndex];
@@ -2784,6 +2934,8 @@
         const prepOverview = getChapterPrepOverview(current);
         const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
         const sponsorTier = getSponsorTierSummary();
+        const researchFrontline = getResearchFrontlineSummary(current);
+        const fragmentInventory = getFragmentInventorySummary(current);
         const researchReadyCount = Object.keys(RESEARCH).filter((researchId) => canUpgradeResearch(researchId)).length;
         const battleActive = state.battle.running && !state.battle.finished;
         const battlePaused = battleActive && state.battle.paused;
@@ -2884,7 +3036,8 @@
                         <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
                         <span class="mini-chip">${getLocalized({ zh: `当前技能 ${currentSkillLabel}`, en: `Skill ${currentSkillLabel}` })}</span>
                         <span class="mini-chip">${getLocalized({ zh: `掉落倾向 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
-                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${t('fragmentLabel')}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `总碎片 ${formatCompact(fragmentInventory.total)}（分塔库存）`, en: `Total frags ${formatCompact(fragmentInventory.total)} (per tower)` })}</span>
+                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${getLocalized({ zh: '焦点碎片', en: 'focus frags' })}</span>
                         ${sponsorTier.unlocked ? renderSponsorTierBoostChips(sponsorTier, { limit: 3 }) : ''}
                     </div>
                     <div class="defend-inline-note">${battleStatusCopy}</div>
@@ -2938,33 +3091,45 @@
                                 <div class="card-kicker">${getLocalized({ zh: '成长入口', en: 'Progression' })}</div>
                                 <div class="card-title">${researchReadyCount > 0
                                     ? getLocalized({ zh: `研究可升 ${researchReadyCount} 项`, en: `${researchReadyCount} research upgrades ready` })
-                                    : getLocalized({ zh: '成长平稳', en: 'Stable growth' })}</div>
+                                    : getLocalized({ zh: '研究已写入防线', en: 'Research applied live' })}</div>
                             </div>
                             <div class="card-number">${getLocalized({ zh: `最佳 ${CHAPTERS[state.save.bestChapterIndex].id}`, en: `Best ${CHAPTERS[state.save.bestChapterIndex].id}` })}</div>
                         </div>
                         <div class="card-copy">${getLocalized({
-                            zh: `本章累计通关 ${getChapterWinCount(current.id)} 次`,
-                            en: `${current.id} cleared ${getChapterWinCount(current.id)} times`
+                            zh: `火力 +${researchFrontline.attackPct}% · 攻速 +${researchFrontline.cadencePct}% · 当前三路约 ${formatCompact(researchFrontline.laneDps)} DPS`,
+                            en: `Damage +${researchFrontline.attackPct}% · Fire rate +${researchFrontline.cadencePct}% · Current lanes about ${formatCompact(researchFrontline.laneDps)} DPS`
                         })}</div>
                         <div class="defend-side-copy">${getLocalized({
-                            zh: '若战力不足，优先回部署页看推荐，再到装配 / 研究页补强。',
-                            en: 'If your power is short, check Setup first and then strengthen via Loadout or Research.'
+                            zh: `核心 ${formatCompact(researchFrontline.coreHp)} · 护盾 ${formatCompact(researchFrontline.shieldCap)} · ${researchFrontline.selectedSkillLabel} ${researchFrontline.skillCooldown.toFixed(1)}s。研究页里的数值会直接实时作用在防线。`,
+                            en: `Core ${formatCompact(researchFrontline.coreHp)} · Shield ${formatCompact(researchFrontline.shieldCap)} · ${researchFrontline.selectedSkillLabel} ${researchFrontline.skillCooldown.toFixed(1)}s. Research values apply to the frontline immediately.`
                         })}</div>
                     </article>
                     <article class="stat-card defend-side-card">
                         <div class="card-top">
                             <div>
-                                <div class="card-kicker">${getLocalized({ zh: '资源回流', en: 'Resource Loop' })}</div>
-                                <div class="card-title">${economyPreview.claimableTotal > 0
-                                    ? getLocalized({ zh: `${economyPreview.claimableTotal} 份待领`, en: `${economyPreview.claimableTotal} rewards ready` })
-                                    : getLocalized({ zh: '当前无待领', en: 'No pending claims' })}</div>
+                                <div class="card-kicker">${getLocalized({ zh: '碎片仓', en: 'Fragment Stock' })}</div>
+                                <div class="card-title">${getLocalized({ zh: `总库存 ${formatCompact(fragmentInventory.total)}`, en: `Total ${formatCompact(fragmentInventory.total)}` })}</div>
                             </div>
-                            <div class="card-number">Lv.${seasonInfo.level}</div>
+                            <div class="card-number">${fragmentInventory.unlockableCount > 0
+                                ? getLocalized({ zh: `可解锁 ${fragmentInventory.unlockableCount}`, en: `${fragmentInventory.unlockableCount} ready` })
+                                : fragmentInventory.nextUnlockEntry
+                                    ? getLocalized({ zh: `差 ${formatCompact(fragmentInventory.nextUnlockEntry.shortage)}`, en: `Need ${formatCompact(fragmentInventory.nextUnlockEntry.shortage)}` })
+                                    : getLocalized({ zh: '已全开', en: 'All unlocked' })}</div>
                         </div>
-                        <div class="card-copy">${economyPreview.dailyRemaining}</div>
+                        <div class="card-copy">${getLocalized({
+                            zh: `顶部显示的是所有炮台碎片总和，不是万能券。装配页看的是单塔专属碎片；当前章节主要掉落 ${focusPreview}。`,
+                            en: `The top bar shows all tower fragments added together, not a shared currency. Loadout uses tower-specific fragments; this chapter mainly drops ${focusPreview}.`
+                        })}</div>
+                        ${fragmentInventory.closestEntries.length ? `<div class="reward-row compact">
+                            ${fragmentInventory.closestEntries.map((entry) => `<span class="mini-chip">${towerLabel(entry.towerId)} ${formatCompact(entry.owned)}/${formatCompact(entry.need)}</span>`).join('')}
+                        </div>` : ''}
                         <div class="defend-side-copy">${getLocalized({
-                            zh: '任务、赛季与补给都保留在各自页签中处理，战斗页只保留结果和入口。',
-                            en: 'Missions, season, and supply stay in their own tabs so the battle page remains clean.'
+                            zh: fragmentInventory.nextUnlockEntry
+                                ? `最近可解锁：${towerLabel(fragmentInventory.nextUnlockEntry.towerId)}，当前 ${formatCompact(fragmentInventory.nextUnlockEntry.owned)}/${formatCompact(fragmentInventory.nextUnlockEntry.need)}，还差 ${formatCompact(fragmentInventory.nextUnlockEntry.shortage)}。`
+                                : '当前所有炮台都已解锁，后续更关注等级、研究和赛季补强即可。',
+                            en: fragmentInventory.nextUnlockEntry
+                                ? `Closest unlock: ${towerLabel(fragmentInventory.nextUnlockEntry.towerId)} at ${formatCompact(fragmentInventory.nextUnlockEntry.owned)}/${formatCompact(fragmentInventory.nextUnlockEntry.need)} with ${formatCompact(fragmentInventory.nextUnlockEntry.shortage)} left.`
+                                : 'All towers are already unlocked, so focus next on levels, research, and season growth.'
                         })}</div>
                     </article>
                 </div>
@@ -3093,6 +3258,7 @@
         const chapter = getCurrentChapter();
         const prepOverview = getChapterPrepOverview(chapter);
         const impact = getLoadoutImpactSummary(chapter);
+        const fragmentInventory = getFragmentInventorySummary(chapter);
         const laneInfo = impact.laneStats[selectedLane];
         const alignedLaneCount = impact.laneStats.filter((lane) => lane.matched).length;
         const currentSkillId = state.save.selectedSkill || impact.preset.skill;
@@ -3103,8 +3269,8 @@
             ${renderPanelHead(
                 t('loadoutPanelTitle'),
                 getLocalized({
-                    zh: '先看总编队，再微调单路，减少来回切页。',
-                    en: 'Read the full build first, then tune a single lane without extra switching.'
+                    zh: '先看总编队与碎片仓，再微调单路；装配页看的都是单塔专属碎片，不会混用。',
+                    en: 'Read the full build and fragment stock first, then tune a lane; loadout always uses tower-specific fragments, never shared stock.'
                 }),
                 `<div class="mini-chip">${getLaneName(selectedLane)} · ${t('laneSelect')}</div>`
             )}
@@ -3177,6 +3343,40 @@
                         </button>
                     </div>
                 </article>
+                <article class="stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '碎片仓', en: 'Fragment Stock' })}</div>
+                            <div class="card-title">${fragmentInventory.unlockableCount > 0
+                                ? getLocalized({ zh: `${fragmentInventory.unlockableCount} 座塔可直接解锁`, en: `${fragmentInventory.unlockableCount} towers ready to unlock` })
+                                : fragmentInventory.nextUnlockEntry
+                                    ? getLocalized({ zh: `${towerLabel(fragmentInventory.nextUnlockEntry.towerId)} 最接近解锁`, en: `${towerLabel(fragmentInventory.nextUnlockEntry.towerId)} is closest` })
+                                    : getLocalized({ zh: '所有炮台已解锁', en: 'All towers unlocked' })}</div>
+                        </div>
+                        <div class="card-number">${getLocalized({ zh: `总库存 ${formatCompact(fragmentInventory.total)}`, en: `Total ${formatCompact(fragmentInventory.total)}` })}</div>
+                    </div>
+                    <div class="card-copy">${getLocalized({
+                        zh: '顶部“总碎片”是所有炮台碎片之和；解锁看的是单塔专属碎片。比如 239 总碎片并不代表任意一座塔都能直接解锁。',
+                        en: 'The top “total fragments” number adds all tower fragments together; unlocking always checks tower-specific fragments. 239 total does not mean every tower is unlockable.'
+                    })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '总库存', en: 'Total Stock' }), value: formatCompact(fragmentInventory.total) },
+                        { label: getLocalized({ zh: '本章焦点', en: 'Chapter Focus' }), value: formatCompact(fragmentInventory.focusTotal) },
+                        { label: getLocalized({ zh: '可解锁', en: 'Unlock Ready' }), value: String(fragmentInventory.unlockableCount) },
+                        {
+                            label: getLocalized({ zh: '最近缺口', en: 'Closest Gap' }),
+                            value: fragmentInventory.nextUnlockEntry
+                                ? formatCompact(fragmentInventory.nextUnlockEntry.shortage)
+                                : getLocalized({ zh: '无', en: 'None' })
+                        }
+                    ])}
+                    ${fragmentInventory.closestEntries.length ? `<div class="reward-row compact">
+                        ${fragmentInventory.closestEntries.map((entry) => `<span class="mini-chip">${towerLabel(entry.towerId)} ${formatCompact(entry.owned)}/${formatCompact(entry.need)}</span>`).join('')}
+                    </div>` : ''}
+                    <div class="reward-row compact">
+                        ${fragmentInventory.focusEntries.map((entry) => `<span class="mini-chip">${towerLabel(entry.towerId)} ${formatCompact(entry.owned)} ${t('fragmentLabel')}</span>`).join('')}
+                    </div>
+                </article>
             </div>
             <div class="lane-summary-grid">
                 ${impact.laneStats.map((lane) => `
@@ -3204,8 +3404,11 @@
         const unlocked = level > 0 || tower.unlockFragments === 0;
         const equipped = state.save.laneLoadout[state.save.selectedLane] === tower.id;
         const canUpgrade = unlocked && level > 0 && level < 8 && state.save.gold >= getTowerUpgradeCost(tower.id);
-        const canUnlock = !unlocked && (state.save.towerFragments[tower.id] || 0) >= getUnlockNeed(tower.id);
-        const progress = unlocked ? Math.min(1, level / 8) : Math.min(1, (state.save.towerFragments[tower.id] || 0) / getUnlockNeed(tower.id));
+        const ownedFragments = Math.max(0, Number(state.save.towerFragments[tower.id]) || 0);
+        const unlockNeed = getUnlockNeed(tower.id);
+        const unlockShortage = Math.max(0, unlockNeed - ownedFragments);
+        const canUnlock = !unlocked && ownedFragments >= unlockNeed;
+        const progress = unlocked ? Math.min(1, level / 8) : Math.min(1, ownedFragments / Math.max(1, unlockNeed));
         const chapter = getCurrentChapter();
         const preset = getChapterLoadoutPreset(chapter);
         const role = getTowerRoleMeta(tower.id);
@@ -3222,16 +3425,24 @@
                     </div>
                     <div class="card-number">${t('levelText')} ${level || 0}</div>
                 </div>
-                <div class="card-copy">${role.detail}</div>
+                <div class="card-copy">${!unlocked
+                    ? getLocalized({
+                        zh: `${role.detail} 当前库存 ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)}，解锁后才能装到防线。`,
+                        en: `${role.detail} You currently have ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)} and must unlock it before equipping it on the frontline.`
+                    })
+                    : role.detail}</div>
                 <div class="tower-tags compact">
                     ${renderLimitedChipMarkup([
                         `<span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>`,
                         `<span class="tag-chip">${role.short}</span>`,
-                        `<span class="tag-chip">${formatCompact(state.save.towerFragments[tower.id] || 0)} ${t('fragmentLabel')}</span>`,
+                        unlocked
+                            ? `<span class="tag-chip">${getLocalized({ zh: `库存 ${formatCompact(ownedFragments)} 碎片`, en: `Stock ${formatCompact(ownedFragments)} frags` })}</span>`
+                            : `<span class="tag-chip">${getLocalized({ zh: `库存 ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)}`, en: `Stock ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)}` })}</span>`,
+                        !unlocked && unlockShortage > 0 ? `<span class="tag-chip">${getLocalized({ zh: `还差 ${formatCompact(unlockShortage)} 碎片`, en: `${formatCompact(unlockShortage)} frags left` })}</span>` : '',
                         tower.id === 'harvest' ? `<span class="tag-chip">${getLocalized({ zh: `击杀金币 +${Math.round((tower.goldBonus || 0) * 100)}%`, en: `Kill gold +${Math.round((tower.goldBonus || 0) * 100)}%` })}</span>` : '',
                         focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '章节掉落倾向', en: 'Focus Drop' })}</span>` : '',
                         ...recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`)
-                    ], { limit: 4 })}
+                    ], { limit: 5 })}
                 </div>
                 <div class="progress-line"><i style="width:${(progress * 100).toFixed(2)}%;"></i></div>
                 <div class="card-actions compact">
@@ -3239,10 +3450,12 @@
                         ? (equipped
                             ? `<button class="ghost-btn" type="button" disabled>${t('equipped')}</button>`
                             : `<button class="primary-btn" type="button" data-action="equipTower" data-value="${tower.id}">${t('equipNow')}</button>`)
-                        : `<button class="primary-btn" type="button" data-action="unlockTower" data-value="${tower.id}" ${canUnlock ? '' : 'disabled'}>${t('unlockNow')}</button>`}
+                        : `<button class="primary-btn" type="button" data-action="unlockTower" data-value="${tower.id}" ${canUnlock ? '' : 'disabled'}>${canUnlock
+                            ? getLocalized({ zh: `解锁 · ${formatCompact(unlockNeed)} 碎片`, en: `Unlock · ${formatCompact(unlockNeed)} frags` })
+                            : getLocalized({ zh: `还差 ${formatCompact(unlockShortage)} 碎片`, en: `Need ${formatCompact(unlockShortage)} frags` })}</button>`}
                     ${unlocked
                         ? `<button class="ghost-btn" type="button" data-action="upgradeTower" data-value="${tower.id}" ${(canUpgrade && level < 8) ? '' : 'disabled'}>${level >= 8 ? t('upgradeMax') : `${t('upgradeNow')} · ${formatCompact(getTowerUpgradeCost(tower.id))}G`}</button>`
-                        : `<button class="ghost-btn" type="button" disabled>${t('needFragments')} ${formatCompact(getUnlockNeed(tower.id))}</button>`}
+                        : `<button class="ghost-btn" type="button" disabled>${getLocalized({ zh: `库存 ${formatCompact(ownedFragments)} / ${formatCompact(unlockNeed)}`, en: `Stock ${formatCompact(ownedFragments)} / ${formatCompact(unlockNeed)}` })}</button>`}
                 </div>
             </article>
         `;
@@ -3251,6 +3464,7 @@
     function renderResearchTab() {
         const chapter = getCurrentChapter();
         const researchPlan = getResearchUpgradePlan(chapter);
+        const researchFrontline = getResearchFrontlineSummary(chapter);
         const topResearch = researchPlan.top;
         const topAffordableResearch = researchPlan.topAffordable;
         const economyPreview = getDefenseEconomyPreview(chapter);
@@ -3365,6 +3579,38 @@
                         </button>
                     </div>
                 </article>
+                <article class="stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '防线实际生效', en: 'Frontline Live Stats' })}</div>
+                            <div class="card-title">${getLocalized({ zh: '研究数值已直接作用战斗', en: 'Research is already in combat' })}</div>
+                        </div>
+                        <div class="card-number">+${formatCompact(researchFrontline.researchPower)}</div>
+                    </div>
+                    <div class="card-copy">${getLocalized({
+                        zh: '研究页不是单独的“后端数值”。这里的火力、攻速、核心和技能冷却，已经实时算进上方防线和装配页 DPS。',
+                        en: 'Research is not a back-office page. Damage, fire rate, core stats, and skill cooldown already feed the frontline and loadout DPS live.'
+                    })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '火力', en: 'Damage' }), value: `+${researchFrontline.attackPct}%` },
+                        { label: getLocalized({ zh: '攻速', en: 'Fire Rate' }), value: `+${researchFrontline.cadencePct}%` },
+                        { label: getLocalized({ zh: '核心 / 护盾', en: 'Core / Shield' }), value: `${formatCompact(researchFrontline.coreHp)} / ${formatCompact(researchFrontline.shieldCap)}` },
+                        { label: getLocalized({ zh: '技能冷却', en: 'Skill Cooldown' }), value: `${researchFrontline.skillCooldown.toFixed(1)}s` }
+                    ])}
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${getLocalized({ zh: `金币收益 +${researchFrontline.salvagePct}%`, en: `Gold gain +${researchFrontline.salvagePct}%` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `${researchFrontline.selectedSkillLabel} 强度 +${researchFrontline.relaySkillPowerPct}%`, en: `${researchFrontline.selectedSkillLabel} power +${researchFrontline.relaySkillPowerPct}%` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前三路约 ${formatCompact(researchFrontline.laneDps)} DPS`, en: `Current lanes about ${formatCompact(researchFrontline.laneDps)} DPS` })}</span>
+                    </div>
+                    <div class="card-actions compact" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="openTab" data-value="defend">
+                            ${getLocalized({ zh: '看防线', en: 'Open Defend' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '看装配', en: 'Open Loadout' })}
+                        </button>
+                    </div>
+                </article>
             </div>
             <div class="research-grid">
                 ${researchPlan.list
@@ -3380,12 +3626,10 @@
         const cost = getResearchCost(researchId);
         const maxed = level >= maxLevel;
         const meta = getResearchMeta(researchId);
-        const currentEffect = RESEARCH[researchId].effect(level);
-        const nextEffect = RESEARCH[researchId].effect(Math.min(maxLevel, level + 1));
-        const nextDelta = Math.max(0, nextEffect - currentEffect);
         const isRecommended = !!recommendation && !recommendation.maxed;
         const canUpgrade = canUpgradeResearch(researchId);
         const shortage = Math.max(0, cost - state.save.gold);
+        const frontlineImpact = getResearchFrontlineImpact(researchId);
         const stateLabel = maxed
             ? getLocalized({ zh: '已满级', en: 'Maxed' })
             : canUpgrade
@@ -3403,13 +3647,14 @@
                     <div class="card-number">${stateLabel}</div>
                 </div>
                 <div class="card-copy">${isRecommended ? recommendation.reason : meta.desc}</div>
+                <div class="card-copy inline-explain">${frontlineImpact.detail}</div>
                 <div class="chip-row compact">
                     ${renderLimitedChipMarkup([
                         `<span class="mini-chip">Lv.${level} / ${maxLevel}</span>`,
-                        `<span class="mini-chip">${t('researchEffect')} ${currentEffect}%</span>`,
-                        !maxed ? `<span class="mini-chip">${getLocalized({ zh: `下一档 +${nextDelta}%`, en: `Next +${nextDelta}%` })}</span>` : '',
+                        `<span class="mini-chip">${frontlineImpact.summary}</span>`,
+                        !maxed && frontlineImpact.nextChip ? `<span class="mini-chip">${frontlineImpact.nextChip}</span>` : '',
                         `<span class="mini-chip">${maxed ? t('researchMaxed') : `${formatCompact(cost)}G`}</span>`
-                    ], { limit: 3 })}
+                    ], { limit: 4 })}
                 </div>
                 <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgrade ? '' : 'disabled'}>
