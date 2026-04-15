@@ -662,6 +662,7 @@
         soundEnabled: true,
         save: initialSave,
         activeTab: 'defend',
+        prepHandoff: null,
         toastTimer: 0,
         renderQueued: false,
         battleLoopStarted: false,
@@ -3731,6 +3732,30 @@
         const roadmap = getDefenseGrowthRoadmap(current);
         const chapterClears = getChapterWinCount(current.id);
         const startAction = prepOverview.ready || prepOverview.nearReady ? 'startChapter' : 'applyChapterPresetStart';
+        const handoff = state.prepHandoff && state.prepHandoff.toChapterId === current.id
+            ? state.prepHandoff
+            : null;
+        const handoffSummary = handoff
+            ? (prepOverview.ready
+                ? getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，当前已经够线，先看敌潮后可直接开打。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. You are already ready, so review the enemy mix and start.` })
+                : prepOverview.nearReady
+                    ? getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，当前只是轻卡点，可先试打，不稳再一键套推荐。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. This is only a light wall, so you can test first and apply the preset if needed.` })
+                    : getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，先看推荐战力与三路分工，再决定是套推荐还是回头补强。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. Check target power and lane roles first, then decide whether to apply the preset or power up more.` }))
+            : '';
+        const handoffStatusLabel = prepOverview.ready
+            ? getLocalized({ zh: '鍙紑鎵?, en: 'Ready' })
+            : prepOverview.powerGap > 0
+                ? getLocalized({ zh: `宸?${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                : prepOverview.laneMatchCount < 3
+                    ? getLocalized({ zh: `瀵逛綅 ${prepOverview.laneMatchCount}/3`, en: `Lanes ${prepOverview.laneMatchCount}/3` })
+                    : getLocalized({ zh: '璋冩暣鎶€鑳?, en: 'Fix Skill' });
+        const handoffFocusChip = prepOverview.powerGap > 0
+            ? getLocalized({ zh: `褰撳墠 ${formatCompact(roadmap.currentPower)} / 鎺ㄨ崘 ${formatCompact(current.recommended)}`, en: `Current ${formatCompact(roadmap.currentPower)} / Target ${formatCompact(current.recommended)}` })
+            : prepOverview.laneMatchCount < 3
+                ? getLocalized({ zh: `瑁呴厤瀵逛綅 ${prepOverview.laneMatchCount}/3`, en: `Lane Match ${prepOverview.laneMatchCount}/3` })
+                : (prepOverview.skillMatches
+                    ? getLocalized({ zh: '涓诲姩鎶€鑳藉凡瀵逛綅', en: 'Skill aligned' })
+                    : getLocalized({ zh: '涓诲姩鎶€鑳藉緟璋冩暣', en: 'Skill mismatch' }));
         const startLabel = prepOverview.ready
             ? getLocalized({ zh: '直接开打', en: 'Defend Now' })
             : prepOverview.nearReady
@@ -3745,6 +3770,25 @@
                 }),
                 `<div class="mini-chip">${current.id} · ${roadmap.currentBand.title}</div>`
             )}
+            ${handoff ? `
+                <article class="prep-handoff-card compact-overview-card">
+                    <div class="card-top prep-handoff-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '章节已切换', en: 'Chapter Handoff' })}</div>
+                            <div class="card-title">${getLocalized({ zh: `当前来到 ${handoff.toChapterId}`, en: `Now at ${handoff.toChapterId}` })}</div>
+                        </div>
+                        <div class="card-number">${prepOverview.ready ? getLocalized({ zh: '可开打', en: 'Ready' }) : (prepOverview.nearReady ? getLocalized({ zh: '可试打', en: 'Testable' }) : getLocalized({ zh: '先补强', en: 'Prep First' }))}</div>
+                    </div>
+                    <div class="card-copy">${handoffSummary}</div>
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${handoffStatusLabel}</span>
+                        <span class="mini-chip">${handoffFocusChip}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `来自 ${handoff.fromChapterId} · ${handoff.clearedWaves}/${TOTAL_WAVES} 波已结算`, en: `From ${handoff.fromChapterId} · ${handoff.clearedWaves}/${TOTAL_WAVES} waves settled` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前 ${formatCompact(roadmap.currentPower)} / 推荐 ${formatCompact(current.recommended)}`, en: `Current ${formatCompact(roadmap.currentPower)} / Target ${formatCompact(current.recommended)}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `推荐技能 ${recommendedSkill}`, en: `Skill ${recommendedSkill}` })}</span>
+                    </div>
+                </article>
+            ` : ''}
             <div class="prep-guide-grid">
                 ${roadmap.bands.map((band, index) => `
                     <article class="prep-guide-card ${band.id === roadmap.currentBand.id ? 'is-current' : ''}">
@@ -5876,6 +5920,7 @@
 
     function selectChapter(index) {
         if (index < 0 || index > state.save.bestChapterIndex) return;
+        state.prepHandoff = null;
         state.save.chapterIndex = index;
         saveProgress();
         updateStartPanel();
@@ -5893,10 +5938,19 @@
     }
 
     function openNextChapterSetupFromResult() {
+        const result = state.battle.result;
         const nextIndex = Math.min(state.save.chapterIndex + 1, state.save.bestChapterIndex);
         if (nextIndex !== state.save.chapterIndex) {
             state.save.chapterIndex = nextIndex;
         }
+        state.prepHandoff = result
+            ? {
+                fromChapterId: result.chapterId,
+                toChapterId: CHAPTERS[state.save.chapterIndex]?.id || result.nextChapterId || result.chapterId,
+                currentPower: result.powerRating,
+                clearedWaves: result.clearedWaves
+            }
+            : null;
         clearFinishedBattleState('prep');
         saveProgress();
         updateStartPanel();
@@ -5928,6 +5982,7 @@
         if (!restart && state.battle.running && !state.battle.finished) return;
         startLoop();
         state.battle = createEmptyBattle();
+        state.prepHandoff = null;
         const sponsorTier = getSponsorTierSummary();
         state.activeTab = 'defend';
         state.battle.running = true;
@@ -8134,6 +8189,30 @@
                     waveText: ui.waveValue?.textContent || '',
                     note: ui.battleNote?.textContent || ''
                 };
+            },
+            nextChapterHandoff() {
+                const targetChapter = CHAPTERS[Math.min(1, CHAPTERS.length - 1)];
+                state.save.chapterIndex = 0;
+                state.save.bestChapterIndex = Math.max(state.save.bestChapterIndex, 1);
+                state.battle = createEmptyBattle(state.save);
+                state.battle.finished = true;
+                state.battle.result = {
+                    win: true,
+                    forcedQuit: false,
+                    goldGain: 420,
+                    coreGain: 18,
+                    seasonGain: 96,
+                    fragmentGain: { pulse: 12, laser: 8 },
+                    chapterId: CHAPTERS[0].id,
+                    chapterRecommended: CHAPTERS[0].recommended,
+                    clearedWaves: TOTAL_WAVES,
+                    chapterProgress: targetChapter.id,
+                    nextChapterId: targetChapter.id,
+                    nextChapterReady: true,
+                    powerRating: getPowerRating(state.save)
+                };
+                openNextChapterSetupFromResult();
+                renderAll();
             },
             impact() {
                 setupDebugBattleScene();

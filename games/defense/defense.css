@@ -760,6 +760,16 @@ body:not([data-defense-tab="defend"]) .stage-card {
     font-size: 16px;
 }
 
+.prep-handoff-card {
+    margin-bottom: 12px;
+    border-color: rgba(114, 244, 255, 0.22);
+    background: linear-gradient(180deg, rgba(114, 244, 255, 0.1), rgba(255, 210, 107, 0.08));
+}
+
+.prep-handoff-top {
+    align-items: flex-start;
+}
+
 .compact-list-card {
     gap: 8px;
 }
@@ -2548,6 +2558,10 @@ body:not([data-defense-tab="defend"]) .stage-card {
         scroll-snap-align: start;
     }
 
+    .prep-handoff-card {
+        margin-bottom: 10px;
+    }
+
     .compact-overview-card {
         gap: 7px;
     }
@@ -2888,6 +2902,10 @@ body:not([data-defense-tab="defend"]) .stage-card {
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
         overflow: hidden;
+    }
+
+    .prep-handoff-card .card-copy {
+        -webkit-line-clamp: 3;
     }
 
     .compact-overview-card .compact-kpi-grid {
