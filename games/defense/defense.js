@@ -2381,6 +2381,52 @@
         };
     }
 
+    function getDefenseWallSeverityMeta(roadmap = getDefenseGrowthRoadmap()) {
+        const powerGap = Math.max(0, Number(roadmap?.powerGap) || 0);
+        if (powerGap <= 0) {
+            return {
+                id: 'ready',
+                label: getLocalized({ zh: '已达标', en: 'Ready' }),
+                shortLabel: getLocalized({ zh: '已达标', en: 'Ready' }),
+                copy: getLocalized({
+                    zh: '本章战力已达标，资源更适合继续转去赛季、赞助和终局炮台，为下一章提前备货。',
+                    en: 'This chapter is already ready, so resources are better spent on season, sponsor, and endgame towers for the next push.'
+                })
+            };
+        }
+        if (roadmap?.wallSeverity === 'hard') {
+            return {
+                id: 'hard',
+                label: getLocalized({ zh: '重卡点', en: 'Hard Wall' }),
+                shortLabel: getLocalized({ zh: '重卡点', en: 'Hard' }),
+                copy: getLocalized({
+                    zh: '当前缺口偏大，先补部署和研究；想立刻突破，就直接走高档充值或累充追档。',
+                    en: 'The gap is large. Fix setup and research first; if you want an immediate break, use a stronger top-up or chase milestone tiers.'
+                })
+            };
+        }
+        if (roadmap?.wallSeverity === 'mid') {
+            return {
+                id: 'mid',
+                label: getLocalized({ zh: '中卡点', en: 'Mid Wall' }),
+                shortLabel: getLocalized({ zh: '中卡点', en: 'Mid' }),
+                copy: getLocalized({
+                    zh: '这是中段卡章，资源包还能继续抬线；想少磨几局，就用当前推荐档直接压低缺口。',
+                    en: 'This is a mid-wall. Resource packs still help, but the recommended top-up cuts the gap faster.'
+                })
+            };
+        }
+        return {
+            id: 'light',
+            label: getLocalized({ zh: '轻卡点', en: 'Light Wall' }),
+            shortLabel: getLocalized({ zh: '轻卡点', en: 'Light' }),
+            copy: getLocalized({
+                zh: '当前更像轻卡点，优先走免费线和资源线；充值主要体现为省时间和提前拉高长期成长。',
+                en: 'This is a light wall. Free and resource routes come first, while top-up mainly saves time and raises long-term growth.'
+            })
+        };
+    }
+
     function getLoadoutImpactSummary(chapter = getCurrentChapter(), saveSnapshot = state.save) {
         const preset = getChapterLoadoutPreset(chapter, saveSnapshot);
         const currentLanes = [0, 1, 2].map((laneIndex) => saveSnapshot.laneLoadout?.[laneIndex] || preset.lanes[laneIndex] || 'pulse');
@@ -4200,6 +4246,7 @@
     function getShopStrategyPlan(chapter = getCurrentChapter(), saveSnapshot = state.save) {
         return {
             prepOverview: getChapterPrepOverview(chapter, saveSnapshot),
+            roadmap: getDefenseGrowthRoadmap(chapter, saveSnapshot),
             goldRoute: getGoldShopRecommendation(chapter, saveSnapshot),
             coreRoute: getCoreShopRecommendation(chapter, saveSnapshot),
             paymentRoute: getPaymentOfferRecommendation(chapter, saveSnapshot)
@@ -4283,13 +4330,71 @@
     }
 
     function renderShopStrategyCard(strategyPlan = getShopStrategyPlan()) {
-        const { prepOverview, goldRoute, coreRoute, paymentRoute } = strategyPlan;
+        const { prepOverview, roadmap = getDefenseGrowthRoadmap(), goldRoute, coreRoute, paymentRoute } = strategyPlan;
         const nextSponsorNode = paymentRoute.nextSponsorNode;
-        const recommendedActions = [
+        const paymentImpact = paymentRoute.impact || getPaymentOfferImpact(paymentRoute.offer);
+        const severityMeta = getDefenseWallSeverityMeta(roadmap);
+        const preferredResourceRoute = [goldRoute, coreRoute]
+            .filter(Boolean)
+            .sort((a, b) => Number(b.affordable) - Number(a.affordable) || a.shortage - b.shortage)[0] || null;
+        const preferredResourceShortageSuffix = preferredResourceRoute?.offer?.priceType === 'gold' ? 'G' : 'C';
+        const overviewCopy = paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
+            ? getLocalized({
+                zh: `当前有 ${paymentRoute.sponsorReady} 个赞助奖励可领，先回收再看是否继续追 ${getLocalized(paymentRoute.offer.name)}。`,
+                en: `${paymentRoute.sponsorReady} sponsor rewards are ready. Claim them first, then decide whether to chase ${getLocalized(paymentRoute.offer.name)}.`
+            })
+            : paymentImpact.breaksWall
+                ? getLocalized({
+                    zh: `${severityMeta.copy} 当前推荐 ${getLocalized(paymentRoute.offer.name)}，总补强约 +${formatCompact(paymentImpact.totalPowerGain)}，可直接过当前章。`,
+                    en: `${severityMeta.copy} ${getLocalized(paymentRoute.offer.name)} adds about +${formatCompact(paymentImpact.totalPowerGain)} total and can break the current chapter.`
+                })
+                : paymentImpact.newMilestoneReadyCount > 0
+                    ? getLocalized({
+                        zh: `${severityMeta.copy} 当前推荐 ${getLocalized(paymentRoute.offer.name)}，还能顺带点亮 ${paymentImpact.newMilestoneReadyCount} 档累充礼包。`,
+                        en: `${severityMeta.copy} ${getLocalized(paymentRoute.offer.name)} also lights ${paymentImpact.newMilestoneReadyCount} milestone tier(s).`
+                    })
+                    : getLocalized({
+                        zh: `${severityMeta.copy} 当前推荐 ${getLocalized(paymentRoute.offer.name)}，总补强约 +${formatCompact(paymentImpact.totalPowerGain)}。`,
+                        en: `${severityMeta.copy} ${getLocalized(paymentRoute.offer.name)} adds about +${formatCompact(paymentImpact.totalPowerGain)} total.`
+                    });
+        const routeChips = [
+            paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
+                ? getLocalized({ zh: `免费线：先领赞助 ${paymentRoute.sponsorReady}`, en: `Free: claim ${paymentRoute.sponsorReady} sponsor reward(s)` })
+                : prepOverview.adjustmentsNeeded > 0
+                    ? getLocalized({ zh: `免费线：先调 ${prepOverview.adjustmentsNeeded} 项`, en: `Free: fix ${prepOverview.adjustmentsNeeded} setup item(s)` })
+                    : roadmap.powerGap > 0
+                        ? getLocalized({ zh: '免费线：先补装配 / 研究', en: 'Free: loadout / research first' })
+                        : getLocalized({ zh: '免费线：备战下章', en: 'Free: prep next chapter' }),
             goldRoute ? getLocalized({ zh: `金币线：${getLocalized(goldRoute.offer.title)}`, en: `Gold: ${getLocalized(goldRoute.offer.title)}` }) : '',
             coreRoute ? getLocalized({ zh: `能核线：${getLocalized(coreRoute.offer.title)}`, en: `Core: ${getLocalized(coreRoute.offer.title)}` }) : '',
-            getLocalized({ zh: `充值线：${getLocalized(paymentRoute.offer.name)}`, en: `Top-up: ${getLocalized(paymentRoute.offer.name)}` })
-        ].filter(Boolean);
+            getLocalized({
+                zh: `充值线：${getLocalized(paymentRoute.offer.name)}${paymentImpact.breaksWall ? ' · 可直过' : ''}`,
+                en: `Top-up: ${getLocalized(paymentRoute.offer.name)}${paymentImpact.breaksWall ? ' · breaks wall' : ''}`
+            })
+        ];
+        const insightChips = [
+            paymentImpact.newMilestoneReadyCount > 0
+                ? getLocalized({ zh: `顺带点亮 +${paymentImpact.newMilestoneReadyCount} 档累充`, en: `Also lights +${paymentImpact.newMilestoneReadyCount} milestone tier(s)` })
+                : paymentImpact.reachedMilestone
+                    ? getLocalized({ zh: `逼近 ${getLocalized(paymentImpact.reachedMilestone.title)}`, en: `Near ${getLocalized(paymentImpact.reachedMilestone.title)}` })
+                    : '',
+            nextSponsorNode
+                ? (paymentRoute.sponsorUnlocked
+                    ? (nextSponsorNode.ready
+                        ? getLocalized({ zh: '赞助节点已就绪', en: 'Sponsor node ready' })
+                        : getLocalized({ zh: `赞助还差 ${formatCompact(nextSponsorNode.remainingXp)} XP`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP to sponsor` }))
+                    : getLocalized({ zh: '首充永久解锁赞助轨道', en: 'First top-up unlocks Sponsor track' }))
+                : getLocalized({ zh: '赞助轨道已领完', en: 'Sponsor track completed' }),
+            preferredResourceRoute && !preferredResourceRoute.affordable
+                ? getLocalized({
+                    zh: `资源线还差 ${formatCompact(preferredResourceRoute.shortage)}${preferredResourceShortageSuffix}`,
+                    en: `Resource route needs ${formatCompact(preferredResourceRoute.shortage)}${preferredResourceShortageSuffix}`
+                })
+                : '',
+            roadmap.nextBand
+                ? getLocalized({ zh: `下一档：${getLocalized(roadmap.nextBand.title)}`, en: `Next band: ${getLocalized(roadmap.nextBand.title)}` })
+                : ''
+        ];
         const primaryAction = paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
             ? {
                 action: 'claimAllSeason',
@@ -4301,23 +4406,31 @@
                 value: paymentRoute.offer.id,
                 label: getLocalized({ zh: '开礼包', en: 'Open Pack' })
             };
-        const supportAction = goldRoute?.affordable
+        const supportAction = paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
             ? {
-                action: 'buyShop',
-                value: goldRoute.offer.id,
-                label: getLocalized({ zh: '买金币包', en: 'Buy Gold Pack' })
+                action: 'openTab',
+                value: 'season',
+                label: getLocalized({ zh: '去赛季', en: 'Open Season' })
             }
-            : coreRoute?.affordable
+            : prepOverview.adjustmentsNeeded > 0
                 ? {
-                    action: 'buyShop',
-                    value: coreRoute.offer.id,
-                    label: getLocalized({ zh: '买能核包', en: 'Buy Core Pack' })
-                }
-                : {
                     action: 'openTab',
-                    value: 'defend',
-                    label: getLocalized({ zh: '去防线', en: 'Battle View' })
-                };
+                    value: 'prep',
+                    label: getLocalized({ zh: '去部署', en: 'Open Setup' })
+                }
+                : preferredResourceRoute?.affordable
+                    ? {
+                        action: 'buyShop',
+                        value: preferredResourceRoute.offer.id,
+                        label: preferredResourceRoute.offer.priceType === 'gold'
+                            ? getLocalized({ zh: '买金币包', en: 'Buy Gold Pack' })
+                            : getLocalized({ zh: '买能核包', en: 'Buy Core Pack' })
+                    }
+                    : {
+                        action: 'openTab',
+                        value: 'defend',
+                        label: getLocalized({ zh: '去防线', en: 'Battle View' })
+                    };
         return `
             <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
@@ -4325,52 +4438,41 @@
                         <div class="card-kicker">${getLocalized({ zh: '当前补强路线', en: 'Current Upgrade Route' })}</div>
                         <div class="card-title">${paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
                             ? getLocalized({ zh: '先回收赞助，再决定补包', en: 'Claim sponsor first, then repack' })
-                            : getLocalized({ zh: '三条消费线都对准当前卡点', en: 'All three spending routes point at your current wall' })}</div>
+                            : `${getLocalized(roadmap.currentBand.title)} · ${severityMeta.label}`}</div>
                     </div>
                     <div class="card-number">${prepOverview.powerGap > 0
                         ? getLocalized({ zh: `缺口 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
                         : getLocalized({ zh: '战力达标', en: 'Power ready' })}</div>
                 </div>
-                <div class="card-copy">${prepOverview.powerGap > 0
-                    ? getLocalized({
-                        zh: '先看缺口，再决定用金币包、能核包还是充值档来补。页面内已把最该买的方案排到最前。',
-                        en: 'Read the gap first, then decide whether gold, cores, or top-up closes it best. The best-fit options are already sorted to the front.'
-                    })
-                    : getLocalized({
-                        zh: '当前更适合把资源转去赛季、赞助和终局塔成长，而不是盲目堆低阶包。',
-                        en: 'You are better off turning resources into season, sponsor, and endgame tower growth instead of overbuying low-tier packs.'
-                    })}</div>
-                <div class="shop-kpi-grid">
-                    <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '战力缺口', en: 'Power Gap' })}</span>
-                        <strong>${prepOverview.powerGap > 0 ? formatCompact(prepOverview.powerGap) : getLocalized({ zh: '达标', en: 'Ready' })}</strong>
-                    </div>
-                    <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '待领奖励', en: 'Ready Claims' })}</span>
-                        <strong>${formatCompact(paymentRoute.sponsorReady || 0)}</strong>
-                    </div>
-                    <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '金币短缺', en: 'Gold Shortage' })}</span>
-                        <strong>${goldRoute && !goldRoute.affordable ? `${formatCompact(goldRoute.shortage)}G` : getLocalized({ zh: '足够', en: 'Enough' })}</strong>
-                    </div>
-                    <div class="shop-kpi">
-                        <span>${getLocalized({ zh: '能核短缺', en: 'Core Shortage' })}</span>
-                        <strong>${coreRoute && !coreRoute.affordable ? `${formatCompact(coreRoute.shortage)}C` : getLocalized({ zh: '足够', en: 'Enough' })}</strong>
-                    </div>
+                <div class="card-copy">${overviewCopy}</div>
+                ${renderCompactKpiGrid([
+                    { label: getLocalized({ zh: '当前档位', en: 'Current Band' }), value: getLocalized(roadmap.currentBand.title) },
+                    { label: getLocalized({ zh: '卡点强度', en: 'Wall Severity' }), value: severityMeta.shortLabel },
+                    {
+                        label: getLocalized({ zh: '资源线', en: 'Resource Route' }),
+                        value: preferredResourceRoute
+                            ? (preferredResourceRoute.affordable
+                                ? getLocalized(preferredResourceRoute.offer.title)
+                                : getLocalized({
+                                    zh: `差 ${formatCompact(preferredResourceRoute.shortage)}${preferredResourceShortageSuffix}`,
+                                    en: `Need ${formatCompact(preferredResourceRoute.shortage)}${preferredResourceShortageSuffix}`
+                                }))
+                            : getLocalized({ zh: '免费推进', en: 'Free Push' })
+                    },
+                    {
+                        label: getLocalized({ zh: '充值后', en: 'After Top-up' }),
+                        value: paymentImpact.currentGap <= 0
+                            ? getLocalized({ zh: '备战下章', en: 'Prep Next' })
+                            : paymentImpact.breaksWall
+                                ? getLocalized({ zh: '直过本章', en: 'Break Wall' })
+                                : getLocalized({ zh: `剩 ${formatCompact(paymentImpact.remainingGap)}`, en: `Left ${formatCompact(paymentImpact.remainingGap)}` })
+                    }
+                ])}
+                <div class="reward-row">
+                    ${renderLimitedChipMarkup(routeChips.map((label) => label ? `<span class="mini-chip">${label}</span>` : ''), { limit: 4 })}
                 </div>
                 <div class="reward-row">
-                    ${recommendedActions.map((label) => `<span class="mini-chip">${label}</span>`).join('')}
-                </div>
-                <div class="reward-row">
-                    ${nextSponsorNode
-                        ? (paymentRoute.sponsorUnlocked
-                            ? `<span class="mini-chip">${nextSponsorNode.ready
-                                ? getLocalized({ zh: '赞助节点已就绪', en: 'Sponsor node ready' })
-                                : getLocalized({ zh: `下一赞助节点还差 ${formatCompact(nextSponsorNode.remainingXp)} XP`, en: `${formatCompact(nextSponsorNode.remainingXp)} XP to next sponsor node` })}</span>`
-                            : `<span class="mini-chip">${getLocalized({ zh: '首充永久解锁赞助轨道', en: 'First top-up unlocks Sponsor track' })}</span>`)
-                        : `<span class="mini-chip">${getLocalized({ zh: '赞助轨道已全部领取', en: 'Sponsor track completed' })}</span>`}
-                    ${goldRoute && !goldRoute.affordable ? `<span class="mini-chip">${getLocalized({ zh: `金币还差 ${formatCompact(goldRoute.shortage)}`, en: `Need ${formatCompact(goldRoute.shortage)}G` })}</span>` : ''}
-                    ${coreRoute && !coreRoute.affordable ? `<span class="mini-chip">${getLocalized({ zh: `能核还差 ${formatCompact(coreRoute.shortage)}`, en: `Need ${formatCompact(coreRoute.shortage)}C` })}</span>` : ''}
+                    ${renderLimitedChipMarkup(insightChips.map((label) => label ? `<span class="mini-chip">${label}</span>` : ''), { limit: 4 })}
                 </div>
                 ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点预览', en: 'Next Sponsor Reward' })}</span>
