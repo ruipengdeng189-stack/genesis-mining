@@ -566,6 +566,21 @@
         rail: { id: 'rail', tier: 'epic', baseDamage: 52, cooldown: 1.18, range: 620, upgradeGold: 980, unlockFragments: 128, color: '#ff6b89', power: 198, splash: 0, slow: 0, pierce: true }
     };
 
+    const DEPLOY_PERMIT_RULES = {
+        common: {
+            2: { minLevel: 3, gold: 1680, cores: 14, fragments: 18 },
+            3: { minLevel: 5, gold: 3980, cores: 34, fragments: 44 }
+        },
+        rare: {
+            2: { minLevel: 3, gold: 2980, cores: 26, fragments: 32 },
+            3: { minLevel: 5, gold: 7680, cores: 62, fragments: 78 }
+        },
+        epic: {
+            2: { minLevel: 4, gold: 5680, cores: 48, fragments: 58 },
+            3: { minLevel: 6, gold: 14800, cores: 118, fragments: 136 }
+        }
+    };
+
     const SKILLS = {
         emp: { id: 'emp', cooldown: 20, nameKey: 'skillEmp' },
         overclock: { id: 'overclock', cooldown: 24, duration: 8, nameKey: 'skillOverclock' },
@@ -1030,6 +1045,9 @@
             case 'unlockTower':
                 unlockTower(value);
                 break;
+            case 'unlockPermit':
+                unlockDeployPermit(value);
+                break;
             case 'upgradeResearch':
                 upgradeResearch(value);
                 break;
@@ -1165,6 +1183,7 @@
             laneLoadout: ['pulse', 'laser', 'harvest'],
             towerLevels: { pulse: 1, laser: 1, frost: 0, rocket: 0, harvest: 1, chain: 0, rail: 0 },
             towerFragments: { pulse: 20, laser: 20, frost: 18, rocket: 22, harvest: 20, chain: 14, rail: 6 },
+            towerPermits: { pulse: 1, laser: 1, frost: 1, rocket: 1, harvest: 1, chain: 1, rail: 1 },
             researches: { attack: 0, cadence: 0, fortify: 0, salvage: 0, relay: 0 },
             shopPurchases: {},
             missionClaimed: [],
@@ -1205,7 +1224,7 @@
         normalized.chapterIndex = Math.min(normalized.chapterIndex, normalized.bestChapterIndex);
         normalized.selectedLane = clampSaveNumber(normalized.selectedLane, base.selectedLane, 0, 2);
         normalized.selectedSkill = SKILLS[normalized.selectedSkill] ? normalized.selectedSkill : base.selectedSkill;
-        normalized.laneLoadout = Array.isArray(normalized.laneLoadout) && normalized.laneLoadout.length === 3
+        const requestedLaneLoadout = Array.isArray(normalized.laneLoadout) && normalized.laneLoadout.length === 3
             ? normalized.laneLoadout.map((towerId, index) => (TOWERS[towerId] ? towerId : base.laneLoadout[index]))
             : base.laneLoadout.slice();
         normalized.towerLevels = Object.fromEntries(
@@ -1214,6 +1233,10 @@
         normalized.towerFragments = Object.fromEntries(
             Object.keys(base.towerFragments).map((towerId) => [towerId, clampSaveNumber(normalized.towerFragments?.[towerId], base.towerFragments[towerId], 0)])
         );
+        normalized.towerPermits = Object.fromEntries(
+            Object.keys(base.towerPermits).map((towerId) => [towerId, clampSaveNumber(normalized.towerPermits?.[towerId], base.towerPermits[towerId], 1, 3)])
+        );
+        normalized.laneLoadout = getLegalizedLaneLoadout(requestedLaneLoadout, normalized, base.laneLoadout);
         normalized.researches = Object.fromEntries(
             Object.keys(base.researches).map((researchId) => [researchId, clampSaveNumber(normalized.researches?.[researchId], base.researches[researchId], 0)])
         );
@@ -1268,6 +1291,7 @@
                 laneLoadout: Array.isArray(parsed?.laneLoadout) && parsed.laneLoadout.length === 3 ? parsed.laneLoadout.slice(0, 3) : base.laneLoadout,
                 towerLevels: { ...base.towerLevels, ...(parsed?.towerLevels || {}) },
                 towerFragments: { ...base.towerFragments, ...(parsed?.towerFragments || {}) },
+                towerPermits: { ...base.towerPermits, ...(parsed?.towerPermits || {}) },
                 researches: { ...base.researches, ...(parsed?.researches || {}) },
                 shopPurchases: { ...base.shopPurchases, ...(parsed?.shopPurchases || {}) },
                 missionClaimed: Array.isArray(parsed?.missionClaimed) ? parsed.missionClaimed : [],
@@ -2841,6 +2865,14 @@
             }));
             return;
         }
+        if (!canEquipTowerToLane(nextTowerId, laneIndex)) {
+            const permitInfo = getDeployPermitInfo(nextTowerId, getTowerPermitCount(nextTowerId) + 1);
+            showToast(getLocalized({
+                zh: `${towerLabel(nextTowerId)} 当前部署已满，先解锁${permitInfo.label}再套用推荐。`,
+                en: `${towerLabel(nextTowerId)} is already at its lane limit. Unlock ${permitInfo.label} before applying the preset.`
+            }));
+            return;
+        }
         state.save.selectedLane = laneIndex;
         state.save.laneLoadout[laneIndex] = nextTowerId;
         saveProgress();
@@ -4029,6 +4061,16 @@
         const impact = getLoadoutImpactSummary(chapter);
         const fragmentInventory = getFragmentInventorySummary(chapter);
         const laneInfo = impact.laneStats[selectedLane];
+        const selectedTowerId = state.save.laneLoadout[selectedLane] || 'pulse';
+        const selectedTowerLevel = getTowerLevel(selectedTowerId);
+        const selectedPermitCount = getTowerPermitCount(selectedTowerId);
+        const selectedPermitUsage = getTowerLaneUsage(selectedTowerId);
+        const selectedPermitInfo = getDeployPermitInfo(selectedTowerId, selectedPermitCount + 1);
+        const selectedPermitCanUnlock = selectedTowerLevel > 0
+            && selectedPermitInfo
+            && !selectedPermitInfo.maxed
+            && selectedPermitInfo.levelReady
+            && selectedPermitInfo.affordable;
         const alignedLaneCount = impact.laneStats.filter((lane) => lane.matched).length;
         const currentSkillId = state.save.selectedSkill || impact.preset.skill;
         const currentSkillLabel = t(SKILLS[currentSkillId].nameKey);
@@ -4038,8 +4080,8 @@
             ${renderPanelHead(
                 t('loadoutPanelTitle'),
                 getLocalized({
-                    zh: '先看总编队与碎片仓，再微调单路；装配页看的都是单塔专属碎片，不会混用。',
-                    en: 'Read the full build and fragment stock first, then tune a lane; loadout always uses tower-specific fragments, never shared stock.'
+                    zh: '先看总编队与碎片仓，再微调单路；现在每座塔默认只开放 1 路部署，想重复上阵要额外解锁部署许可，并消耗该塔专属碎片、金币与能核。',
+                    en: 'Read the full build and fragment stock first, then tune a lane; every tower now starts with 1 lane by default, and repeating it needs an extra permit paid with that tower’s fragments, gold, and cores.'
                 }),
                 `<div class="mini-chip">${getLaneName(selectedLane)} · ${t('laneSelect')}</div>`
             )}
@@ -4146,6 +4188,81 @@
                         ${fragmentInventory.focusEntries.map((entry) => `<span class="mini-chip">${towerLabel(entry.towerId)} ${formatCompact(entry.owned)} ${t('fragmentLabel')}</span>`).join('')}
                     </div>
                 </article>
+                <article class="stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '部署许可', en: 'Deploy Permit' })}</div>
+                            <div class="card-title">${selectedPermitInfo && !selectedPermitInfo.maxed
+                                ? getLocalized({
+                                    zh: `${towerLabel(selectedTowerId)} 下一档 ${selectedPermitInfo.label}`,
+                                    en: `${towerLabel(selectedTowerId)} · Next ${selectedPermitInfo.label}`
+                                })
+                                : getLocalized({
+                                    zh: `${towerLabel(selectedTowerId)} 已满配 3 路`,
+                                    en: `${towerLabel(selectedTowerId)} is maxed at 3 lanes`
+                                })}</div>
+                        </div>
+                        <div class="card-number">${getLocalized({ zh: `${selectedPermitUsage}/${selectedPermitCount} 路`, en: `${selectedPermitUsage}/${selectedPermitCount} lanes` })}</div>
+                    </div>
+                    <div class="card-copy">${selectedTowerLevel <= 0
+                        ? getLocalized({
+                            zh: '先把当前路塔台解锁，之后才会开放额外部署许可。默认同塔只能占 1 路。',
+                            en: 'Unlock this tower first; extra deployment permits only open afterward. The same tower starts at 1 lane by default.'
+                        })
+                        : selectedPermitInfo && !selectedPermitInfo.maxed
+                            ? getLocalized({
+                                zh: '重复上阵同一座塔，需要额外消耗该塔专属碎片、金币与能核，并满足等级门槛。',
+                                en: 'Repeating the same tower across lanes consumes that tower’s own fragments, plus gold and cores, and also checks a level gate.'
+                            })
+                            : getLocalized({
+                                zh: '这座塔已经拿满 3 路部署许可，后续提升重点转为等级、研究与充值常驻增益。',
+                                en: 'This tower already has all 3 lane permits, so further growth shifts to levels, research, and permanent top-up boosts.'
+                            })}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '当前等级', en: 'Tower Lv.' }), value: `Lv.${selectedTowerLevel}` },
+                        { label: getLocalized({ zh: '已开许可', en: 'Permits' }), value: `${selectedPermitCount}/3` },
+                        { label: getLocalized({ zh: '已占路数', en: 'Used Lanes' }), value: `${selectedPermitUsage}` },
+                        {
+                            label: getLocalized({ zh: '下一门槛', en: 'Next Gate' }),
+                            value: selectedPermitInfo && !selectedPermitInfo.maxed
+                                ? `Lv.${selectedPermitInfo.minLevel}`
+                                : getLocalized({ zh: '封顶', en: 'Maxed' })
+                        }
+                    ])}
+                    <div class="reward-row compact">
+                        ${renderLimitedChipMarkup([
+                            selectedPermitInfo && !selectedPermitInfo.maxed ? `<span class="mini-chip">${selectedPermitInfo.label}</span>` : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed ? `<span class="mini-chip">${formatCompact(selectedPermitInfo.cost.gold)}G</span>` : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed ? `<span class="mini-chip">${formatCompact(selectedPermitInfo.cost.cores)}C</span>` : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed ? `<span class="mini-chip">${formatCompact(selectedPermitInfo.cost.fragments)}F</span>` : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed && !selectedPermitInfo.levelReady
+                                ? `<span class="mini-chip">${getLocalized({ zh: `需 Lv.${selectedPermitInfo.minLevel}`, en: `Need Lv.${selectedPermitInfo.minLevel}` })}</span>`
+                                : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed && selectedPermitInfo.shortage.fragments > 0
+                                ? `<span class="mini-chip">${getLocalized({ zh: `缺 ${formatCompact(selectedPermitInfo.shortage.fragments)} 碎片`, en: `Need ${formatCompact(selectedPermitInfo.shortage.fragments)} frags` })}</span>`
+                                : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed && selectedPermitInfo.shortage.gold > 0
+                                ? `<span class="mini-chip">${getLocalized({ zh: `缺 ${formatCompact(selectedPermitInfo.shortage.gold)} 金币`, en: `Need ${formatCompact(selectedPermitInfo.shortage.gold)} gold` })}</span>`
+                                : '',
+                            selectedPermitInfo && !selectedPermitInfo.maxed && selectedPermitInfo.shortage.cores > 0
+                                ? `<span class="mini-chip">${getLocalized({ zh: `缺 ${formatCompact(selectedPermitInfo.shortage.cores)} 能核`, en: `Need ${formatCompact(selectedPermitInfo.shortage.cores)} cores` })}</span>`
+                                : ''
+                        ], { limit: 5 })}
+                    </div>
+                    <div class="card-actions compact">
+                        <button
+                            class="primary-btn"
+                            type="button"
+                            data-action="unlockPermit"
+                            data-value="${selectedTowerId}"
+                            ${(selectedPermitCanUnlock && selectedPermitInfo && !selectedPermitInfo.maxed) ? '' : 'disabled'}
+                        >${selectedTowerLevel <= 0
+                            ? getLocalized({ zh: '先解锁塔台', en: 'Unlock Tower First' })
+                            : selectedPermitInfo && !selectedPermitInfo.maxed
+                                ? getLocalized({ zh: `解锁${selectedPermitInfo.label}`, en: `Unlock ${selectedPermitInfo.label}` })
+                                : getLocalized({ zh: '部署许可已满', en: 'Permit Maxed' })}</button>
+                    </div>
+                </article>
             </div>
             <div class="lane-summary-grid">
                 ${impact.laneStats.map((lane) => `
@@ -4171,7 +4288,22 @@
     function renderTowerCard(tower) {
         const level = getTowerLevel(tower.id);
         const unlocked = level > 0 || tower.unlockFragments === 0;
-        const equipped = state.save.laneLoadout[state.save.selectedLane] === tower.id;
+        const selectedLane = state.save.selectedLane;
+        const equipped = state.save.laneLoadout[selectedLane] === tower.id;
+        const permitCount = getTowerPermitCount(tower.id);
+        const usedLanes = getTowerLaneUsage(tower.id);
+        const canEquip = unlocked && canEquipTowerToLane(tower.id, selectedLane);
+        const permitBlocked = unlocked && !equipped && !canEquip;
+        const nextPermitInfo = unlocked && permitCount < 3 ? getDeployPermitInfo(tower.id, permitCount + 1) : null;
+        const canUnlockPermit = !!nextPermitInfo && !nextPermitInfo.maxed && nextPermitInfo.levelReady && nextPermitInfo.affordable;
+        const permitButtonLabel = nextPermitInfo
+            ? (nextPermitInfo.levelReady
+                ? getLocalized({ zh: `解锁${nextPermitInfo.label}`, en: `Unlock ${nextPermitInfo.label}` })
+                : getLocalized({ zh: `${nextPermitInfo.label} 需 Lv.${nextPermitInfo.minLevel}`, en: `${nextPermitInfo.label} needs Lv.${nextPermitInfo.minLevel}` }))
+            : '';
+        const permitButtonText = nextPermitInfo && nextPermitInfo.levelReady
+            ? `${permitButtonLabel} · ${formatCompact(nextPermitInfo.cost.gold)}G / ${formatCompact(nextPermitInfo.cost.cores)}C / ${formatCompact(nextPermitInfo.cost.fragments)}F`
+            : permitButtonLabel;
         const canUpgrade = unlocked && level > 0 && level < 8 && state.save.gold >= getTowerUpgradeCost(tower.id);
         const ownedFragments = Math.max(0, Number(state.save.towerFragments[tower.id]) || 0);
         const unlockNeed = getUnlockNeed(tower.id);
@@ -4185,8 +4317,14 @@
             .map((towerId, laneIndex) => towerId === tower.id ? getLaneName(laneIndex) : '')
             .filter(Boolean);
         const focusRecommended = chapter.fragmentFocus.includes(tower.id);
+        const permitUsageChip = unlocked
+            ? `<span class="tag-chip">${getLocalized({ zh: `部署 ${usedLanes}/${permitCount} 路`, en: `Deploy ${usedLanes}/${permitCount}` })}</span>`
+            : '';
+        const permitNextChip = nextPermitInfo
+            ? `<span class="tag-chip">${getLocalized({ zh: `${nextPermitInfo.label} · Lv.${nextPermitInfo.minLevel}`, en: `${nextPermitInfo.label} · Lv.${nextPermitInfo.minLevel}` })}</span>`
+            : '';
         return `
-            <article class="tower-card compact-list-card ${(canUpgrade || canUnlock) ? 'ready' : ''} ${!unlocked ? 'locked' : ''}">
+            <article class="tower-card compact-list-card ${(canUpgrade || canUnlock || canUnlockPermit) ? 'ready' : ''} ${!unlocked ? 'locked' : ''}">
                 <div class="card-top">
                     <div>
                         <div class="card-kicker">${rarityLabel(tower.tier)}</div>
@@ -4199,7 +4337,12 @@
                         zh: `${role.detail} 当前库存 ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)}，解锁后才能装到防线。`,
                         en: `${role.detail} You currently have ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)} and must unlock it before equipping it on the frontline.`
                     })
-                    : role.detail}</div>
+                    : permitBlocked && nextPermitInfo
+                        ? getLocalized({
+                            zh: `${towerLabel(tower.id)} 当前已占用 ${usedLanes}/${permitCount} 路部署，想重复上阵要先解锁${nextPermitInfo.label}。`,
+                            en: `${towerLabel(tower.id)} is already using ${usedLanes}/${permitCount} lane slots. Unlock ${nextPermitInfo.label} before repeating it.`
+                        })
+                        : role.detail}</div>
                 <div class="tower-tags compact">
                     ${renderLimitedChipMarkup([
                         `<span class="tag-chip">${t('dpsText')} ${formatCompact(Math.round(getTowerPreviewDps(tower.id)))}</span>`,
@@ -4207,16 +4350,20 @@
                         unlocked
                             ? `<span class="tag-chip">${getLocalized({ zh: `库存 ${formatCompact(ownedFragments)} 碎片`, en: `Stock ${formatCompact(ownedFragments)} frags` })}</span>`
                             : `<span class="tag-chip">${getLocalized({ zh: `库存 ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)}`, en: `Stock ${formatCompact(ownedFragments)}/${formatCompact(unlockNeed)}` })}</span>`,
+                        permitUsageChip,
+                        permitNextChip,
                         !unlocked && unlockShortage > 0 ? `<span class="tag-chip">${getLocalized({ zh: `还差 ${formatCompact(unlockShortage)} 碎片`, en: `${formatCompact(unlockShortage)} frags left` })}</span>` : '',
                         tower.id === 'harvest' ? `<span class="tag-chip">${getLocalized({ zh: `击杀金币 +${Math.round((tower.goldBonus || 0) * 100)}%`, en: `Kill gold +${Math.round((tower.goldBonus || 0) * 100)}%` })}</span>` : '',
                         focusRecommended ? `<span class="tag-chip">${getLocalized({ zh: '章节掉落倾向', en: 'Focus Drop' })}</span>` : '',
                         ...recommendedLanes.map((laneName) => `<span class="tag-chip">${getLocalized({ zh: `推荐 ${laneName}`, en: `${laneName} preset` })}</span>`)
-                    ], { limit: 5 })}
+                    ], { limit: 6 })}
                 </div>
                 <div class="progress-line"><i style="width:${(progress * 100).toFixed(2)}%;"></i></div>
                 <div class="card-actions compact">
                     ${unlocked
-                        ? (equipped
+                        ? (permitBlocked && nextPermitInfo
+                            ? `<button class="primary-btn" type="button" data-action="unlockPermit" data-value="${tower.id}" ${canUnlockPermit ? '' : 'disabled'}>${permitButtonText}</button>`
+                            : equipped
                             ? `<button class="ghost-btn" type="button" disabled>${t('equipped')}</button>`
                             : `<button class="primary-btn" type="button" data-action="equipTower" data-value="${tower.id}">${t('equipNow')}</button>`)
                         : `<button class="primary-btn" type="button" data-action="unlockTower" data-value="${tower.id}" ${canUnlock ? '' : 'disabled'}>${canUnlock
@@ -6921,6 +7068,13 @@
 
     function equipTower(towerId) {
         if (getTowerLevel(towerId) <= 0) return showToast(t('toastNeedUnlock'));
+        if (!canEquipTowerToLane(towerId, state.save.selectedLane)) {
+            const permitInfo = getDeployPermitInfo(towerId, getTowerPermitCount(towerId) + 1);
+            return showToast(getLocalized({
+                zh: `${towerLabel(towerId)} 当前部署已满，先解锁${permitInfo.label}。`,
+                en: `${towerLabel(towerId)} is already at its lane limit. Unlock ${permitInfo.label} first.`
+            }));
+        }
         state.save.laneLoadout[state.save.selectedLane] = towerId;
         saveProgress();
         showToast(t('toastEquipped'));
@@ -6947,6 +7101,41 @@
         state.save.towerLevels[towerId] += 1;
         saveProgress();
         showToast(t('toastTowerUp'));
+        renderAll();
+    }
+
+    function unlockDeployPermit(towerId) {
+        if (getTowerLevel(towerId) <= 0) return showToast(t('toastNeedUnlock'));
+        const permitInfo = getDeployPermitInfo(towerId, getTowerPermitCount(towerId) + 1);
+        if (!permitInfo || permitInfo.maxed) {
+            return showToast(getLocalized({
+                zh: `${towerLabel(towerId)} 的部署许可已满`,
+                en: `${towerLabel(towerId)} already has max permits`
+            }));
+        }
+        if (!permitInfo.levelReady) {
+            return showToast(getLocalized({
+                zh: `${towerLabel(towerId)} 需升到 Lv.${permitInfo.minLevel} 才能解锁${permitInfo.label}`,
+                en: `${towerLabel(towerId)} must reach Lv.${permitInfo.minLevel} before unlocking ${permitInfo.label}`
+            }));
+        }
+        if (permitInfo.shortage.fragments > 0) {
+            return showToast(getLocalized({
+                zh: `${permitInfo.label} 还差 ${formatCompact(permitInfo.shortage.fragments)} 碎片`,
+                en: `${permitInfo.label} needs ${formatCompact(permitInfo.shortage.fragments)} more fragments`
+            }));
+        }
+        if (permitInfo.shortage.gold > 0) return showToast(t('toastNotEnoughGold'));
+        if (permitInfo.shortage.cores > 0) return showToast(t('toastNotEnoughCore'));
+        state.save.gold -= permitInfo.cost.gold;
+        state.save.cores -= permitInfo.cost.cores;
+        state.save.towerFragments[towerId] -= permitInfo.cost.fragments;
+        state.save.towerPermits[towerId] = permitInfo.targetPermits;
+        saveProgress();
+        showToast(getLocalized({
+            zh: `${towerLabel(towerId)} 已解锁${permitInfo.label}`,
+            en: `${towerLabel(towerId)} unlocked ${permitInfo.label}`
+        }));
         renderAll();
     }
 
@@ -7020,6 +7209,118 @@
 
     function getUnlockNeed(towerId) {
         return TOWERS[towerId]?.unlockFragments || 0;
+    }
+
+    function getTowerPermitCount(towerId, saveSnapshot = state.save) {
+        return clampSaveNumber(saveSnapshot?.towerPermits?.[towerId], 1, 1, 3);
+    }
+
+    function getTowerLaneUsage(towerId, saveSnapshot = state.save, excludingLaneIndex = -1) {
+        const laneLoadout = Array.isArray(saveSnapshot?.laneLoadout) ? saveSnapshot.laneLoadout : [];
+        return laneLoadout.reduce((sum, currentTowerId, laneIndex) => (
+            currentTowerId === towerId && laneIndex !== excludingLaneIndex ? sum + 1 : sum
+        ), 0);
+    }
+
+    function canEquipTowerToLane(towerId, laneIndex = state.save.selectedLane, saveSnapshot = state.save) {
+        if (!isTowerUnlockedForSave(towerId, saveSnapshot)) return false;
+        const laneLoadout = Array.isArray(saveSnapshot?.laneLoadout) ? saveSnapshot.laneLoadout : [];
+        if (laneLoadout[laneIndex] === towerId) return true;
+        return getTowerLaneUsage(towerId, saveSnapshot, laneIndex) < getTowerPermitCount(towerId, saveSnapshot);
+    }
+
+    function getDeployPermitLabel(targetPermits, lang = state.lang) {
+        const count = Math.max(2, Math.min(3, Number(targetPermits) || 2));
+        if (lang === 'zh') return count === 2 ? '双路部署' : '三路部署';
+        return count === 2 ? '2-Lane Permit' : '3-Lane Permit';
+    }
+
+    function getDeployPermitRule(towerId, targetPermits) {
+        const tower = TOWERS[towerId];
+        if (!tower) return null;
+        return DEPLOY_PERMIT_RULES[tower.tier]?.[targetPermits] || null;
+    }
+
+    function getDeployPermitInfo(towerId, targetPermits = null, saveSnapshot = state.save) {
+        const currentPermits = getTowerPermitCount(towerId, saveSnapshot);
+        const nextTarget = Math.max(2, Math.min(3, Number(targetPermits) || (currentPermits + 1)));
+        const rule = getDeployPermitRule(towerId, nextTarget);
+        if (!rule || currentPermits >= 3) {
+            return {
+                currentPermits,
+                targetPermits: currentPermits,
+                maxed: true,
+                cost: { gold: 0, cores: 0, fragments: 0 },
+                shortage: { gold: 0, cores: 0, fragments: 0 },
+                affordable: false,
+                levelReady: false,
+                currentLevel: getTowerLevel(towerId, saveSnapshot),
+                minLevel: 0,
+                label: getDeployPermitLabel(currentPermits, state.lang)
+            };
+        }
+        const currentLevel = getTowerLevel(towerId, saveSnapshot);
+        const ownedFragments = Math.max(0, Number(saveSnapshot?.towerFragments?.[towerId]) || 0);
+        const shortage = {
+            gold: Math.max(0, rule.gold - (Number(saveSnapshot?.gold) || 0)),
+            cores: Math.max(0, rule.cores - (Number(saveSnapshot?.cores) || 0)),
+            fragments: Math.max(0, rule.fragments - ownedFragments)
+        };
+        return {
+            currentPermits,
+            targetPermits: nextTarget,
+            maxed: false,
+            cost: { gold: rule.gold, cores: rule.cores, fragments: rule.fragments },
+            shortage,
+            affordable: shortage.gold <= 0 && shortage.cores <= 0 && shortage.fragments <= 0,
+            levelReady: currentLevel >= rule.minLevel,
+            currentLevel,
+            minLevel: rule.minLevel,
+            ownedFragments,
+            label: getDeployPermitLabel(nextTarget, state.lang)
+        };
+    }
+
+    function getLegalizedLaneLoadout(requestedLaneLoadout, saveSnapshot = state.save, fallbackLoadout = ['pulse', 'laser', 'harvest']) {
+        const requested = Array.isArray(requestedLaneLoadout) ? requestedLaneLoadout.slice(0, 3) : [];
+        while (requested.length < 3) requested.push(fallbackLoadout[requested.length] || 'pulse');
+        const chapterIndex = clampSaveNumber(saveSnapshot?.chapterIndex, 0, 0, CHAPTERS.length - 1);
+        const chapter = CHAPTERS[chapterIndex] || CHAPTERS[0];
+        const presetConfig = getChapterPresetConfig(chapter.id);
+        const resolved = [];
+        const usage = {};
+        const canUseCandidate = (towerId) => (
+            !!TOWERS[towerId]
+            && isTowerUnlockedForSave(towerId, saveSnapshot)
+            && (usage[towerId] || 0) < getTowerPermitCount(towerId, saveSnapshot)
+        );
+
+        for (let laneIndex = 0; laneIndex < 3; laneIndex += 1) {
+            const currentTowerId = requested[laneIndex];
+            const presetTowerId = presetConfig.lanes?.[laneIndex] || fallbackLoadout[laneIndex] || 'pulse';
+            const candidateOrder = Array.from(new Set([
+                currentTowerId,
+                presetTowerId,
+                ...getTowerPresetFallbacks(presetTowerId),
+                ...getTowerPresetFallbacks(currentTowerId),
+                ...(saveSnapshot?.laneLoadout || []),
+                ...fallbackLoadout,
+                'pulse',
+                'laser',
+                'harvest',
+                'frost',
+                'rocket',
+                'chain',
+                'rail'
+            ].filter(Boolean)));
+
+            let chosenTowerId = candidateOrder.find(canUseCandidate);
+            if (!chosenTowerId) chosenTowerId = Object.keys(TOWERS).find(canUseCandidate) || presetTowerId || 'pulse';
+            resolved.push(chosenTowerId);
+            usage[chosenTowerId] = (usage[chosenTowerId] || 0) + 1;
+        }
+
+        return resolved;
     }
 
     function getTowerDamagePerShot(towerId, options = {}) {
@@ -7130,7 +7431,16 @@
     function getPaymentMilestoneReadyCount(saveSnapshot = state.save) { return getClaimablePaymentMilestones(saveSnapshot).length; }
     function getNextPaymentMilestone(saveSnapshot = state.save) { return DEFENSE_PAYMENT_MILESTONES.find((milestone) => !saveSnapshot.payment?.milestoneClaims?.[milestone.id]) || null; }
     function isDailySupplyReady() { return !state.save.dailySupplyAt || Date.now() - state.save.dailySupplyAt >= DAILY_SUPPLY_COOLDOWN_MS; }
-    function hasLoadoutRedDot() { return Object.keys(TOWERS).some((towerId) => { const level = getTowerLevel(towerId); return level <= 0 ? (state.save.towerFragments[towerId] || 0) >= getUnlockNeed(towerId) : (level < 8 && state.save.gold >= getTowerUpgradeCost(towerId)); }); }
+    function hasLoadoutRedDot() {
+        return Object.keys(TOWERS).some((towerId) => {
+            const level = getTowerLevel(towerId);
+            const permitInfo = getDeployPermitInfo(towerId, getTowerPermitCount(towerId) + 1);
+            const permitReady = level > 0 && permitInfo && !permitInfo.maxed && permitInfo.levelReady && permitInfo.affordable;
+            return level <= 0
+                ? (state.save.towerFragments[towerId] || 0) >= getUnlockNeed(towerId)
+                : (level < 8 && state.save.gold >= getTowerUpgradeCost(towerId)) || permitReady;
+        });
+    }
     function hasResearchRedDot() { return Object.keys(RESEARCH).some((id) => canUpgradeResearch(id)); }
     function hasMissionRedDot() { return MISSIONS.some((mission) => !state.save.missionClaimed.includes(mission.id) && mission.metric(state.save) >= mission.target); }
     function hasSeasonRedDot() { return SEASON_NODES.some((node) => isSeasonClaimable(node.id)) || SPONSOR_SEASON_NODES.some((node) => isSponsorSeasonClaimable(node.id)); }
@@ -7180,7 +7490,17 @@
             sort: claimable ? 4000 : claimed ? 100 : 1000 + progress
         };
     }
-    function getTowerSortScore(towerId) { const level = getTowerLevel(towerId); const equipped = state.save.laneLoadout.includes(towerId) ? 1000 : 0; const ready = (level <= 0 && (state.save.towerFragments[towerId] || 0) >= getUnlockNeed(towerId)) || (level > 0 && level < 8 && state.save.gold >= getTowerUpgradeCost(towerId)) ? 400 : 0; return equipped + ready + level * 20 + (state.save.towerFragments[towerId] || 0); }
+    function getTowerSortScore(towerId) {
+        const level = getTowerLevel(towerId);
+        const equipped = state.save.laneLoadout.includes(towerId) ? 1000 : 0;
+        const permitInfo = getDeployPermitInfo(towerId, getTowerPermitCount(towerId) + 1);
+        const permitReady = level > 0 && permitInfo && !permitInfo.maxed && permitInfo.levelReady && permitInfo.affordable ? 260 : 0;
+        const ready = (level <= 0 && (state.save.towerFragments[towerId] || 0) >= getUnlockNeed(towerId))
+            || (level > 0 && level < 8 && state.save.gold >= getTowerUpgradeCost(towerId))
+            ? 400
+            : 0;
+        return equipped + ready + permitReady + level * 20 + (state.save.towerFragments[towerId] || 0);
+    }
     function capitalize(value) { return value ? value.charAt(0).toUpperCase() + value.slice(1) : ''; }
     function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
