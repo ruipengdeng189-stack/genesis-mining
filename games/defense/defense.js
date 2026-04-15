@@ -633,6 +633,13 @@
         { id: 'p14', xp: 13600, reward: { gold: 54800, cores: 590, fragments: { frost: 40, rocket: 40, chain: 46, rail: 50 } } }
     ];
 
+    const DEFENSE_PAYMENT_MILESTONES = [
+        { id: 'tier1', threshold: 1, title: { zh: '前线达标礼包', en: 'Frontline Milestone Pack' }, reward: { gold: 2800, cores: 26, seasonXp: 120, fragments: { pulse: 18, laser: 18, harvest: 14 } } },
+        { id: 'tier2', threshold: 6, title: { zh: '指挥达标礼包', en: 'Command Milestone Pack' }, reward: { gold: 9600, cores: 88, seasonXp: 360, fragments: { frost: 24, rocket: 24, chain: 20 } } },
+        { id: 'tier3', threshold: 16, title: { zh: '统御达标礼包', en: 'Dominion Milestone Pack' }, reward: { gold: 22800, cores: 210, seasonXp: 880, fragments: { rocket: 34, chain: 34, rail: 28 } } },
+        { id: 'tier4', threshold: 30, title: { zh: '创世达标礼包', en: 'Genesis Milestone Pack' }, reward: { gold: 48800, cores: 420, seasonXp: 1680, fragments: { frost: 42, rocket: 42, chain: 42, rail: 36 } } }
+    ];
+
     const LANE_POSITIONS = [170, 360, 550];
     const ENEMY_TYPE_IDS = new Set(['grunt', 'fast', 'shield', 'split', 'elite', 'boss']);
     const CHAPTER_WAVE_SCRIPTS = Object.freeze({});
@@ -908,6 +915,12 @@
             case 'claimSponsorSeason':
                 claimSponsorSeason(value);
                 break;
+            case 'claimPaymentMilestone':
+                claimPaymentMilestone(value);
+                break;
+            case 'claimAllPaymentMilestones':
+                claimAllPaymentMilestones();
+                break;
             default:
                 break;
         }
@@ -1012,6 +1025,7 @@
                 purchaseCount: 0,
                 totalSpent: 0,
                 passUnlocked: false,
+                milestoneClaims: {},
                 claimedOrders: {},
                 pendingClaims: {},
                 premiumSeasonClaims: {},
@@ -1079,6 +1093,7 @@
             purchaseCount: clampSaveNumber(normalized.payment?.purchaseCount, base.payment.purchaseCount, 0),
             totalSpent: Math.max(0, Number(normalized.payment?.totalSpent) || 0),
             passUnlocked: !!normalized.payment?.passUnlocked,
+            milestoneClaims: normalized.payment?.milestoneClaims && typeof normalized.payment.milestoneClaims === 'object' ? { ...normalized.payment.milestoneClaims } : {},
             claimedOrders: normalized.payment?.claimedOrders && typeof normalized.payment.claimedOrders === 'object' ? { ...normalized.payment.claimedOrders } : {},
             pendingClaims: normalized.payment?.pendingClaims && typeof normalized.payment.pendingClaims === 'object' ? { ...normalized.payment.pendingClaims } : {},
             premiumSeasonClaims: normalized.payment?.premiumSeasonClaims && typeof normalized.payment.premiumSeasonClaims === 'object' ? { ...normalized.payment.premiumSeasonClaims } : {},
@@ -1117,6 +1132,7 @@
                 payment: {
                     ...base.payment,
                     ...(parsed?.payment || {}),
+                    milestoneClaims: { ...base.payment.milestoneClaims, ...((parsed?.payment && parsed.payment.milestoneClaims) || {}) },
                     claimedOrders: { ...base.payment.claimedOrders, ...((parsed?.payment && parsed.payment.claimedOrders) || {}) },
                     pendingClaims: { ...base.payment.pendingClaims, ...((parsed?.payment && parsed.payment.pendingClaims) || {}) },
                     premiumSeasonClaims: { ...base.payment.premiumSeasonClaims, ...((parsed?.payment && parsed.payment.premiumSeasonClaims) || {}) },
@@ -2162,6 +2178,15 @@
         const projectedSave = getProjectedPaymentSave(offer, saveSnapshot);
         const projectedTier = getSponsorTierSummary(projectedSave);
         const currentGap = Math.max(0, chapter.recommended - getPowerRating(saveSnapshot));
+        const currentMilestoneReadyCount = getPaymentMilestoneReadyCount(saveSnapshot);
+        const projectedMilestoneReadyCount = getPaymentMilestoneReadyCount(projectedSave);
+        const newMilestoneReadyCount = Math.max(0, projectedMilestoneReadyCount - currentMilestoneReadyCount);
+        const reachedMilestone = DEFENSE_PAYMENT_MILESTONES.find((milestone) => {
+            const claimed = !!saveSnapshot.payment?.milestoneClaims?.[milestone.id];
+            return !claimed
+                && (Number(saveSnapshot.payment?.totalSpent) || 0) < milestone.threshold
+                && (Number(projectedSave.payment?.totalSpent) || 0) >= milestone.threshold;
+        }) || null;
         const permanentPowerGain = Math.max(0, (projectedTier.powerBonus || 0) - (currentTier.powerBonus || 0));
         const permanentDamageGain = Math.max(0, Math.round(((projectedTier.damageBoost || 0) - (currentTier.damageBoost || 0)) * 100));
         const permanentEliteDamageGain = Math.max(0, Math.round(((projectedTier.eliteDamageBoost || 0) - (currentTier.eliteDamageBoost || 0)) * 100));
@@ -2188,6 +2213,8 @@
             bossBountyGain,
             choiceCountGain,
             rerollGain,
+            newMilestoneReadyCount,
+            reachedMilestone,
             instantPowerGain,
             utilityPowerGain,
             totalPowerGain,
@@ -2573,6 +2600,7 @@
         const missionReady = getClaimableMissionCount();
         const seasonReady = getClaimableSeasonCount();
         const sponsorReady = getSponsorSeasonReadyCount();
+        const paymentReady = getPaymentMilestoneReadyCount();
         const dailyReady = isDailySupplyReady();
         const dailyRemaining = dailyReady
             ? getLocalized({ zh: '日常补给可领取', en: 'Daily supply ready' })
@@ -2580,12 +2608,13 @@
                 zh: `下一次补给 ${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`,
                 en: `Next supply ${formatTime(DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - state.save.dailySupplyAt))}`
             });
-        const claimableTotal = missionReady + seasonReady + sponsorReady + (dailyReady ? 1 : 0);
+        const claimableTotal = missionReady + seasonReady + sponsorReady + paymentReady + (dailyReady ? 1 : 0);
         const powerGap = Math.max(0, chapter.recommended - getPowerRating(state.save));
         return {
             missionReady,
             seasonReady,
             sponsorReady,
+            paymentReady,
             dailyReady,
             dailyRemaining,
             claimableTotal,
@@ -3698,12 +3727,95 @@
             <div class="card-grid tab-overview-grid">
                 ${renderShopStrategyCard(strategyPlan)}
                 ${renderTopupOverviewCard(strategyPlan)}
+                ${renderPaymentMilestoneCard(strategyPlan)}
                 ${renderDailyCard()}
             </div>
             <div class="shop-grid">
                 ${orderedShopOffers.map((offer) => renderShopOfferCard(offer, strategyPlan)).join('')}
                 ${orderedPaymentOffers.map((offer) => renderPaymentOfferCard(offer, strategyPlan)).join('')}
             </div>
+        `;
+    }
+
+    function renderPaymentMilestoneCard(strategyPlan = getShopStrategyPlan()) {
+        const sponsorUnlocked = !!state.save.payment.passUnlocked;
+        const totalSpent = Math.max(0, Number(state.save.payment.totalSpent) || 0);
+        const sponsorTier = getSponsorTierSummary();
+        const readyMilestones = getClaimablePaymentMilestones();
+        const readyCount = readyMilestones.length;
+        const nextMilestone = getNextPaymentMilestone();
+        const focusMilestone = readyMilestones[0] || nextMilestone || DEFENSE_PAYMENT_MILESTONES[DEFENSE_PAYMENT_MILESTONES.length - 1];
+        const claimedCount = DEFENSE_PAYMENT_MILESTONES.filter((milestone) => !!state.save.payment.milestoneClaims?.[milestone.id]).length;
+        const achievedCount = DEFENSE_PAYMENT_MILESTONES.filter((milestone) => totalSpent >= milestone.threshold).length;
+        const remaining = nextMilestone ? Math.max(0, nextMilestone.threshold - totalSpent) : 0;
+        const primaryAction = readyCount > 1
+            ? { action: 'claimAllPaymentMilestones', value: 'all', label: getLocalized({ zh: '一键领取', en: 'Claim All' }) }
+            : readyCount === 1
+                ? { action: 'claimPaymentMilestone', value: focusMilestone.id, label: getLocalized({ zh: '领取达标礼包', en: 'Claim Milestone' }) }
+                : { action: 'openPayment', value: strategyPlan.paymentRoute.offer.id, label: getLocalized({ zh: '继续追档', en: 'Keep Pushing' }) };
+        const secondaryAction = nextMilestone
+            ? { action: 'openPayment', value: strategyPlan.paymentRoute.offer.id, label: getLocalized({ zh: '去充值线', en: 'Top-up Route' }) }
+            : { action: 'openTab', value: 'season', label: getLocalized({ zh: '赞助轨道', en: 'Sponsor Track' }) };
+        return `
+            <article class="shop-card premium compact-overview-card">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${getLocalized({ zh: '累充里程碑', en: 'Top-up Milestones' })}</div>
+                        <div class="card-title">${readyCount > 0
+                            ? getLocalized({ zh: `${readyCount} 档礼包待领`, en: `${readyCount} milestone packs ready` })
+                            : nextMilestone
+                                ? getLocalized({ zh: `再充 $${remaining.toFixed(2)} 解锁下一档`, en: `$${remaining.toFixed(2)} to next milestone` })
+                                : getLocalized({ zh: '累充档位已全部吃满', en: 'All milestones claimed' })}</div>
+                    </div>
+                    <div class="card-number">${readyCount > 0
+                        ? getLocalized({ zh: `待领 ${readyCount}`, en: `${readyCount} ready` })
+                        : nextMilestone
+                            ? `$${remaining.toFixed(2)}`
+                            : getLocalized({ zh: '完成', en: 'Done' })}</div>
+                </div>
+                <div class="card-copy">${!sponsorUnlocked
+                    ? getLocalized({
+                        zh: '首充除了开赞助轨道，还会同时点亮第 1 档累充礼包，让充值目标更像“买一档、领两份”。',
+                        en: 'Your first top-up unlocks the Sponsor track and the first milestone pack, so one purchase lights up two rewards.'
+                    })
+                    : readyCount > 0
+                        ? getLocalized({
+                            zh: `当前累计 $${totalSpent.toFixed(2)}，已达到 ${getLocalized(focusMilestone.title)}。先领掉这一档，再决定要不要继续冲下一档。`,
+                            en: `You have spent $${totalSpent.toFixed(2)} and reached ${getLocalized(focusMilestone.title)}. Claim it first, then decide whether to chase the next tier.`
+                        })
+                        : nextMilestone
+                            ? getLocalized({
+                                zh: `当前累计 $${totalSpent.toFixed(2)}，距 ${getLocalized(nextMilestone.title)} 还差 $${remaining.toFixed(2)}。这条线专门用来补“再充一点就再拿一包”的冲档刺激。`,
+                                en: `You have spent $${totalSpent.toFixed(2)} and are $${remaining.toFixed(2)} away from ${getLocalized(nextMilestone.title)}. This lane is built for one-more-pack milestone pressure.`
+                            })
+                            : getLocalized({
+                                zh: '所有累充礼包都已领取完，后续充值会更聚焦在赞助常驻强度和即时资源补强。',
+                                en: 'All milestone packs are claimed, so future top-ups now focus on permanent Sponsor strength and direct resources.'
+                            })}</div>
+                ${focusMilestone ? `<div class="reward-row compact">${renderRewardChips(focusMilestone.reward, { limit: 3 })}</div>` : ''}
+                ${renderCompactKpiGrid([
+                    { label: getLocalized({ zh: '累计充值', en: 'Spent' }), value: `$${totalSpent.toFixed(2)}` },
+                    { label: getLocalized({ zh: '已领档位', en: 'Claimed' }), value: `${claimedCount}/${DEFENSE_PAYMENT_MILESTONES.length}` },
+                    { label: getLocalized({ zh: '已达档位', en: 'Reached' }), value: `${achievedCount}/${DEFENSE_PAYMENT_MILESTONES.length}` },
+                    { label: getLocalized({ zh: '当前赞助', en: 'Sponsor' }), value: getLocalized(sponsorTier.title) }
+                ])}
+                <div class="reward-row compact">
+                    ${renderLimitedChipMarkup([
+                        focusMilestone ? `<span class="mini-chip">${getLocalized({ zh: `当前目标 ${getLocalized(focusMilestone.title)}`, en: `Target ${getLocalized(focusMilestone.title)}` })}</span>` : '',
+                        nextMilestone ? `<span class="mini-chip">${getLocalized({ zh: `下一档门槛 $${nextMilestone.threshold.toFixed(2)}`, en: `Next at $${nextMilestone.threshold.toFixed(2)}` })}</span>` : '',
+                        readyCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: '已达成，可立即领取', en: 'Reached and claimable' })}</span>` : '',
+                        sponsorUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '和赞助阶位共线成长', en: 'Shares the Sponsor ladder' })}</span>` : `<span class="mini-chip">${getLocalized({ zh: '首充即可点亮第 1 档', en: 'First top-up lights tier 1' })}</span>`
+                    ], { limit: 4 })}
+                </div>
+                <div class="card-actions compact">
+                    <button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
+                        ${primaryAction.label}
+                    </button>
+                    <button class="ghost-btn" type="button" data-action="${secondaryAction.action}" data-value="${secondaryAction.value}">
+                        ${secondaryAction.label}
+                    </button>
+                </div>
+            </article>
         `;
     }
 
@@ -4044,6 +4156,7 @@
                 if (impact.currentGap > 0 && impact.tierPromotion) score += 260 + impact.permanentPowerGain * 0.25;
                 if (impact.currentGap > 0) score += impact.choiceCountGain * 120;
                 score += impact.rerollGain * 120;
+                score += impact.newMilestoneReadyCount * 160;
                 score += impact.permanentEliteDamageGain * 4;
                 score += impact.bossBountyGain * 5;
                 return { ...impact, score };
@@ -4331,8 +4444,9 @@
                         `<span class="mini-chip">${getLocalized({ zh: `即时补强 +${formatCompact(impact.instantPowerGain)}`, en: `Instant +${formatCompact(impact.instantPowerGain)}` })}</span>`,
                         `<span class="mini-chip">${getLocalized({ zh: `总补强 +${formatCompact(impact.totalPowerGain)}`, en: `Total +${formatCompact(impact.totalPowerGain)}` })}</span>`,
                         renderPaymentGapChip(impact),
-                        renderPaymentUpgradeChip(projectedTier)
-                    ], { limit: 4 })}
+                        renderPaymentUpgradeChip(projectedTier),
+                        impact.newMilestoneReadyCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `累充礼包 +${impact.newMilestoneReadyCount} 档`, en: `+${impact.newMilestoneReadyCount} milestone pack` })}</span>` : ''
+                    ], { limit: 5 })}
                 </div>
                 ${nextSponsorNode ? `<div class="reward-row compact">
                     <span class="mini-chip">${getLocalized({ zh: '下个赞助节点奖励', en: 'Next Sponsor Reward' })}</span>
@@ -4422,8 +4536,9 @@
                     `<span class="mini-chip">${getLocalized({ zh: `即时 +${formatCompact(impact.instantPowerGain)}`, en: `Instant +${formatCompact(impact.instantPowerGain)}` })}</span>`,
                     `<span class="mini-chip">${getLocalized({ zh: `总补强 +${formatCompact(impact.totalPowerGain)}`, en: `Total +${formatCompact(impact.totalPowerGain)}` })}</span>`,
                     renderPaymentGapChip(impact),
-                    renderPaymentUpgradeChip(projectedTier)
-                ], { limit: 4 })}</div>
+                    renderPaymentUpgradeChip(projectedTier),
+                    impact.newMilestoneReadyCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `累充礼包 +${impact.newMilestoneReadyCount} 档`, en: `+${impact.newMilestoneReadyCount} milestone pack` })}</span>` : ''
+                ], { limit: 5 })}</div>
                 <div class="reward-row compact">${renderSponsorTierBoostChips(tierPromotion ? projectedTier : currentTier, tierPromotion ? { diffFrom: currentTier, limit: 4 } : { limit: 4 })}</div>
                 <div class="card-actions compact">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">
@@ -5346,6 +5461,34 @@
         renderAll();
     }
 
+    function claimPaymentMilestone(id) {
+        const milestone = DEFENSE_PAYMENT_MILESTONES.find((item) => item.id === id);
+        if (!milestone || !isPaymentMilestoneClaimable(id)) return;
+        state.save.payment.milestoneClaims[id] = true;
+        grantReward(milestone.reward);
+        saveProgress();
+        showToast(getLocalized({
+            zh: `已领取 ${getLocalized(milestone.title)}`,
+            en: `${getLocalized(milestone.title)} claimed`
+        }));
+        renderAll();
+    }
+
+    function claimAllPaymentMilestones() {
+        const milestones = getClaimablePaymentMilestones();
+        if (!milestones.length) return;
+        milestones.forEach((milestone) => {
+            state.save.payment.milestoneClaims[milestone.id] = true;
+        });
+        grantReward(mergeRewards(...milestones.map((milestone) => milestone.reward)));
+        saveProgress();
+        showToast(getLocalized({
+            zh: `已一键领取 ${milestones.length} 档累充礼包`,
+            en: `${milestones.length} milestone packs claimed`
+        }));
+        renderAll();
+    }
+
     function claimDailySupply() {
         if (!isDailySupplyReady()) return;
         state.save.dailySupplyAt = Date.now();
@@ -5578,12 +5721,22 @@
     function isSeasonClaimable(nodeId) { return !state.save.seasonClaimed.includes(nodeId) && !!SEASON_NODES.find((node) => node.id === nodeId && state.save.seasonXp >= node.xp); }
     function isSponsorSeasonClaimable(nodeId) { return !!state.save.payment.passUnlocked && !state.save.payment.premiumSeasonClaims[nodeId] && !!SPONSOR_SEASON_NODES.find((node) => node.id === nodeId && state.save.seasonXp >= node.xp); }
     function getSponsorSeasonReadyCount() { return SPONSOR_SEASON_NODES.filter((node) => isSponsorSeasonClaimable(node.id)).length; }
+    function isPaymentMilestoneClaimable(id, saveSnapshot = state.save) {
+        const milestone = DEFENSE_PAYMENT_MILESTONES.find((item) => item.id === id);
+        if (!milestone) return false;
+        return !!saveSnapshot.payment?.passUnlocked
+            && (Number(saveSnapshot.payment?.totalSpent) || 0) >= milestone.threshold
+            && !saveSnapshot.payment?.milestoneClaims?.[id];
+    }
+    function getClaimablePaymentMilestones(saveSnapshot = state.save) { return DEFENSE_PAYMENT_MILESTONES.filter((milestone) => isPaymentMilestoneClaimable(milestone.id, saveSnapshot)); }
+    function getPaymentMilestoneReadyCount(saveSnapshot = state.save) { return getClaimablePaymentMilestones(saveSnapshot).length; }
+    function getNextPaymentMilestone(saveSnapshot = state.save) { return DEFENSE_PAYMENT_MILESTONES.find((milestone) => !saveSnapshot.payment?.milestoneClaims?.[milestone.id]) || null; }
     function isDailySupplyReady() { return !state.save.dailySupplyAt || Date.now() - state.save.dailySupplyAt >= DAILY_SUPPLY_COOLDOWN_MS; }
     function hasLoadoutRedDot() { return Object.keys(TOWERS).some((towerId) => { const level = getTowerLevel(towerId); return level <= 0 ? (state.save.towerFragments[towerId] || 0) >= getUnlockNeed(towerId) : (level < 8 && state.save.gold >= getTowerUpgradeCost(towerId)); }); }
     function hasResearchRedDot() { return Object.keys(RESEARCH).some((id) => canUpgradeResearch(id)); }
     function hasMissionRedDot() { return MISSIONS.some((mission) => !state.save.missionClaimed.includes(mission.id) && mission.metric(state.save) >= mission.target); }
     function hasSeasonRedDot() { return SEASON_NODES.some((node) => isSeasonClaimable(node.id)) || SPONSOR_SEASON_NODES.some((node) => isSponsorSeasonClaimable(node.id)); }
-    function hasShopRedDot() { return isDailySupplyReady() || SHOP_ITEMS.some((offer) => canAffordShopOffer(offer)); }
+    function hasShopRedDot() { return isDailySupplyReady() || getPaymentMilestoneReadyCount() > 0 || SHOP_ITEMS.some((offer) => canAffordShopOffer(offer)); }
     function showToast(message) { if (!message) return; ui.toast.textContent = message; ui.toast.classList.add('show'); clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2200); }
     function showOverlay(node) { node.classList.remove('is-hidden'); }
     function hideOverlay(node) { node.classList.add('is-hidden'); }
@@ -5801,8 +5954,9 @@
                         `<span class="mini-chip">${getLocalized({ zh: `总补强 +${formatCompact(impact.totalPowerGain)}`, en: `Total +${formatCompact(impact.totalPowerGain)}` })}</span>`,
                         renderPaymentGapChip(impact),
                         impact.tierPromotion ? `<span class="mini-chip">${getLocalized({ zh: `升到 ${getLocalized(impact.projectedTier.title)}`, en: `Promotes to ${getLocalized(impact.projectedTier.title)}` })}</span>` : '',
-                        renderPaymentUpgradeChip(impact.projectedTier)
-                    ], { limit: 4 })}</div>
+                        renderPaymentUpgradeChip(impact.projectedTier),
+                        impact.newMilestoneReadyCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `累充礼包 +${impact.newMilestoneReadyCount} 档`, en: `+${impact.newMilestoneReadyCount} milestone pack` })}</span>` : ''
+                    ], { limit: 5 })}</div>
                 </button>
             `;
         }).join('');
@@ -6048,13 +6202,17 @@
         const permanentPowerGain = Math.max(0, (afterTier.powerBonus || 0) - (beforeTier.powerBonus || 0));
         const rerollGain = Math.max(0, (afterTier.upgradeRerollCount || 0) - (beforeTier.upgradeRerollCount || 0));
         const bossBountyGain = Math.max(0, Math.round(((afterTier.bossBountyBoost || 0) - (beforeTier.bossBountyBoost || 0)) * 100));
+        const milestoneReadyCount = getPaymentMilestoneReadyCount();
         saveProgress();
         showToast(tierPromotion
             ? getLocalized({
-                zh: `充值成功：${getLocalized(offer.name)} 已到账 · 晋升 ${getLocalized(afterTier.title)} · 常驻战力 +${formatCompact(permanentPowerGain)}${afterTier.upgradeChoiceCount > (beforeTier.upgradeChoiceCount || 3) ? ` · 强化改为 ${afterTier.upgradeChoiceCount}选1` : ''}${rerollGain > 0 ? ` · 重抽 +${rerollGain}` : ''}${bossBountyGain > 0 ? ` · 赏金 +${bossBountyGain}%` : ''}`,
-                en: `Top-up complete: ${getLocalized(offer.name)} granted · promoted to ${getLocalized(afterTier.title)} · permanent power +${formatCompact(permanentPowerGain)}${afterTier.upgradeChoiceCount > (beforeTier.upgradeChoiceCount || 3) ? ` · upgrades become ${afterTier.upgradeChoiceCount} picks` : ''}${rerollGain > 0 ? ` · rerolls +${rerollGain}` : ''}${bossBountyGain > 0 ? ` · bounty +${bossBountyGain}%` : ''}`
+                zh: `充值成功：${getLocalized(offer.name)} 已到账 · 晋升 ${getLocalized(afterTier.title)} · 常驻战力 +${formatCompact(permanentPowerGain)}${afterTier.upgradeChoiceCount > (beforeTier.upgradeChoiceCount || 3) ? ` · 强化改为 ${afterTier.upgradeChoiceCount}选1` : ''}${rerollGain > 0 ? ` · 重抽 +${rerollGain}` : ''}${bossBountyGain > 0 ? ` · 赏金 +${bossBountyGain}%` : ''}${milestoneReadyCount > 0 ? ` · 里程碑待领 ${milestoneReadyCount}` : ''}`,
+                en: `Top-up complete: ${getLocalized(offer.name)} granted · promoted to ${getLocalized(afterTier.title)} · permanent power +${formatCompact(permanentPowerGain)}${afterTier.upgradeChoiceCount > (beforeTier.upgradeChoiceCount || 3) ? ` · upgrades become ${afterTier.upgradeChoiceCount} picks` : ''}${rerollGain > 0 ? ` · rerolls +${rerollGain}` : ''}${bossBountyGain > 0 ? ` · bounty +${bossBountyGain}%` : ''}${milestoneReadyCount > 0 ? ` · ${milestoneReadyCount} milestones ready` : ''}`
             })
-            : getLocalized({ zh: `充值成功：${getLocalized(offer.name)} 奖励已到账`, en: `Top-up complete: ${getLocalized(offer.name)} rewards granted` }));
+            : getLocalized({
+                zh: `充值成功：${getLocalized(offer.name)} 奖励已到账${milestoneReadyCount > 0 ? ` · 里程碑待领 ${milestoneReadyCount}` : ''}`,
+                en: `Top-up complete: ${getLocalized(offer.name)} rewards granted${milestoneReadyCount > 0 ? ` · ${milestoneReadyCount} milestones ready` : ''}`
+            }));
         renderAll();
         return true;
     }
