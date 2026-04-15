@@ -9,6 +9,7 @@
     const SAFE_CORE_Y = 910;
     const SKILL_READY_GLOW_MS = 240;
     const PAYMENT_API_BASE = '/api';
+    const PAYMENT_ORDER_STORAGE_KEY = 'genesis_defense_payment_order_v1';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
@@ -686,9 +687,11 @@
         bindStaticEvents();
         markHubOpen();
         applyLanguage();
+        restoreStoredPaymentOrder();
         updateStartPanel();
         renderAll();
         registerDebugApi();
+        syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true }).catch(() => {});
         flushPendingPaymentClaims().catch(() => {});
         paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
         startLoop();
@@ -3743,12 +3746,12 @@
                     : getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，先看推荐战力与三路分工，再决定是套推荐还是回头补强。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. Check target power and lane roles first, then decide whether to apply the preset or power up more.` }))
             : '';
         const handoffStatusLabel = prepOverview.ready
-            ? getLocalized({ zh: '鍙紑鎵?, en: 'Ready' })
+            ? getLocalized({ zh: '可开打', en: 'Ready' })
             : prepOverview.powerGap > 0
-                ? getLocalized({ zh: `宸?${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
                 : prepOverview.laneMatchCount < 3
                     ? getLocalized({ zh: `瀵逛綅 ${prepOverview.laneMatchCount}/3`, en: `Lanes ${prepOverview.laneMatchCount}/3` })
-                    : getLocalized({ zh: '璋冩暣鎶€鑳?, en: 'Fix Skill' });
+                    : getLocalized({ zh: '调整技能', en: 'Fix Skill' });
         const handoffFocusChip = prepOverview.powerGap > 0
             ? getLocalized({ zh: `褰撳墠 ${formatCompact(roadmap.currentPower)} / 鎺ㄨ崘 ${formatCompact(current.recommended)}`, en: `Current ${formatCompact(roadmap.currentPower)} / Target ${formatCompact(current.recommended)}` })
             : prepOverview.laneMatchCount < 3
@@ -7086,18 +7089,71 @@
     }
 
     function buildClientPaymentOrder(order) {
+        const createdAtRaw = order?.createdAt ?? order?.created_at;
+        const expiresAtRaw = order?.expiresAt ?? order?.expires_at;
         return {
             id: String(order?.orderId || order?.order_id || '--'),
             offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
             offerName: String(order?.offerName || order?.offer_name || ''),
             minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
-            createdAt: Date.parse(order?.createdAt || order?.created_at || '') || Date.now(),
-            expiresAt: Date.parse(order?.expiresAt || order?.expires_at || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS),
+            createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
+            expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
             exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
             payAddress: String(order?.payAddress || ''),
             network: String(order?.network || 'TRON (TRC20)'),
-            status: String(order?.status || 'pending')
+            status: String(order?.status || 'pending'),
+            txid: String(order?.txid || ''),
+            paidAt: String(order?.paidAt || order?.paid_at || ''),
+            rewardGranted: !!(order?.rewardGranted ?? order?.reward_granted)
         };
+    }
+
+    function isPaymentOrderSettledLocally(order = currentPaymentOrder) {
+        return !!order?.id && !!state.save.payment.claimedOrders?.[order.id];
+    }
+
+    function persistCurrentPaymentOrder() {
+        try {
+            const order = currentPaymentOrder;
+            const shouldPersist = !!order
+                && !!order.id
+                && order.id !== '--'
+                && !isPaymentOrderSettledLocally(order)
+                && String(order.status || 'pending') !== 'expired'
+                && String(order.status || 'pending') !== 'cancelled';
+
+            if (shouldPersist) {
+                localStorage.setItem(PAYMENT_ORDER_STORAGE_KEY, JSON.stringify(order));
+            } else {
+                localStorage.removeItem(PAYMENT_ORDER_STORAGE_KEY);
+            }
+        } catch (error) {}
+    }
+
+    function setCurrentPaymentOrder(order, { persist = true } = {}) {
+        currentPaymentOrder = order ? buildClientPaymentOrder(order) : null;
+        if (currentPaymentOrder?.offerId && DEFENSE_PAYMENT_OFFERS.some((offer) => offer.id === currentPaymentOrder.offerId)) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
+        }
+        if (persist) persistCurrentPaymentOrder();
+        return currentPaymentOrder;
+    }
+
+    function restoreStoredPaymentOrder() {
+        try {
+            const raw = localStorage.getItem(PAYMENT_ORDER_STORAGE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            const storedOrder = buildClientPaymentOrder(parsed);
+            if (!storedOrder?.id || storedOrder.id === '--') {
+                localStorage.removeItem(PAYMENT_ORDER_STORAGE_KEY);
+                return null;
+            }
+            return setCurrentPaymentOrder(storedOrder, { persist: true });
+        } catch (error) {
+            try { localStorage.removeItem(PAYMENT_ORDER_STORAGE_KEY); } catch (innerError) {}
+            return null;
+        }
     }
 
     async function createBackendPaymentOrder(offerId) {
@@ -7120,6 +7176,120 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId, txid })
         });
+    }
+
+    async function checkBackendPaymentOrder(orderId) {
+        const query = new URLSearchParams({ orderId: String(orderId || '') });
+        return requestPaymentApi(`/check-order?${query.toString()}`);
+    }
+
+    async function syncCurrentPaymentOrderStatus({ recoverRewards = false, silent = true } = {}) {
+        if (!currentPaymentOrder?.id || currentPaymentOrder.id === '--') return null;
+
+        try {
+            const payload = await checkBackendPaymentOrder(currentPaymentOrder.id);
+            const syncedOrder = buildClientPaymentOrder(payload?.order || currentPaymentOrder);
+
+            if (syncedOrder.minerId && syncedOrder.minerId !== getPaymentMinerId()) {
+                setCurrentPaymentOrder(null);
+                if (!silent) {
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = getLocalized({
+                        zh: '检测到本地缓存订单归属不一致，已自动清除。',
+                        en: 'The cached order belongs to a different player and was cleared.'
+                    });
+                    refreshPaymentVerificationState();
+                }
+                return null;
+            }
+
+            if (syncedOrder.status === 'expired' || syncedOrder.status === 'cancelled') {
+                setCurrentPaymentOrder(null);
+                if (!silent && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = syncedOrder.status === 'expired'
+                        ? getLocalized({ zh: '当前订单已过期，请重新创建订单。', en: 'This order has expired. Please create a new one.' })
+                        : getLocalized({ zh: '当前订单已失效，请重新创建订单。', en: 'This order is no longer valid. Please create a new one.' });
+                    renderPaymentOrderUI();
+                    refreshPaymentVerificationState();
+                }
+                return null;
+            }
+
+            setCurrentPaymentOrder(syncedOrder);
+
+            if ((syncedOrder.rewardGranted || syncedOrder.status === 'granted') && state.save.payment.pendingClaims[syncedOrder.id]) {
+                delete state.save.payment.pendingClaims[syncedOrder.id];
+                saveProgress();
+            }
+
+            const needsRecovery = recoverRewards
+                && !isPaymentOrderSettledLocally(syncedOrder)
+                && !!syncedOrder.txid
+                && (syncedOrder.status === 'paid' || syncedOrder.status === 'granted' || syncedOrder.rewardGranted);
+
+            if (needsRecovery) {
+                grantPaymentRewards({
+                    orderId: syncedOrder.id,
+                    txid: syncedOrder.txid,
+                    offerId: syncedOrder.offerId,
+                    queueClaim: !(syncedOrder.rewardGranted || syncedOrder.status === 'granted')
+                });
+
+                if (syncedOrder.rewardGranted || syncedOrder.status === 'granted') {
+                    delete state.save.payment.pendingClaims[syncedOrder.id];
+                    saveProgress();
+                    paymentVerificationState = 'verified';
+                    paymentVerificationError = '';
+                    paymentVerificationNotice = getLocalized({
+                        zh: '检测到已支付订单，奖励已自动补发。',
+                        en: 'A paid order was found and rewards were restored automatically.'
+                    });
+                    setCurrentPaymentOrder({ ...syncedOrder, status: syncedOrder.status || 'granted', rewardGranted: true });
+                } else {
+                    try {
+                        await claimBackendPayment(syncedOrder.id, syncedOrder.txid);
+                        delete state.save.payment.pendingClaims[syncedOrder.id];
+                        saveProgress();
+                        paymentVerificationState = 'verified';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = getLocalized({
+                            zh: '检测到已支付订单，奖励已自动到账并完成后台补记。',
+                            en: 'A paid order was found. Rewards were restored and synced automatically.'
+                        });
+                        setCurrentPaymentOrder({ ...syncedOrder, status: 'granted', rewardGranted: true });
+                    } catch (claimError) {
+                        paymentVerificationState = 'verified';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = getLocalized({
+                            zh: '检测到已支付订单，奖励已自动到账；后台发奖记录将在稍后自动同步。',
+                            en: 'A paid order was found. Rewards were restored and backend sync will retry automatically.'
+                        });
+                        console.warn('Defense payment recovery claim sync queued.', { orderId: syncedOrder.id, claimError });
+                        setCurrentPaymentOrder({ ...syncedOrder, status: 'paid', rewardGranted: false });
+                    }
+                }
+            }
+
+            if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+                renderPaymentOrderUI();
+                refreshPaymentVerificationState();
+            }
+            return currentPaymentOrder;
+        } catch (error) {
+            if (!silent) {
+                paymentVerificationState = 'idle';
+                paymentVerificationNotice = '';
+                paymentVerificationError = error?.message || getLocalized({
+                    zh: '订单状态同步失败，请稍后重试。',
+                    en: 'Failed to sync the order state. Please try again.'
+                });
+                refreshPaymentVerificationState();
+            }
+            return null;
+        }
     }
 
     function formatPaymentUsdt(value) {
@@ -7152,11 +7322,19 @@
     }
 
     function isPaymentOrderExpired(order = currentPaymentOrder) {
-        return !!order && Number(order.expiresAt || 0) <= Date.now();
+        if (!order) return false;
+        const status = String(order.status || 'pending');
+        if (status === 'expired' || status === 'cancelled') return true;
+        if (status === 'paid' || status === 'granted') return false;
+        return Number(order.expiresAt || 0) <= Date.now();
     }
 
     function getPaymentOrderCountdown(order = currentPaymentOrder) {
         if (!order) return '--:--';
+        const status = String(order.status || 'pending');
+        if (status === 'granted') return getLocalized({ zh: '已发奖', en: 'Granted' });
+        if (status === 'paid') return getLocalized({ zh: '已支付', en: 'Paid' });
+        if (status === 'expired') return getLocalized({ zh: '已过期', en: 'Expired' });
         return formatTime(Math.max(0, Number(order.expiresAt || 0) - Date.now()));
     }
 
@@ -7283,9 +7461,17 @@
         }
 
         if (orderExpired) {
-            ui.paymentStatus.textContent = getLocalized({ zh: '当前订单已过期，请重新选择礼包创建新订单。', en: 'This order has expired. Select the pack again to create a fresh order.' });
+            ui.paymentStatus.textContent = txidValid
+                ? getLocalized({
+                    zh: '当前订单倒计时已结束；若你已在有效期内完成支付，仍可继续校验该 txid。',
+                    en: 'The order window has ended, but you can still verify this txid if the payment was completed before expiry.'
+                })
+                : getLocalized({
+                    zh: '当前订单倒计时已结束；如未支付请重新创建订单，如已支付可继续粘贴 txid 校验。',
+                    en: 'The order window has ended. Create a new order if you did not pay, or paste the txid if you already paid in time.'
+                });
             ui.paymentStatus.classList.add('is-error');
-            ui.paymentVerifyBtn.disabled = true;
+            ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
             return;
         }
 
@@ -7347,7 +7533,7 @@
         const requestPromise = createBackendPaymentOrder(offer.id)
             .then((order) => {
                 if (requestId !== paymentOrderNonce) return currentPaymentOrder || order;
-                currentPaymentOrder = order;
+                setCurrentPaymentOrder(order);
                 paymentVerificationState = 'idle';
                 paymentVerificationError = '';
                 paymentVerificationNotice = '';
@@ -7357,7 +7543,7 @@
             })
             .catch((error) => {
                 if (requestId === paymentOrderNonce) {
-                    currentPaymentOrder = null;
+                    setCurrentPaymentOrder(null);
                     paymentVerificationState = 'idle';
                     paymentVerificationNotice = '';
                     paymentVerificationError = error?.message || getLocalized({ zh: '订单创建失败，请稍后重试。', en: 'Failed to create order. Please try again.' });
@@ -7388,8 +7574,17 @@
 
     async function openPaymentModal(offerId = null) {
         if (!ui.paymentModal) return;
-        if (offerId) selectedPaymentOfferId = offerId;
-        else syncRecommendedPaymentOfferSelection({ force: true });
+        if (!currentPaymentOrder) restoreStoredPaymentOrder();
+        const hasRecoverableOrder = !!currentPaymentOrder && !isPaymentOrderSettledLocally(currentPaymentOrder);
+
+        if (hasRecoverableOrder) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
+        } else if (offerId) {
+            selectedPaymentOfferId = offerId;
+        } else {
+            syncRecommendedPaymentOfferSelection({ force: true });
+        }
+
         flushPendingPaymentClaims().catch(() => {});
         renderPaymentOfferGrid();
         resetPaymentVerificationState(true);
@@ -7397,12 +7592,20 @@
         ui.paymentModal.classList.remove('is-hidden');
         document.body.classList.add('modal-open');
         try {
-            await syncPaymentOrderForSelectedOffer(
+            if (currentPaymentOrder) {
+                await syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true });
+            }
+
+            if (
+                paymentVerificationState !== 'verified' && (
                 !currentPaymentOrder
+                || isPaymentOrderSettledLocally(currentPaymentOrder)
                 || currentPaymentOrder.offerId !== selectedPaymentOfferId
-                || isPaymentOrderExpired(currentPaymentOrder),
-                true
-            );
+                || isPaymentOrderExpired(currentPaymentOrder)
+                )
+            ) {
+                await syncPaymentOrderForSelectedOffer(true, true);
+            }
         } catch (error) {}
         refreshPaymentVerificationState();
     }
@@ -7442,18 +7645,25 @@
         refreshPaymentVerificationState();
     }
 
-    function grantPaymentRewards({ orderId, txid, offerId }) {
+    function grantPaymentRewards({ orderId, txid, offerId, queueClaim = true }) {
         const offer = DEFENSE_PAYMENT_OFFERS.find((item) => item.id === offerId) || getSelectedPaymentOffer();
-        if (!offer || state.save.payment.claimedOrders[orderId]) return false;
+        if (!offer || !orderId || state.save.payment.claimedOrders[orderId]) return false;
         const beforeTier = getSponsorTierSummary();
+        const normalizedTxid = PAYMENT_TXID_REGEX.test(String(txid || '').trim()) ? String(txid).trim().toLowerCase() : '';
 
         grantReward(offer.reward);
         state.save.payment.purchaseCount += 1;
         state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
         state.save.payment.passUnlocked = true;
         state.save.payment.claimedOrders[orderId] = true;
-        state.save.payment.pendingClaims[orderId] = txid;
-        state.save.payment.verifiedTxids = [txid, ...(state.save.payment.verifiedTxids || []).filter((item) => item !== txid)].slice(0, 100);
+        if (queueClaim && normalizedTxid) {
+            state.save.payment.pendingClaims[orderId] = normalizedTxid;
+        } else {
+            delete state.save.payment.pendingClaims[orderId];
+        }
+        if (normalizedTxid) {
+            state.save.payment.verifiedTxids = [normalizedTxid, ...(state.save.payment.verifiedTxids || []).filter((item) => item !== normalizedTxid)].slice(0, 100);
+        }
         const afterTier = getSponsorTierSummary();
         const tierPromotion = afterTier.id !== beforeTier.id;
         const permanentPowerGain = Math.max(0, (afterTier.powerBonus || 0) - (beforeTier.powerBonus || 0));
@@ -7492,8 +7702,15 @@
             return;
         }
 
-        if (!currentPaymentOrder || isPaymentOrderExpired(currentPaymentOrder)) {
-            paymentVerificationError = getLocalized({ zh: '当前订单已过期，请重新创建订单。', en: 'The current order has expired. Please create a new one.' });
+        if (!currentPaymentOrder) {
+            paymentVerificationError = getLocalized({ zh: '当前没有可校验的订单，请先创建订单。', en: 'There is no active order to verify. Please create one first.' });
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if (currentPaymentOrder.status === 'expired' || currentPaymentOrder.status === 'cancelled') {
+            paymentVerificationError = getLocalized({ zh: '当前订单已失效，请重新创建订单。', en: 'This order is no longer valid. Please create a new one.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
@@ -7508,14 +7725,26 @@
         try {
             const verificationResult = await verifyBackendPayment(orderId, txid);
             const orderPayload = verificationResult?.order || {};
-            const resolvedOfferId = String(orderPayload?.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+            const resolvedOrder = buildClientPaymentOrder({
+                ...currentPaymentOrder,
+                ...orderPayload,
+                txid: orderPayload?.txid || txid
+            });
+            const resolvedOfferId = String(resolvedOrder.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+            const hadLocalReward = !!state.save.payment.claimedOrders[orderId];
+            setCurrentPaymentOrder(resolvedOrder);
 
-            if (orderPayload?.rewardGranted || state.save.payment.claimedOrders[orderId]) {
-                if (orderPayload?.rewardGranted && state.save.payment.pendingClaims[orderId]) {
+            if (resolvedOrder.rewardGranted || hadLocalReward) {
+                if (resolvedOrder.rewardGranted && !hadLocalReward) {
+                    grantPaymentRewards({ orderId, txid: resolvedOrder.txid || txid, offerId: resolvedOfferId, queueClaim: false });
+                }
+                if (resolvedOrder.rewardGranted && state.save.payment.pendingClaims[orderId]) {
                     delete state.save.payment.pendingClaims[orderId];
                 }
                 paymentVerificationState = 'verified';
-                paymentVerificationNotice = getLocalized({ zh: '该订单奖励已发放，无需重复领取。', en: 'Rewards for this order have already been granted.' });
+                paymentVerificationNotice = resolvedOrder.rewardGranted && !hadLocalReward
+                    ? getLocalized({ zh: '该订单已在后台完成发奖，本地奖励已补发。', en: 'This order was already granted on the backend. Local rewards were restored.' })
+                    : getLocalized({ zh: '该订单奖励已发放，无需重复领取。', en: 'Rewards for this order have already been granted.' });
                 refreshPaymentVerificationState();
                 saveProgress();
                 return;
@@ -7527,9 +7756,11 @@
             try {
                 await claimBackendPayment(orderId, txid);
                 delete state.save.payment.pendingClaims[orderId];
+                setCurrentPaymentOrder({ ...resolvedOrder, status: 'granted', rewardGranted: true, txid });
                 paymentVerificationNotice = getLocalized({ zh: '链上校验成功，奖励已发放。', en: 'On-chain verification succeeded and rewards were granted.' });
                 saveProgress();
             } catch (claimError) {
+                setCurrentPaymentOrder({ ...resolvedOrder, status: 'paid', rewardGranted: false, txid });
                 paymentVerificationNotice = getLocalized({ zh: '链上校验成功，奖励已到账；后台发奖记录将在稍后自动同步。', en: 'On-chain verification succeeded and rewards were granted. Backend sync will retry automatically.' });
                 console.warn('Defense payment claim sync queued.', { orderId, claimError });
             }

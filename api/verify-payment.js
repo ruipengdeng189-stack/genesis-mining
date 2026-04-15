@@ -233,6 +233,10 @@ export async function GET(request) {
         message: 'payment already verified for this order',
         order: {
           orderId: order.order_id,
+          minerId: order.miner_id,
+          offerId: order.offer_id,
+          offerName: order.offer_name,
+          exactAmount: Number(order.exact_amount).toFixed(4),
           status: order.status,
           txid: order.txid,
           paidAt: order.paid_at,
@@ -362,7 +366,7 @@ export async function GET(request) {
         paidAt: updatedOrder.paid_at,
         rewardGranted: updatedOrder.reward_granted,
       },
-      note: '当前这一步只把订单标记为 paid。下一步我们再把前端游戏奖励接上。',
+      note: '订单已完成链上校验。前端会在本地发放奖励，并回写 granted 状态。',
     });
   } catch (error) {
     return Response.json(
