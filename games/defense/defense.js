@@ -2951,6 +2951,145 @@
         ];
     }
 
+    function getDefenseGrowthFlow(chapter = getCurrentChapter(), saveSnapshot = state.save) {
+        const prepOverview = getChapterPrepOverview(chapter, saveSnapshot);
+        const roadmap = getDefenseGrowthRoadmap(chapter, saveSnapshot);
+        const wallMeta = getDefenseWallSeverityMeta(roadmap);
+        const impact = getLoadoutImpactSummary(chapter, saveSnapshot);
+        const fragmentInventory = getFragmentInventorySummary(chapter, saveSnapshot);
+        const researchPlan = getResearchUpgradePlan(chapter, saveSnapshot);
+        const researchFrontline = getResearchFrontlineSummary(chapter, saveSnapshot);
+        const economyPreview = getDefenseEconomyPreview(chapter);
+        const focusPreview = getChapterFocusPreview(chapter);
+        const laneMismatchCount = impact.laneStats.filter((lane) => !lane.matched).length;
+        const nextMismatchLane = impact.laneStats.find((lane) => !lane.matched) || impact.laneStats[0];
+        const focusResearch = researchPlan.topAffordable || researchPlan.top;
+        const focusResearchRole = focusResearch ? getResearchBattleRole(focusResearch.id) : null;
+        const focusResearchImpact = focusResearch ? getResearchFrontlineImpact(focusResearch.id, chapter, saveSnapshot) : null;
+        const loadoutBlocked = fragmentInventory.unlockableCount > 0
+            || laneMismatchCount >= 2
+            || impact.powerDelta > Math.max(120, chapter.recommended * 0.08);
+        const researchBlocked = !loadoutBlocked && (
+            roadmap.powerGap > 120
+            || (!!focusResearch && (!prepOverview.ready || researchPlan.powerGap > 0))
+        );
+        const primaryStep = loadoutBlocked ? 'loadout' : (researchBlocked ? 'research' : 'defend');
+        const refillAction = economyPreview.dailyReady
+            ? { action: 'claimDaily', value: 'daily', label: getLocalized({ zh: '先领补给', en: 'Claim Supply' }) }
+            : economyPreview.claimableTotal > 0
+                ? {
+                    action: 'openTab',
+                    value: economyPreview.missionReady > 0 ? 'missions' : 'season',
+                    label: getLocalized({ zh: '先收待领奖励', en: 'Claim Ready Rewards' })
+                }
+                : { action: 'openTab', value: 'shop', label: getLocalized({ zh: '看补资源入口', en: 'Open Refill' }) };
+        const steps = [
+            {
+                id: 'loadout',
+                order: '01',
+                label: getLocalized({ zh: '装配', en: 'Loadout' }),
+                status: fragmentInventory.unlockableCount > 0
+                    ? getLocalized({ zh: `可解锁 ${fragmentInventory.unlockableCount}`, en: `${fragmentInventory.unlockableCount} unlocks` })
+                    : laneMismatchCount > 0
+                        ? getLocalized({ zh: `${laneMismatchCount} 路待对位`, en: `${laneMismatchCount} lanes off` })
+                        : getLocalized({ zh: '三路已对位', en: 'Lanes aligned' }),
+                detail: fragmentInventory.unlockableCount > 0
+                    ? getLocalized({
+                        zh: `${towerLabel(fragmentInventory.nextUnlockEntry.towerId)} ${formatCompact(fragmentInventory.nextUnlockEntry.owned)}/${formatCompact(fragmentInventory.nextUnlockEntry.need)}，先补单塔碎片。`,
+                        en: `${towerLabel(fragmentInventory.nextUnlockEntry.towerId)} ${formatCompact(fragmentInventory.nextUnlockEntry.owned)}/${formatCompact(fragmentInventory.nextUnlockEntry.need)}. Finish the tower-specific fragments first.`
+                    })
+                    : laneMismatchCount > 0
+                        ? getLocalized({
+                            zh: `${nextMismatchLane.laneName}路建议换成 ${nextMismatchLane.recommendedTower}，会更贴合本章敌潮。`,
+                            en: `Swap ${nextMismatchLane.laneName} to ${nextMismatchLane.recommendedTower}; it fits this chapter better.`
+                        })
+                        : getLocalized({
+                            zh: `当前三路已对位，碎片继续刷 ${focusPreview} 即可准备下一塔。`,
+                            en: `Your current lanes are aligned, so keep farming ${focusPreview} fragments for the next unlock.`
+                        }),
+                meta: fragmentInventory.unlockableCount > 0
+                    ? getLocalized({ zh: '先解锁再上阵', en: 'Unlock before equipping' })
+                    : getLocalized({ zh: `对位 ${3 - laneMismatchCount}/3`, en: `Aligned ${3 - laneMismatchCount}/3` }),
+                action: 'openTab',
+                value: 'loadout',
+                tone: primaryStep === 'loadout' ? 'warn' : (laneMismatchCount > 0 || fragmentInventory.unlockableCount > 0 ? 'neutral' : 'ready')
+            },
+            {
+                id: 'research',
+                order: '02',
+                label: getLocalized({ zh: '研究', en: 'Research' }),
+                status: focusResearch
+                    ? getLocalized({ zh: `先升 ${focusResearch.meta.title}`, en: `Upgrade ${focusResearch.meta.title}` })
+                    : getLocalized({ zh: '研究已满', en: 'Research maxed' }),
+                detail: focusResearch && focusResearchImpact
+                    ? getLocalized({
+                        zh: `${focusResearchRole.label}：${focusResearchImpact.nextChip || focusResearchImpact.summary}。`,
+                        en: `${focusResearchRole.label}: ${focusResearchImpact.nextChip || focusResearchImpact.summary}.`
+                    })
+                    : getLocalized({
+                        zh: `当前火力 +${researchFrontline.attackPct}% · 攻速 +${researchFrontline.cadencePct}%，这部分已实时作用到防线。`,
+                        en: `Damage +${researchFrontline.attackPct}% and fire rate +${researchFrontline.cadencePct}% already apply to the frontline.`
+                    }),
+                meta: focusResearch
+                    ? (focusResearch.affordable
+                        ? getLocalized({ zh: `${formatCompact(focusResearch.cost)}G 可升`, en: `${formatCompact(focusResearch.cost)}G ready` })
+                        : getLocalized({ zh: `还差 ${formatCompact(focusResearch.shortage)}G`, en: `Need ${formatCompact(focusResearch.shortage)}G` }))
+                    : getLocalized({ zh: '转去装配/赛季', en: 'Shift to loadout/season' }),
+                action: 'openTab',
+                value: 'research',
+                tone: primaryStep === 'research' ? 'warn' : (!!focusResearch && focusResearch.affordable ? 'ready' : 'neutral')
+            },
+            {
+                id: 'defend',
+                order: '03',
+                label: getLocalized({ zh: '防线', en: 'Defend' }),
+                status: prepOverview.ready
+                    ? getLocalized({ zh: '可直接开打', en: 'Ready to defend' })
+                    : roadmap.powerGap > 0
+                        ? getLocalized({ zh: `还差 ${formatCompact(roadmap.powerGap)} 战力`, en: `Need ${formatCompact(roadmap.powerGap)} power` })
+                        : getLocalized({ zh: `还差 ${prepOverview.adjustmentsNeeded} 项部署`, en: `${prepOverview.adjustmentsNeeded} setup items left` }),
+                detail: prepOverview.ready
+                    ? getLocalized({
+                        zh: `${chapter.id} 已达标，回防线开打即可吃到 ${formatCompact(chapter.goldReward)}G / ${formatCompact(chapter.fragmentReward)} 焦点碎片。`,
+                        en: `${chapter.id} is ready, so go defend for ${formatCompact(chapter.goldReward)}G and ${formatCompact(chapter.fragmentReward)} focus fragments.`
+                    })
+                    : roadmap.nextAction,
+                meta: wallMeta.shortLabel,
+                action: prepOverview.ready ? 'startChapter' : 'openTab',
+                value: prepOverview.ready ? chapter.id : 'prep',
+                tone: primaryStep === 'defend' ? 'ready' : 'neutral'
+            }
+        ];
+        return {
+            primaryStep,
+            steps,
+            refillAction,
+            wallMeta,
+            summaryTitle: primaryStep === 'loadout'
+                ? getLocalized({ zh: '现在先补装配', en: 'Loadout first' })
+                : primaryStep === 'research'
+                    ? getLocalized({ zh: '现在先补研究', en: 'Research first' })
+                    : getLocalized({ zh: '可以回防线开打', en: 'Ready to defend' }),
+            summaryCopy: primaryStep === 'loadout'
+                ? getLocalized({
+                    zh: '先把单塔碎片和三路对位补齐，再去研究压低战力缺口，最后回防线开打。',
+                    en: 'Finish tower fragments and lane alignment first, then use research to lower the power gap before defending.'
+                })
+                : primaryStep === 'research'
+                    ? getLocalized({
+                        zh: '装配已经接近完成，先把关键研究抬一档，再回防线验证波次压力。',
+                        en: 'Loadout is close enough, so raise the key research branch first and then test the next wave pressure.'
+                    })
+                    : getLocalized({
+                        zh: '装配和研究都已经接上，直接回防线开打；缺资源时再回来沿这条路线补。',
+                        en: 'Loadout and research are aligned, so go defend now. Come back to this route only when you need more resources.'
+                    }),
+            supportMeta: economyPreview.claimableTotal > 0
+                ? getLocalized({ zh: `另有 ${economyPreview.claimableTotal} 个奖励可回收`, en: `${economyPreview.claimableTotal} rewards also ready` })
+                : economyPreview.dailyRemaining
+        };
+    }
+
     function renderCompactKpiGrid(items) {
         return `
             <div class="compact-kpi-grid">
@@ -2992,7 +3131,206 @@
         return visible.join('');
     }
 
+    function renderDefendTabUnified() {
+        const current = getCurrentChapter();
+        const focusPreview = getChapterFocusPreview(current);
+        const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
+        const economyPreview = getDefenseEconomyPreview(current);
+        const prepOverview = getChapterPrepOverview(current);
+        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const sponsorTier = getSponsorTierSummary();
+        const researchFrontline = getResearchFrontlineSummary(current);
+        const growthFlow = getDefenseGrowthFlow(current);
+        const primaryGrowthAction = growthFlow.steps.find((step) => step.id === growthFlow.primaryStep) || growthFlow.steps[0];
+        const battleActive = state.battle.running && !state.battle.finished;
+        const battlePaused = battleActive && state.battle.paused;
+        const battleWave = battleActive ? Math.max(1, state.battle.currentWave || 1) : 0;
+        const currentSkillId = state.save.selectedSkill || prepOverview.currentSkill || prepOverview.preset.skill;
+        const currentSkillLabel = t(SKILLS[currentSkillId].nameKey);
+        const laneSummary = prepOverview.currentLanes
+            .map((towerId, laneIndex) => `${getLaneName(laneIndex)}路${towerLabel(towerId)}`)
+            .join(' / ');
+        const battleStatusLabel = state.battle.finished
+            ? getLocalized({ zh: '本局已结算完成', en: 'Run finished' })
+            : battlePaused
+                ? getLocalized({ zh: '战斗已暂停', en: 'Battle paused' })
+                : battleActive
+                    ? getLocalized({ zh: `第 ${battleWave}/${TOTAL_WAVES} 波进行中`, en: `Wave ${battleWave}/${TOTAL_WAVES} live` })
+                    : prepOverview.ready
+                        ? getLocalized({ zh: '部署完成，可直接开打', en: 'Ready to defend' })
+                        : getLocalized({ zh: `还差 ${prepOverview.adjustmentsNeeded} 项部署`, en: `${prepOverview.adjustmentsNeeded} setup items left` });
+        const statusChipLabel = state.battle.finished
+            ? getLocalized({ zh: '已结算', en: 'Finished' })
+            : battlePaused
+                ? getLocalized({ zh: '已暂停', en: 'Paused' })
+                : battleActive
+                    ? getLocalized({ zh: `第 ${battleWave} 波`, en: `Wave ${battleWave}` })
+                    : prepOverview.ready
+                        ? getLocalized({ zh: '可开打', en: 'Ready' })
+                        : getLocalized({ zh: `待调 ${prepOverview.adjustmentsNeeded}`, en: `${prepOverview.adjustmentsNeeded} left` });
+        const battleStatusCopy = state.battle.finished
+            ? getLocalized({
+                zh: '这局已经结算完了。想继续推进时，先去“部署”页切章节，再回这里开打。',
+                en: 'This run is already complete. Open Setup for the next chapter, then come back here to start.'
+            })
+            : battlePaused
+                ? getLocalized({
+                    zh: '你离开战斗页时系统会自动暂停；回到这里后可以直接继续，不会丢进度。',
+                    en: 'The game auto-pauses when you leave the battle view, so you can safely resume from here.'
+                })
+                : battleActive
+                    ? getLocalized({
+                        zh: '战斗已经在上方主视野中进行，这里只保留状态和快捷入口，不打断战场视野。',
+                        en: 'The fight is already live in the main battlefield above. This panel keeps only status and quick actions.'
+                    })
+                    : prepOverview.ready
+                        ? getLocalized({
+                            zh: '当前章节、三路装配和主动技能都已接好，点击开始就能直接进入战斗。',
+                            en: 'Your chapter, three-lane loadout, and active skill are aligned. Start whenever you are ready.'
+                        })
+                        : getLocalized({
+                            zh: '如果还看不清先补哪里，就看右侧“成长路线”：先装配、再研究、最后回防线开打。',
+                            en: 'If the next step still feels unclear, use the Growth Route on the right: loadout first, then research, then defend.'
+                        });
+        const primaryAction = battlePaused
+            ? {
+                action: 'resumeBattle',
+                value: 'resume',
+                label: getLocalized({ zh: '继续战斗', en: 'Resume Battle' })
+            }
+            : battleActive
+                ? null
+                : prepOverview.ready
+                    ? {
+                        action: 'startChapter',
+                        value: current.id,
+                        label: getLocalized({ zh: '开始防守', en: 'Start Defense' })
+                    }
+                    : {
+                        action: 'openTab',
+                        value: 'prep',
+                        label: getLocalized({ zh: '前往部署', en: 'Open Setup' })
+                    };
+        ui.panelContent.innerHTML = `
+            ${renderPanelHead(
+                t('defendPanelTitle'),
+                getLocalized({
+                    zh: '这里只看战斗状态、当前章节和成长路线；章节选择与详细部署都放在“部署”页。',
+                    en: 'This view now focuses on battle status, the current chapter, and the growth route. Detailed setup lives in Setup.'
+                }),
+                `<div class="mini-chip">${current.id} · ${statusChipLabel}</div>`
+            )}
+            <div class="defend-battle-layout">
+                <article class="defend-primary-card stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '战斗总览', en: 'Battle Overview' })}</div>
+                            <div class="card-title">${battleStatusLabel}</div>
+                        </div>
+                        <div class="card-number">${prepOverview.powerGap > 0
+                            ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                            : getLocalized({ zh: '已达标', en: 'On target' })}</div>
+                    </div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '当前章节', en: 'Chapter' }), value: current.id },
+                        { label: getLocalized({ zh: '波次', en: 'Wave' }), value: battleActive ? `${battleWave}/${TOTAL_WAVES}` : `0/${TOTAL_WAVES}` },
+                        { label: getLocalized({ zh: '待领奖励', en: 'Claims' }), value: String(economyPreview.claimableTotal) },
+                        { label: t('seasonLabel'), value: `Lv.${seasonInfo.level}` }
+                    ])}
+                    <div class="chip-row defend-chip-row">
+                        <span class="mini-chip">${t('enemyPreview')} ${current.enemies.map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前技能 ${currentSkillLabel}`, en: `Skill ${currentSkillLabel}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `焦点碎片 ${focusPreview}`, en: `Focus ${focusPreview}` })}</span>
+                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${getLocalized({ zh: '焦点碎片', en: 'focus frags' })}</span>
+                        ${sponsorTier.unlocked ? renderSponsorTierBoostChips(sponsorTier, { limit: 3 }) : ''}
+                    </div>
+                    <div class="defend-inline-note">${battleStatusCopy}</div>
+                    <div class="card-actions compact defend-card-actions">
+                        ${primaryAction
+                            ? `<button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
+                                ${primaryAction.label}
+                            </button>`
+                            : `<button class="primary-btn" type="button" disabled>
+                                ${getLocalized({ zh: '战斗进行中', en: 'Battle Live' })}
+                            </button>`}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                            ${getLocalized({ zh: '章节部署', en: 'Open Setup' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '看装配', en: 'Open Loadout' })}
+                        </button>
+                    </div>
+                </article>
+                <div class="card-grid defend-side-grid">
+                    <article class="stat-card defend-side-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '当前部署', en: 'Current Setup' })}</div>
+                                <div class="card-title">${prepOverview.ready
+                                    ? getLocalized({ zh: '编队已就绪', en: 'Preset ready' })
+                                    : getLocalized({ zh: `待调整 ${prepOverview.adjustmentsNeeded} 项`, en: `${prepOverview.adjustmentsNeeded} tweaks left` })}</div>
+                            </div>
+                            <div class="card-number">${formatCompact(getPowerRating(state.save))}</div>
+                        </div>
+                        <div class="card-copy">${laneSummary}</div>
+                        <div class="defend-side-copy">${getLocalized({
+                            zh: `推荐主动技能：${recommendedSkill}`,
+                            en: `Recommended skill: ${recommendedSkill}`
+                        })}</div>
+                    </article>
+                    <article class="stat-card defend-side-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '敌潮焦点', en: 'Enemy Focus' })}</div>
+                                <div class="card-title">${getLocalized({ zh: '本章威胁', en: 'Pressure Mix' })}</div>
+                            </div>
+                            <div class="card-number">${getLocalized({ zh: `${current.enemies.length} 类`, en: `${current.enemies.length} types` })}</div>
+                        </div>
+                        <div class="card-copy">${getChapterWavePlan(current)}</div>
+                        <div class="defend-side-copy">${getChapterOpeningGuide(current)}</div>
+                    </article>
+                    <article class="stat-card defend-side-card growth-route-card">
+                        <div class="card-top">
+                            <div>
+                                <div class="card-kicker">${getLocalized({ zh: '成长路线', en: 'Growth Route' })}</div>
+                                <div class="card-title">${growthFlow.summaryTitle}</div>
+                            </div>
+                            <div class="card-number">${growthFlow.wallMeta.shortLabel}</div>
+                        </div>
+                        <div class="card-copy">${growthFlow.summaryCopy}</div>
+                        <div class="growth-route-grid">
+                            ${growthFlow.steps.map((step) => `
+                                <button class="growth-route-step is-${step.tone}" type="button" data-action="${step.action}" data-value="${step.value}">
+                                    <div class="growth-route-top">
+                                        <span>${step.order} · ${step.label}</span>
+                                        <strong>${step.status}</strong>
+                                    </div>
+                                    <small>${step.detail}</small>
+                                    <i>${step.meta}</i>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="reward-row compact">
+                            <span class="mini-chip">${growthFlow.supportMeta}</span>
+                            <span class="mini-chip">${getLocalized({ zh: `当前三路 ${formatCompact(researchFrontline.laneDps)} DPS`, en: `Current lanes ${formatCompact(researchFrontline.laneDps)} DPS` })}</span>
+                            <span class="mini-chip">${getLocalized({ zh: `${researchFrontline.selectedSkillLabel} ${researchFrontline.skillCooldown.toFixed(1)}s`, en: `${researchFrontline.selectedSkillLabel} ${researchFrontline.skillCooldown.toFixed(1)}s` })}</span>
+                        </div>
+                        <div class="card-actions compact">
+                            <button class="primary-btn" type="button" data-action="${primaryGrowthAction.action}" data-value="${primaryGrowthAction.value}">
+                                ${growthFlow.summaryTitle}
+                            </button>
+                            <button class="ghost-btn" type="button" data-action="${growthFlow.refillAction.action}" data-value="${growthFlow.refillAction.value}">
+                                ${growthFlow.refillAction.label}
+                            </button>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        `;
+    }
+
     function renderDefendTab() {
+        return renderDefendTabUnified();
         const current = getCurrentChapter();
         const focusPreview = getChapterFocusPreview(current);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);

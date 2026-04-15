@@ -1014,6 +1014,69 @@ body:not([data-defense-tab="defend"]) .stage-card {
     line-height: 1.5;
 }
 
+.growth-route-card {
+    gap: 10px;
+    grid-column: 1 / -1;
+}
+
+.growth-route-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.growth-route-step {
+    appearance: none;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.growth-route-step.is-ready {
+    border-color: rgba(101, 255, 178, 0.32);
+    background: rgba(101, 255, 178, 0.08);
+}
+
+.growth-route-step.is-warn {
+    border-color: rgba(255, 210, 107, 0.3);
+    background: rgba(255, 210, 107, 0.08);
+}
+
+.growth-route-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.growth-route-top span {
+    color: var(--gold);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.growth-route-top strong {
+    font-size: 13px;
+    line-height: 1.25;
+    text-align: right;
+}
+
+.growth-route-step small,
+.growth-route-step i {
+    font-style: normal;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
 .defend-card-actions > .primary-btn,
 .defend-card-actions > .ghost-btn {
     flex: 1 1 150px;
@@ -2473,6 +2536,26 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     .defend-mini-stat strong {
         font-size: 13px;
+    }
+
+    .growth-route-step {
+        padding: 9px 10px;
+        border-radius: 14px;
+        gap: 4px;
+    }
+
+    .growth-route-top span {
+        font-size: 10px;
+    }
+
+    .growth-route-top strong {
+        font-size: 12px;
+    }
+
+    .growth-route-step small,
+    .growth-route-step i {
+        font-size: 10px;
+        line-height: 1.32;
     }
 
     .defend-quick-grid {
