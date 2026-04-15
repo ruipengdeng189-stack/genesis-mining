@@ -2617,6 +2617,72 @@
         }
     }
 
+    function getResearchBattleRole(researchId) {
+        switch (researchId) {
+            case 'attack':
+                return {
+                    label: getLocalized({ zh: '三路火力', en: 'Lane Damage' }),
+                    detail: getLocalized({ zh: '直接抬高三路炮台输出。', en: 'Directly raises tower damage across all three lanes.' })
+                };
+            case 'cadence':
+                return {
+                    label: getLocalized({ zh: '清线节奏', en: 'Clear Speed' }),
+                    detail: getLocalized({ zh: '直接加快三路清怪速度。', en: 'Directly speeds up clearing across all three lanes.' })
+                };
+            case 'fortify':
+                return {
+                    label: getLocalized({ zh: '核心容错', en: 'Core Durability' }),
+                    detail: getLocalized({ zh: '提高漏怪后的承伤空间。', en: 'Adds more room to survive leaks on the core.' })
+                };
+            case 'salvage':
+                return {
+                    label: getLocalized({ zh: '资源回流', en: 'Gold Loop' }),
+                    detail: getLocalized({ zh: '提高每局回收金币，帮助补研究和装配。', en: 'Raises gold return each run so research and loadout come online faster.' })
+                };
+            case 'relay':
+                return {
+                    label: getLocalized({ zh: '主动技能', en: 'Active Skill' }),
+                    detail: getLocalized({ zh: '缩短技能冷却，并放大技能效果。', en: 'Shortens cooldowns and strengthens the active skill.' })
+                };
+            default:
+                return {
+                    label: getLocalized({ zh: '防线强化', en: 'Frontline Boost' }),
+                    detail: getLocalized({ zh: '会直接作用到当前防线。', en: 'This feeds directly into the current frontline.' })
+                };
+        }
+    }
+
+    function renderResearchBattleStrip(researchFrontline) {
+        const items = [
+            {
+                label: getLocalized({ zh: '当前三路', en: 'Current Lanes' }),
+                value: `${formatCompact(researchFrontline.laneDps)} DPS`,
+                note: getLocalized({ zh: '研究已实时算进战斗', en: 'Research is already in combat' }),
+                main: true
+            },
+            { label: getLocalized({ zh: '伤害', en: 'Damage' }), value: `+${researchFrontline.attackPct}%` },
+            { label: getLocalized({ zh: '攻速', en: 'Fire Rate' }), value: `+${researchFrontline.cadencePct}%` },
+            { label: getLocalized({ zh: '核心/护盾', en: 'Core/Shield' }), value: `${formatCompact(researchFrontline.coreHp)} / ${formatCompact(researchFrontline.shieldCap)}` },
+            { label: getLocalized({ zh: '金币回流', en: 'Gold Gain' }), value: `+${researchFrontline.salvagePct}%` },
+            {
+                label: getLocalized({ zh: '技能循环', en: 'Skill Loop' }),
+                value: `${researchFrontline.selectedSkillLabel} ${researchFrontline.skillCooldown.toFixed(1)}s`,
+                note: getLocalized({ zh: `强度 +${researchFrontline.relaySkillPowerPct}%`, en: `Power +${researchFrontline.relaySkillPowerPct}%` })
+            }
+        ];
+        return `
+            <div class="research-battle-strip">
+                ${items.map((item) => `
+                    <article class="battle-pill ${item.main ? 'main' : ''}">
+                        <span>${item.label}</span>
+                        <strong>${item.value}</strong>
+                        ${item.note ? `<small>${item.note}</small>` : ''}
+                    </article>
+                `).join('')}
+            </div>
+        `;
+    }
+
     function applyRecommendedLanePreset(laneIndex = state.save.selectedLane, chapter = getCurrentChapter()) {
         const preset = getChapterLoadoutPreset(chapter);
         const nextTowerId = preset.lanes[laneIndex];
@@ -3461,7 +3527,151 @@
         `;
     }
 
+    function renderResearchTabCompact() {
+        const chapter = getCurrentChapter();
+        const researchPlan = getResearchUpgradePlan(chapter);
+        const researchFrontline = getResearchFrontlineSummary(chapter);
+        const topResearch = researchPlan.top;
+        const topAffordableResearch = researchPlan.topAffordable;
+        const focusResearch = topAffordableResearch || topResearch;
+        const focusResearchRole = focusResearch ? getResearchBattleRole(focusResearch.id) : null;
+        const focusResearchImpact = focusResearch ? getResearchFrontlineImpact(focusResearch.id, chapter) : null;
+        const economyPreview = getDefenseEconomyPreview(chapter);
+        const seasonTotalReady = economyPreview.seasonReady + economyPreview.sponsorReady;
+        const researchReadyCount = researchPlan.list.filter((item) => item.affordable && !item.maxed).length;
+        const researchMaxedCount = researchPlan.list.filter((item) => item.maxed).length;
+        const prioritizedResearch = researchPlan.list.filter((item) => !item.maxed).slice(0, 2);
+        const recoveryAction = economyPreview.dailyReady
+            ? {
+                action: 'claimDaily',
+                value: 'daily',
+                label: getLocalized({ zh: '领取补给', en: 'Claim Supply' })
+            }
+            : economyPreview.missionReady > 0
+                ? {
+                    action: 'openTab',
+                    value: 'missions',
+                    label: getLocalized({ zh: `任务 x${economyPreview.missionReady}`, en: `Missions x${economyPreview.missionReady}` })
+                }
+                : seasonTotalReady > 0
+                    ? {
+                        action: 'openTab',
+                        value: 'season',
+                        label: getLocalized({ zh: `赛季 x${seasonTotalReady}`, en: `Season x${seasonTotalReady}` })
+                    }
+                    : {
+                        action: 'openTab',
+                        value: 'defend',
+                        label: getLocalized({ zh: '返回防线', en: 'Back To Defend' })
+                    };
+        const focusResearchTitle = focusResearch
+            ? focusResearch.meta.title
+            : getLocalized({ zh: '研究已满', en: 'Research maxed' });
+        const focusResearchState = focusResearch
+            ? (focusResearch.affordable
+                ? getLocalized({ zh: `${formatCompact(focusResearch.cost)}G 可升`, en: `${formatCompact(focusResearch.cost)}G ready` })
+                : getLocalized({ zh: `还差 ${formatCompact(focusResearch.shortage)}G`, en: `Need ${formatCompact(focusResearch.shortage)}G` }))
+            : getLocalized({ zh: '已满', en: 'Maxed' });
+        const focusResearchCopy = focusResearch
+            ? getLocalized({
+                zh: `${focusResearchRole.detail}${focusResearch.affordable ? ' 现在就能升。' : ' 缺金币时先去右侧收补给。'}`,
+                en: `${focusResearchRole.detail}${focusResearch.affordable ? ' You can upgrade it now.' : ' If gold is short, refill from the right card first.'}`
+            })
+            : getLocalized({ zh: '研究已经成型，资源可以更多转去装配、赛季和冲关。', en: 'Research is already built out, so shift more resources into loadout, season, and chapter pushes.' });
+        ui.panelContent.innerHTML = `
+            ${renderPanelHead(
+                t('researchPanelTitle'),
+                getLocalized({
+                    zh: '这里只看三件事：当前实战效果、现在先升什么、缺金币去哪里补。',
+                    en: 'This tab focuses on three things: live combat impact, what to upgrade now, and where to refill when gold runs short.'
+                }),
+                `<div class="mini-chip">${chapter.id} · ${focusResearchTitle}</div>`
+            )}
+            ${renderResearchBattleStrip(researchFrontline)}
+            <div class="research-decision-grid">
+                <article class="stat-card compact-overview-card research-focus-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '现在先升', en: 'Upgrade Now' })}</div>
+                            <div class="card-title">${focusResearchTitle}</div>
+                        </div>
+                        <div class="card-number">${focusResearchState}</div>
+                    </div>
+                    <div class="card-copy">${focusResearchCopy}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '可升分支', en: 'Ready Upgrades' }), value: String(researchReadyCount) },
+                        { label: getLocalized({ zh: '已满分支', en: 'Maxed Branches' }), value: String(researchMaxedCount) },
+                        { label: getLocalized({ zh: '作用区域', en: 'Applies To' }), value: focusResearchRole ? focusResearchRole.label : getLocalized({ zh: '已完成', en: 'Completed' }) },
+                        { label: getLocalized({ zh: '当前金币', en: 'Current Gold' }), value: `${formatCompact(state.save.gold)}G` }
+                    ])}
+                    ${focusResearchImpact ? `<div class="research-focus-impact-grid">
+                        <div class="research-impact-box">
+                            <span>${getLocalized({ zh: '当前生效', en: 'Live Now' })}</span>
+                            <strong>${focusResearchImpact.summary}</strong>
+                        </div>
+                        <div class="research-impact-box next">
+                            <span>${getLocalized({ zh: '下一级', en: 'Next Level' })}</span>
+                            <strong>${focusResearchImpact.nextChip || focusResearchState}</strong>
+                        </div>
+                    </div>` : ''}
+                    ${prioritizedResearch.length ? `<div class="reward-row compact">
+                        ${prioritizedResearch.map((item, index) => `<span class="mini-chip">${getLocalized({ zh: `优先 ${index + 1} · ${item.meta.title}`, en: `Top ${index + 1} · ${item.meta.title}` })}</span>`).join('')}
+                    </div>` : ''}
+                    <div class="card-actions compact" style="margin-top:12px;">
+                        ${focusResearch && focusResearch.affordable
+                            ? `<button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${focusResearch.id}">
+                                ${getLocalized({ zh: `升 ${focusResearch.meta.title}`, en: `Upgrade ${focusResearch.meta.title}` })}
+                            </button>`
+                            : `<button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
+                                ${recoveryAction.label}
+                            </button>`}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="defend">
+                            ${getLocalized({ zh: '去防线', en: 'Open Defend' })}
+                        </button>
+                    </div>
+                </article>
+                <article class="stat-card compact-overview-card research-refill-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '缺资源时', en: 'Resource Refill' })}</div>
+                            <div class="card-title">${recoveryAction.label}</div>
+                        </div>
+                        <div class="card-number">${getLocalized({ zh: `待领 ${economyPreview.claimableTotal}`, en: `${economyPreview.claimableTotal} ready` })}</div>
+                    </div>
+                    <div class="card-copy">${economyPreview.claimableTotal > 0
+                        ? getLocalized({ zh: '先把现成奖励收掉，再回来补研究，节奏最顺。', en: 'Sweep ready rewards first, then come back to research for the smoothest loop.' })
+                        : economyPreview.dailyRemaining}</div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '任务', en: 'Missions' }), value: String(economyPreview.missionReady) },
+                        { label: getLocalized({ zh: '赛季', en: 'Season' }), value: String(economyPreview.seasonReady) },
+                        { label: getLocalized({ zh: '赞助', en: 'Sponsor' }), value: String(economyPreview.sponsorReady) },
+                        { label: getLocalized({ zh: '补给', en: 'Supply' }), value: economyPreview.dailyReady ? getLocalized({ zh: '可领', en: 'Ready' }) : getLocalized({ zh: '冷却中', en: 'Cooldown' }) }
+                    ])}
+                    <div class="reward-row compact">
+                        <span class="mini-chip">${getLocalized({ zh: `任务待领 ${economyPreview.missionReady}`, en: `Mission ready ${economyPreview.missionReady}` })}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `赛季待领 ${seasonTotalReady}`, en: `Season ready ${seasonTotalReady}` })}</span>
+                        <span class="mini-chip">${economyPreview.dailyRemaining}</span>
+                    </div>
+                    <div class="card-actions compact" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="${recoveryAction.action}" data-value="${recoveryAction.value}">
+                            ${recoveryAction.label}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '看装配', en: 'Loadout' })}
+                        </button>
+                    </div>
+                </article>
+            </div>
+            <div class="research-grid">
+                ${researchPlan.list
+                    .map((item) => renderResearchCard(item.id, item))
+                    .join('')}
+            </div>
+        `;
+    }
+
     function renderResearchTab() {
+        return renderResearchTabCompact();
         const chapter = getCurrentChapter();
         const researchPlan = getResearchUpgradePlan(chapter);
         const researchFrontline = getResearchFrontlineSummary(chapter);
@@ -3620,7 +3830,64 @@
         `;
     }
 
+    function renderResearchCardCompact(researchId, recommendation = null) {
+        const level = getResearchLevel(researchId);
+        const maxLevel = RESEARCH[researchId].maxLevel;
+        const cost = getResearchCost(researchId);
+        const maxed = level >= maxLevel;
+        const meta = getResearchMeta(researchId);
+        const isRecommended = !!recommendation && !recommendation.maxed;
+        const canUpgrade = canUpgradeResearch(researchId);
+        const shortage = Math.max(0, cost - state.save.gold);
+        const frontlineImpact = getResearchFrontlineImpact(researchId);
+        const roleMeta = getResearchBattleRole(researchId);
+        const stateLabel = maxed
+            ? getLocalized({ zh: '已满级', en: 'Maxed' })
+            : canUpgrade
+                ? getLocalized({ zh: '可立即升级', en: 'Ready' })
+                : getLocalized({ zh: `差 ${formatCompact(shortage)}G`, en: `Need ${formatCompact(shortage)}G` });
+        return `
+            <article class="research-card compact-list-card research-branch-card ${canUpgrade ? 'ready' : ''}">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${isRecommended
+                            ? `${getLocalized({ zh: `优先 ${researchPlanIndexLabel(recommendation, state.lang)}`, en: `Priority ${researchPlanIndexLabel(recommendation, state.lang)}` })} · ${roleMeta.label}`
+                            : roleMeta.label}</div>
+                        <div class="card-title">${meta.title}</div>
+                    </div>
+                    <div class="card-number">Lv.${level} / ${maxLevel}</div>
+                </div>
+                <div class="research-branch-grid">
+                    <div class="research-branch-stat">
+                        <span>${getLocalized({ zh: '当前生效', en: 'Live Now' })}</span>
+                        <strong>${frontlineImpact.summary}</strong>
+                        <small>${roleMeta.detail}</small>
+                    </div>
+                    <div class="research-branch-stat next ${maxed ? 'is-muted' : ''}">
+                        <span>${maxed ? getLocalized({ zh: '已到上限', en: 'Maxed Out' }) : getLocalized({ zh: '下一级', en: 'Next Level' })}</span>
+                        <strong>${maxed ? t('researchMaxed') : (frontlineImpact.nextChip || stateLabel)}</strong>
+                        <small>${maxed
+                            ? getLocalized({ zh: '这一条已经到顶，资源可以转去别的分支。', en: 'This branch is done, so you can move resources into another one.' })
+                            : frontlineImpact.detail}</small>
+                    </div>
+                </div>
+                <div class="chip-row compact">
+                    ${renderLimitedChipMarkup([
+                        `<span class="mini-chip">${stateLabel}</span>`,
+                        `<span class="mini-chip">${maxed ? t('researchMaxed') : `${formatCompact(cost)}G`}</span>`
+                    ], { limit: 3 })}
+                </div>
+                <div class="card-actions compact">
+                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${researchId}" ${canUpgrade ? '' : 'disabled'}>
+                        ${maxed ? t('researchMaxed') : `${getLocalized({ zh: '升级', en: 'Upgrade' })} · ${formatCompact(cost)}G`}
+                    </button>
+                </div>
+            </article>
+        `;
+    }
+
     function renderResearchCard(researchId, recommendation = null) {
+        return renderResearchCardCompact(researchId, recommendation);
         const level = getResearchLevel(researchId);
         const maxLevel = RESEARCH[researchId].maxLevel;
         const cost = getResearchCost(researchId);
