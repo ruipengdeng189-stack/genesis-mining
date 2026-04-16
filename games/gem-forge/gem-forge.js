@@ -495,6 +495,7 @@
 
     function renderPaymentOfferGrid() {
         if (!ui.paymentOfferGrid) return;
+        const recommendedOfferId = getRecommendedPaymentOfferId();
         ui.paymentOfferGrid.innerHTML = config.paymentOffers.map((offer) => {
             const projected = getProjectedOfferImpact(offer);
             return `
@@ -504,6 +505,7 @@
                     data-select-payment-offer="${offer.id}"
                 >
                     <span class="pill gf-payment-offer-badge">${text('链上礼包', 'On-Chain Pack')}</span>
+                    ${offer.id === recommendedOfferId ? `<span class="pill gf-payment-offer-badge">${text('当前推荐', 'Recommended')}</span>` : ''}
                     <div class="gf-payment-offer-price">$${offer.price.toFixed(2)}</div>
                     <h3>${localize(offer.name)}</h3>
                     <p>${text(`立即补入 ${formatCompact(offer.reward.gold)} 金币、${formatCompact(offer.reward.dust)} 熔尘与 ${formatCompact(offer.reward.catalyst)} 催化剂。`, `Instantly grants ${formatCompact(offer.reward.gold)} gold, ${formatCompact(offer.reward.dust)} dust, and ${formatCompact(offer.reward.catalyst)} catalyst.`)}</p>
@@ -693,6 +695,8 @@
             selectedPaymentOfferId = currentPaymentOrder.offerId;
         } else if (offerId && config.paymentOffers.some((offer) => offer.id === offerId)) {
             selectedPaymentOfferId = offerId;
+        } else if (config.paymentOffers.some((offer) => offer.id === getRecommendedPaymentOfferId())) {
+            selectedPaymentOfferId = getRecommendedPaymentOfferId();
         } else if (!config.paymentOffers.some((offer) => offer.id === selectedPaymentOfferId)) {
             selectedPaymentOfferId = config.paymentOffers[0]?.id || 'starter';
         }
@@ -1394,12 +1398,46 @@
         `;
     }
 
+    function renderGrowthDiagnosisCard() {
+        const diagnosis = getGrowthDiagnosis();
+        const offer = config.paymentOffers.find((item) => item.id === diagnosis.recommendedOfferId) || config.paymentOffers[0];
+        return `
+            <article class="gf-card gf-shop-card is-highlight">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('当前卡点诊断', 'Current Wall')}</div>
+                        <div class="gf-card-title">${diagnosis.title}</div>
+                    </div>
+                    <div class="gf-card-number">${localize(offer.name)}</div>
+                </div>
+                <div class="gf-card-copy">${diagnosis.summary}</div>
+                ${renderKpiGrid([
+                    { label: text('当前合同', 'Contract'), value: diagnosis.contractId },
+                    { label: text('差距', 'Gap'), value: formatCompact(diagnosis.powerGap) },
+                    { label: text('免费先做', 'Free Path'), value: diagnosis.freeShort },
+                    { label: text('推荐礼包', 'Offer'), value: localize(offer.name) }
+                ])}
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    ${diagnosis.goldPressure > 0 ? `<span class="gf-chip">${text('金币压力', 'Gold')} · ${formatCompact(diagnosis.goldPressure)}</span>` : ''}
+                    ${diagnosis.dustPressure > 0 ? `<span class="gf-chip">${text('熔尘压力', 'Dust')} · ${formatCompact(diagnosis.dustPressure)}</span>` : ''}
+                    ${diagnosis.catalystPressure > 0 ? `<span class="gf-chip">${text('催化压力', 'Catalyst')} · ${formatCompact(diagnosis.catalystPressure)}</span>` : ''}
+                    <span class="gf-chip is-success">${text('免费路线', 'Free Route')} · ${diagnosis.freeShort}</span>
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">${text('打开推荐礼包', 'Open Recommended Pack')}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="${diagnosis.freeTab}">${diagnosis.freeLabel}</button>
+                </div>
+            </article>
+        `;
+    }
+
     function renderShopTab() {
         const sponsorTier = getSponsorTier();
         const milestoneViews = config.paymentMilestones.map((milestone) => getMilestoneView(milestone));
         const claimableMilestones = milestoneViews.filter((item) => item.claimable);
         const readyShopItems = config.shopItems.filter((item) => isShopItemReady(item.id));
         const activePaymentCard = renderActivePaymentCard();
+        const growthDiagnosisCard = renderGrowthDiagnosisCard();
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
@@ -1407,6 +1445,10 @@
                 text('商店只保留每日免费、金币箱、熔尘箱和赞助礼包四类入口，减少理解成本。', 'The shop keeps only four entry types: daily free, gold crate, dust crate, and sponsor offers.'),
                 `<div class="gf-chip">${text('可回收入口', 'Ready Sources')} · ${readyShopItems.length + claimableMilestones.length}</div>`
             )}
+            <div class="gf-list">
+                ${growthDiagnosisCard}
+            </div>
+            <div class="gf-divider"></div>
             <div class="gf-card-grid">
                 <article class="gf-card gf-shop-card is-highlight">
                     <div class="gf-card-head">
@@ -2495,6 +2537,183 @@
     function getProjectedSponsorTier(offer, saveSnapshot = state.save) {
         const spent = Number(saveSnapshot.payment?.totalSpent || 0) + Number(offer.price || 0);
         return config.sponsorTiers.slice().sort((a, b) => a.threshold - b.threshold).filter((tier) => spent >= tier.threshold).pop() || config.sponsorTiers[0];
+    }
+
+    function getPriorityWorkshopTarget() {
+        const priorityOrder = ['rareRate', 'heatRegen', 'dustYield', 'catalystRefine', 'heatCap'];
+        return priorityOrder.map((workshopId) => {
+            const item = workshopMap[workshopId];
+            if (!item) return null;
+            const level = getWorkshopLevel(workshopId);
+            if (level >= item.maxLevel) return null;
+            const cost = getWorkshopUpgradeCost(workshopId);
+            return {
+                workshopId,
+                item,
+                cost,
+                missingGold: Math.max(0, cost.gold - state.save.gold),
+                missingDust: Math.max(0, cost.dust - state.save.dust),
+                affordable: state.save.gold >= cost.gold && state.save.dust >= cost.dust
+            };
+        }).filter(Boolean)[0] || null;
+    }
+
+    function getPrioritySigilTarget() {
+        const candidates = config.sigils.map((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const shardOwned = getSigilShardCount(sigil.id);
+            const cost = getSigilUpgradeCost(sigil.id);
+            const focus = getCurrentContract().focus.includes(sigil.family);
+            const unlockReady = level <= 0 && shardOwned >= sigil.shardUnlock;
+            const upgradeReady = level > 0 && level < 8 && state.save.gold >= cost.gold && shardOwned >= cost.shards;
+            return {
+                sigil,
+                level,
+                shardOwned,
+                cost,
+                focus,
+                unlockReady,
+                upgradeReady,
+                missingGold: level > 0 ? Math.max(0, cost.gold - state.save.gold) : 0,
+                missingShards: level > 0 ? Math.max(0, cost.shards - shardOwned) : Math.max(0, sigil.shardUnlock - shardOwned),
+                score: (focus ? 1000 : 0) + (unlockReady ? 800 : 0) + (upgradeReady ? 700 : 0) + sigil.baseScore - level * 10
+            };
+        }).sort((left, right) => right.score - left.score);
+        return candidates[0] || null;
+    }
+
+    function getGrowthDiagnosis() {
+        const contract = getCurrentContract();
+        const power = getCurrentPower().total;
+        const effectivePower = getEffectiveContractPower();
+        const powerGap = Math.max(0, contract.recommended - effectivePower);
+        const inventoryRows = getGemInventoryRows();
+        const fuseReadyCount = inventoryRows.filter((row) => row.canFuse).length;
+        const awakenReadyCount = inventoryRows.filter((row) => row.canAwaken).length;
+        const awakenCandidates = inventoryRows.filter((row) => row.tier >= 3 && row.count > 0).length;
+        const sigilReadyCount = config.sigils.filter((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const cost = getSigilUpgradeCost(sigil.id);
+            return (level <= 0 && getSigilShardCount(sigil.id) >= sigil.shardUnlock)
+                || (level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigil.id) >= cost.shards);
+        }).length;
+        const workshopReadyCount = config.workshop.filter((item) => canUpgradeWorkshop(item.id)).length;
+        const workshopTarget = getPriorityWorkshopTarget();
+        const sigilTarget = getPrioritySigilTarget();
+
+        const targetGoldReserve = 600 + state.save.contractIndex * 360;
+        const targetDustReserve = 70 + state.save.contractIndex * 45;
+        const targetCatalystReserve = state.save.contractIndex <= 2
+            ? 6 + state.save.contractIndex * 2
+            : state.save.contractIndex <= 5
+                ? 14 + state.save.contractIndex * 4
+                : 28 + state.save.contractIndex * 6;
+
+        const goldPressure = Math.max(0, targetGoldReserve - state.save.gold, workshopTarget?.missingGold || 0, sigilTarget?.missingGold || 0);
+        const dustPressure = Math.max(0, targetDustReserve - state.save.dust, workshopTarget?.missingDust || 0);
+        const catalystPressure = Math.max(0, targetCatalystReserve - state.save.catalyst, awakenCandidates > awakenReadyCount ? targetCatalystReserve - state.save.catalyst : 0);
+
+        let pressureId = 'power';
+        let title = text('战力仍有缺口', 'Power Gap Remains');
+        let summary = text('当前最直接的推进问题仍然是合同有效战力不够。', 'The main issue right now is still not having enough effective contract power.');
+        let freeTab = 'sigils';
+        let freeLabel = text('去补符印', 'Raise Sigils');
+        let freeShort = text('补符印', 'Sigils');
+
+        if (powerGap <= 0) {
+            pressureId = 'push';
+            title = text('已经够线，直接推进', 'Ready to Push');
+            summary = text(`当前已经达到合同 ${contract.id} 推荐线，优先去合同页推进，别让热量和免费补给空转。`, `You already meet the ${contract.id} contract line. Push contracts now so heat and free supplies do not sit idle.`);
+            freeTab = 'contracts';
+            freeLabel = text('去跑合同', 'Run Contract');
+            freeShort = text('推进合同', 'Push');
+        } else if (fuseReadyCount > 0 || awakenReadyCount > 0) {
+            pressureId = 'forge';
+            title = text('现有库存就能补强', 'Actionable Inventory Ready');
+            summary = text(`你手上已经有 ${fuseReadyCount} 条可合成、${awakenReadyCount} 条可觉醒库存，先把现成成长吃掉，通常比直接充更划算。`, `You already have ${fuseReadyCount} fuse-ready and ${awakenReadyCount} awaken-ready rows. Use this growth first; it is usually more efficient than topping up immediately.`);
+            freeTab = 'forge';
+            freeLabel = text('去熔炉处理', 'Open Forge');
+            freeShort = text('先合成', 'Forge');
+        } else if (sigilReadyCount > 0) {
+            pressureId = 'sigil';
+            title = text('符印可升，优先补主印', 'Sigils Are Ready');
+            summary = text(`当前至少有 ${sigilReadyCount} 个符印已经能解锁或升级，先补本章焦点符印，通常是最快的过线方式。`, `At least ${sigilReadyCount} sigils can already be unlocked or upgraded. Focus sigils are usually the fastest path to clear the current wall.`);
+            freeTab = 'sigils';
+            freeLabel = text('去补符印', 'Raise Sigils');
+            freeShort = text('补符印', 'Sigils');
+        } else if (workshopReadyCount > 0) {
+            pressureId = 'workshop';
+            title = text('工坊可点，先拉效率', 'Workshop Upgrade Ready');
+            summary = text(`当前至少有 ${workshopReadyCount} 个工坊升级已能点出，优先补热量恢复和稀有率，熔炼效率会更平滑。`, `At least ${workshopReadyCount} workshop upgrades are already affordable. Prioritize heat regen and rare rate for smoother forge efficiency.`);
+            freeTab = 'workshop';
+            freeLabel = text('去点工坊', 'Open Workshop');
+            freeShort = text('补工坊', 'Workshop');
+        } else if (catalystPressure >= dustPressure && catalystPressure >= goldPressure && state.save.contractIndex >= 4) {
+            pressureId = 'catalyst';
+            title = text('催化剂开始卡觉醒', 'Catalyst Starts Gating');
+            summary = text(`进入 ${contract.id} 后，催化剂会明显拖慢 T3+ 觉醒和后续推进，当前更像是“材料门槛”而不是纯战力门槛。`, `From ${contract.id} onward, catalyst starts slowing T3+ awakening and late pushes. The wall is now more about materials than pure power.`);
+            freeTab = 'contracts';
+            freeLabel = text('去刷合同回收', 'Farm Contracts');
+            freeShort = text('补催化剂', 'Catalyst');
+        } else if (dustPressure >= goldPressure && dustPressure > 0) {
+            pressureId = 'dust';
+            title = text('熔尘开始卡档', 'Dust Is Tight');
+            summary = text(`你现在更缺的是中段熔尘，不补的话会拖慢高阶宝石与后续构筑节奏。`, `Dust is the tighter resource right now. Without more of it, higher-tier gem progress and later build tempo both slow down.`);
+            freeTab = 'forge';
+            freeLabel = text('去熔炉刷库存', 'Farm Forge');
+            freeShort = text('补熔尘', 'Dust');
+        } else if (goldPressure > 0) {
+            pressureId = 'gold';
+            title = text('金币开始吃紧', 'Gold Is Tight');
+            summary = text(`当前主要被金币储备卡住：符印、工坊和合同推进都能做，但手头金币不够连起来。`, `Gold is the main bottleneck now: sigils, workshop, and contract pushes all want progress, but your current reserve cannot connect them smoothly.`);
+            freeTab = 'contracts';
+            freeLabel = text('去跑合同回金币', 'Farm Gold');
+            freeShort = text('补金币', 'Gold');
+        }
+
+        let recommendedOfferId = 'starter';
+        if (pressureId === 'push') {
+            recommendedOfferId = state.save.payment.passUnlocked ? 'accelerator' : 'starter';
+        } else if (pressureId === 'forge' || pressureId === 'sigil') {
+            recommendedOfferId = state.save.contractIndex <= 2 ? 'starter' : state.save.contractIndex <= 5 ? 'accelerator' : 'rush';
+        } else if (pressureId === 'workshop' || pressureId === 'gold') {
+            recommendedOfferId = state.save.contractIndex <= 1 ? 'starter' : state.save.contractIndex <= 3 ? 'accelerator' : state.save.contractIndex <= 5 ? 'rush' : state.save.contractIndex <= 7 ? 'sovereign' : 'nexus';
+        } else if (pressureId === 'dust') {
+            recommendedOfferId = state.save.contractIndex <= 3 ? 'accelerator' : state.save.contractIndex <= 5 ? 'rush' : state.save.contractIndex <= 7 ? 'sovereign' : 'nexus';
+        } else if (pressureId === 'catalyst') {
+            recommendedOfferId = state.save.contractIndex <= 5 ? 'sovereign' : state.save.contractIndex <= 7 ? 'nexus' : 'throne';
+        } else if (powerGap > 1800) {
+            recommendedOfferId = 'throne';
+        } else if (powerGap > 1100) {
+            recommendedOfferId = 'nexus';
+        } else if (powerGap > 700) {
+            recommendedOfferId = 'sovereign';
+        } else if (powerGap > 360) {
+            recommendedOfferId = 'rush';
+        } else if (powerGap > 160) {
+            recommendedOfferId = 'accelerator';
+        }
+
+        return {
+            pressureId,
+            title,
+            summary,
+            freeTab,
+            freeLabel,
+            freeShort,
+            contractId: contract.id,
+            power,
+            effectivePower,
+            powerGap,
+            goldPressure,
+            dustPressure,
+            catalystPressure,
+            recommendedOfferId
+        };
+    }
+
+    function getRecommendedPaymentOfferId() {
+        return getGrowthDiagnosis().recommendedOfferId;
     }
 
     function getNextProgressSuggestion() {
