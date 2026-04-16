@@ -277,6 +277,10 @@ input {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.gf-inline-grid--four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .gf-slot-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -602,6 +606,117 @@ input {
     font-weight: 800;
 }
 
+.gf-forge-control {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.gf-forge-control-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.gf-forge-control-head > span {
+    color: var(--gf-text-soft);
+    font-size: 12px;
+}
+
+.gf-forge-control-head > strong {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.gf-forge-control-copy {
+    color: var(--gf-text-soft);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.gf-forge-timing-bar {
+    position: relative;
+    overflow: hidden;
+    min-height: 50px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08)),
+        rgba(8, 11, 18, 0.82);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.gf-forge-timing-bar.is-active {
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 0 22px rgba(255, 139, 87, 0.18),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.gf-forge-timing-zone,
+.gf-forge-timing-center,
+.gf-forge-timing-needle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.gf-forge-timing-zone {
+    height: 18px;
+    border-radius: 999px;
+    opacity: 0.9;
+}
+
+.gf-forge-timing-zone.is-good {
+    left: 30%;
+    width: 40%;
+    background: rgba(87, 199, 255, 0.16);
+}
+
+.gf-forge-timing-zone.is-great {
+    left: 39%;
+    width: 22%;
+    background: rgba(105, 240, 174, 0.22);
+}
+
+.gf-forge-timing-zone.is-perfect {
+    left: 45.5%;
+    width: 9%;
+    background: rgba(255, 229, 106, 0.28);
+}
+
+.gf-forge-timing-center {
+    left: calc(50% - 1px);
+    width: 2px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.56);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.36);
+}
+
+.gf-forge-timing-needle {
+    left: 50%;
+    width: 18px;
+    height: 36px;
+    margin-left: -9px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fff2ca, #ff8b57 65%, #ff5f5f);
+    box-shadow: 0 0 16px rgba(255, 139, 87, 0.42);
+}
+
+.gf-forge-timing-bar::after {
+    content: '';
+    position: absolute;
+    inset: 8px 14px;
+    border-radius: 999px;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
 .gf-forge-side {
     display: grid;
     gap: 10px;
@@ -744,6 +859,22 @@ input {
 .gf-toast.show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+}
+
+.gf-toast[data-tone='success'] {
+    border-color: rgba(105, 240, 174, 0.36);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(105, 240, 174, 0.16);
+}
+
+.gf-toast[data-tone='warning'] {
+    border-color: rgba(255, 186, 73, 0.4);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.32), 0 0 0 1px rgba(255, 186, 73, 0.16);
+}
+
+.gf-toast[data-tone='claim'] {
+    border-color: rgba(181, 111, 255, 0.48);
+    background: linear-gradient(180deg, rgba(27, 16, 46, 0.96), rgba(10, 12, 22, 0.94));
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.32), 0 0 24px rgba(181, 111, 255, 0.18);
 }
 
 .primary-btn:active,
@@ -1222,6 +1353,10 @@ body.modal-open {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
+    .gf-inline-grid--four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .gf-slot-grid,
     .gf-node-grid {
         grid-template-columns: 1fr;
@@ -1293,6 +1428,21 @@ body.modal-open {
     .gf-compact-sub,
     .gf-result-box p {
         -webkit-line-clamp: 2;
+    }
+
+    .gf-forge-control {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .gf-forge-control-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .gf-forge-timing-bar {
+        min-height: 44px;
     }
 
     .gf-resource-pill strong,

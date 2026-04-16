@@ -11,6 +11,24 @@
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const FORGE_TIMING_TARGET = 0.5;
+    const FORGE_TIMING_PERFECT_WINDOW = 0.045;
+    const FORGE_TIMING_GREAT_WINDOW = 0.11;
+    const FORGE_TIMING_GOOD_WINDOW = 0.2;
+    const FORGE_TIMING_ROUGH_WINDOW = 0.31;
+    const FORGE_TIMING_EDGE_MIN = 0.06;
+    const FORGE_TIMING_EDGE_MAX = 0.94;
+    const FORGE_TIMING_SPEED_MIN = 0.00048;
+    const FORGE_TIMING_SPEED_MAX = 0.00072;
+    const FORGE_RELIC_MAX = 24;
+    const FORGE_RELIC_PITY_NEED = 7;
+    const FORGE_RELIC_EPIC_PITY_NEED = 18;
+    const FORGE_RELIC_FORMS = {
+        rare: { zh: '炉印', en: 'Seal' },
+        epic: { zh: '冠冕', en: 'Crown' },
+        legend: { zh: '星核', en: 'Star Core' },
+        mythic: { zh: '圣座', en: 'Throne' }
+    };
 
     const config = window.GENESIS_GEM_FORGE_CONFIG;
     if (!config) return;
@@ -27,7 +45,8 @@
         toastTimer: 0,
         uiMotionTimer: 0,
         pendingUiMotion: '',
-        pendingUiMotionDuration: 420
+        pendingUiMotionDuration: 420,
+        forgeTiming: createForgeTimingState()
     };
 
     const ui = {};
@@ -124,6 +143,13 @@
             paymentVerificationNotice = paymentVerificationState === 'verified' ? paymentVerificationNotice : '';
             refreshPaymentVerificationState();
         });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                cancelForgeTimingSession();
+            } else if (state.tab === 'forge') {
+                renderAll();
+            }
+        });
         window.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
                 closePaymentModal();
@@ -137,10 +163,15 @@
         if (!target) return;
         const action = target.dataset.action;
         const value = target.dataset.value || '';
+        if (state.forgeTiming.active && action !== 'stopForgeTiming') {
+            cancelForgeTimingSession();
+        }
 
         switch (action) {
             case 'smeltOne': smeltOne(); break;
             case 'smeltBatch': smeltBatch(); break;
+            case 'startForgeTiming': startForgeTiming(); break;
+            case 'stopForgeTiming': stopForgeTiming(); break;
             case 'fuseGem': fuseGem(value); break;
             case 'awakenGem': awakenGem(value); break;
             case 'salvageGem': salvageGem(value); break;
@@ -205,6 +236,217 @@
         }, state.pendingUiMotionDuration || 420);
     }
 
+    function cancelForgeTimingSession() {
+        if (state.forgeTiming.frameId) {
+            window.cancelAnimationFrame(state.forgeTiming.frameId);
+        }
+        state.forgeTiming.active = false;
+        state.forgeTiming.frameId = 0;
+        state.forgeTiming.lastTickAt = 0;
+        syncForgeTimingUi();
+    }
+
+    function startForgeTiming() {
+        syncHeat();
+        if (state.save.heat < SMELT_HEAT_COST) {
+            return showToast(text('热量不足，先等恢复或补热量上限。', 'Not enough heat. Wait for regen or raise heat cap first.'), 'warning');
+        }
+        cancelForgeTimingSession();
+        state.forgeTiming.active = true;
+        state.forgeTiming.pointer = 0.18 + Math.random() * 0.22;
+        state.forgeTiming.direction = Math.random() > 0.5 ? 1 : -1;
+        state.forgeTiming.speed = FORGE_TIMING_SPEED_MIN + Math.random() * (FORGE_TIMING_SPEED_MAX - FORGE_TIMING_SPEED_MIN);
+        state.forgeTiming.lastTickAt = performance.now();
+        renderAll();
+        state.forgeTiming.frameId = window.requestAnimationFrame(stepForgeTiming);
+    }
+
+    function stopForgeTiming() {
+        if (!state.forgeTiming.active) return;
+        const outcome = evaluateForgeTiming(state.forgeTiming.pointer);
+        cancelForgeTimingSession();
+        state.forgeTiming.lastOutcome = outcome.id;
+        resolveForgeTimingSmelt(outcome);
+    }
+
+    function stepForgeTiming(timestamp) {
+        if (!state.forgeTiming.active) return;
+        const elapsed = Math.max(0, Number(timestamp) - Number(state.forgeTiming.lastTickAt || timestamp));
+        state.forgeTiming.lastTickAt = Number(timestamp) || performance.now();
+        state.forgeTiming.pointer += state.forgeTiming.direction * elapsed * state.forgeTiming.speed;
+        if (state.forgeTiming.pointer >= FORGE_TIMING_EDGE_MAX) {
+            state.forgeTiming.pointer = FORGE_TIMING_EDGE_MAX;
+            state.forgeTiming.direction = -1;
+        } else if (state.forgeTiming.pointer <= FORGE_TIMING_EDGE_MIN) {
+            state.forgeTiming.pointer = FORGE_TIMING_EDGE_MIN;
+            state.forgeTiming.direction = 1;
+        }
+        syncForgeTimingUi();
+        state.forgeTiming.frameId = window.requestAnimationFrame(stepForgeTiming);
+    }
+
+    function syncForgeTimingUi() {
+        const bar = document.getElementById('gfForgeTimingBar');
+        const needle = document.getElementById('gfForgeTimingNeedle');
+        const status = document.getElementById('gfForgeTimingStatus');
+        const hint = document.getElementById('gfForgeTimingHint');
+        if (bar) {
+            bar.classList.toggle('is-active', !!state.forgeTiming.active);
+            bar.dataset.quality = state.forgeTiming.active ? evaluateForgeTiming(state.forgeTiming.pointer).id : String(state.forgeTiming.lastOutcome || 'idle');
+        }
+        if (needle) {
+            needle.style.left = `${(state.forgeTiming.pointer * 100).toFixed(2)}%`;
+        }
+        if (status || hint) {
+            const outcome = state.forgeTiming.active
+                ? evaluateForgeTiming(state.forgeTiming.pointer)
+                : getForgeTimingRestingState();
+            if (status) status.textContent = outcome.status;
+            if (hint) hint.textContent = outcome.hint;
+        }
+    }
+
+    function getForgeTimingRestingState() {
+        const lastOutcome = state.forgeTiming.lastOutcome && state.forgeTiming.lastOutcome !== 'idle'
+            ? getForgeTimingMeta(state.forgeTiming.lastOutcome)
+            : null;
+        return {
+            status: lastOutcome
+                ? text(`上次手感 · ${lastOutcome.shortZh}`, `Last touch · ${lastOutcome.shortEn}`)
+                : text('手动控火', 'Manual Control'),
+            hint: text('先点“开始控火”，指针扫过甜区时再次点击收炉；手动更容易爆珍藏。', 'Tap Start Control, then stop in the sweet zone. Manual control is the best way to chase relics.')
+        };
+    }
+
+    function getForgeTimingMeta(outcomeId) {
+        switch (outcomeId) {
+            case 'perfect':
+                return {
+                    id: 'perfect',
+                    shortZh: '完美',
+                    shortEn: 'Perfect',
+                    statusZh: '完美控火',
+                    statusEn: 'Perfect Control',
+                    hintZh: '完美区会显著提高高阶与珍藏掉率。',
+                    hintEn: 'Perfect windows sharply lift high-tier and relic odds.',
+                    rareBonus: 0.14,
+                    jumpChance: 0.08,
+                    doubleChance: 0.12,
+                    extraGemChance: 0.1,
+                    relicChance: 0.22,
+                    dustBonus: 0,
+                    xpBonus: 16,
+                    comboGain: 2,
+                    tone: 'claim'
+                };
+            case 'great':
+                return {
+                    id: 'great',
+                    shortZh: '极佳',
+                    shortEn: 'Great',
+                    statusZh: '精准控火',
+                    statusEn: 'Precise Control',
+                    hintZh: '稳定命中甜区，适合冲高价值珍藏。',
+                    hintEn: 'A stable sweet-zone hit that is great for valuable relics.',
+                    rareBonus: 0.08,
+                    jumpChance: 0.05,
+                    doubleChance: 0.06,
+                    extraGemChance: 0.06,
+                    relicChance: 0.12,
+                    dustBonus: 0,
+                    xpBonus: 12,
+                    comboGain: 1,
+                    tone: 'success'
+                };
+            case 'good':
+                return {
+                    id: 'good',
+                    shortZh: '稳定',
+                    shortEn: 'Stable',
+                    statusZh: '稳定控火',
+                    statusEn: 'Stable Control',
+                    hintZh: '有稳定加成，适合边玩边攒库存。',
+                    hintEn: 'A safe boost for steady stock building.',
+                    rareBonus: 0.03,
+                    jumpChance: 0.02,
+                    doubleChance: 0.02,
+                    extraGemChance: 0.03,
+                    relicChance: 0.05,
+                    dustBonus: 2,
+                    xpBonus: 9,
+                    comboGain: 1,
+                    tone: 'success'
+                };
+            case 'rough':
+                return {
+                    id: 'rough',
+                    shortZh: '擦边',
+                    shortEn: 'Rough',
+                    statusZh: '擦边收炉',
+                    statusEn: 'Rough Lock',
+                    hintZh: '能出货，但珍藏概率一般。',
+                    hintEn: 'Still useful, but relic odds stay modest.',
+                    rareBonus: 0,
+                    jumpChance: 0,
+                    doubleChance: 0,
+                    extraGemChance: 0,
+                    relicChance: 0.02,
+                    dustBonus: 4,
+                    xpBonus: 7,
+                    comboGain: -999,
+                    tone: 'warning'
+                };
+            case 'unstable':
+            default:
+                return {
+                    id: 'unstable',
+                    shortZh: '过热',
+                    shortEn: 'Overheat',
+                    statusZh: '过热收炉',
+                    statusEn: 'Overheat Lock',
+                    hintZh: '虽然也能出货，但更适合先练手感。',
+                    hintEn: 'You still get loot, but this is mostly a practice stop.',
+                    rareBonus: 0,
+                    jumpChance: 0,
+                    doubleChance: 0,
+                    extraGemChance: 0,
+                    relicChance: 0,
+                    dustBonus: 6,
+                    xpBonus: 6,
+                    comboGain: -999,
+                    tone: 'warning'
+                };
+        }
+    }
+
+    function evaluateForgeTiming(pointer = state.forgeTiming.pointer) {
+        const delta = Math.abs(Number(pointer) - FORGE_TIMING_TARGET);
+        const combo = Math.max(0, Number(state.save.forgeCombo) || 0);
+        const comboRareBonus = Math.min(0.08, combo * 0.008);
+        const comboRelicBonus = Math.min(0.12, combo * 0.015);
+        const base = delta <= FORGE_TIMING_PERFECT_WINDOW
+            ? getForgeTimingMeta('perfect')
+            : delta <= FORGE_TIMING_GREAT_WINDOW
+                ? getForgeTimingMeta('great')
+                : delta <= FORGE_TIMING_GOOD_WINDOW
+                    ? getForgeTimingMeta('good')
+                    : delta <= FORGE_TIMING_ROUGH_WINDOW
+                        ? getForgeTimingMeta('rough')
+                        : getForgeTimingMeta('unstable');
+        return {
+            ...base,
+            delta,
+            status: state.forgeTiming.active
+                ? text(`${base.statusZh} · 点击收炉`, `${base.statusEn} · Tap to stop`)
+                : text(base.statusZh, base.statusEn),
+            hint: state.forgeTiming.active
+                ? text(`当前连击 x${combo}，甜区越准越容易爆珍藏。`, `Current streak x${combo}. Better precision means better relic odds.`)
+                : text(base.hintZh, base.hintEn),
+            rareBonus: base.rareBonus + comboRareBonus,
+            relicChance: base.relicChance + comboRelicBonus
+        };
+    }
+
     function getMotionSnapshot() {
         return JSON.stringify({
             tab: state.tab,
@@ -250,6 +492,7 @@
             refreshPaymentVerificationState();
         }
         applyPendingUiMotion();
+        syncForgeTimingUi();
     }
 
     function getSelectedPaymentOffer() {
@@ -1526,6 +1769,7 @@
                     <strong>${statusLabel}</strong>
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${order.offerId}">${text('继续支付', 'Resume')}</button>
                 </div>
+                </div>
             </article>
         `;
     }
@@ -2022,6 +2266,12 @@
         const focusAwakened = focusFamilies.reduce((sum, item) => sum + item.awakened, 0);
         const heatEnoughOne = state.save.heat >= SMELT_HEAT_COST;
         const heatEnoughBatch = state.save.heat >= config.forgeBalance.batchSmeltHeatCost;
+        const timingOutcome = state.forgeTiming.active ? evaluateForgeTiming(state.forgeTiming.pointer) : getForgeTimingRestingState();
+        const relicSummary = getForgeRelicSummary();
+        const bestRelicLabel = relicSummary.best
+            ? `${getForgeRelicRarityLabel(relicSummary.best.rarity)} ${formatCompact(relicSummary.best.score)}`
+            : text('尚未掉落', 'No relic yet');
+        const timingNeedleLeft = `${(state.forgeTiming.pointer * 100).toFixed(2)}%`;
 
         return `
             <article class="gf-card gf-forge-stage">
@@ -2051,11 +2301,27 @@
                                 <div class="gf-progress gf-progress--small"><i style="width:${Math.min(100, (state.save.pity.t4 / Math.max(1, config.forgeBalance.pityTier4Need)) * 100).toFixed(2)}%;"></i></div>
                             </div>
                         </div>
+                        <div class="gf-forge-control">
+                            <div class="gf-forge-control-head">
+                                <span>${state.forgeTiming.active ? text('控火进行中', 'Control Live') : text('手动控火', 'Manual Control')}</span>
+                                <strong id="gfForgeTimingStatus">${timingOutcome.status}</strong>
+                            </div>
+                            <button id="gfForgeTimingBar" class="gf-forge-timing-bar ${state.forgeTiming.active ? 'is-active' : ''}" type="button" data-action="${state.forgeTiming.active ? 'stopForgeTiming' : 'startForgeTiming'}" data-quality="${state.forgeTiming.active ? evaluateForgeTiming(state.forgeTiming.pointer).id : String(state.forgeTiming.lastOutcome || 'idle')}">
+                                <span class="gf-forge-timing-zone is-good"></span>
+                                <span class="gf-forge-timing-zone is-great"></span>
+                                <span class="gf-forge-timing-zone is-perfect"></span>
+                                <span class="gf-forge-timing-center"></span>
+                                <i id="gfForgeTimingNeedle" class="gf-forge-timing-needle" style="left:${timingNeedleLeft};"></i>
+                            </button>
+                            <div id="gfForgeTimingHint" class="gf-forge-control-copy">${timingOutcome.hint}</div>
+                        </div>
                     </div>
                     <div class="gf-action-row">
-                        <button class="primary-btn" type="button" data-action="smeltOne">${heatEnoughOne ? text('立即熔炼', 'Smelt Now') : text(`热量不足 · 还差 ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))}`, `Need ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))} heat`)}</button>
-                        <button class="ghost-btn" type="button" data-action="smeltBatch">${heatEnoughBatch ? text('批量熔炼 x3', 'Batch x3') : text(`批量还差 ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`, `Need ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`)}</button>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('调整符印', 'Tune Sigils')}</button>
+                        <button class="primary-btn" type="button" data-action="${state.forgeTiming.active ? 'stopForgeTiming' : 'startForgeTiming'}">${state.forgeTiming.active
+                            ? text('定点收炉', 'Lock Result')
+                            : (heatEnoughOne ? text('开始控火', 'Start Control') : text(`热量不足 · 还差 ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))}`, `Need ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))} heat`))}</button>
+                        <button class="ghost-btn" type="button" data-action="smeltOne">${heatEnoughOne ? text('速熔 1 次', 'Quick Smelt') : text('等待热量', 'Wait Heat')}</button>
+                        <button class="ghost-btn" type="button" data-action="smeltBatch">${heatEnoughBatch ? text('批量速熔 x3', 'Batch x3') : text(`批量还差 ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`, `Need ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`)}</button>
                     </div>
                     <div class="gf-inline-grid gf-forge-quick-grid">
                         ${slotPills.map((item) => `
@@ -2072,6 +2338,10 @@
                     <span class="gf-chip ${gap > 0 ? 'is-warning' : 'is-success'}">${gap > 0 ? text(`还差 ${formatCompact(gap)}`, `Gap ${formatCompact(gap)}`) : text('已够线', 'Ready')}</span>
                     <span class="gf-chip">${text('觉醒', 'Awaken')} · ${formatCompact(focusAwakened)}</span>
                     <span class="gf-chip">${text('热量恢复', 'Heat Regen')} · ${formatCompact(getHeatRegenPerSecond())}/s</span>
+                    <span class="gf-chip is-strong">${text('珍藏柜', 'Relics')} · ${formatCompact(relicSummary.count)}</span>
+                    <span class="gf-chip">${text('最佳', 'Best')} · ${bestRelicLabel}</span>
+                    <span class="gf-chip ${relicSummary.combo > 0 ? 'is-success' : ''}">${text('连击', 'Streak')} · x${formatCompact(relicSummary.combo)}</span>
+                    <span class="gf-chip">${text('珍藏保底', 'Relic Pity')} · ${relicSummary.pityRemain}</span>
                 </div>
             </article>
         `;
@@ -2290,6 +2560,9 @@
             dailySupplyAt: 0,
             lastHeatAt: Date.now(),
             lastResult: null,
+            forgeCombo: 0,
+            relicPity: 0,
+            forgeRelics: [],
             permanent: {
                 heatCap: 0,
                 rareRate: 0,
@@ -2308,7 +2581,11 @@
                 contractWins: 0,
                 highestTier: 1,
                 tier3Drops: 0,
-                tier4Drops: 0
+                tier4Drops: 0,
+                manualSmelts: 0,
+                perfectControls: 0,
+                relicDrops: 0,
+                mythicRelics: 0
             }
         };
     }
@@ -2334,6 +2611,7 @@
             pity: { ...base.pity, ...(save?.pity || {}) },
             gems: { ...(save?.gems || {}) },
             awakened: { ...(save?.awakened || {}) },
+            forgeRelics: Array.isArray(save?.forgeRelics) ? save.forgeRelics.slice(0, FORGE_RELIC_MAX) : [],
             sigilLevels: { ...base.sigilLevels, ...(save?.sigilLevels || {}) },
             sigilShards: { ...base.sigilShards, ...(save?.sigilShards || {}) },
             workshopLevels: { ...base.workshopLevels, ...(save?.workshopLevels || {}) },
@@ -2350,6 +2628,12 @@
         next.heat = Math.max(0, Number(next.heat) || 0);
         next.lastHeatAt = Math.max(0, Number(next.lastHeatAt) || Date.now());
         next.dailySupplyAt = Math.max(0, Number(next.dailySupplyAt) || 0);
+        next.forgeCombo = Math.max(0, Math.round(Number(next.forgeCombo) || 0));
+        next.relicPity = Math.max(0, Math.round(Number(next.relicPity) || 0));
+        next.forgeRelics = next.forgeRelics
+            .map(normalizeForgeRelic)
+            .filter(Boolean)
+            .slice(0, FORGE_RELIC_MAX);
         next.selectedSigils = Array.isArray(next.selectedSigils) ? next.selectedSigils.slice(0, 3) : base.selectedSigils.slice();
         while (next.selectedSigils.length < 3) next.selectedSigils.push('');
         next.selectedSigils = next.selectedSigils.map((sigilId, index) => {
@@ -2371,6 +2655,55 @@
         return next;
     }
 
+    function createForgeTimingState() {
+        return {
+            active: false,
+            pointer: 0.24,
+            direction: 1,
+            speed: FORGE_TIMING_SPEED_MIN,
+            lastTickAt: 0,
+            frameId: 0,
+            lastOutcome: 'idle'
+        };
+    }
+
+    function normalizeForgeRelic(relic) {
+        if (!relic || typeof relic !== 'object') return null;
+        const familyId = typeof relic.familyId === 'string' ? relic.familyId : '';
+        const rarity = typeof relic.rarity === 'string' ? relic.rarity : 'rare';
+        if (!familyMap[familyId] || !FORGE_RELIC_FORMS[rarity]) return null;
+        return {
+            id: String(relic.id || `${familyId}_${Date.now().toString(16)}`),
+            familyId,
+            rarity,
+            tier: Math.max(1, Math.min(5, Math.round(Number(relic.tier) || 1))),
+            score: Math.max(1, Math.round(Number(relic.score) || 1)),
+            title: relic.title && typeof relic.title === 'object'
+                ? {
+                    zh: String(relic.title.zh || ''),
+                    en: String(relic.title.en || '')
+                }
+                : {
+                    zh: `${familyMap[familyId].name.zh}${FORGE_RELIC_FORMS[rarity].zh}`,
+                    en: `${familyMap[familyId].name.en} ${FORGE_RELIC_FORMS[rarity].en}`
+                },
+            reward: {
+                gold: Math.max(0, Math.round(Number(relic.reward?.gold) || 0)),
+                dust: Math.max(0, Math.round(Number(relic.reward?.dust) || 0)),
+                catalyst: Math.max(0, Math.round(Number(relic.reward?.catalyst) || 0)),
+                seasonXp: Math.max(0, Math.round(Number(relic.reward?.seasonXp) || 0))
+            },
+            permanent: {
+                heatCap: Math.max(0, Number(relic.permanent?.heatCap) || 0),
+                rareRate: Math.max(0, Number(relic.permanent?.rareRate) || 0),
+                dustYield: Math.max(0, Number(relic.permanent?.dustYield) || 0),
+                catalystYield: Math.max(0, Number(relic.permanent?.catalystYield) || 0)
+            },
+            qualityId: typeof relic.qualityId === 'string' ? relic.qualityId : 'good',
+            createdAt: Math.max(0, Number(relic.createdAt) || Date.now())
+        };
+    }
+
     function saveProgress() {
         try { localStorage.setItem(SAVE_KEY, JSON.stringify(state.save)); } catch (error) {}
     }
@@ -2386,19 +2719,57 @@
         state.save.lastHeatAt = now;
     }
 
+    function resolveForgeTimingSmelt(outcome) {
+        syncHeat();
+        if (state.save.heat < SMELT_HEAT_COST) {
+            return showToast(text('热量刚好不足，先等一口恢复。', 'Heat dipped too low. Wait for a little regen first.'), 'warning');
+        }
+        state.save.heat -= SMELT_HEAT_COST;
+        state.save.stats.smelts += 1;
+        state.save.stats.manualSmelts += 1;
+        if (outcome.id === 'perfect') state.save.stats.perfectControls += 1;
+        state.save.seasonXp += 6 + outcome.xpBonus;
+        state.save.dust += outcome.dustBonus;
+        if (outcome.comboGain > 0) {
+            state.save.forgeCombo = Math.min(12, Number(state.save.forgeCombo || 0) + outcome.comboGain);
+        } else if (outcome.comboGain < 0) {
+            state.save.forgeCombo = 0;
+        }
+        const result = performSmeltRoll({
+            rareBonus: outcome.rareBonus,
+            jumpChance: outcome.jumpChance,
+            doubleChance: outcome.doubleChance,
+            extraGemChance: outcome.extraGemChance,
+            controlKey: outcome.id,
+            controlLabel: text(outcome.shortZh, outcome.shortEn)
+        });
+        const relic = tryForgeRelicDrop(result, outcome);
+        applySmeltResultEnhanced({
+            ...result,
+            controlKey: outcome.id,
+            controlLabel: text(outcome.shortZh, outcome.shortEn),
+            relic
+        });
+        triggerUiMotion(relic ? 'claim' : 'forge', relic ? 620 : 460);
+        saveProgress();
+        renderAll();
+    }
+
     function smeltOne() {
+        cancelForgeTimingSession();
         syncHeat();
         if (state.save.heat < SMELT_HEAT_COST) return showToast(text('热量不足，先等恢复或补热量上限。', 'Not enough heat. Wait for regen or raise heat cap first.'));
         const result = performSmeltRoll();
         state.save.heat -= SMELT_HEAT_COST;
         state.save.stats.smelts += 1;
         state.save.seasonXp += 6;
-        applySmeltResult(result);
+        applySmeltResultEnhanced(result);
         saveProgress();
         renderAll();
     }
 
     function smeltBatch() {
+        cancelForgeTimingSession();
         syncHeat();
         if (state.save.heat < config.forgeBalance.batchSmeltHeatCost) return showToast(text('批量熔炼至少需要 12 热量。', 'Batch forge needs at least 12 heat.'));
         state.save.heat -= config.forgeBalance.batchSmeltHeatCost;
@@ -2406,7 +2777,7 @@
         for (let index = 0; index < 3; index += 1) {
             const result = performSmeltRoll();
             rolls.push(result);
-            applySmeltResult(result, true);
+            applySmeltResultEnhanced(result, true);
             state.save.stats.smelts += 1;
         }
         const batchDustBonus = Math.round(config.forgeBalance.batchSmeltDustGain * (1 + getDustBonus()) + getSigilPassives().batchDustBonus);
@@ -2441,14 +2812,14 @@
         renderAll();
     }
 
-    function performSmeltRoll() {
-        const rareBonus = getRareBonus();
+    function performSmeltRoll(options = {}) {
+        const rareBonus = getRareBonus() + (Number(options.rareBonus) || 0);
         const passives = getSigilPassives();
-        const tierRoll = rollTier(rareBonus, passives.jumpChance);
+        const tierRoll = rollTier(rareBonus, passives.jumpChance + (Number(options.jumpChance) || 0));
         const tier = tierRoll.tier;
         const familyId = rollFamilyId();
-        let quantity = Math.random() < Math.min(0.48, passives.doubleChance) ? 2 : 1;
-        if (Math.random() < Math.min(0.18, passives.bonusExtraGemChance || 0)) quantity += 1;
+        let quantity = Math.random() < Math.min(0.6, passives.doubleChance + (Number(options.doubleChance) || 0)) ? 2 : 1;
+        if (Math.random() < Math.min(0.28, (passives.bonusExtraGemChance || 0) + (Number(options.extraGemChance) || 0))) quantity += 1;
         addGem(familyId, tier, quantity);
         if (tier >= 3) {
             state.save.pity.t3 = 0;
@@ -2463,7 +2834,14 @@
             state.save.pity.t4 += 1;
         }
         state.save.stats.highestTier = Math.max(state.save.stats.highestTier, tier);
-        return { familyId, tier, quantity, pityType: tierRoll.pityType || '' };
+        return {
+            familyId,
+            tier,
+            quantity,
+            pityType: tierRoll.pityType || '',
+            controlKey: String(options.controlKey || ''),
+            controlLabel: String(options.controlLabel || '')
+        };
     }
 
     function rollTier(rareBonus, jumpChance) {
@@ -2502,6 +2880,136 @@
         return config.gemFamilies[0].id;
     }
 
+    function getForgeRelicRarityWeight(rarity) {
+        switch (rarity) {
+            case 'mythic': return 4;
+            case 'legend': return 3;
+            case 'epic': return 2;
+            case 'rare':
+            default: return 1;
+        }
+    }
+
+    function getForgeRelicRarityLabel(rarity) {
+        switch (rarity) {
+            case 'mythic': return text('神话', 'Mythic');
+            case 'legend': return text('传说', 'Legend');
+            case 'epic': return text('史诗', 'Epic');
+            case 'rare':
+            default: return text('珍稀', 'Rare');
+        }
+    }
+
+    function getForgeRelicSummary() {
+        const relics = Array.isArray(state.save.forgeRelics) ? state.save.forgeRelics : [];
+        const best = relics.slice().sort((left, right) => {
+            const rarityGap = getForgeRelicRarityWeight(right.rarity) - getForgeRelicRarityWeight(left.rarity);
+            if (rarityGap !== 0) return rarityGap;
+            return Number(right.score || 0) - Number(left.score || 0);
+        })[0] || null;
+        return {
+            count: relics.length,
+            best,
+            latest: relics[0] || null,
+            combo: Math.max(0, Number(state.save.forgeCombo) || 0),
+            pityRemain: Math.max(0, FORGE_RELIC_PITY_NEED - (Number(state.save.relicPity) || 0))
+        };
+    }
+
+    function addForgeRelic(relic) {
+        const normalized = normalizeForgeRelic(relic);
+        if (!normalized) return null;
+        state.save.forgeRelics = [normalized, ...(state.save.forgeRelics || [])].slice(0, FORGE_RELIC_MAX);
+        state.save.stats.relicDrops += 1;
+        if (normalized.rarity === 'mythic') state.save.stats.mythicRelics += 1;
+        return normalized;
+    }
+
+    function buildForgeRelic(result, rarity, outcome) {
+        const family = familyMap[result.familyId];
+        const form = FORGE_RELIC_FORMS[rarity] || FORGE_RELIC_FORMS.rare;
+        const rarityMultiplier = rarity === 'mythic' ? 2.7 : rarity === 'legend' ? 1.9 : rarity === 'epic' ? 1.35 : 1;
+        const tierScale = 1 + Math.max(0, result.tier - 1) * 0.24;
+        const score = Math.round((58 + result.tier * 22 + outcome.xpBonus * 2.4 + Math.random() * 28) * rarityMultiplier * tierScale);
+        const reward = {
+            gold: Math.round((70 + score * 1.8) * (rarity === 'mythic' ? 1.55 : rarity === 'legend' ? 1.25 : 1)),
+            dust: Math.round((8 + result.tier * 6 + score * 0.12) * (rarity === 'mythic' ? 1.45 : 1)),
+            catalyst: Math.max(0, Math.round((rarity === 'rare' ? 0 : rarity === 'epic' ? 1 : rarity === 'legend' ? 3 : 6) + Math.max(0, result.tier - 3))),
+            seasonXp: Math.round(rarity === 'rare' ? 0 : rarity === 'epic' ? 12 : rarity === 'legend' ? 28 : 56)
+        };
+        const permanent = {
+            heatCap: 0,
+            rareRate: 0,
+            dustYield: 0,
+            catalystYield: 0
+        };
+        const bonusScale = rarity === 'mythic' ? 2.4 : rarity === 'legend' ? 1.7 : rarity === 'epic' ? 1.15 : 0.7;
+        switch (result.familyId) {
+            case 'ember':
+                permanent.rareRate = Number((0.0026 * bonusScale + result.tier * 0.00035).toFixed(4));
+                permanent.heatCap = Math.round(1 + bonusScale + Math.max(0, result.tier - 2) * 0.8);
+                break;
+            case 'tide':
+                permanent.dustYield = Number((0.0032 * bonusScale + result.tier * 0.00045).toFixed(4));
+                permanent.heatCap = Math.round(1 + Math.max(0, bonusScale - 0.35));
+                break;
+            case 'volt':
+                permanent.heatCap = Math.round(2 + bonusScale * 1.8 + Math.max(0, result.tier - 2));
+                permanent.rareRate = Number((0.0016 * bonusScale + result.tier * 0.00025).toFixed(4));
+                break;
+            case 'void':
+            default:
+                permanent.catalystYield = Number((0.0032 * bonusScale + result.tier * 0.00045).toFixed(4));
+                permanent.rareRate = Number((0.0018 * bonusScale + result.tier * 0.00028).toFixed(4));
+                break;
+        }
+        return {
+            id: `relic_${Date.now().toString(16)}_${Math.random().toString(16).slice(2, 8)}`,
+            familyId: result.familyId,
+            rarity,
+            tier: result.tier,
+            score,
+            qualityId: outcome.id,
+            createdAt: Date.now(),
+            title: {
+                zh: `${family.name.zh}${form.zh}`,
+                en: `${family.name.en} ${form.en}`
+            },
+            reward,
+            permanent
+        };
+    }
+
+    function tryForgeRelicDrop(result, outcome) {
+        const pityCount = Math.max(0, Number(state.save.relicPity) || 0);
+        const forcedRare = pityCount + 1 >= FORGE_RELIC_PITY_NEED;
+        const forcedEpic = pityCount + 1 >= FORGE_RELIC_EPIC_PITY_NEED && (outcome.id === 'perfect' || outcome.id === 'great');
+        const baseChance = outcome.relicChance + Math.max(0, result.tier - 1) * 0.02;
+        const shouldDrop = forcedRare || Math.random() < Math.min(0.62, baseChance);
+        if (!shouldDrop) {
+            state.save.relicPity = pityCount + 1;
+            return null;
+        }
+        const rarityRoll = Math.random();
+        let rarity = 'rare';
+        if (forcedEpic) {
+            rarity = rarityRoll < 0.22 ? 'mythic' : rarityRoll < 0.56 ? 'legend' : 'epic';
+        } else if (outcome.id === 'perfect') {
+            rarity = rarityRoll < 0.03 ? 'mythic' : rarityRoll < 0.13 ? 'legend' : rarityRoll < 0.42 ? 'epic' : 'rare';
+        } else if (outcome.id === 'great') {
+            rarity = rarityRoll < 0.01 ? 'mythic' : rarityRoll < 0.07 ? 'legend' : rarityRoll < 0.28 ? 'epic' : 'rare';
+        } else if (outcome.id === 'good') {
+            rarity = rarityRoll < 0.003 ? 'mythic' : rarityRoll < 0.025 ? 'legend' : rarityRoll < 0.15 ? 'epic' : 'rare';
+        }
+        if (result.tier >= 4 && rarity === 'rare' && Math.random() < 0.45) rarity = 'epic';
+        if (result.tier >= 5 && rarity === 'epic' && Math.random() < 0.28) rarity = 'legend';
+        const relic = addForgeRelic(buildForgeRelic(result, rarity, outcome));
+        state.save.relicPity = 0;
+        grantReward(relic.reward);
+        applyPermanentBonus(relic.permanent);
+        return relic;
+    }
+
     function applySmeltResult(result, silent = false) {
         const familyName = localize(familyMap[result.familyId].name);
         const pityLabel = getPityLabel(result.pityType);
@@ -2516,6 +3024,38 @@
         if (!silent) showToast(result.pityType
             ? text(`${pityLabel}：${familyName} T${result.tier}`, `${pityLabel}: ${familyName} T${result.tier}`)
             : text(`熔炼成功：${familyName} T${result.tier}`, `Forged ${familyName} T${result.tier}`));
+    }
+
+    function applySmeltResultEnhanced(result, silent = false) {
+        const familyName = localize(familyMap[result.familyId].name);
+        const pityLabel = getPityLabel(result.pityType);
+        const controlLabel = String(result.controlLabel || '');
+        const relic = result.relic ? normalizeForgeRelic(result.relic) : null;
+        state.save.lastResult = {
+            type: relic ? 'relic' : 'smelt',
+            title: relic
+                ? text(`${getForgeRelicRarityLabel(relic.rarity)}珍藏 · ${localize(relic.title)}`, `${getForgeRelicRarityLabel(relic.rarity)} Relic · ${localize(relic.title)}`)
+                : text(`${familyName} T${result.tier} 宝石`, `${familyName} T${result.tier} Gem`),
+            copy: relic
+                ? text(`这次${controlLabel || '控火'}直接爆出 ${localize(relic.title)}，已自动入柜并发放奖励。后续可继续冲更高稀有度与更高收藏分。`, `This ${controlLabel || 'manual forge'} dropped ${localize(relic.title)}. It has been archived automatically and its rewards are already granted.`)
+                : result.pityType
+                    ? text(`本次${controlLabel || '熔炼'}获得 ${result.quantity} 颗 ${familyName} T${result.tier} 宝石，并触发了 ${pityLabel}。继续攒到 3 颗就能合到下一阶。`, `This ${controlLabel || 'forge'} gave ${result.quantity} ${familyName} T${result.tier} gems and triggered ${pityLabel}. Reach 3 copies to fuse into the next tier.`)
+                    : text(`本次${controlLabel || '熔炼'}获得 ${result.quantity} 颗 ${familyName} T${result.tier} 宝石。继续攒到 3 颗就能合到下一阶。`, `This ${controlLabel || 'forge'} gave ${result.quantity} ${familyName} T${result.tier} gems. Reach 3 copies to fuse into the next tier.`),
+            tags: [familyName, `T${result.tier}`, `${text('数量', 'Qty')} ${result.quantity}`, controlLabel, pityLabel, relic ? getForgeRelicRarityLabel(relic.rarity) : ''].filter(Boolean),
+            reward: relic ? relic.reward : null,
+            permanent: relic ? relic.permanent : null
+        };
+        if (!silent) {
+            if (relic) {
+                showToast(text(`爆出${getForgeRelicRarityLabel(relic.rarity)}珍藏：${localize(relic.title)}`, `Dropped ${getForgeRelicRarityLabel(relic.rarity)} relic: ${localize(relic.title)}`), relic.rarity === 'legend' || relic.rarity === 'mythic' ? 'claim' : 'success');
+            } else if (result.pityType) {
+                showToast(text(`${pityLabel}：${familyName} T${result.tier}`, `${pityLabel}: ${familyName} T${result.tier}`), controlLabel ? 'success' : 'neutral');
+            } else {
+                showToast(controlLabel
+                    ? text(`${controlLabel}收炉：${familyName} T${result.tier}`, `${controlLabel}: ${familyName} T${result.tier}`)
+                    : text(`熔炼成功：${familyName} T${result.tier}`, `Forged ${familyName} T${result.tier}`), controlLabel ? 'success' : 'neutral');
+            }
+        }
     }
 
     function fuseGem(key) {
@@ -3607,6 +4147,12 @@
             <article class="gf-result-box ${result.success === true ? 'is-success' : result.success === false ? 'is-warning' : ''}">
                 <strong>${text('最近结果', 'Latest Result')} · ${result.title}</strong>
                 <p>${result.copy}</p>
+                ${(result.reward || result.permanent) ? `
+                    <div class="gf-chip-row" style="margin-top:10px;">
+                        ${renderRewardChips(result.reward, { limit: 4 })}
+                        ${renderPermanentChips(result.permanent, { limit: 3 })}
+                    </div>
+                ` : ''}
                 <div class="gf-chip-row" style="margin-top:10px;">
                     ${(result.tags || []).map((tag) => `<span class="gf-chip is-strong">${tag}</span>`).join('')}
                 </div>
@@ -3660,6 +4206,7 @@
         const awakenReady = inventoryRows.filter((row) => row.canAwaken);
         const lastResult = state.save.lastResult;
         const recyclePlan = getSmartRecyclePlan();
+        const relicSummary = getForgeRelicSummary();
         const actionableRows = inventoryRows.filter((row) => row.canFuse || row.canAwaken).slice(0, 4);
         const previewRows = actionableRows.length ? actionableRows : inventoryRows.slice(0, 4);
 
@@ -3670,10 +4217,11 @@
                 `<div class="gf-chip">${contract.id} · ${text('焦点', 'Focus')} ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')}</div>`
             )}
             ${renderForgeStageCard({ contract, effectivePower })}
-            <div class="gf-inline-grid">
+            <div class="gf-inline-grid gf-inline-grid--four">
                 <div class="gf-inline-pill"><span>${text('可合成', 'Fuse Ready')}</span><strong>${formatCompact(fuseReady.length)}</strong></div>
                 <div class="gf-inline-pill"><span>${text('可觉醒', 'Awaken Ready')}</span><strong>${formatCompact(awakenReady.length)}</strong></div>
                 <div class="gf-inline-pill"><span>${text('可回收尘', 'Recycle Dust')}</span><strong>${formatCompact(recyclePlan.totalDust)}</strong></div>
+                <div class="gf-inline-pill"><span>${text('珍藏柜', 'Relics')}</span><strong>${formatCompact(relicSummary.count)}</strong></div>
             </div>
             ${renderLatestResultCard(lastResult, { context: 'forge', compact: true })}
             <article class="gf-list-card">
