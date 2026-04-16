@@ -932,13 +932,12 @@
         const powerGap = Math.max(0, contract.recommended - effectivePower);
         const sponsorTier = getSponsorTier();
         const heatMax = getHeatMax();
+        const diagnosis = getGrowthDiagnosis();
 
         ui.heroSummary.innerHTML = `
             ${renderPanelHead(
                 text('当前推进', 'Current Route'),
-                powerGap > 0
-                    ? text(`离 ${contract.id} 推荐线还差 ${formatCompact(powerGap)} 战力，优先补符印等级、熔尘与高阶宝石。`, `You are ${formatCompact(powerGap)} power short of ${contract.id}. Raise sigils, dust income, and higher-tier gems first.`)
-                    : text(`${contract.id} 已达推荐线，可以继续推进合同并回收聚焦碎片。`, `${contract.id} is on pace. Push contracts now and recycle focus shards.`),
+                '',
                 `<div class="gf-chip is-strong">${text('当前合同', 'Contract')} · ${contract.id}</div>`
             )}
             <div class="gf-kpi-grid">
@@ -948,15 +947,12 @@
                 <div class="gf-kpi-card"><span>${text('最高合同', 'Best')}</span><strong>${config.contracts[state.save.bestContractIndex].id}</strong></div>
             </div>
             <div class="gf-chip-row" style="margin-top:12px;">
+                <span class="gf-chip is-strong">${powerGap > 0 ? text(`还差 ${formatCompact(powerGap)}`, `Gap ${formatCompact(powerGap)}`) : text('已够线', 'Ready')}</span>
+                <span class="gf-chip">${text('下一步', 'Next')} · ${diagnosis.freeShort}</span>
                 <span class="gf-chip is-success">${text('稳定补正', 'Stability')} · +${formatCompact(Math.max(0, effectivePower - power.total))}</span>
                 <span class="gf-chip is-success">${text('热量恢复', 'Heat Regen')} · ${formatCompact(getHeatRegenPerSecond())}/s</span>
                 <span class="gf-chip">${text('稀有率强化', 'Rare Rate')} · +${formatPercent(getRareBonus())}</span>
                 <span class="gf-chip">${text('熔尘回收', 'Dust Yield')} · +${formatPercent(getDustBonus())}</span>
-                <span class="gf-chip">${text('催化提炼', 'Catalyst Yield')} · +${formatPercent(getCatalystBonus())}</span>
-            </div>
-            <div class="gf-result-box" style="margin-top:12px;">
-                <strong>${text('下一步建议', 'Next Step')}</strong>
-                <p>${getNextProgressSuggestion()}</p>
             </div>
         `;
     }
@@ -1255,13 +1251,15 @@
         const missionViews = config.missions.map(getMissionView).sort((a, b) => b.sort - a.sort);
         const claimable = missionViews.filter((item) => item.claimable);
         const pending = missionViews.filter((item) => !item.claimed && !item.claimable);
-        const visible = [...claimable, ...pending.slice(0, Math.max(4, 6 - claimable.length))];
+        const visible = [...claimable, ...pending.slice(0, Math.max(3, 5 - claimable.length))];
         const bundleReward = mergeRewards(...claimable.map((item) => item.reward));
+        const nextMission = visible[0] || null;
+        const nextRoute = nextMission ? getMissionRoute(nextMission.id) : { tab: 'forge', label: text('去熔炉', 'Open Forge') };
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
-                text('任务中心', 'Missions'),
-                text('这里只保留能领的和离完成最近的目标，避免长列表阅读疲劳。', 'This tab keeps only claimables and nearest goals to avoid long-list fatigue.'),
+                text('任务', 'Missions'),
+                '',
                 `<div class="gf-chip">${text('可领取', 'Ready')} · ${claimable.length}</div>`
             )}
             <div class="gf-card-grid">
@@ -1273,43 +1271,36 @@
                         </div>
                         <div class="gf-card-number">${claimable.length}</div>
                     </div>
-                    <div class="gf-card-copy">${claimable.length > 0 ? text('先统一回收，再继续推进离完成最近的一条。', 'Sweep rewards first, then return to the nearest unfinished objective.') : text('还没有成熟奖励，就盯最近的 1 到 2 个目标即可。', 'Nothing is ready yet, so just focus on the nearest one or two goals.')}</div>
-                    ${claimable.length > 0 ? `<div class="gf-chip-row" style="margin-top:12px;">${renderRewardChips(bundleReward, { limit: 4 })}</div>` : ''}
+                    ${renderKpiGrid([
+                        { label: text('待领', 'Ready'), value: formatCompact(claimable.length) },
+                        { label: text('总任务', 'Total'), value: formatCompact(config.missions.length) },
+                        { label: text('已完成', 'Claimed'), value: formatCompact(state.save.missionClaimed.length) },
+                        { label: text('最近目标', 'Next'), value: nextMission ? `${Math.round(nextMission.progressRate * 100)}%` : '100%' }
+                    ])}
+                    ${claimable.length > 0 ? `<div class="gf-chip-row" style="margin-top:12px;">${renderRewardChips(bundleReward, { limit: 4 })}</div>` : `<div class="gf-chip-row" style="margin-top:12px;"><span class="gf-chip">${text('当前暂无可领，先做最近目标。', 'Nothing ready yet. Push the nearest goal first.')}</span></div>`}
                     <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="claimAllMissions" ${claimable.length > 0 ? '' : 'disabled'}>${text('一键领取', 'Claim All')}</button>
+                        <button class="primary-btn" type="button" data-action="claimAllMissions">${text('一键领取', 'Claim All')}</button>
                     </div>
                 </article>
                 <article class="gf-card">
                     <div class="gf-card-head">
                         <div>
                             <div class="eyebrow">${text('最近目标', 'Nearest Goal')}</div>
-                            <div class="gf-card-title">${visible[0] ? visible[0].title : text('当前任务已清空', 'Mission board clear')}</div>
+                            <div class="gf-card-title">${nextMission ? nextMission.title : text('当前任务已清空', 'Mission board clear')}</div>
                         </div>
-                        <div class="gf-card-number">${visible[0] ? `${Math.round(visible[0].progressRate * 100)}%` : '100%'}</div>
+                        <div class="gf-card-number">${nextMission ? `${Math.round(nextMission.progressRate * 100)}%` : '100%'}</div>
                     </div>
-                    <div class="gf-card-copy">${visible[0] ? visible[0].desc : text('继续熔炼、合成和推进合同，新的任务会自然解锁。', 'Keep forging, fusing, and pushing contracts to unlock more missions naturally.')}</div>
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        <span class="gf-chip is-strong">${nextMission ? `${nextMission.progress}/${nextMission.target}` : text('已完成', 'Done')}</span>
+                        ${nextMission ? renderRewardChips(nextMission.reward, { limit: 2 }) : ''}
+                    </div>
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="${nextRoute.tab}">${nextRoute.label}</button>
+                    </div>
                 </article>
             </div>
-            <div class="gf-list">
-                ${visible.length ? visible.map((mission) => `
-                    <article class="gf-list-card ${mission.claimable ? 'gf-node-card is-ready' : ''}">
-                        <div class="gf-row-head">
-                            <div>
-                                <div class="eyebrow">${text('任务', 'Mission')}</div>
-                                <div class="gf-card-title">${mission.title}</div>
-                            </div>
-                            <div class="gf-card-number">${mission.progress}/${mission.target}</div>
-                        </div>
-                        <div class="gf-card-copy">${mission.desc}</div>
-                        <div class="gf-progress"><i style="width:${(mission.progressRate * 100).toFixed(2)}%;"></i></div>
-                        <div class="gf-chip-row" style="margin-top:10px;">
-                            ${renderRewardChips(mission.reward, { limit: 4 })}
-                        </div>
-                        <div class="gf-action-row" style="margin-top:12px;">
-                            <button class="primary-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${mission.claimable ? '' : 'disabled'}>${mission.claimed ? text('已领取', 'Claimed') : text('领取奖励', 'Claim Reward')}</button>
-                        </div>
-                    </article>
-                `).join('') : `<div class="gf-empty">${text('当前没有可显示的任务。', 'No visible missions right now.')}</div>`}
+            <div class="gf-list gf-list--compact">
+                ${visible.length ? visible.map(renderMissionCompactRow).join('') : `<div class="gf-empty">${text('当前没有可显示的任务。', 'No visible missions right now.')}</div>`}
             </div>
         `;
     }
@@ -1320,11 +1311,15 @@
         const claimableSeason = seasonNodes.filter((node) => node.claimable);
         const claimableSponsor = sponsorNodes.filter((node) => node.claimable);
         const sponsorTier = getSponsorTier();
+        const nextFree = seasonNodes.find((node) => !node.claimed && !node.claimable) || null;
+        const nextSponsor = sponsorNodes.find((node) => !node.claimed && !node.claimable) || null;
+        const visibleFree = [...claimableSeason, ...(nextFree ? [nextFree] : [])].slice(0, 3);
+        const visibleSponsor = [...claimableSponsor, ...(nextSponsor ? [nextSponsor] : [])].slice(0, 3);
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
-                text('赛季轨道', 'Season Track'),
-                text('免费轨承担基础回流，赞助轨负责把充值后的提速感拉得更直观。', 'The free track handles baseline returns, while the sponsor track makes top-up acceleration feel much more obvious.'),
+                text('赛季', 'Season'),
+                '',
                 `<div class="gf-chip">${text('赞助档位', 'Sponsor')} · ${localize(sponsorTier.title)}</div>`
             )}
             <div class="gf-card-grid">
@@ -1336,9 +1331,15 @@
                         </div>
                         <div class="gf-card-number">${formatCompact(state.save.seasonXp)}</div>
                     </div>
-                    <div class="gf-card-copy">${text('赛季经验主要来自熔炼、合成、合同突破与觉醒。', 'Season XP mainly comes from smelting, fusion, contract clears, and awakening.')}</div>
+                    ${renderKpiGrid([
+                        { label: text('当前 XP', 'Current XP'), value: formatCompact(state.save.seasonXp) },
+                        { label: text('可领', 'Ready'), value: formatCompact(claimableSeason.length) },
+                        { label: text('下一档', 'Next'), value: nextFree ? nextFree.id : text('已满', 'Done') },
+                        { label: text('还差', 'Gap'), value: nextFree ? formatCompact(Math.max(0, nextFree.xp - state.save.seasonXp)) : '0' }
+                    ])}
                     <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="claimAllSeason" ${claimableSeason.length + claimableSponsor.length > 0 ? '' : 'disabled'}>${text('领取全部可领奖励', 'Claim All Ready')}</button>
+                        <button class="primary-btn" type="button" data-action="claimAllSeason">${text('领取全部可领奖励', 'Claim All Ready')}</button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="forge">${text('去熔炉拿 XP', 'Forge for XP')}</button>
                     </div>
                 </article>
                 <article class="gf-card">
@@ -1349,17 +1350,23 @@
                         </div>
                         <div class="gf-card-number">${localize(sponsorTier.title)}</div>
                     </div>
-                    <div class="gf-card-copy">${state.save.payment.passUnlocked
-                        ? text('赞助轨的奖励更偏中后期卡点：熔尘、催化剂和大包金币会更集中。', 'Sponsor rewards focus more heavily on mid-late walls: dust, catalyst, and larger gold injections.')
-                        : text('任意一笔赞助到账后，会同步打开赞助轨和额外常驻增益。', 'Any sponsor purchase opens both the sponsor track and extra permanent boosts.')}</div>
+                    ${renderKpiGrid([
+                        { label: text('可领', 'Ready'), value: formatCompact(claimableSponsor.length) },
+                        { label: text('是否开启', 'State'), value: state.save.payment.passUnlocked ? text('已开启', 'Open') : text('未开启', 'Locked') },
+                        { label: text('下一档', 'Next'), value: nextSponsor ? nextSponsor.id : text('已满', 'Done') },
+                        { label: text('还差 XP', 'XP Gap'), value: nextSponsor ? formatCompact(Math.max(0, nextSponsor.xp - state.save.seasonXp)) : '0' }
+                    ])}
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="ghost-btn" type="button" data-action="${state.save.payment.passUnlocked ? 'openTab' : 'openPayment'}" data-value="${state.save.payment.passUnlocked ? 'shop' : getRecommendedPaymentOfferId()}">${state.save.payment.passUnlocked ? text('去商店补给', 'Open Shop') : text('去开赞助', 'Unlock Sponsor')}</button>
+                    </div>
                 </article>
             </div>
-            <div class="gf-node-grid">
-                ${seasonNodes.slice(0, 8).map((node) => renderSeasonNode(node)).join('')}
+            <div class="gf-list gf-list--compact">
+                ${visibleFree.map((node) => renderSeasonCompactRow(node, false)).join('')}
             </div>
             <div class="gf-divider"></div>
-            <div class="gf-node-grid">
-                ${sponsorNodes.slice(0, 5).map((node) => renderSeasonNode(node, true)).join('')}
+            <div class="gf-list gf-list--compact">
+                ${visibleSponsor.map((node) => renderSeasonCompactRow(node, true)).join('')}
             </div>
         `;
     }
@@ -1440,17 +1447,17 @@
         const activePaymentCard = renderActivePaymentCard();
         const growthDiagnosisCard = renderGrowthDiagnosisCard();
         const milestoneSummary = getMilestoneSummary();
+        const recommendedItemId = getRecommendedShopItemId();
+        const recommendedItem = config.shopItems.find((item) => item.id === recommendedItemId);
+        const recommendedOffer = config.paymentOffers.find((item) => item.id === getRecommendedPaymentOfferId()) || config.paymentOffers[0];
+        const visibleMilestones = [...claimableMilestones, ...milestoneViews.filter((item) => !item.claimed && !item.claimable).slice(0, 1)].slice(0, 2);
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
-                text('补给商店', 'Shop'),
-                text('商店只保留每日免费、金币箱、熔尘箱和赞助礼包四类入口，减少理解成本。', 'The shop keeps only four entry types: daily free, gold crate, dust crate, and sponsor offers.'),
+                text('商店', 'Shop'),
+                '',
                 `<div class="gf-chip">${text('可回收入口', 'Ready Sources')} · ${readyShopItems.length + claimableMilestones.length}</div>`
             )}
-            <div class="gf-list">
-                ${growthDiagnosisCard}
-            </div>
-            <div class="gf-divider"></div>
             <div class="gf-card-grid">
                 <article class="gf-card gf-shop-card is-highlight">
                     <div class="gf-card-head">
@@ -1458,14 +1465,14 @@
                             <div class="eyebrow">${text('每日免费', 'Daily Free')}</div>
                             <div class="gf-card-title">${text('每日引火箱', 'Daily Spark Box')}</div>
                         </div>
-                        <div class="gf-card-number">${isDailySupplyReady() ? text('免费', 'Free') : text('冷却中', 'Cooldown')}</div>
+                        <div class="gf-card-number">${isDailySupplyReady() ? text('免费', 'Free') : formatDurationCompact(getDailySupplyRemainingMs())}</div>
                     </div>
-                    <div class="gf-card-copy">${text('20 小时一轮，给一点基础金币、熔尘和催化剂，保证回流不断。', 'One cycle every 20 hours with a small amount of gold, dust, and catalyst so the baseline loop never fully stops.')}</div>
                     <div class="gf-chip-row" style="margin-top:12px;">
                         ${renderRewardChips(config.shopItems.find((item) => item.id === 'dailySupply').reward, { limit: 4 })}
+                        <span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +4</span>
                     </div>
                     <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="claimDailySupply" ${isDailySupplyReady() ? '' : 'disabled'}>${text('免费领取', 'Claim Free')}</button>
+                        <button class="primary-btn" type="button" data-action="claimDailySupply">${isDailySupplyReady() ? text('免费领取', 'Claim Free') : text('查看冷却', 'View Cooldown')}</button>
                     </div>
                 </article>
                 <article class="gf-card">
@@ -1476,12 +1483,14 @@
                         </div>
                         <div class="gf-card-number">$${Number(state.save.payment.totalSpent || 0).toFixed(2)}</div>
                     </div>
-                    <div class="gf-card-copy">${text('赞助会同时提高热量上限、稀有率、熔尘回收和催化剂效率，并打开赛季赞助轨。', 'Sponsor purchases boost heat cap, rare rate, dust return, and catalyst efficiency while also opening the sponsor season track.')}</div>
                     <div class="gf-chip-row" style="margin-top:12px;">
                         <span class="gf-chip">${text('热量上限', 'Heat Cap')} +${formatCompact(sponsorTier.heatCapBonus)}</span>
                         <span class="gf-chip">${text('稀有率', 'Rare Rate')} +${formatPercent(sponsorTier.rareRateBonus)}</span>
                         <span class="gf-chip">${text('熔尘回收', 'Dust')} +${formatPercent(sponsorTier.dustYieldBonus)}</span>
                         <span class="gf-chip">${text('催化效率', 'Catalyst')} +${formatPercent(sponsorTier.catalystYieldBonus)}</span>
+                    </div>
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="ghost-btn" type="button" data-action="openPayment" data-value="${recommendedOffer.id}">${text('打开礼包中心', 'Open Top-Up')}</button>
                     </div>
                 </article>
                 <article class="gf-card gf-shop-card ${milestoneSummary.claimableCount > 0 ? 'is-highlight' : ''}">
@@ -1492,9 +1501,6 @@
                         </div>
                         <div class="gf-card-number">${milestoneSummary.claimedCount}/${milestoneSummary.totalCount}</div>
                     </div>
-                    <div class="gf-card-copy">${milestoneSummary.nextThreshold > 0
-                        ? text(`当前已累充 $${Number(state.save.payment.totalSpent || 0).toFixed(2)}，距离下一档 $${milestoneSummary.nextThreshold.toFixed(2)} 还差 $${milestoneSummary.nextGap.toFixed(2)}。每档都会同时给即时资源和永久增益。`, `You have spent $${Number(state.save.payment.totalSpent || 0).toFixed(2)} so far. $${milestoneSummary.nextGap.toFixed(2)} remains to reach the next $${milestoneSummary.nextThreshold.toFixed(2)} tier. Each tier grants both instant resources and permanent gains.`)
-                        : text('4 档里程碑都已达成，后续充值只看礼包即时收益和赞助档位提升。', 'All four milestones are complete. Further purchases mainly improve immediate bundle value and sponsor tier progression.')}</div>
                     ${renderKpiGrid([
                         { label: text('已领取', 'Claimed'), value: formatCompact(milestoneSummary.claimedCount) },
                         { label: text('可领取', 'Ready'), value: formatCompact(milestoneSummary.claimableCount) },
@@ -1506,41 +1512,40 @@
                         ${milestoneSummary.nextPermanent ? renderPermanentChips(milestoneSummary.nextPermanent, { limit: 3 }) : ''}
                     </div>
                     <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="claimAllMilestones" ${milestoneSummary.claimableCount > 0 ? '' : 'disabled'}>${text('一键领取里程碑', 'Claim All')}</button>
+                        <button class="primary-btn" type="button" data-action="claimAllMilestones">${text('一键领取里程碑', 'Claim All')}</button>
                         <button class="ghost-btn" type="button" data-action="openPayment" data-value="${milestoneSummary.recommendedOfferId}">${text('去补下一档', 'Top Up Next Tier')}</button>
                     </div>
                 </article>
+                <article class="gf-card gf-shop-card ${recommendedItem && isShopItemReady(recommendedItem.id) ? 'is-highlight' : ''}">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('推荐补给', 'Recommended Supply')}</div>
+                            <div class="gf-card-title">${recommendedItem ? localize(recommendedItem.title) : text('暂无推荐', 'No Recommendation')}</div>
+                        </div>
+                        <div class="gf-card-number">${recommendedItem ? (recommendedItem.free ? text('免费', 'Free') : `${formatCompact(getShopPrice(recommendedItem.id))}${recommendedItem.priceType === 'gold' ? 'G' : 'D'}`) : '-'}</div>
+                    </div>
+                    ${recommendedItem ? `<div class="gf-chip-row" style="margin-top:12px;">${renderRewardChips(recommendedItem.reward, { limit: 4 })}</div>` : ''}
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        ${recommendedItem ? `<button class="ghost-btn" type="button" data-action="${recommendedItem.free ? 'claimDailySupply' : 'buyShopItem'}" data-value="${recommendedItem.id}">${recommendedItem.free ? text('领取', 'Claim') : text('立即购买', 'Buy Now')}</button>` : ''}
+                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${recommendedOffer.id}">${text('打开推荐礼包', 'Open Recommended Pack')}</button>
+                    </div>
+                </article>
             </div>
-            ${activePaymentCard ? `<div class="gf-list">${activePaymentCard}</div><div class="gf-divider"></div>` : ''}
-            <div class="gf-list">
-                ${config.shopItems.map(renderShopItemRow).join('')}
-            </div>
-            <div class="gf-divider"></div>
-            <div class="gf-offer-grid">
-                ${config.paymentOffers.map(renderPaymentOffer).join('')}
-            </div>
-            <div class="gf-divider"></div>
-            <div class="gf-node-grid">
-                ${milestoneViews.map((item) => `
-                    <article class="gf-card gf-node-card ${item.claimable ? 'is-ready' : ''}">
-                        <div class="gf-card-head">
-                            <div>
-                                <div class="eyebrow">${text('累充里程碑', 'Milestone')}</div>
-                                <div class="gf-card-title">$${item.threshold.toFixed(2)}</div>
+            ${activePaymentCard ? `<div class="gf-list gf-list--compact">${activePaymentCard}</div>` : ''}
+            <div class="gf-list gf-list--compact">
+                ${growthDiagnosisCard}
+                ${visibleMilestones.map((item) => `
+                    <article class="gf-compact-row ${item.claimable ? 'is-ready' : ''}">
+                        <div class="gf-compact-main">
+                            <div class="gf-compact-title">${text('里程碑', 'Milestone')} · $${item.threshold.toFixed(2)}</div>
+                            <div class="gf-chip-row">
+                                ${renderRewardChips(item.reward, { limit: 3 })}
+                                ${renderPermanentChips(item.permanent, { limit: 2 })}
                             </div>
-                            <div class="gf-card-number">${item.claimed ? text('已领', 'Claimed') : item.claimable ? text('可领', 'Ready') : text('未达成', 'Pending')}</div>
                         </div>
-                        <div class="gf-chip-row" style="margin-top:12px;">
-                            ${renderRewardChips(item.reward, { limit: 4 })}
-                            ${renderPermanentChips(item.permanent, { limit: 4 })}
-                        </div>
-                        <div class="gf-card-copy" style="margin-top:12px;">${item.claimed
-                            ? text('该档永久增益已并入账号成长，后续合同、熔炼与回收都会持续生效。', 'This tier’s permanent boosts are already merged into your account progression and keep affecting contracts, forging, and recycling.')
-                            : item.claimable
-                                ? text('这档已经达成，建议立即领掉，让热量上限、稀有率或回收效率立刻生效。', 'This tier is ready. Claim it now so the permanent heat, rarity, or recycle boosts apply immediately.')
-                                : text('每一档都同时给即时资源和永久增益，领完后的后续收益也会更高。', 'Each tier grants instant resources plus permanent gains, so future progression also becomes more efficient.')}</div>
-                        <div class="gf-action-row" style="margin-top:12px;">
-                            <button class="primary-btn" type="button" data-action="claimMilestone" data-value="${item.id}" ${item.claimable ? '' : 'disabled'}>${item.claimed ? text('已领取', 'Claimed') : text('领取', 'Claim')}</button>
+                        <div class="gf-compact-side">
+                            <strong>${item.claimed ? text('已领', 'Claimed') : item.claimable ? text('可领', 'Ready') : text('未达', 'Pending')}</strong>
+                            <button class="${item.claimable ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="${item.claimable ? 'claimMilestone' : 'openPayment'}" data-value="${item.claimable ? item.id : milestoneSummary.recommendedOfferId}">${item.claimable ? text('领取', 'Claim') : text('去补', 'Top Up')}</button>
                         </div>
                     </article>
                 `).join('')}
@@ -1622,6 +1627,165 @@
         `;
     }
 
+    function renderCompactGemActionRow(row) {
+        const family = familyMap[row.familyId];
+        const recycleDust = getRecycleDustValue(row.tier, 1);
+        return `
+            <article class="gf-compact-row">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">
+                        <i class="gf-gem-dot" style="color:${family.accent}; background:${family.accent};"></i>
+                        ${localize(family.name)} · T${row.tier}
+                    </div>
+                    <div class="gf-compact-sub">${text(`库存 ${row.count} · 觉醒 ${row.awakened}`, `Owned ${row.count} · Awakened ${row.awakened}`)}</div>
+                </div>
+                <div class="gf-compact-side">
+                    <div class="gf-chip-row">
+                        ${row.canFuse ? `<span class="gf-chip is-success">${text('可合成', 'Fuse Ready')}</span>` : ''}
+                        ${row.canAwaken ? `<span class="gf-chip is-warning">${text('可觉醒', 'Awaken Ready')}</span>` : ''}
+                    </div>
+                    <div class="gf-action-row">
+                        <button class="ghost-btn" type="button" data-action="salvageGem" data-value="${row.key}">${text(`回收 +${formatCompact(recycleDust)}`, `Recycle +${formatCompact(recycleDust)}`)}</button>
+                        <button class="ghost-btn" type="button" data-action="fuseGem" data-value="${row.key}">${text('合成', 'Fuse')}</button>
+                        <button class="primary-btn" type="button" data-action="awakenGem" data-value="${row.key}">${text('觉醒', 'Awaken')}</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderMissionCompactRow(mission) {
+        const route = getMissionRoute(mission.id);
+        return `
+            <article class="gf-compact-row ${mission.claimable ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${mission.title}</div>
+                    <div class="gf-compact-sub">${getMissionDesc(mission.id)}</div>
+                    <div class="gf-progress gf-progress--small"><i style="width:${(mission.progressRate * 100).toFixed(2)}%;"></i></div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(mission.reward, { limit: 3 })}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${mission.progress}/${mission.target}</strong>
+                    <button class="${mission.claimable ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="${mission.claimable ? 'claimMission' : 'openTab'}" data-value="${mission.claimable ? mission.id : route.tab}">${mission.claimable ? text('领取', 'Claim') : route.label}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderSeasonCompactRow(node, sponsor = false) {
+        const gapXp = Math.max(0, Number(node.xp || 0) - Number(state.save.seasonXp || 0));
+        const action = node.claimable
+            ? { action: sponsor ? 'claimSponsorSeason' : 'claimSeason', value: node.id, label: text('领取', 'Claim'), cls: 'primary-btn' }
+            : sponsor && !state.save.payment.passUnlocked
+                ? { action: 'openTab', value: 'shop', label: text('去开赞助', 'Unlock Sponsor'), cls: 'ghost-btn' }
+                : { action: 'openTab', value: gapXp > 0 ? 'forge' : 'season', label: gapXp > 0 ? text('去拿 XP', 'Get XP') : text('查看', 'View'), cls: 'ghost-btn' };
+        return `
+            <article class="gf-compact-row ${node.claimable ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${sponsor ? text('赞助轨', 'Sponsor') : text('免费轨', 'Free')} · ${node.id}</div>
+                    <div class="gf-compact-sub">${node.claimed
+                        ? text('该节点已领取。', 'This node is already claimed.')
+                        : sponsor && !state.save.payment.passUnlocked
+                            ? text('先开赞助，再领这条赛季奖励。', 'Unlock sponsor first to claim this reward.')
+                            : gapXp > 0
+                                ? text(`还差 ${formatCompact(gapXp)} XP。`, `${formatCompact(gapXp)} XP remaining.`)
+                                : text('当前节点可立即领取。', 'This node is ready to claim.')}</div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(node.reward, { limit: 3 })}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${node.claimed ? text('已领', 'Claimed') : node.claimable ? text('可领', 'Ready') : `${formatCompact(node.xp)} XP`}</strong>
+                    <button class="${node.claimed ? 'ghost-btn' : action.cls}" type="button" data-action="${node.claimed ? 'openTab' : action.action}" data-value="${node.claimed ? 'season' : action.value}">${node.claimed ? text('已完成', 'Done') : action.label}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderForgeStageCard(options = {}) {
+        const contract = options.contract || getCurrentContract();
+        const effectivePower = Number(options.effectivePower || 0);
+        const gap = Math.max(0, contract.recommended - effectivePower);
+        const heatMax = Math.max(1, getHeatMax());
+        const heatPercent = Math.min(100, (state.save.heat / heatMax) * 100);
+        const t3Remain = Math.max(0, config.forgeBalance.pityTier3Need - state.save.pity.t3);
+        const t4Remain = Math.max(0, config.forgeBalance.pityTier4Need - state.save.pity.t4);
+        const slotCards = SLOT_ORDER.map((slotId, index) => {
+            const sigilId = state.save.selectedSigils[index];
+            const sigil = sigilMap[sigilId];
+            const locked = slotId === 'resonance' && state.save.bestContractIndex < 2;
+            const level = sigil ? getSigilLevel(sigil.id) : 0;
+            return { slotId, sigil, locked, level };
+        });
+        const familyCards = config.gemFamilies.map((family) => ({
+            ...family,
+            total: getFamilyGemCount(family.id),
+            awakened: getFamilyAwakenedCount(family.id),
+            focus: contract.focus.includes(family.id)
+        })).sort((left, right) => Number(right.focus) - Number(left.focus) || right.total - left.total).slice(0, 4);
+        const heatEnoughOne = state.save.heat >= SMELT_HEAT_COST;
+        const heatEnoughBatch = state.save.heat >= config.forgeBalance.batchSmeltHeatCost;
+
+        return `
+            <article class="gf-card gf-forge-stage">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('熔炉战场', 'Forge Stage')}</div>
+                        <div class="gf-card-title">${gap > 0 ? text(`还差 ${formatCompact(gap)} 才能稳过 ${contract.id}`, `${formatCompact(gap)} short of ${contract.id}`) : text(`${contract.id} 已可推进`, `${contract.id} ready`)}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(effectivePower)}</div>
+                </div>
+                <div class="gf-forge-scene">
+                    <div class="gf-forge-core-wrap">
+                        <div class="gf-forge-core">
+                            <span>${text('炉芯热量', 'Core Heat')}</span>
+                            <strong>${formatCompact(Math.floor(state.save.heat))}</strong>
+                            <small>${heatPercent.toFixed(0)}%</small>
+                        </div>
+                        <div class="gf-forge-meter-grid">
+                            <div class="gf-forge-meter">
+                                <span>T3 ${text('保底', 'Pity')}</span>
+                                <strong>${t3Remain}</strong>
+                                <div class="gf-progress gf-progress--small"><i style="width:${Math.min(100, (state.save.pity.t3 / Math.max(1, config.forgeBalance.pityTier3Need)) * 100).toFixed(2)}%;"></i></div>
+                            </div>
+                            <div class="gf-forge-meter">
+                                <span>T4 ${text('保底', 'Pity')}</span>
+                                <strong>${t4Remain}</strong>
+                                <div class="gf-progress gf-progress--small"><i style="width:${Math.min(100, (state.save.pity.t4 / Math.max(1, config.forgeBalance.pityTier4Need)) * 100).toFixed(2)}%;"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gf-forge-side">
+                        <div class="gf-chip-row">
+                            <span class="gf-chip is-strong">${text('合同', 'Contract')} · ${contract.id}</span>
+                            ${contract.focus.map((familyId) => `<span class="gf-chip ${contract.focus.includes(familyId) ? 'is-success' : ''}">${localize(familyMap[familyId].name)}</span>`).join('')}
+                        </div>
+                        <div class="gf-forge-slot-list">
+                            ${slotCards.map((item) => `<div class="gf-forge-slot ${item.locked ? 'is-locked' : ''}">
+                                <span>${getSlotName(item.slotId)}</span>
+                                <strong>${item.locked ? text('未开', 'Locked') : item.sigil && item.level > 0 ? `${localize(item.sigil.name)} Lv.${item.level}` : text('空槽', 'Empty')}</strong>
+                            </div>`).join('')}
+                        </div>
+                        <div class="gf-forge-family-grid">
+                            ${familyCards.map((family) => `<div class="gf-forge-family ${family.focus ? 'is-focus' : ''}">
+                                <span>${localize(family.name)}</span>
+                                <strong>${formatCompact(family.total)}</strong>
+                                <small>${text('觉醒', 'Awaken')} ${formatCompact(family.awakened)}</small>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="smeltOne">${heatEnoughOne ? text('立即熔炼', 'Smelt Now') : text(`热量不足 · 还差 ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))}`, `Need ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))} heat`)}</button>
+                    <button class="ghost-btn" type="button" data-action="smeltBatch">${heatEnoughBatch ? text('批量熔炼 x3', 'Batch x3') : text(`批量还差 ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`, `Need ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`)}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('调整符印', 'Tune Sigils')}</button>
+                </div>
+            </article>
+        `;
+    }
+
     function renderSlotCard(item) {
         const slotName = getSlotName(item.slotId);
         const isLocked = item.slotId === 'resonance' && state.save.bestContractIndex < 2;
@@ -1666,8 +1830,8 @@
                     ${slotLocked ? `<span class="gf-chip is-warning">${text('槽位未开', 'Slot Locked')}</span>` : ''}
                 </div>
                 <div class="gf-action-row" style="margin-top:12px;">
-                    <button class="ghost-btn" type="button" data-action="equipSigil" data-value="${sigil.id}" ${(unlocked && !slotLocked) ? '' : 'disabled'}>${equipped ? text('当前已装', 'Equipped') : text('装到槽位', 'Equip')}</button>
-                    <button class="primary-btn" type="button" data-action="${unlocked ? 'upgradeSigil' : 'unlockSigil'}" data-value="${sigil.id}" ${(unlockReady || upgradeReady) ? '' : 'disabled'}>${unlocked
+                    <button class="ghost-btn" type="button" data-action="equipSigil" data-value="${sigil.id}">${equipped ? text('当前已装', 'Equipped') : text('装到槽位', 'Equip')}</button>
+                    <button class="primary-btn" type="button" data-action="${unlocked ? 'upgradeSigil' : 'unlockSigil'}" data-value="${sigil.id}">${unlocked
                         ? (level >= 8 ? text('已满级', 'Maxed') : text(`升级 · ${formatCompact(upgradeCost.gold)}G / ${formatCompact(upgradeCost.shards)} 碎片`, `Upgrade · ${formatCompact(upgradeCost.gold)}G / ${formatCompact(upgradeCost.shards)} shards`))
                         : text(`解锁 · ${formatCompact(sigil.shardUnlock)} 碎片`, `Unlock · ${formatCompact(sigil.shardUnlock)} shards`)}</button>
                 </div>
@@ -1698,10 +1862,10 @@
     function renderPanelHead(title, copy, side = '') {
         return `
             <div class="gf-panel-head">
-                <div>
+                <div class="gf-panel-title-wrap">
                     <div class="eyebrow">${title}</div>
                     <h2>${title}</h2>
-                    <div class="gf-panel-copy">${copy}</div>
+                    ${copy ? `<div class="gf-panel-copy">${copy}</div>` : ''}
                 </div>
                 ${side}
             </div>
@@ -1749,6 +1913,80 @@
         if (permanent.catalystYield) chips.push(`<span class="gf-chip is-success">${text('永久催化', 'Perm Catalyst')} +${formatPercent(permanent.catalystYield)}</span>`);
         if (chips.length > limit) return [...chips.slice(0, limit), `<span class="gf-chip">+${chips.length - limit}</span>`].join('');
         return chips.join('');
+    }
+
+    function getFamilyGemCount(familyId, minTier = 1) {
+        return config.gemTiers.reduce((sum, tierMeta) => {
+            if (tierMeta.tier < minTier) return sum;
+            return sum + getGemCount(familyId, tierMeta.tier);
+        }, 0);
+    }
+
+    function getFamilyAwakenedCount(familyId) {
+        return config.gemTiers.reduce((sum, tierMeta) => {
+            const key = buildGemKey(familyId, tierMeta.tier);
+            return sum + getAwakenedCount(key);
+        }, 0);
+    }
+
+    function getDailySupplyRemainingMs() {
+        if (isDailySupplyReady()) return 0;
+        return Math.max(0, DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - Number(state.save.dailySupplyAt || 0)));
+    }
+
+    function formatDurationCompact(ms) {
+        const totalSeconds = Math.max(0, Math.ceil((Number(ms) || 0) / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${Math.max(1, minutes)}m`;
+    }
+
+    function getMissionRoute(missionId) {
+        switch (missionId) {
+            case 'm1':
+            case 'm2':
+            case 'm6':
+            case 'm8':
+            case 'm9':
+                return { tab: 'forge', label: text('去熔炉', 'Open Forge') };
+            case 'm3':
+                return { tab: 'sigils', label: text('去符印', 'Open Sigils') };
+            case 'm4':
+            case 'm7':
+            case 'm10':
+                return { tab: 'contracts', label: text('去合同', 'Open Contracts') };
+            case 'm5':
+                return { tab: 'workshop', label: text('去工坊', 'Open Workshop') };
+            default:
+                return { tab: 'forge', label: text('去熔炉', 'Open Forge') };
+        }
+    }
+
+    function getMissionDesc(missionId) {
+        switch (missionId) {
+            case 'm1': return text('多开炉拿基础库存。', 'Forge more starter stock.');
+            case 'm2': return text('先把可合成行吃掉。', 'Consume fuse-ready rows first.');
+            case 'm3': return text('升级主印和共鸣槽。', 'Upgrade main and echo sigils.');
+            case 'm4': return text('当前够线就去推 1-3。', 'Push to 1-3 once ready.');
+            case 'm5': return text('优先热量恢复和稀有率。', 'Prioritize heat regen and rare rate.');
+            case 'm6': return text('攒出第一颗 T3。', 'Build your first T3.');
+            case 'm7': return text('中期开始补 2-2。', 'Push toward 2-2 in midgame.');
+            case 'm8': return text('持续做高阶合成。', 'Keep chaining higher fusions.');
+            case 'm9': return text('开始追 T4 产线。', 'Start chasing T4 output.');
+            case 'm10': return text('终局目标推进到 3-3。', 'Endgame push to 3-3.');
+            default: return text('继续当前主循环。', 'Continue the core loop.');
+        }
+    }
+
+    function getRecommendedShopItemId() {
+        const diagnosis = getGrowthDiagnosis();
+        if (diagnosis.pressureId === 'catalyst') {
+            return state.save.payment.passUnlocked ? 'sponsorVault' : 'dustCrate';
+        }
+        if (diagnosis.pressureId === 'dust') return 'goldCrate';
+        if (diagnosis.pressureId === 'gold') return 'dustCrate';
+        return state.save.payment.passUnlocked ? 'sponsorVault' : 'goldCrate';
     }
 
     function createBaseSave() {
@@ -2118,7 +2356,7 @@
     function unlockSigil(sigilId) {
         const sigil = sigilMap[sigilId];
         if (!sigil) return;
-        if (getSigilLevel(sigilId) > 0) return;
+        if (getSigilLevel(sigilId) > 0) return showToast(text('该符印已经解锁。', 'This sigil is already unlocked.'));
         if (getSigilShardCount(sigilId) < sigil.shardUnlock) return showToast(text('符印碎片不足。', 'Not enough sigil shards.'));
         state.save.sigilShards[sigilId] -= sigil.shardUnlock;
         state.save.sigilLevels[sigilId] = 1;
@@ -2145,7 +2383,7 @@
         if (!sigil) return;
         const level = getSigilLevel(sigilId);
         if (level <= 0) return showToast(text('请先解锁该符印。', 'Unlock this sigil first.'));
-        if (level >= 8) return;
+        if (level >= 8) return showToast(text('该符印已经满级。', 'This sigil is already maxed.'));
         const cost = getSigilUpgradeCost(sigilId);
         if (state.save.gold < cost.gold) return showToast(text('金币不足。', 'Not enough gold.'));
         if (getSigilShardCount(sigilId) < cost.shards) return showToast(text('符印碎片不足。', 'Not enough sigil shards.'));
@@ -2172,8 +2410,16 @@
 
     function claimMission(missionId) {
         const mission = config.missions.find((item) => item.id === missionId);
+        if (!mission) return showToast(text('未找到该任务。', 'Mission not found.'));
         const view = getMissionView(mission);
-        if (!view || !view.claimable) return;
+        if (!view) return showToast(text('当前无法领取该任务。', 'This mission cannot be claimed right now.'));
+        if (view.claimed) return showToast(text('该任务奖励已经领取过了。', 'This mission reward has already been claimed.'));
+        if (!view.claimable) {
+            const route = getMissionRoute(missionId);
+            state.tab = tabMap[route.tab] ? route.tab : state.tab;
+            renderAll();
+            return showToast(text('任务尚未完成，已跳到对应页签。', 'Mission not ready. Routed to the relevant tab.'));
+        }
         grantReward(view.reward);
         state.save.missionClaimed.push(missionId);
         showToast(text('任务奖励已领取。', 'Mission reward claimed.'));
@@ -2183,7 +2429,7 @@
 
     function claimAllMissions() {
         const claimable = config.missions.map(getMissionView).filter((item) => item.claimable);
-        if (!claimable.length) return;
+        if (!claimable.length) return showToast(text('当前没有可领取的任务奖励。', 'There are no mission rewards ready right now.'));
         claimable.forEach((item) => {
             grantReward(item.reward);
             state.save.missionClaimed.push(item.id);
@@ -2196,7 +2442,17 @@
 
     function claimSeasonNode(nodeId) {
         const node = config.seasonNodes.find((item) => item.id === nodeId);
-        if (!node || !isSeasonClaimable(node.id)) return;
+        if (!node) return showToast(text('未找到该赛季节点。', 'Season node not found.'));
+        if (state.save.seasonClaimed.includes(node.id)) return showToast(text('该赛季奖励已经领取。', 'This season reward has already been claimed.'));
+        if (!isSeasonClaimable(node.id)) {
+            const gapXp = Math.max(0, Number(node.xp || 0) - Number(state.save.seasonXp || 0));
+            if (gapXp > 0) {
+                state.tab = 'forge';
+                renderAll();
+                return showToast(text(`还差 ${formatCompact(gapXp)} XP，先去熔炉推进。`, `You need ${formatCompact(gapXp)} more XP. Head to Forge first.`));
+            }
+            return showToast(text('该赛季奖励当前不可领取。', 'This season reward is not claimable right now.'));
+        }
         grantReward(node.reward);
         state.save.seasonClaimed.push(node.id);
         showToast(text('赛季奖励已领取。', 'Season reward claimed.'));
@@ -2206,7 +2462,22 @@
 
     function claimSponsorSeasonNode(nodeId) {
         const node = config.sponsorSeasonNodes.find((item) => item.id === nodeId);
-        if (!node || !isSponsorSeasonClaimable(node.id)) return;
+        if (!node) return showToast(text('未找到该赞助赛季节点。', 'Sponsor season node not found.'));
+        if (state.save.payment.premiumSeasonClaims[node.id]) return showToast(text('该赞助奖励已经领取。', 'This sponsor reward has already been claimed.'));
+        if (!state.save.payment.passUnlocked) {
+            state.tab = 'shop';
+            renderAll();
+            return showToast(text('需要先开通赞助，已跳到商店。', 'Sponsor unlock is required first. Routed to Shop.'));
+        }
+        if (!isSponsorSeasonClaimable(node.id)) {
+            const gapXp = Math.max(0, Number(node.xp || 0) - Number(state.save.seasonXp || 0));
+            if (gapXp > 0) {
+                state.tab = 'forge';
+                renderAll();
+                return showToast(text(`还差 ${formatCompact(gapXp)} XP，先去熔炉推进。`, `You need ${formatCompact(gapXp)} more XP. Head to Forge first.`));
+            }
+            return showToast(text('该赞助赛季奖励当前不可领取。', 'This sponsor season reward is not claimable right now.'));
+        }
         grantReward(node.reward);
         state.save.payment.premiumSeasonClaims[node.id] = true;
         showToast(text('赞助赛季奖励已领取。', 'Sponsor season reward claimed.'));
@@ -2215,25 +2486,31 @@
     }
 
     function claimAllSeason() {
+        let claimedCount = 0;
         config.seasonNodes.forEach((node) => {
             if (isSeasonClaimable(node.id)) {
                 grantReward(node.reward);
                 state.save.seasonClaimed.push(node.id);
+                claimedCount += 1;
             }
         });
         config.sponsorSeasonNodes.forEach((node) => {
             if (isSponsorSeasonClaimable(node.id)) {
                 grantReward(node.reward);
                 state.save.payment.premiumSeasonClaims[node.id] = true;
+                claimedCount += 1;
             }
         });
-        showToast(text('全部可领奖励已回收。', 'All ready rewards claimed.'));
+        if (!claimedCount) return showToast(text('当前没有可领取的赛季奖励。', 'There are no season rewards ready right now.'));
+        showToast(text(`已领取 ${claimedCount} 个赛季奖励。`, `Claimed ${claimedCount} season rewards.`));
         saveProgress();
         renderAll();
     }
 
     function claimDailySupply() {
-        if (!isDailySupplyReady()) return;
+        if (!isDailySupplyReady()) {
+            return showToast(text(`每日补给冷却中，${formatDurationCompact(getDailySupplyRemainingMs())} 后可领。`, `Daily supply is cooling down. Ready in ${formatDurationCompact(getDailySupplyRemainingMs())}.`));
+        }
         const item = config.shopItems.find((entry) => entry.id === 'dailySupply');
         grantReward(item.reward);
         grantFocusShards(getCurrentContract().focus, 4);
@@ -2284,8 +2561,14 @@
 
     function claimPaymentMilestone(milestoneId) {
         const milestone = config.paymentMilestones.find((item) => item.id === milestoneId);
+        if (!milestone) return showToast(text('未找到该累充里程碑。', 'Payment milestone not found.'));
         const view = getMilestoneView(milestone);
-        if (!view || !view.claimable) return;
+        if (!view) return showToast(text('当前无法领取该累充里程碑。', 'This payment milestone cannot be claimed right now.'));
+        if (view.claimed) return showToast(text('该累充里程碑已经领取过了。', 'This payment milestone has already been claimed.'));
+        if (!view.claimable) {
+            openPaymentModal(getMilestoneSummary().recommendedOfferId);
+            return showToast(text('尚未达到该档位，已打开推荐礼包。', 'This tier is not reached yet. Opened the recommended pack.'));
+        }
         grantReward(view.reward);
         applyPermanentBonus(view.permanent);
         state.save.payment.milestoneClaims[milestoneId] = true;
@@ -2296,7 +2579,12 @@
 
     function claimAllPaymentMilestones() {
         const claimable = config.paymentMilestones.map(getMilestoneView).filter((item) => item && item.claimable);
-        if (!claimable.length) return;
+        if (!claimable.length) {
+            const summary = getMilestoneSummary();
+            return showToast(summary.nextThreshold > 0
+                ? text(`当前没有可领取的累充奖励，距离下一档还差 $${summary.nextGap.toFixed(2)}。`, `No payment milestones are ready. $${summary.nextGap.toFixed(2)} more to the next tier.`)
+                : text('当前没有可领取的累充奖励。', 'There are no payment milestones ready right now.'));
+        }
         claimable.forEach((item) => {
             grantReward(item.reward);
             applyPermanentBonus(item.permanent);
@@ -3071,153 +3359,50 @@
 
     renderForgeTab = function renderForgeTabEnhanced() {
         const contract = getCurrentContract();
-        const power = getCurrentPower();
         const effectivePower = getEffectiveContractPower();
-        const passives = getSigilPassives();
-        const heatEnoughOne = state.save.heat >= SMELT_HEAT_COST;
-        const heatEnoughBatch = state.save.heat >= config.forgeBalance.batchSmeltHeatCost;
         const inventoryRows = getGemInventoryRows();
         const fuseReady = inventoryRows.filter((row) => row.canFuse);
         const awakenReady = inventoryRows.filter((row) => row.canAwaken);
         const lastResult = state.save.lastResult;
         const recyclePlan = getSmartRecyclePlan();
-        const slotCards = SLOT_ORDER.map((slotId, index) => {
-            const sigilId = state.save.selectedSigils[index];
-            const sigil = sigilMap[sigilId];
-            const locked = slotId === 'resonance' && state.save.bestContractIndex < 2;
-            const level = sigil ? getSigilLevel(sigil.id) : 0;
-            return { slotId, sigil, locked, level };
-        });
-        const loadoutPower = getSelectedSigilPower();
-        const upgradeReadyCount = config.sigils.filter((sigil) => {
-            const level = getSigilLevel(sigil.id);
-            const cost = getSigilUpgradeCost(sigil.id);
-            return level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigil.id) >= cost.shards;
-        }).length;
+        const actionableRows = inventoryRows.filter((row) => row.canFuse || row.canAwaken).slice(0, 4);
+        const previewRows = actionableRows.length ? actionableRows : inventoryRows.slice(0, 4);
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
-                text('熔炉主界面', 'Forge Core'),
-                text('单屏只保留热量、合同焦点、保底进度、熔炼按钮和当前可操作库存，先把循环跑顺。', 'This view keeps only heat, contract focus, pity progress, forge buttons, and actionable inventory so the core loop stays readable.'),
-                `<div class="gf-chip">${text('焦点掉落', 'Focus')} · ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')}</div>`
+                text('熔炉', 'Forge'),
+                '',
+                `<div class="gf-chip">${contract.id} · ${text('焦点', 'Focus')} ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')}</div>`
             )}
-            <div class="gf-card-grid">
-                <article class="gf-card">
-                    <div class="gf-card-head">
-                        <div>
-                            <div class="eyebrow">${text('熔炉状态', 'Forge Status')}</div>
-                            <div class="gf-card-title">${text('热量与保底', 'Heat & Pity')}</div>
-                        </div>
-                        <div class="gf-card-number">${formatCompact(Math.floor(state.save.heat))}</div>
-                    </div>
-                    <div class="gf-card-copy">${text('单次熔炼消耗 4 热量；批量熔炼用 12 热量换 3 次，并附带少量金币 / 熔尘回流。', 'Single forge spends 4 heat. Batch forge spends 12 heat for 3 rolls and adds a small gold/dust return.')}</div>
-                    ${renderKpiGrid([
-                        { label: text('热量上限', 'Heat Cap'), value: formatCompact(getHeatMax()) },
-                        { label: text('恢复 / 秒', 'Regen / s'), value: formatCompact(getHeatRegenPerSecond()) },
-                        { label: text('T3 保底', 'T3 Pity'), value: `${Math.max(0, config.forgeBalance.pityTier3Need - state.save.pity.t3)}` },
-                        { label: text('T4 保底', 'T4 Pity'), value: `${Math.max(0, config.forgeBalance.pityTier4Need - state.save.pity.t4)}` }
-                    ])}
-                    <div class="gf-progress"><i style="width:${Math.min(100, (state.save.heat / Math.max(1, getHeatMax())) * 100).toFixed(2)}%;"></i></div>
-                    <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="smeltOne" ${heatEnoughOne ? '' : 'disabled'}>${text('立即熔炼', 'Smelt Now')}</button>
-                        <button class="ghost-btn" type="button" data-action="smeltBatch" ${heatEnoughBatch ? '' : 'disabled'}>${text('批量熔炼 x3', 'Batch x3')}</button>
-                    </div>
-                </article>
-                <article class="gf-card">
-                    <div class="gf-card-head">
-                        <div>
-                            <div class="eyebrow">${text('当前主构筑', 'Current Build')}</div>
-                            <div class="gf-card-title">${text('3 槽符印与关键增益', '3-slot sigils and key passives')}</div>
-                        </div>
-                        <div class="gf-card-number">${formatCompact(loadoutPower)}</div>
-                    </div>
-                    <div class="gf-card-copy">${text('熔炉页直接展示当前 3 槽构筑，方便一眼判断主产出、连锁增益和经济回流是否已经到位。', 'The forge page now shows the live 3-slot build so you can quickly judge whether output, chaining, and economy are aligned.')}</div>
-                    ${renderKpiGrid([
-                        { label: text('符印战力', 'Sigil Power'), value: formatCompact(loadoutPower) },
-                        { label: text('可升级', 'Ready Up'), value: formatCompact(upgradeReadyCount) },
-                        { label: text('催化库存', 'Catalyst'), value: formatCompact(state.save.catalyst) },
-                        { label: text('可觉醒行', 'Awaken Ready'), value: formatCompact(awakenReady.length) }
-                    ])}
-                    <div class="gf-chip-row" style="margin-top:12px;">
-                        ${slotCards.map((item) => item.locked
-                            ? `<span class="gf-chip is-warning">${getSlotName(item.slotId)} · ${text('未开启', 'Locked')}</span>`
-                            : item.sigil && item.level > 0
-                                ? `<span class="gf-chip is-strong">${getSlotName(item.slotId)} · ${localize(item.sigil.name)} Lv.${item.level}</span>`
-                                : `<span class="gf-chip">${getSlotName(item.slotId)} · ${text('空槽', 'Empty')}</span>`).join('')}
-                    </div>
-                    <div class="gf-chip-row" style="margin-top:10px;">
-                        ${passives.heatRegen > 0 ? `<span class="gf-chip">${text('热量恢复', 'Heat Regen')} +${formatCompact(passives.heatRegen)}/s</span>` : ''}
-                        ${passives.rareRate > 0 ? `<span class="gf-chip">${text('稀有率', 'Rare Rate')} +${formatPercent(passives.rareRate)}</span>` : ''}
-                        ${passives.jumpChance > 0 ? `<span class="gf-chip">${text('跳阶率', 'Tier Jump')} +${formatPercent(passives.jumpChance)}</span>` : ''}
-                        ${passives.doubleChance > 0 ? `<span class="gf-chip">${text('双倍产出', 'Double Output')} +${formatPercent(passives.doubleChance)}</span>` : ''}
-                        ${passives.goldBonus > 0 ? `<span class="gf-chip">${text('金币回收', 'Gold Return')} +${formatPercent(passives.goldBonus)}</span>` : ''}
-                    </div>
-                    <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="openTab" data-value="sigils">${text('调整符印', 'Tune Sigils')}</button>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="workshop">${text('补工坊', 'Open Workshop')}</button>
-                    </div>
-                </article>
-                <article class="gf-card">
-                    <div class="gf-card-head">
-                        <div>
-                            <div class="eyebrow">${text('当前卡点', 'Current Wall')}</div>
-                            <div class="gf-card-title">${effectivePower >= contract.recommended ? text('可以继续冲合同', 'Ready to push') : text('仍需补强', 'Needs more power')}</div>
-                        </div>
-                        <div class="gf-card-number">${formatCompact(Math.max(0, contract.recommended - effectivePower))}</div>
-                    </div>
-                    <div class="gf-card-copy">${text(`合同 ${contract.id} 推荐战力 ${formatCompact(contract.recommended)}。这里直接按“基础战力 + 符印稳定补正”显示真实过线能力，避免误判。`, `Contract ${contract.id} recommends ${formatCompact(contract.recommended)} power. This card uses base power plus sigil stability so the real clear line is visible at a glance.`)}</div>
-                    ${renderKpiGrid([
-                        { label: text('有效战力', 'Effective'), value: formatCompact(effectivePower) },
-                        { label: text('稳定补正', 'Stability'), value: `+${formatCompact(passives.contractStability)}` },
-                        { label: text('推荐线', 'Recommended'), value: formatCompact(contract.recommended) },
-                        { label: text('金币回收', 'Gold'), value: formatCompact(contract.reward.gold) }
-                    ])}
-                    <div class="gf-chip-row" style="margin-top:12px;">
-                        ${contract.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
-                        <span class="gf-chip is-warning">${text('建议同步补符印与工坊', 'Raise sigils and workshop together')}</span>
-                    </div>
-                    <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="openTab" data-value="contracts">${text('去合同页推进', 'Open Contracts')}</button>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('去补符印', 'Raise Sigils')}</button>
-                    </div>
-                </article>
-                <article class="gf-card">
-                    <div class="gf-card-head">
-                        <div>
-                            <div class="eyebrow">${text('智能回收', 'Smart Recycle')}</div>
-                            <div class="gf-card-title">${recyclePlan.entries.length ? text(`${recyclePlan.totalCount} 颗可回收`, `${recyclePlan.totalCount} gems recyclable`) : text('无安全富余库存', 'No safe overflow')}</div>
-                        </div>
-                        <div class="gf-card-number">${formatCompact(recyclePlan.totalDust)}</div>
-                    </div>
-                    <div class="gf-card-copy">${text('只回收当前推进用不上的低优先宝石，会为当前合同焦点保留合成和觉醒所需的基础库存。', 'Only low-priority gems outside your current push are recycled, while the stock needed for upcoming fuse and awaken steps is kept.')}</div>
-                    ${renderKpiGrid([
-                        { label: text('可回收行', 'Rows'), value: formatCompact(recyclePlan.entries.length) },
-                        { label: text('可回收总数', 'Gems'), value: formatCompact(recyclePlan.totalCount) },
-                        { label: text('熔尘返还', 'Dust Back'), value: formatCompact(recyclePlan.totalDust) },
-                        { label: text('保留库存', 'Kept'), value: formatCompact(recyclePlan.protectedCount) }
-                    ])}
-                    <div class="gf-chip-row" style="margin-top:12px;">
-                        ${recyclePlan.entries.slice(0, 4).map((entry) => `<span class="gf-chip">${localize(familyMap[entry.familyId].name)} T${entry.tier} · -${entry.amount}</span>`).join('')}
-                        ${recyclePlan.entries.length > 4 ? `<span class="gf-chip is-warning">+${recyclePlan.entries.length - 4}</span>` : ''}
-                    </div>
-                    <div class="gf-action-row" style="margin-top:12px;">
-                        <button class="primary-btn" type="button" data-action="smartRecycle" ${recyclePlan.entries.length ? '' : 'disabled'}>${text('一键回收', 'Smart Recycle')}</button>
-                    </div>
-                </article>
+            ${renderForgeStageCard({ contract, effectivePower })}
+            <div class="gf-inline-grid">
+                <div class="gf-inline-pill"><span>${text('可合成', 'Fuse Ready')}</span><strong>${formatCompact(fuseReady.length)}</strong></div>
+                <div class="gf-inline-pill"><span>${text('可觉醒', 'Awaken Ready')}</span><strong>${formatCompact(awakenReady.length)}</strong></div>
+                <div class="gf-inline-pill"><span>${text('可回收尘', 'Recycle Dust')}</span><strong>${formatCompact(recyclePlan.totalDust)}</strong></div>
             </div>
             ${renderLatestResultCard(lastResult, { context: 'forge', compact: true })}
             <article class="gf-list-card">
                 <div class="gf-card-head">
                     <div>
-                        <div class="eyebrow">${text('宝石库存', 'Gem Stock')}</div>
-                        <div class="gf-card-title">${text(`${fuseReady.length} 条可合成，${awakenReady.length} 条可觉醒`, `${fuseReady.length} fuse-ready, ${awakenReady.length} awaken-ready`)}</div>
+                        <div class="eyebrow">${text('当前可操作', 'Action Queue')}</div>
+                        <div class="gf-card-title">${previewRows.length ? text('先处理这几条，再继续开炉', 'Handle these first, then keep forging') : text('先开一炉拿第一批宝石', 'Forge once to get the first stock')}</div>
                     </div>
                     <div class="gf-card-number">${formatCompact(getTotalGemCount())}</div>
                 </div>
-                <div class="gf-card-copy">${text('这里按“能不能操作”排序：能合成、能觉醒、价值高的宝石会自动置顶。', 'Rows are sorted by actionability first, so fuse-ready, awaken-ready, and high-value gems stay on top.')}</div>
-                <div class="gf-list" style="margin-top:12px;">
-                    ${inventoryRows.length ? inventoryRows.slice(0, 12).map(renderGemRow).join('') : `<div class="gf-empty">${text('当前库存还是空的，先点一次“立即熔炼”拿到第一批宝石。', 'Your stock is empty. Start with one smelt to get the first gems rolling.')}</div>`}
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    <span class="gf-chip">${text('总库存', 'Total Gems')} · ${formatCompact(getTotalGemCount())}</span>
+                    <span class="gf-chip">${text('焦点家族', 'Focus')} · ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')}</span>
+                    ${recyclePlan.entries.length ? `<span class="gf-chip is-warning">${text('安全回收', 'Safe Recycle')} · ${formatCompact(recyclePlan.totalCount)}</span>` : ''}
                 </div>
+                <div class="gf-list gf-list--compact" style="margin-top:12px;">
+                    ${previewRows.length ? previewRows.map(renderCompactGemActionRow).join('') : `<div class="gf-empty">${text('当前还没有库存，先点“立即熔炼”启动循环。', 'There is no stock yet. Tap Smelt Now to start the loop.')}</div>`}
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="ghost-btn" type="button" data-action="smartRecycle">${recyclePlan.entries.length ? text(`一键回收 +${formatCompact(recyclePlan.totalDust)} 尘`, `Smart Recycle +${formatCompact(recyclePlan.totalDust)}`) : text('当前无可回收', 'No Recycle Now')}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="contracts">${text('去推进合同', 'Push Contracts')}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('去补符印', 'Raise Sigils')}</button>
+                </div>
+                ${inventoryRows.length > previewRows.length ? `<div class="gf-empty" style="margin-top:12px;">${text(`其余 ${inventoryRows.length - previewRows.length} 条库存已折叠，避免手机单屏信息过载。`, `${inventoryRows.length - previewRows.length} more rows are collapsed to keep the mobile screen readable.`)}</div>` : ''}
             </article>
         `;
     };
@@ -3308,8 +3493,8 @@
                             ${renderRewardChips(getContractPreviewReward(contract), { limit: 4 })}
                         </div>
                         <div class="gf-action-row" style="margin-top:12px;">
-                            <button class="ghost-btn" type="button" data-action="selectContract" data-value="${index}" ${unlocked ? '' : 'disabled'}>${selected ? text('当前目标', 'Current Target') : text('设为目标', 'Set Target')}</button>
-                            <button class="primary-btn" type="button" data-action="runContract" data-value="${index}" ${unlocked ? '' : 'disabled'}>${text('执行', 'Run')}</button>
+                            <button class="ghost-btn" type="button" data-action="selectContract" data-value="${index}">${selected ? text('当前目标', 'Current Target') : text('设为目标', 'Set Target')}</button>
+                            <button class="primary-btn" type="button" data-action="runContract" data-value="${index}">${text('执行', 'Run')}</button>
                         </div>
                     </article>
                 `).join('')}
