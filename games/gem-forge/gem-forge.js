@@ -76,6 +76,8 @@
             case 'smeltBatch': smeltBatch(); break;
             case 'fuseGem': fuseGem(value); break;
             case 'awakenGem': awakenGem(value); break;
+            case 'salvageGem': salvageGem(value); break;
+            case 'smartRecycle': smartRecycleGems(); break;
             case 'selectContract': selectContract(Number(value)); break;
             case 'runContract': runContract(Number(value)); break;
             case 'equipSigil': equipSigil(value); break;
@@ -703,6 +705,9 @@
 
     function renderGemRow(row) {
         const family = familyMap[row.familyId];
+        const recycleDust = getRecycleDustValue(row.tier, 1);
+        const safeKeep = getSmartRecycleKeepCount(row.familyId, row.tier);
+        const safeOverflow = Number.isFinite(safeKeep) ? Math.max(0, row.count - safeKeep) : 0;
         return `
             <div class="gf-list-row">
                 <div class="gf-list-copy">
@@ -712,7 +717,9 @@
                     </div>
                     <div class="gf-list-sub">${text(`库存 ${row.count} · 觉醒 ${row.awakened} · 单颗战力 ${formatCompact(row.score)}`, `Owned ${row.count} · Awakened ${row.awakened} · ${formatCompact(row.score)} power each`)}</div>
                 </div>
+                    ${safeOverflow > 0 ? `<div class="gf-list-sub">${text(`智能回收会保留 ${safeKeep} 颗，本行还可安全回收 ${safeOverflow} 颗。`, `Smart recycle keeps ${safeKeep}. ${safeOverflow} more can be safely recycled here.`)}</div>` : ''}
                 <div class="gf-row-actions">
+                    <button class="ghost-btn" type="button" data-action="salvageGem" data-value="${row.key}" ${row.count > 0 && recycleDust > 0 ? '' : 'disabled'}>${text(`回收 1 · +${formatCompact(recycleDust)} 尘`, `Recycle 1 · +${formatCompact(recycleDust)} dust`)}</button>
                     <button class="ghost-btn" type="button" data-action="fuseGem" data-value="${row.key}" ${row.canFuse ? '' : 'disabled'}>${text('3 合 1', 'Fuse 3 → 1')}</button>
                     <button class="primary-btn" type="button" data-action="awakenGem" data-value="${row.key}" ${row.canAwaken ? '' : 'disabled'}>${text('觉醒', 'Awaken')}</button>
                 </div>
@@ -858,6 +865,7 @@
                 smelts: 0,
                 batchSmelts: 0,
                 fuses: 0,
+                salvages: 0,
                 awakenings: 0,
                 sigilUps: 0,
                 workshopUps: 0,
@@ -1092,6 +1100,51 @@
             tags: [familyName, `T${tier}`, text('永久加成', 'Permanent Bonus')]
         };
         showToast(text('觉醒完成，永久战力已提高。', 'Awakening complete. Permanent power increased.'));
+        saveProgress();
+        renderAll();
+    }
+
+    function salvageGem(key) {
+        const { familyId, tier } = parseGemKey(key);
+        const tierMeta = getTierMeta(tier);
+        if (!familyId || !tierMeta) return;
+        if (getGemCount(familyId, tier) < 1) return showToast(text('缺少可回收的宝石。', 'No gem is available to recycle.'));
+        const dustGain = getRecycleDustValue(tier, 1);
+        if (dustGain <= 0) return showToast(text('该阶宝石当前无法回收。', 'This tier cannot be recycled right now.'));
+        addGem(familyId, tier, -1);
+        state.save.dust += dustGain;
+        state.save.stats.salvages += 1;
+        const familyName = localize(familyMap[familyId].name);
+        state.save.lastResult = {
+            type: 'salvage',
+            title: text(`回收完成 · ${familyName} T${tier}`, `Recycle Complete · ${familyName} T${tier}`),
+            copy: text(`回收 1 颗 ${familyName} T${tier} 宝石，返还 ${formatCompact(dustGain)} 熔尘。`, `Recycled 1 ${familyName} T${tier} gem and returned ${formatCompact(dustGain)} dust.`),
+            tags: [familyName, `T${tier}`, `${text('熔尘', 'Dust')} +${formatCompact(dustGain)}`]
+        };
+        showToast(text(`已回收 ${familyName} T${tier}，返还 ${formatCompact(dustGain)} 熔尘。`, `Recycled ${familyName} T${tier} for ${formatCompact(dustGain)} dust.`));
+        saveProgress();
+        renderAll();
+    }
+
+    function smartRecycleGems() {
+        const plan = getSmartRecyclePlan();
+        if (!plan.entries.length) return showToast(text('当前没有适合智能回收的低优先库存。', 'There is no low-priority stock to smart recycle right now.'));
+        plan.entries.forEach((entry) => {
+            addGem(entry.familyId, entry.tier, -entry.amount);
+            state.save.dust += entry.dust;
+        });
+        state.save.stats.salvages += plan.totalCount;
+        state.save.lastResult = {
+            type: 'salvage',
+            title: text('智能回收完成', 'Smart Recycle Complete'),
+            copy: text(`本次共回收 ${plan.totalCount} 颗低优先宝石，返还 ${formatCompact(plan.totalDust)} 熔尘，并保留当前推进仍需要的关键库存。`, `Recycled ${plan.totalCount} lower-priority gems for ${formatCompact(plan.totalDust)} dust while keeping the key stock needed for your current push.`),
+            tags: [
+                `${text('回收', 'Recycled')} ${plan.totalCount}`,
+                `${text('熔尘', 'Dust')} +${formatCompact(plan.totalDust)}`,
+                text('已保留推进库存', 'Push stock kept')
+            ]
+        };
+        showToast(text(`智能回收完成，返还 ${formatCompact(plan.totalDust)} 熔尘。`, `Smart recycle returned ${formatCompact(plan.totalDust)} dust.`));
         saveProgress();
         renderAll();
     }
@@ -1486,6 +1539,55 @@
         return rows.sort((a, b) => b.sort - a.sort);
     }
 
+    function getRecycleDustValue(tier, amount = 1) {
+        const tierMeta = getTierMeta(tier);
+        if (!tierMeta || amount <= 0) return 0;
+        return Math.max(0, Math.round((Number(tierMeta.dismantleDust) || 0) * amount));
+    }
+
+    function getSmartRecycleKeepCount(familyId, tier) {
+        const isFocusFamily = getCurrentContract().focus.includes(familyId);
+        if (tier >= 4) return Number.POSITIVE_INFINITY;
+        if (tier === 3) return isFocusFamily ? 3 : 1;
+        return isFocusFamily ? 6 : 3;
+    }
+
+    function getSmartRecyclePlan() {
+        const entries = [];
+        let totalCount = 0;
+        let totalDust = 0;
+
+        config.gemFamilies.forEach((family) => {
+            config.gemTiers.forEach((tierMeta) => {
+                if (tierMeta.tier > 3) return;
+                const count = getGemCount(family.id, tierMeta.tier);
+                if (count <= 0) return;
+                const keep = getSmartRecycleKeepCount(family.id, tierMeta.tier);
+                const amount = Math.max(0, count - keep);
+                if (amount <= 0) return;
+                const dust = getRecycleDustValue(tierMeta.tier, amount);
+                if (dust <= 0) return;
+                entries.push({
+                    key: buildGemKey(family.id, tierMeta.tier),
+                    familyId: family.id,
+                    tier: tierMeta.tier,
+                    keep,
+                    amount,
+                    dust
+                });
+                totalCount += amount;
+                totalDust += dust;
+            });
+        });
+
+        return {
+            entries,
+            totalCount,
+            totalDust,
+            protectedCount: Math.max(0, getTotalGemCount() - totalCount)
+        };
+    }
+
     function getContractPreviewReward(contract, success = true) {
         const goldFactor = success ? 1 + getGoldBonus() : 0.58 + getGoldBonus() * 0.4;
         const dustFactor = success ? 1 + getDustBonus() : 0.64 + getDustBonus() * 0.4;
@@ -1806,6 +1908,7 @@
         const fuseReady = inventoryRows.filter((row) => row.canFuse);
         const awakenReady = inventoryRows.filter((row) => row.canAwaken);
         const lastResult = state.save.lastResult;
+        const recyclePlan = getSmartRecyclePlan();
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
@@ -1857,6 +1960,29 @@
                     <div class="gf-action-row" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="openTab" data-value="contracts">${text('去合同页推进', 'Open Contracts')}</button>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('去补符印', 'Raise Sigils')}</button>
+                    </div>
+                </article>
+                <article class="gf-card">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('智能回收', 'Smart Recycle')}</div>
+                            <div class="gf-card-title">${recyclePlan.entries.length ? text(`${recyclePlan.totalCount} 颗可回收`, `${recyclePlan.totalCount} gems recyclable`) : text('无安全富余库存', 'No safe overflow')}</div>
+                        </div>
+                        <div class="gf-card-number">${formatCompact(recyclePlan.totalDust)}</div>
+                    </div>
+                    <div class="gf-card-copy">${text('只回收当前推进用不上的低优先宝石，会为当前合同焦点保留合成和觉醒所需的基础库存。', 'Only low-priority gems outside your current push are recycled, while the stock needed for upcoming fuse and awaken steps is kept.')}</div>
+                    ${renderKpiGrid([
+                        { label: text('可回收行', 'Rows'), value: formatCompact(recyclePlan.entries.length) },
+                        { label: text('可回收总数', 'Gems'), value: formatCompact(recyclePlan.totalCount) },
+                        { label: text('熔尘返还', 'Dust Back'), value: formatCompact(recyclePlan.totalDust) },
+                        { label: text('保留库存', 'Kept'), value: formatCompact(recyclePlan.protectedCount) }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        ${recyclePlan.entries.slice(0, 4).map((entry) => `<span class="gf-chip">${localize(familyMap[entry.familyId].name)} T${entry.tier} · -${entry.amount}</span>`).join('')}
+                        ${recyclePlan.entries.length > 4 ? `<span class="gf-chip is-warning">+${recyclePlan.entries.length - 4}</span>` : ''}
+                    </div>
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="smartRecycle" ${recyclePlan.entries.length ? '' : 'disabled'}>${text('一键回收', 'Smart Recycle')}</button>
                     </div>
                 </article>
             </div>
