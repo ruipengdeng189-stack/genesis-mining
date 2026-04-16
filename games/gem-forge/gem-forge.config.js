@@ -255,6 +255,7 @@
                 price: 1.0,
                 name: { zh: '火种补给', en: 'Spark Starter' },
                 reward: { gold: 1800, dust: 72, catalyst: 8 },
+                focusShards: 10,
                 permanent: { heatCap: 20, rareRate: 0.03 }
             },
             {
@@ -262,6 +263,7 @@
                 price: 2.99,
                 name: { zh: '熔炉加速箱', en: 'Forge Booster' },
                 reward: { gold: 6200, dust: 220, catalyst: 20 },
+                focusShards: 18,
                 permanent: { heatCap: 36, rareRate: 0.05, dustYield: 0.08 }
             },
             {
@@ -269,6 +271,7 @@
                 price: 3.99,
                 name: { zh: '卡点突围包', en: 'Wall Breaker' },
                 reward: { gold: 11800, dust: 420, catalyst: 38 },
+                focusShards: 28,
                 permanent: { heatCap: 52, rareRate: 0.08, dustYield: 0.12 }
             },
             {
@@ -276,6 +279,7 @@
                 price: 5.99,
                 name: { zh: '棱镜统御包', en: 'Prism Dominion' },
                 reward: { gold: 22800, dust: 760, catalyst: 68 },
+                focusShards: 40,
                 permanent: { heatCap: 80, rareRate: 0.12, dustYield: 0.18, catalystYield: 0.08 }
             },
             {
@@ -283,6 +287,7 @@
                 price: 9.99,
                 name: { zh: '棱核中枢包', en: 'Prism Nexus' },
                 reward: { gold: 30800, dust: 1020, catalyst: 92 },
+                focusShards: 54,
                 permanent: { heatCap: 94, rareRate: 0.14, dustYield: 0.21, catalystYield: 0.11 }
             },
             {
@@ -290,6 +295,7 @@
                 price: 12.99,
                 name: { zh: '创世砧核', en: 'Genesis Anvil' },
                 reward: { gold: 38800, dust: 1280, catalyst: 120 },
+                focusShards: 70,
                 permanent: { heatCap: 110, rareRate: 0.16, dustYield: 0.24, catalystYield: 0.14 }
             }
         ],
@@ -301,10 +307,30 @@
             { id: 'genesis', threshold: 25, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, heatCapBonus: 110, rareRateBonus: 0.15, dustYieldBonus: 0.32, catalystYieldBonus: 0.22, contractSlotBonus: 2 }
         ],
         paymentMilestones: [
-            { id: 'tier1', threshold: 1, reward: { gold: 1200, dust: 60, catalyst: 6 } },
-            { id: 'tier2', threshold: 5, reward: { gold: 4200, dust: 180, catalyst: 16 } },
-            { id: 'tier3', threshold: 12, reward: { gold: 11800, dust: 460, catalyst: 42 } },
-            { id: 'tier4', threshold: 25, reward: { gold: 25800, dust: 980, catalyst: 92 } }
+            {
+                id: 'tier1',
+                threshold: 1,
+                reward: { gold: 1200, dust: 60, catalyst: 6 },
+                permanent: { heatCap: 8, rareRate: 0.01 }
+            },
+            {
+                id: 'tier2',
+                threshold: 5,
+                reward: { gold: 4200, dust: 180, catalyst: 16 },
+                permanent: { heatCap: 12, dustYield: 0.03, catalystYield: 0.02 }
+            },
+            {
+                id: 'tier3',
+                threshold: 12,
+                reward: { gold: 11800, dust: 460, catalyst: 42 },
+                permanent: { heatCap: 16, rareRate: 0.02, dustYield: 0.04 }
+            },
+            {
+                id: 'tier4',
+                threshold: 25,
+                reward: { gold: 25800, dust: 980, catalyst: 92 },
+                permanent: { heatCap: 22, rareRate: 0.03, dustYield: 0.06, catalystYield: 0.04 }
+            }
         ],
         baseSave: {
             gold: 2400,
