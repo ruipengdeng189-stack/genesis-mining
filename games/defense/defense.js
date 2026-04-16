@@ -357,7 +357,7 @@
             toastTowerUp: 'Tower upgraded',
             toastTowerUnlock: 'Tower unlocked',
             toastEquipped: 'Lane loadout updated',
-            toastDailySupply: 'Today''s supply claimed',
+            toastDailySupply: "Today's supply claimed",
             toastShopBought: 'Supply purchased',
             toastWaveClear: 'Wave cleared. Choose an upgrade to continue',
             toastRunWin: 'Defense held successfully',
