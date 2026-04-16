@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>宝石熔炉 / Gem Forge</title>
+    <meta name="description" content="宝石熔炉 - 熔炼、合成、升阶、觉醒。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/hub.css">
+    <link rel="stylesheet" href="./gem-forge.css">
+</head>
+<body>
+    <div class="gf-bg"></div>
+    <div class="gf-shell">
+        <header class="gf-topbar">
+            <div class="gf-topline">
+                <a class="back-link" href="/">← 返回大厅 / Back To Hub</a>
+                <div class="lang-toggle" role="group" aria-label="Language / 中文">
+                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">中</button>
+                    <button class="lang-btn" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+                </div>
+            </div>
+
+            <section class="gf-hero-card">
+                <div class="gf-hero-copy">
+                    <div class="eyebrow" id="heroEyebrow">GENESIS GEM FORGE</div>
+                    <h1 id="heroTitle">宝石熔炉</h1>
+                    <p id="heroSubtitle">熔炼、合成、升阶、觉醒</p>
+                </div>
+                <div class="gf-resource-strip" id="resourceStrip"></div>
+            </section>
+        </header>
+
+        <main class="gf-main">
+            <section class="gf-summary-card" id="heroSummary"></section>
+            <section class="gf-panel-card">
+                <div class="gf-panel-content" id="panelContent"></div>
+            </section>
+        </main>
+
+        <nav class="gf-tabbar" id="tabBar" aria-label="Gem Forge tabs"></nav>
+        <div class="gf-toast" id="toast"></div>
+    </div>
+
+    <script src="./gem-forge.config.js"></script>
+    <script src="./gem-forge.js"></script>
+</body>
+</html>

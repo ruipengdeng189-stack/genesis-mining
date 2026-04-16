@@ -109,16 +109,16 @@
                          "en":  "Fuse, Smelt, Ascend"
                      },
         "description":  {
-                            "zh":  "\u56f4\u7ed5\u4f4e\u7ea7\u5b9d\u77f3\u5408\u6210\u3001\u7a00\u6709\u6750\u6599\u6389\u843d\u3001\u7194\u7089\u4fdd\u5e95\u548c\u9ad8\u7ea7\u5916\u89c2\u6765\u505a\u51fa\u5f88\u5f3a\u7684\u4ed8\u8d39\u52a8\u673a\u3002",
-                            "en":  "Built around low-tier gem fusion, rare drops, forge pity, and premium visuals."
+                            "zh":  "\u5df2\u53ef\u8fdb\u5165\u7684\u7b2c 4 \u4e2a\u539f\u578b\uff0c\u73b0\u5df2\u5305\u542b\u7194\u70bc\u3001\u5408\u6210\u3001\u89c9\u9192\u3001\u5408\u540c\u3001\u7b26\u5370\u3001\u5de5\u574a\u3001\u4efb\u52a1\u3001\u8d5b\u5b63\u4e0e\u5546\u5e97\u57fa\u7840\u5faa\u73af\u3002",
+                            "en":  "The fourth playable prototype now includes forge, fusion, awakening, contracts, sigils, workshop, missions, season rewards, and a starter shop loop."
                         },
         "icon":  "GF",
-        "href":  "/games/coming-soon/?id=gem-forge",
+        "href":  "/games/gem-forge/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u5df2\u5f00\u653e",
+                      "en":  "Live"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
                       "zh":  "\u5b9d\u77f3\u7194\u7089",
                       "en":  "Gem Forge"
