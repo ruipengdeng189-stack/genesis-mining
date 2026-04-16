@@ -49,8 +49,12 @@ body.modal-open {
 }
 
 button,
-a {
+a,
+canvas,
+[data-action],
+.tab-btn {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .defense-bg {
@@ -898,6 +902,21 @@ body:not([data-defense-tab="defend"]) .stage-card {
     align-content: start;
 }
 
+.defend-side-stack {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    min-width: 0;
+}
+
+.defend-side-grid .defend-quick-grid {
+    grid-column: 1 / -1;
+}
+
+.defend-side-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .defend-side-card {
     min-width: 0;
 }
@@ -1444,6 +1463,64 @@ body:not([data-defense-tab="defend"]) .stage-card {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+}
+
+.shop-section-block {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.shop-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.shop-section-head h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.shop-section-head p {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.shop-grid--focus {
+    gap: 10px;
+}
+
+.shop-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.shop-quick-btn {
+    display: grid;
+    align-content: center;
+    justify-items: flex-start;
+    gap: 2px;
+    min-height: 38px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    text-align: left;
+}
+
+.shop-quick-btn span,
+.shop-quick-btn small {
+    pointer-events: none;
+}
+
+.shop-quick-btn small {
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.1;
 }
 
 .tower-card,
@@ -2101,6 +2178,47 @@ body:not([data-defense-tab="defend"]) .stage-card {
         gap: 8px;
     }
 
+    .shop-section-block {
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .shop-section-head {
+        gap: 8px;
+        align-items: center;
+    }
+
+    .shop-section-head h4 {
+        font-size: 12px;
+    }
+
+    .shop-section-head p {
+        font-size: 10px;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .shop-grid--focus {
+        gap: 8px;
+    }
+
+    .shop-quick-grid {
+        gap: 5px;
+    }
+
+    .shop-quick-btn {
+        min-height: 34px;
+        padding: 7px 8px;
+        border-radius: 11px;
+    }
+
+    .shop-quick-btn small {
+        font-size: 9px;
+    }
+
     .research-battle-strip {
         display: flex;
         gap: 6px;
@@ -2204,6 +2322,10 @@ body:not([data-defense-tab="defend"]) .stage-card {
         line-height: 1;
     }
 
+    body[data-defense-tab="defend"] .summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .summary-item {
         padding: 9px 10px;
         gap: 5px;
@@ -2232,6 +2354,11 @@ body:not([data-defense-tab="defend"]) .stage-card {
     body[data-defense-tab="defend"] .summary-item strong {
         font-size: 13px;
         line-height: 1.1;
+    }
+
+    body[data-defense-tab="defend"] .summary-item:nth-child(4),
+    body[data-defense-tab="defend"] .summary-item:nth-child(6) {
+        display: none;
     }
 
     .stage-hud {
@@ -2277,7 +2404,7 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     body[data-defense-tab="defend"] .battlefield-wrap,
     body[data-defense-tab="defend"] #battlefieldCanvas {
-        min-height: clamp(430px, 60dvh, 660px);
+        min-height: clamp(440px, 62dvh, 680px);
     }
 
     .lane-strip {
@@ -2330,6 +2457,32 @@ body:not([data-defense-tab="defend"]) .stage-card {
     }
 
     .battle-insights {
+        gap: 8px;
+    }
+
+    body[data-defense-tab="defend"] .panel-card {
+        padding: 8px;
+    }
+
+    body[data-defense-tab="defend"] .panel-content {
+        gap: 8px;
+    }
+
+    body[data-defense-tab="defend"] .panel-head {
+        gap: 8px;
+        align-items: center;
+    }
+
+    body[data-defense-tab="defend"] .panel-head h3 {
+        font-size: 16px;
+    }
+
+    body[data-defense-tab="defend"] .panel-head p,
+    body:not([data-defense-tab="defend"]) .panel-head p {
+        display: none;
+    }
+
+    body:not([data-defense-tab="defend"]) .panel-content {
         gap: 8px;
     }
 
@@ -2386,6 +2539,10 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     body[data-defense-tab="defend"] .battle-insight-body,
     body[data-defense-tab="defend"] .lane-pressure-meta {
+        display: none;
+    }
+
+    body[data-defense-tab="defend"] .battle-insight-kicker {
         display: none;
     }
 
@@ -2576,6 +2733,42 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     .compact-overview-card .card-number {
         font-size: 12px;
+    }
+
+    body[data-defense-tab="defend"] .defend-battle-layout {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    body[data-defense-tab="defend"] .defend-side-stack {
+        gap: 8px;
+    }
+
+    body[data-defense-tab="defend"] .defend-side-grid--compact {
+        gap: 6px;
+    }
+
+    body[data-defense-tab="defend"] .defend-side-grid--compact .defend-side-card {
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    body[data-defense-tab="defend"] .defend-quick-grid {
+        gap: 6px;
+    }
+
+    body[data-defense-tab="defend"] .defend-quick-btn,
+    body[data-defense-tab="defend"] .defend-quick-summary {
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    body[data-defense-tab="defend"] .defend-quick-value {
+        font-size: 14px;
+    }
+
+    body:not([data-defense-tab="defend"]) .tab-overview-grid > article {
+        flex: 0 0 min(66vw, 220px);
     }
 
     .compact-overview-card .compact-kpi {
@@ -2875,6 +3068,118 @@ body:not([data-defense-tab="defend"]) .stage-card {
         display: none;
     }
 
+    body:not([data-defense-tab="defend"]) .panel-card article {
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    body:not([data-defense-tab="defend"]) .tower-grid,
+    body:not([data-defense-tab="defend"]) .research-grid,
+    body:not([data-defense-tab="defend"]) .mission-grid,
+    body:not([data-defense-tab="defend"]) .season-grid,
+    body:not([data-defense-tab="defend"]) .shop-grid {
+        gap: 8px;
+    }
+
+    body:not([data-defense-tab="defend"]) .tower-card,
+    body:not([data-defense-tab="defend"]) .research-card,
+    body:not([data-defense-tab="defend"]) .mission-card,
+    body:not([data-defense-tab="defend"]) .season-node,
+    body:not([data-defense-tab="defend"]) .shop-card,
+    body:not([data-defense-tab="defend"]) .stat-card {
+        gap: 7px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-top {
+        gap: 6px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-kicker {
+        font-size: 10px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-title {
+        font-size: 13px;
+        line-height: 1.2;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-number {
+        font-size: 11px;
+    }
+
+    body:not([data-defense-tab="defend"]) .tower-card .card-copy,
+    body:not([data-defense-tab="defend"]) .research-card .card-copy,
+    body:not([data-defense-tab="defend"]) .mission-card .card-copy,
+    body:not([data-defense-tab="defend"]) .season-node .card-copy,
+    body:not([data-defense-tab="defend"]) .shop-card .card-copy,
+    body:not([data-defense-tab="defend"]) .stat-card .card-copy {
+        font-size: 10px;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-copy.inline-explain {
+        display: none;
+    }
+
+    body:not([data-defense-tab="defend"]) .reward-row,
+    body:not([data-defense-tab="defend"]) .chip-row,
+    body:not([data-defense-tab="defend"]) .tower-tags {
+        gap: 4px;
+    }
+
+    body:not([data-defense-tab="defend"]) .mini-chip,
+    body:not([data-defense-tab="defend"]) .tag-chip {
+        min-height: 22px;
+        padding: 0 7px;
+        font-size: 9px;
+    }
+
+    body:not([data-defense-tab="defend"]) .progress-line {
+        height: 6px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-actions {
+        gap: 6px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-actions > .primary-btn,
+    body:not([data-defense-tab="defend"]) .card-actions > .ghost-btn {
+        min-height: 36px;
+        flex: 1 1 108px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-actions.compact > .primary-btn,
+    body:not([data-defense-tab="defend"]) .card-actions.compact > .ghost-btn {
+        min-height: 32px;
+        padding: 7px 8px;
+        font-size: 10px;
+        border-radius: 10px;
+        flex: 1 1 92px;
+    }
+
+    body:not([data-defense-tab="defend"]) .chapter-btn,
+    body:not([data-defense-tab="defend"]) .lane-picker-btn,
+    body:not([data-defense-tab="defend"]) .skill-picker-btn {
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 10px;
+        font-size: 10px;
+    }
+
+    body:not([data-defense-tab="defend"]) .inline-link-row {
+        margin-top: 6px;
+    }
+
+    body:not([data-defense-tab="defend"]) .inline-link-row > .ghost-btn {
+        min-height: 24px;
+        padding: 5px 9px;
+        font-size: 9px;
+    }
+
     .tab-overview-grid > article {
         flex: 0 0 min(74vw, 250px);
     }
@@ -3004,7 +3309,7 @@ body:not([data-defense-tab="defend"]) .stage-card {
 
     body[data-defense-tab="defend"] .battlefield-wrap,
     body[data-defense-tab="defend"] #battlefieldCanvas {
-        min-height: clamp(410px, 58dvh, 560px);
+        min-height: clamp(420px, 60dvh, 580px);
     }
 
     body[data-defense-tab="defend"] .summary-item {
@@ -3058,8 +3363,63 @@ body:not([data-defense-tab="defend"]) .stage-card {
         display: none;
     }
 
-    .tab-overview-grid > article {
-        flex-basis: min(78vw, 232px);
+    body:not([data-defense-tab="defend"]) .tab-overview-grid > article {
+        flex-basis: min(72vw, 220px);
+    }
+
+    body:not([data-defense-tab="defend"]) .panel-card article {
+        padding: 9px;
+    }
+
+    body:not([data-defense-tab="defend"]) .tower-grid,
+    body:not([data-defense-tab="defend"]) .research-grid,
+    body:not([data-defense-tab="defend"]) .mission-grid,
+    body:not([data-defense-tab="defend"]) .season-grid,
+    body:not([data-defense-tab="defend"]) .shop-grid {
+        gap: 6px;
+    }
+
+    .shop-section-head {
+        align-items: flex-start;
+    }
+
+    .shop-section-head h4 {
+        font-size: 11px;
+    }
+
+    .shop-section-head p {
+        -webkit-line-clamp: 1;
+    }
+
+    .shop-quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shop-quick-btn {
+        min-height: 30px;
+        padding: 6px 8px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-title {
+        font-size: 12px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-number {
+        font-size: 10px;
+    }
+
+    body:not([data-defense-tab="defend"]) .mini-chip,
+    body:not([data-defense-tab="defend"]) .tag-chip {
+        min-height: 20px;
+        padding: 0 6px;
+        font-size: 8px;
+    }
+
+    body:not([data-defense-tab="defend"]) .card-actions.compact > .primary-btn,
+    body:not([data-defense-tab="defend"]) .card-actions.compact > .ghost-btn {
+        min-height: 30px;
+        padding: 6px 7px;
+        font-size: 9px;
     }
 
     .compact-overview-card .compact-kpi-grid {

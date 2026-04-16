@@ -3450,7 +3450,7 @@
         return visible.join('');
     }
 
-    function renderDefendTabUnified() {
+    function renderDefendTabUnifiedLegacy() {
         const current = getCurrentChapter();
         const focusPreview = getChapterFocusPreview(current);
         const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
@@ -3890,6 +3890,223 @@
                                 : 'All towers are already unlocked, so focus next on levels, research, and season growth.'
                         })}</div>
                     </article>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderDefendTabUnified() {
+        const current = getCurrentChapter();
+        const focusPreview = getChapterFocusPreview(current);
+        const recommendedSkill = t(SKILLS[getRecommendedSkillIdForChapter(current)].nameKey);
+        const economyPreview = getDefenseEconomyPreview(current);
+        const prepOverview = getChapterPrepOverview(current);
+        const seasonInfo = getSeasonLevelInfo(state.save.seasonXp);
+        const sponsorTier = getSponsorTierSummary();
+        const researchFrontline = getResearchFrontlineSummary(current);
+        const fragmentInventory = getFragmentInventorySummary(current);
+        const researchReadyCount = Object.keys(RESEARCH).filter((researchId) => canUpgradeResearch(researchId)).length;
+        const quickAccessItems = getDefendQuickAccessItems(prepOverview, economyPreview)
+            .filter((item) => item.data !== 'shop')
+            .slice(0, 4);
+        const battleActive = state.battle.running && !state.battle.finished;
+        const battlePaused = battleActive && state.battle.paused;
+        const battleWave = battleActive ? Math.max(1, state.battle.currentWave || 1) : 0;
+        const currentSkillId = state.save.selectedSkill || prepOverview.currentSkill || prepOverview.preset.skill;
+        const currentSkillLabel = t(SKILLS[currentSkillId].nameKey);
+        const laneMatchCount = Number(prepOverview.laneMatchCount || 0);
+        const laneSummary = prepOverview.currentLanes
+            .map((towerId, laneIndex) => `${getLaneName(laneIndex)} · ${towerLabel(towerId)}`)
+            .join(' / ');
+        const battleStatusLabel = state.battle.finished
+            ? getLocalized({ zh: '本局已结算', en: 'Run finished' })
+            : battlePaused
+                ? getLocalized({ zh: '战斗已暂停', en: 'Battle paused' })
+                : battleActive
+                    ? getLocalized({ zh: `第 ${battleWave}/${TOTAL_WAVES} 波进行中`, en: `Wave ${battleWave}/${TOTAL_WAVES} live` })
+                    : prepOverview.ready
+                        ? getLocalized({ zh: '配置完成，可直接开战', en: 'Ready to defend' })
+                        : getLocalized({ zh: `还差 ${prepOverview.adjustmentsNeeded} 项调整`, en: `${prepOverview.adjustmentsNeeded} setup items left` });
+        const statusChipLabel = state.battle.finished
+            ? getLocalized({ zh: '已结算', en: 'Finished' })
+            : battlePaused
+                ? getLocalized({ zh: '暂停中', en: 'Paused' })
+                : battleActive
+                    ? getLocalized({ zh: `第 ${battleWave} 波`, en: `Wave ${battleWave}` })
+                    : prepOverview.ready
+                        ? getLocalized({ zh: '可开战', en: 'Ready' })
+                        : getLocalized({ zh: `待调 ${prepOverview.adjustmentsNeeded}`, en: `${prepOverview.adjustmentsNeeded} left` });
+        const battleStatusCopy = state.battle.finished
+            ? getLocalized({
+                zh: '本局已结算，去“部署”切下一章，或直接再开一局。',
+                en: 'This run is settled. Open Setup for the next chapter, or start another run here.'
+            })
+            : battlePaused
+                ? getLocalized({
+                    zh: '离开防线时会自动暂停，回到这里可以直接继续。',
+                    en: 'The game auto-pauses when you leave the battle view, so you can resume safely from here.'
+                })
+                : battleActive
+                    ? getLocalized({
+                        zh: '战斗正在上方进行，这里只保留关键状态和快捷入口。',
+                        en: 'The fight is already live above, so this panel keeps only key status and fast actions.'
+                    })
+                    : prepOverview.ready
+                        ? getLocalized({
+                            zh: '章节、三路装配和主动技能都已对位，随时可以开战。',
+                            en: 'Your chapter, three-lane loadout, and active skill are aligned. Start whenever you are ready.'
+                        })
+                        : getLocalized({
+                            zh: '先补装配或研究，再回到这里开战会更稳。',
+                            en: 'Upgrade loadout or research first, then come back here to defend.'
+                        });
+        const primaryAction = battlePaused
+            ? {
+                action: 'resumeBattle',
+                value: 'resume',
+                label: getLocalized({ zh: '继续战斗', en: 'Resume Battle' })
+            }
+            : battleActive
+                ? null
+                : prepOverview.ready
+                    ? {
+                        action: 'startChapter',
+                        value: current.id,
+                        label: getLocalized({ zh: '开始防守', en: 'Start Defense' })
+                    }
+                    : {
+                        action: 'openTab',
+                        value: 'prep',
+                        label: getLocalized({ zh: '前往部署', en: 'Open Setup' })
+                    };
+        const fragmentChips = fragmentInventory.closestEntries
+            .slice(0, 2)
+            .map((entry) => `<span class="mini-chip">${towerLabel(entry.towerId)} ${formatCompact(entry.owned)}/${formatCompact(entry.need)}</span>`)
+            .join('');
+        const fragmentCopy = fragmentInventory.nextUnlockEntry
+            ? getLocalized({
+                zh: `顶部“总碎片”是全部塔台累计；装配页消耗的是单塔专属碎片。当前最近可解锁的是 ${towerLabel(fragmentInventory.nextUnlockEntry.towerId)}，还差 ${formatCompact(fragmentInventory.nextUnlockEntry.shortage)}。`,
+                en: `The top bar shows all tower fragments combined, while Loadout spends tower-specific fragments. The closest unlock is ${towerLabel(fragmentInventory.nextUnlockEntry.towerId)} with ${formatCompact(fragmentInventory.nextUnlockEntry.shortage)} still needed.`
+            })
+            : getLocalized({
+                zh: '顶部“总碎片”只做总览，真正消耗看装配页的单塔碎片库存；当前塔台已全部解锁，继续补等级、研究和赛季即可。',
+                en: 'The top bar is only a total overview; actual spending uses the tower-specific fragments in Loadout. All towers are unlocked, so focus next on levels, research, and season growth.'
+            });
+        ui.panelContent.innerHTML = `
+            ${renderPanelHead(
+                t('defendPanelTitle'),
+                getLocalized({
+                    zh: '这里只保留战斗状态、开战入口和必要补强信息；章节部署放到“部署”页。',
+                    en: 'This page keeps only battle status, fast actions, and the key boost route. Detailed setup lives in Setup.'
+                }),
+                `<div class="mini-chip">${current.id} 路 ${statusChipLabel}</div>`
+            )}
+            <div class="defend-battle-layout">
+                <article class="defend-primary-card stat-card compact-overview-card">
+                    <div class="card-top">
+                        <div>
+                            <div class="card-kicker">${getLocalized({ zh: '战斗总览', en: 'Battle Overview' })}</div>
+                            <div class="card-title">${battleStatusLabel}</div>
+                        </div>
+                        <div class="card-number">${prepOverview.powerGap > 0
+                            ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                            : getLocalized({ zh: '已达标', en: 'On target' })}</div>
+                    </div>
+                    ${renderCompactKpiGrid([
+                        { label: getLocalized({ zh: '当前章节', en: 'Chapter' }), value: current.id },
+                        { label: getLocalized({ zh: '波次', en: 'Wave' }), value: battleActive ? `${battleWave}/${TOTAL_WAVES}` : `0/${TOTAL_WAVES}` },
+                        { label: getLocalized({ zh: '待领奖励', en: 'Claims' }), value: String(economyPreview.claimableTotal) },
+                        { label: t('seasonLabel'), value: `Lv.${seasonInfo.level}` }
+                    ])}
+                    <div class="chip-row defend-chip-row">
+                        <span class="mini-chip">${t('enemyPreview')} ${current.enemies.slice(0, 3).map((enemyId) => enemyLabel(enemyId)).join(' / ')}</span>
+                        <span class="mini-chip">${getLocalized({ zh: `当前技能 ${currentSkillLabel}`, en: `Skill ${currentSkillLabel}` })}</span>
+                        <span class="mini-chip">${t('rewardPreview')} ${formatCompact(current.goldReward)}G / ${formatCompact(current.coreReward)}C / ${formatCompact(current.fragmentReward)} ${getLocalized({ zh: '焦点碎片', en: 'focus frags' })}</span>
+                        ${sponsorTier.unlocked ? renderSponsorTierBoostChips(sponsorTier, { limit: 2 }) : ''}
+                    </div>
+                    <div class="defend-inline-note">${battleStatusCopy}</div>
+                    <div class="card-actions compact defend-card-actions">
+                        ${primaryAction
+                            ? `<button class="primary-btn" type="button" data-action="${primaryAction.action}" data-value="${primaryAction.value}">
+                                ${primaryAction.label}
+                            </button>`
+                            : `<button class="primary-btn" type="button" disabled>
+                                ${getLocalized({ zh: '战斗进行中', en: 'Battle Live' })}
+                            </button>`}
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                            ${getLocalized({ zh: '章节部署', en: 'Open Setup' })}
+                        </button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                            ${getLocalized({ zh: '打开装配', en: 'Open Loadout' })}
+                        </button>
+                    </div>
+                </article>
+                <div class="defend-side-stack">
+                    <div class="defend-quick-grid">
+                        ${quickAccessItems.map((item) => `
+                            <button class="defend-quick-btn is-${item.tone}" type="button" data-action="${item.action}" data-value="${item.data}">
+                                <span class="defend-quick-label">${item.label}</span>
+                                <strong class="defend-quick-value">${item.value}</strong>
+                                <span class="defend-quick-meta">${item.meta}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="card-grid defend-side-grid defend-side-grid--compact">
+                        <article class="stat-card defend-side-card">
+                            <div class="card-top">
+                                <div>
+                                    <div class="card-kicker">${getLocalized({ zh: '当前装配', en: 'Current Setup' })}</div>
+                                    <div class="card-title">${prepOverview.ready
+                                        ? getLocalized({ zh: '三路已就绪', en: 'Three lanes ready' })
+                                        : getLocalized({ zh: `还需 ${prepOverview.adjustmentsNeeded} 项调整`, en: `${prepOverview.adjustmentsNeeded} tweaks left` })}</div>
+                                </div>
+                                <div class="card-number">${formatCompact(getPowerRating(state.save))}</div>
+                            </div>
+                            <div class="card-copy">${laneSummary}</div>
+                            <div class="reward-row compact">
+                                <span class="mini-chip">${getLocalized({ zh: `匹配 ${laneMatchCount}/3`, en: `Aligned ${laneMatchCount}/3` })}</span>
+                                <span class="mini-chip">${getLocalized({ zh: `当前 ${currentSkillLabel}`, en: `Current ${currentSkillLabel}` })}</span>
+                                <span class="mini-chip">${getLocalized({ zh: `推荐 ${recommendedSkill}`, en: `Recommended ${recommendedSkill}` })}</span>
+                            </div>
+                            <div class="card-actions compact">
+                                <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                                    ${getLocalized({ zh: '调整装配', en: 'Tune Loadout' })}
+                                </button>
+                                <button class="ghost-btn" type="button" data-action="openTab" data-value="prep">
+                                    ${getLocalized({ zh: '看章节部署', en: 'Open Setup' })}
+                                </button>
+                            </div>
+                        </article>
+                        <article class="stat-card defend-side-card">
+                            <div class="card-top">
+                                <div>
+                                    <div class="card-kicker">${getLocalized({ zh: '补强入口', en: 'Boost Route' })}</div>
+                                    <div class="card-title">${researchReadyCount > 0
+                                        ? getLocalized({ zh: `${researchReadyCount} 项可立即补强`, en: `${researchReadyCount} upgrades ready` })
+                                        : getLocalized({ zh: '研究与碎片已直连前线', en: 'Research and fragments feed the frontline' })}</div>
+                                </div>
+                                <div class="card-number">+${researchFrontline.attackPct}%</div>
+                            </div>
+                            <div class="card-copy">${getLocalized({
+                                zh: `研究加成会直接作用到防线：火力 +${researchFrontline.attackPct}% / 攻速 +${researchFrontline.cadencePct}% / 三路约 ${formatCompact(researchFrontline.laneDps)} DPS。当前章节主要掉落 ${focusPreview}。`,
+                                en: `Research applies to the frontline immediately: damage +${researchFrontline.attackPct}% / fire rate +${researchFrontline.cadencePct}% / about ${formatCompact(researchFrontline.laneDps)} DPS across the three lanes. This chapter mainly drops ${focusPreview}.`
+                            })}</div>
+                            <div class="reward-row compact">
+                                <span class="mini-chip">${getLocalized({ zh: `核心 ${formatCompact(researchFrontline.coreHp)}`, en: `Core ${formatCompact(researchFrontline.coreHp)}` })}</span>
+                                <span class="mini-chip">${getLocalized({ zh: `护盾 ${formatCompact(researchFrontline.shieldCap)}`, en: `Shield ${formatCompact(researchFrontline.shieldCap)}` })}</span>
+                                ${fragmentChips}
+                            </div>
+                            <div class="defend-side-copy">${fragmentCopy}</div>
+                            <div class="card-actions compact">
+                                <button class="ghost-btn" type="button" data-action="openTab" data-value="research">
+                                    ${getLocalized({ zh: '去研究补强', en: 'Open Research' })}
+                                </button>
+                                <button class="ghost-btn" type="button" data-action="openTab" data-value="loadout">
+                                    ${getLocalized({ zh: '去看碎片', en: 'Open Loadout' })}
+                                </button>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </div>
         `;
@@ -5120,6 +5337,16 @@
             return Number(b.id === recommendedPaymentId) - Number(a.id === recommendedPaymentId)
                 || a.price - b.price;
         });
+        const { visible: visibleShopOffers, hidden: hiddenShopOffers } = pickCompactOffers(
+            orderedShopOffers,
+            [strategyPlan.goldRoute?.offer.id, strategyPlan.coreRoute?.offer.id],
+            2
+        );
+        const { visible: visiblePaymentOffers, hidden: hiddenPaymentOffers } = pickCompactOffers(
+            orderedPaymentOffers,
+            [recommendedPaymentId],
+            2
+        );
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 t('shopPanelTitle'),
@@ -5138,11 +5365,167 @@
                 ${renderPaymentMilestoneCard(strategyPlan)}
                 ${renderDailyCard()}
             </div>
-            <div class="shop-grid">
-                ${orderedShopOffers.map((offer) => renderShopOfferCard(offer, strategyPlan)).join('')}
-                ${orderedPaymentOffers.map((offer) => renderPaymentOfferCard(offer, strategyPlan)).join('')}
+            <section class="shop-section-block">
+                ${renderShopSectionHead(
+                    getLocalized({ zh: '当前补给', en: 'Current Supply' }),
+                    getLocalized({ zh: '首屏只保留现在最该买的两项，其他资源包收起成快捷入口。', en: 'The first screen keeps only the two most relevant packs, while the rest collapse into quick shortcuts.' }),
+                    getLocalized({ zh: `${orderedShopOffers.length} 个补给`, en: `${orderedShopOffers.length} packs` })
+                )}
+                <div class="shop-grid shop-grid--focus">
+                    ${visibleShopOffers.map((offer) => renderShopOfferCard(offer, strategyPlan)).join('')}
+                    ${hiddenShopOffers.length > 0 ? renderCollapsedShopOfferSummaryCard(hiddenShopOffers, strategyPlan) : ''}
+                </div>
+            </section>
+            <section class="shop-section-block">
+                ${renderShopSectionHead(
+                    getLocalized({ zh: '充值成长', en: 'Top-up Growth' }),
+                    getLocalized({ zh: '保留当前推荐档与低门槛档，其余充值档改为快捷入口，不再把整页撑满。', en: 'The current recommendation and entry pack stay visible, while the other top-up tiers move into quick shortcuts.' }),
+                    sponsorUnlocked
+                        ? getLocalized({ zh: `赞助已开 · 待领 ${sponsorReady}`, en: `Sponsor open · ${sponsorReady} ready` })
+                        : getLocalized({ zh: '首充即可开启赞助轨道', en: 'First top-up unlocks Sponsor' })
+                )}
+                <div class="shop-grid shop-grid--focus">
+                    ${visiblePaymentOffers.map((offer) => renderPaymentOfferCard(offer, strategyPlan)).join('')}
+                    ${hiddenPaymentOffers.length > 0 ? renderCollapsedPaymentOfferSummaryCard(hiddenPaymentOffers, strategyPlan) : ''}
+                </div>
+            </section>
+        `;
+    }
+
+    function pickCompactOffers(offers, preferredIds = [], limit = 2) {
+        const selected = [];
+        const selectedIds = new Set();
+        preferredIds
+            .filter(Boolean)
+            .forEach((id) => {
+                const offer = offers.find((entry) => entry.id === id);
+                if (!offer || selectedIds.has(offer.id) || selected.length >= limit) return;
+                selected.push(offer);
+                selectedIds.add(offer.id);
+            });
+        offers.forEach((offer) => {
+            if (selected.length >= limit || selectedIds.has(offer.id)) return;
+            selected.push(offer);
+            selectedIds.add(offer.id);
+        });
+        return {
+            visible: selected,
+            hidden: offers.filter((offer) => !selectedIds.has(offer.id))
+        };
+    }
+
+    function renderShopSectionHead(title, copy, badge = '') {
+        return `
+            <div class="shop-section-head">
+                <div>
+                    <h4>${title}</h4>
+                    <p>${copy}</p>
+                </div>
+                ${badge ? `<span class="mini-chip">${badge}</span>` : ''}
             </div>
         `;
+    }
+
+    function renderCollapsedShopOfferSummaryCard(hiddenOffers, strategyPlan = getShopStrategyPlan()) {
+        const paymentOfferId = strategyPlan?.paymentRoute?.offer?.id || selectedPaymentOfferId;
+        const goldCount = hiddenOffers.filter((offer) => offer.priceType === 'gold').length;
+        const coreCount = hiddenOffers.filter((offer) => offer.priceType === 'core').length;
+        const sponsorCount = hiddenOffers.filter((offer) => offer.requiresSponsor).length;
+        const affordableCount = hiddenOffers.filter((offer) => isShopOfferUnlocked(offer) && canAffordShopOffer(offer)).length;
+        return `
+            <article class="shop-card compact-list-card">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${getLocalized({ zh: '补给汇总', en: 'Supply Summary' })}</div>
+                        <div class="card-title">${getLocalized({ zh: `其余 ${hiddenOffers.length} 个资源包已折叠`, en: `${hiddenOffers.length} more packs collapsed` })}</div>
+                    </div>
+                    <div class="card-number">${affordableCount > 0
+                        ? getLocalized({ zh: `可买 ${affordableCount}`, en: `${affordableCount} ready` })
+                        : getLocalized({ zh: '快捷入口', en: 'Quick Access' })}</div>
+                </div>
+                <div class="card-copy">${getLocalized({
+                    zh: '当前卡点最相关的两项保留在上方，其余资源包改为快捷按钮，避免商城页继续拉长。',
+                    en: 'The two packs most relevant to your current wall stay above, while the rest move into shortcuts so the page stays shorter.'
+                })}</div>
+                ${renderCompactKpiGrid([
+                    { label: getLocalized({ zh: '金币包', en: 'Gold' }), value: String(goldCount) },
+                    { label: getLocalized({ zh: '能核包', en: 'Core' }), value: String(coreCount) },
+                    { label: getLocalized({ zh: '赞助包', en: 'Sponsor' }), value: String(sponsorCount) },
+                    { label: getLocalized({ zh: '可直买', en: 'Ready' }), value: String(affordableCount) }
+                ])}
+                <div class="reward-row compact">
+                    ${renderLimitedChipMarkup([
+                        goldCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `${goldCount} 个金币消耗点`, en: `${goldCount} gold sinks` })}</span>` : '',
+                        coreCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `${coreCount} 个能核消耗点`, en: `${coreCount} core sinks` })}</span>` : '',
+                        sponsorCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `${sponsorCount} 个赞助专供`, en: `${sponsorCount} sponsor-only` })}</span>` : '',
+                        affordableCount > 0 ? `<span class="mini-chip">${getLocalized({ zh: `${affordableCount} 个当前可买`, en: `${affordableCount} affordable now` })}</span>` : ''
+                    ], { limit: 4 })}
+                </div>
+                ${renderShopQuickActionGrid(hiddenOffers.map((offer) => {
+                    const locked = !!offer.requiresSponsor && !isShopOfferUnlocked(offer);
+                    return {
+                        label: getLocalized(offer.title),
+                        meta: `${formatCompact(getShopOfferCost(offer.id))} ${offer.priceType === 'gold' ? 'G' : 'C'}`,
+                        action: locked ? 'openPayment' : 'buyShop',
+                        value: locked ? paymentOfferId : offer.id
+                    };
+                }))}
+            </article>
+        `;
+    }
+
+    function renderCollapsedPaymentOfferSummaryCard(hiddenOffers, strategyPlan = getShopStrategyPlan()) {
+        const minPrice = hiddenOffers.reduce((lowest, offer) => Math.min(lowest, offer.price), Number.POSITIVE_INFINITY);
+        const maxPrice = hiddenOffers.reduce((highest, offer) => Math.max(highest, offer.price), 0);
+        const readyMilestones = getPaymentMilestoneReadyCount();
+        const totalSpent = Math.max(0, Number(state.save.payment.totalSpent) || 0);
+        return `
+            <article class="shop-card premium compact-list-card">
+                <div class="card-top">
+                    <div>
+                        <div class="card-kicker">${getLocalized({ zh: '充值汇总', en: 'Top-up Summary' })}</div>
+                        <div class="card-title">${getLocalized({ zh: `其余 ${hiddenOffers.length} 档充值已折叠`, en: `${hiddenOffers.length} more tiers collapsed` })}</div>
+                    </div>
+                    <div class="card-number">$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}</div>
+                </div>
+                <div class="card-copy">${getLocalized({
+                    zh: `上方只保留当前推荐档和低门槛档；其余充值档改成快捷入口。当前累计 $${totalSpent.toFixed(2)}，${readyMilestones > 0 ? `另有 ${readyMilestones} 档累充礼包可领。` : '继续沿推荐档推进即可。'}`,
+                    en: `Only the current recommendation and entry pack stay above. The remaining tiers move into quick shortcuts. You have spent $${totalSpent.toFixed(2)} so far, ${readyMilestones > 0 ? `with ${readyMilestones} milestone tier(s) ready to claim.` : 'and can keep following the recommended tier.'}`
+                })}</div>
+                ${renderCompactKpiGrid([
+                    { label: getLocalized({ zh: '档位数', en: 'Tiers' }), value: String(hiddenOffers.length) },
+                    { label: getLocalized({ zh: '最低档', en: 'Min' }), value: `$${minPrice.toFixed(2)}` },
+                    { label: getLocalized({ zh: '最高档', en: 'Max' }), value: `$${maxPrice.toFixed(2)}` },
+                    { label: getLocalized({ zh: '待领里程碑', en: 'Ready' }), value: String(readyMilestones) }
+                ])}
+                <div class="reward-row compact">
+                    ${renderLimitedChipMarkup([
+                        `<span class="mini-chip">${getLocalized({ zh: `推荐档：${getLocalized(strategyPlan.paymentRoute.offer.name)}`, en: `Recommended: ${getLocalized(strategyPlan.paymentRoute.offer.name)}` })}</span>`,
+                        !state.save.payment.passUnlocked ? `<span class="mini-chip">${getLocalized({ zh: '首充后解锁赞助轨道', en: 'First top-up unlocks Sponsor' })}</span>` : '',
+                        readyMilestones > 0 ? `<span class="mini-chip">${getLocalized({ zh: `${readyMilestones} 档里程碑待领`, en: `${readyMilestones} milestone ready` })}</span>` : ''
+                    ], { limit: 4 })}
+                </div>
+                ${renderShopQuickActionGrid(hiddenOffers.map((offer) => ({
+                    label: getLocalized(offer.name),
+                    meta: `$${offer.price.toFixed(2)}`,
+                    action: 'openPayment',
+                    value: offer.id
+                })))}
+            </article>
+        `;
+    }
+
+    function renderShopQuickActionGrid(items = []) {
+        const actions = items
+            .filter((item) => item && item.label && item.action)
+            .map((item) => `
+                <button class="ghost-btn shop-quick-btn" type="button" data-action="${item.action}" data-value="${item.value || ''}">
+                    <span>${item.label}</span>
+                    ${item.meta ? `<small>${item.meta}</small>` : ''}
+                </button>
+            `)
+            .join('');
+        return actions ? `<div class="shop-quick-grid">${actions}</div>` : '';
     }
 
     function renderPaymentMilestoneCard(strategyPlan = getShopStrategyPlan()) {
@@ -8669,7 +9052,7 @@
         ctx.fillRect(x, y, width * Math.max(0, enemy.hp / enemy.maxHp), 6);
     }
 
-    function drawCanvasTopInfo(ctx) {
+    function drawCanvasTopInfoLegacy(ctx) {
         const skillReady = state.battle.skillCooldown <= 0;
         const displayWaveText = state.battle.running || state.battle.finished || state.battle.awaitingUpgrade
             ? t('waveText').replace('{wave}', String(Math.max(1, state.battle.currentWave || 1)))
@@ -8692,6 +9075,53 @@
         ctx.fillText(`${t('threatLabel')}: ${t(getThreatKey())}`, 20, 56);
         ctx.fillStyle = skillReady ? 'rgba(114,244,255,0.98)' : 'rgba(145,162,192,0.96)';
         ctx.fillText(`${t(SKILLS[state.save.selectedSkill].nameKey)} · ${state.battle.skillCooldown > 0 ? state.battle.skillCooldown.toFixed(1) + 's' : getLocalized({ zh: '可释放', en: 'READY' })}`, 20, 78);
+    }
+
+    function drawCanvasTopInfo(ctx) {
+        const skillReady = state.battle.skillCooldown <= 0;
+        const displayWaveText = state.battle.running || state.battle.finished || state.battle.awaitingUpgrade
+            ? t('waveText').replace('{wave}', String(Math.max(1, state.battle.currentWave || 1)))
+            : `0 / ${TOTAL_WAVES}`;
+        const chapterPanel = { x: 14, y: 10, width: 248, height: 56 };
+        const skillPanel = { width: 162, height: 38 };
+        const skillName = t(SKILLS[state.save.selectedSkill].nameKey);
+        const skillStatus = state.battle.skillCooldown > 0
+            ? `${state.battle.skillCooldown.toFixed(1)}s`
+            : getLocalized({ zh: '可释放', en: 'READY' });
+        const skillX = CANVAS_WIDTH - skillPanel.width - 14;
+        const skillY = 10;
+        ctx.save();
+        ctx.fillStyle = skillReady && state.battle.running ? 'rgba(10, 28, 44, 0.86)' : 'rgba(6, 12, 24, 0.78)';
+        fillRoundRect(ctx, chapterPanel.x, chapterPanel.y, chapterPanel.width, chapterPanel.height, 18);
+        ctx.fill();
+        ctx.strokeStyle = skillReady && state.battle.running ? 'rgba(114,244,255,0.28)' : 'rgba(128,168,255,0.18)';
+        ctx.lineWidth = 1.5;
+        fillRoundRect(ctx, chapterPanel.x, chapterPanel.y, chapterPanel.width, chapterPanel.height, 18);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = '700 16px Inter';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${getCurrentChapter().id} · ${displayWaveText}`, 22, 32);
+        ctx.font = '600 11.5px Inter';
+        ctx.fillStyle = 'rgba(145,162,192,0.96)';
+        ctx.fillText(`${t('threatLabel')} · ${t(getThreatKey())}`, 22, 50);
+
+        ctx.fillStyle = skillReady ? 'rgba(13, 42, 56, 0.9)' : 'rgba(7, 14, 28, 0.82)';
+        fillRoundRect(ctx, skillX, skillY, skillPanel.width, skillPanel.height, 16);
+        ctx.fill();
+        ctx.strokeStyle = skillReady ? 'rgba(114,244,255,0.34)' : 'rgba(128,168,255,0.16)';
+        fillRoundRect(ctx, skillX, skillY, skillPanel.width, skillPanel.height, 16);
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = skillReady ? 'rgba(114,244,255,0.98)' : 'rgba(238,245,255,0.9)';
+        ctx.font = '700 12px Inter';
+        ctx.fillText(skillName, skillX + skillPanel.width / 2, 26);
+        ctx.font = '700 11px Inter';
+        ctx.fillStyle = skillReady ? 'rgba(114,244,255,0.98)' : 'rgba(145,162,192,0.96)';
+        ctx.fillText(skillStatus, skillX + skillPanel.width / 2, 42);
+        ctx.restore();
     }
 
     function drawCoreImpactOverlay(ctx) {
