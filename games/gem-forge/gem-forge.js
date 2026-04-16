@@ -946,7 +946,7 @@
                 <div class="gf-kpi-card"><span>${text('赞助档位', 'Sponsor')}</span><strong>${localize(sponsorTier.title)}</strong></div>
                 <div class="gf-kpi-card"><span>${text('最高合同', 'Best')}</span><strong>${config.contracts[state.save.bestContractIndex].id}</strong></div>
             </div>
-            <div class="gf-chip-row" style="margin-top:12px;">
+            <div class="gf-chip-row gf-summary-status-row" style="margin-top:12px;">
                 <span class="gf-chip is-strong">${powerGap > 0 ? text(`还差 ${formatCompact(powerGap)}`, `Gap ${formatCompact(powerGap)}`) : text('已够线', 'Ready')}</span>
                 <span class="gf-chip">${text('下一步', 'Next')} · ${diagnosis.freeShort}</span>
                 <span class="gf-chip is-success">${text('稳定补正', 'Stability')} · +${formatCompact(Math.max(0, effectivePower - power.total))}</span>
@@ -1207,42 +1207,69 @@
             const affordB = canUpgradeWorkshop(b.id) ? 1 : 0;
             return affordB - affordA;
         });
+        const priorityTarget = getPriorityWorkshopTarget();
+        const rareRate = getWorkshopEffect('rareRate');
+        const heatRegen = getWorkshopEffect('heatRegen');
+        const dustYield = getWorkshopEffect('dustYield');
+        const catalystRefine = getWorkshopEffect('catalystRefine');
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
-                text('工坊研究', 'Workshop'),
-                text('工坊不做复杂科技树，只保留 5 条能直接看懂的永久成长线。升级结果会立刻写进熔炉、合同和产出公式。', 'The workshop avoids a complex tech tree and keeps only 5 permanent growth lines. Upgrades apply immediately to forge, contracts, and economy formulas.'),
-                `<div class="gf-chip">${text('总研究次数', 'Research Count')} · ${formatCompact(state.save.stats.workshopUps)}</div>`
+                text('工坊', 'Workshop'),
+                '',
+                `<div class="gf-chip">${text('研究次数', 'Research Count')} · ${formatCompact(state.save.stats.workshopUps)}</div>`
             )}
-            <div class="gf-list">
-                ${sortedWorkshop.map((item) => {
-                    const level = getWorkshopLevel(item.id);
-                    const cost = getWorkshopUpgradeCost(item.id);
-                    const currentEffect = getWorkshopEffect(item.id);
-                    const nextEffect = getWorkshopEffect(item.id, level + 1);
-                    const maxed = level >= item.maxLevel;
-                    return `
-                        <article class="gf-list-card">
-                            <div class="gf-row-head">
-                                <div>
-                                    <div class="eyebrow">${text('永久线', 'Permanent Line')}</div>
-                                    <div class="gf-card-title">${localize(item.name)} · Lv.${level}</div>
-                                </div>
-                                <div class="gf-card-number">${maxed ? text('封顶', 'Maxed') : `Lv.${level + 1}`}</div>
-                            </div>
-                            <div class="gf-card-copy">${getWorkshopRelationCopy(item.id, currentEffect, nextEffect)}</div>
-                            ${renderKpiGrid([
-                                { label: text('当前效果', 'Current'), value: formatWorkshopEffect(item.id, currentEffect) },
-                                { label: text('下级效果', 'Next'), value: maxed ? text('封顶', 'Maxed') : formatWorkshopEffect(item.id, nextEffect) },
-                                { label: text('金币消耗', 'Gold Cost'), value: maxed ? '-' : formatCompact(cost.gold) },
-                                { label: text('熔尘消耗', 'Dust Cost'), value: maxed ? '-' : formatCompact(cost.dust) }
-                            ])}
-                            <div class="gf-action-row" style="margin-top:12px;">
-                                <button class="primary-btn" type="button" data-action="upgradeWorkshop" data-value="${item.id}" ${(canUpgradeWorkshop(item.id) && !maxed) ? '' : 'disabled'}>${maxed ? text('已封顶', 'Maxed') : text('立即升级', 'Upgrade')}</button>
-                            </div>
-                        </article>
-                    `;
-                }).join('')}
+            <div class="gf-card-grid">
+                <article class="gf-card ${priorityTarget?.affordable ? 'gf-shop-card is-highlight' : ''}">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('优先升级', 'Priority Upgrade')}</div>
+                            <div class="gf-card-title">${priorityTarget ? localize(priorityTarget.item.name) : text('当前工坊已封顶', 'Workshop maxed')}</div>
+                        </div>
+                        <div class="gf-card-number">${priorityTarget ? `Lv.${getWorkshopLevel(priorityTarget.workshopId)}` : text('完成', 'Done')}</div>
+                    </div>
+                    ${priorityTarget ? renderKpiGrid([
+                        { label: text('当前', 'Current'), value: formatWorkshopEffect(priorityTarget.workshopId, getWorkshopEffect(priorityTarget.workshopId)) },
+                        { label: text('下级', 'Next'), value: formatWorkshopEffect(priorityTarget.workshopId, getWorkshopEffect(priorityTarget.workshopId, getWorkshopLevel(priorityTarget.workshopId) + 1)) },
+                        { label: text('金币', 'Gold'), value: formatCompact(priorityTarget.cost.gold) },
+                        { label: text('熔尘', 'Dust'), value: formatCompact(priorityTarget.cost.dust) }
+                    ]) : renderKpiGrid([
+                        { label: text('热量恢复', 'Heat Regen'), value: formatWorkshopEffect('heatRegen', heatRegen) },
+                        { label: text('稀有率', 'Rare Rate'), value: formatWorkshopEffect('rareRate', rareRate) },
+                        { label: text('熔尘收益', 'Dust'), value: formatWorkshopEffect('dustYield', dustYield) },
+                        { label: text('催化提炼', 'Catalyst'), value: formatWorkshopEffect('catalystRefine', catalystRefine) }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        ${priorityTarget
+                            ? `<span class="gf-chip is-strong">${getWorkshopRelationCopy(priorityTarget.workshopId, getWorkshopEffect(priorityTarget.workshopId), getWorkshopEffect(priorityTarget.workshopId, getWorkshopLevel(priorityTarget.workshopId) + 1))}</span>`
+                            : `<span class="gf-chip is-success">${text('5 条常驻线都已升满，可回到熔炉与合同继续推进。', 'All 5 permanent lines are maxed. Return to Forge and Contracts to keep pushing.')}</span>`}
+                    </div>
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="${priorityTarget?.affordable ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="${priorityTarget ? 'upgradeWorkshop' : 'openTab'}" data-value="${priorityTarget ? priorityTarget.workshopId : 'forge'}">${priorityTarget ? text('立即升级', 'Upgrade Now') : text('返回熔炉', 'Back to Forge')}</button>
+                    </div>
+                </article>
+                <article class="gf-card">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('常驻快照', 'Permanent Snapshot')}</div>
+                            <div class="gf-card-title">${text('工坊加成会立刻写入熔炉、合同与产出。', 'Workshop bonuses apply immediately to forge, contracts, and economy.')}</div>
+                        </div>
+                        <div class="gf-card-number">${sortedWorkshop.filter((item) => getWorkshopLevel(item.id) >= item.maxLevel).length}/${sortedWorkshop.length}</div>
+                    </div>
+                    ${renderKpiGrid([
+                        { label: text('热量恢复', 'Heat Regen'), value: formatWorkshopEffect('heatRegen', heatRegen) },
+                        { label: text('稀有率', 'Rare Rate'), value: formatWorkshopEffect('rareRate', rareRate) },
+                        { label: text('熔尘收益', 'Dust'), value: formatWorkshopEffect('dustYield', dustYield) },
+                        { label: text('催化提炼', 'Catalyst'), value: formatWorkshopEffect('catalystRefine', catalystRefine) }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        <span class="gf-chip">${text('热量上限', 'Heat Cap')} · ${formatWorkshopEffect('heatCap', getWorkshopEffect('heatCap'))}</span>
+                        <span class="gf-chip">${text('当前可升', 'Ready Up')} · ${formatCompact(sortedWorkshop.filter((item) => canUpgradeWorkshop(item.id)).length)}</span>
+                    </div>
+                </article>
+            </div>
+            <div class="gf-list gf-list--compact">
+                ${sortedWorkshop.map(renderWorkshopCompactRow).join('')}
             </div>
         `;
     }
@@ -1699,6 +1726,166 @@
                 <div class="gf-compact-side">
                     <strong>${node.claimed ? text('已领', 'Claimed') : node.claimable ? text('可领', 'Ready') : `${formatCompact(node.xp)} XP`}</strong>
                     <button class="${node.claimed ? 'ghost-btn' : action.cls}" type="button" data-action="${node.claimed ? 'openTab' : action.action}" data-value="${node.claimed ? 'season' : action.value}">${node.claimed ? text('已完成', 'Done') : action.label}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function getVisibleContractViews(limit = 4) {
+        const effectivePower = getEffectiveContractPower();
+        const all = config.contracts.map((contract, index) => {
+            const unlocked = index <= state.save.bestContractIndex;
+            const selected = index === state.save.contractIndex;
+            const cleared = index < state.save.bestContractIndex;
+            const preview = index === state.save.bestContractIndex + 1;
+            const powerGap = Math.max(0, contract.recommended - effectivePower);
+            return { contract, index, unlocked, selected, cleared, preview, powerGap };
+        });
+        const visible = [];
+        const seen = new Set();
+
+        function pushIndex(index) {
+            if (!Number.isFinite(index) || index < 0 || index >= all.length || seen.has(index) || visible.length >= limit) return;
+            seen.add(index);
+            visible.push(all[index]);
+        }
+
+        pushIndex(state.save.contractIndex);
+        pushIndex(state.save.bestContractIndex + 1);
+        pushIndex(state.save.bestContractIndex);
+        pushIndex(state.save.bestContractIndex - 1);
+        all.forEach((entry) => {
+            if (visible.length >= limit) return;
+            if (entry.unlocked || entry.preview) pushIndex(entry.index);
+        });
+
+        return {
+            visible,
+            totalRelevant: all.filter((entry) => entry.unlocked || entry.preview).length
+        };
+    }
+
+    function renderContractCompactRow(entry) {
+        const { contract, index, unlocked, selected, cleared, preview, powerGap } = entry;
+        const focusLabel = contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ');
+        const action = selected
+            ? { action: 'runContract', value: index, label: text('执行', 'Run'), cls: 'primary-btn' }
+            : { action: 'selectContract', value: index, label: unlocked ? text('设目标', 'Set Target') : text('预设下一档', 'Set Next'), cls: 'ghost-btn' };
+        const statusLabel = selected
+            ? text('当前', 'Current')
+            : preview
+                ? text('下一档', 'Next')
+                : cleared
+                    ? text('已通', 'Cleared')
+                    : unlocked
+                        ? text('开放', 'Open')
+                        : text('锁定', 'Locked');
+        const summary = !unlocked && preview
+            ? text(`通关上一档后正式开启，焦点为 ${focusLabel}。`, `Unlocks after clearing the previous stage. Focus: ${focusLabel}.`)
+            : powerGap > 0
+                ? text(`还差 ${formatCompact(powerGap)} 有效战力，优先补 ${focusLabel}。`, `Need ${formatCompact(powerGap)} more effective power. Focus ${focusLabel} first.`)
+                : text('已经够线，可直接执行并拿走本档奖励。', 'You are on the line. Run now and collect this stage reward.');
+
+        return `
+            <article class="gf-compact-row ${selected || (unlocked && powerGap <= 0) ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${contract.id} · ${localize(contract.name)}</div>
+                    <div class="gf-compact-sub">${summary}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip is-strong">${statusLabel}</span>
+                        ${contract.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
+                        ${renderRewardChips(getContractPreviewReward(contract), { limit: 2 })}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${powerGap > 0 ? `-${formatCompact(powerGap)}` : text('Ready', 'Ready')}</strong>
+                    <button class="${action.cls}" type="button" data-action="${action.action}" data-value="${action.value}">${action.label}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderMiniSlotCard(item) {
+        const family = item.sigil ? familyMap[item.sigil.family] : null;
+        const locked = item.slotId === 'resonance' && state.save.bestContractIndex < 2;
+        return `
+            <article class="gf-mini-slot ${locked ? 'is-locked' : ''} ${item.level > 0 ? 'is-equipped' : ''}">
+                <span>${getSlotName(item.slotId)}</span>
+                <strong>${locked ? text('未开', 'Locked') : item.sigil ? localize(item.sigil.name) : text('空槽', 'Empty')}</strong>
+                <small>${locked
+                    ? text('推进到 1-3 开启', 'Unlock at 1-3')
+                    : item.sigil
+                        ? `Lv.${item.level} · ${localize(family.name)}`
+                        : text('装同槽符印', 'Equip a matching sigil')}</small>
+            </article>
+        `;
+    }
+
+    function renderSigilCompactRow(sigil) {
+        const level = getSigilLevel(sigil.id);
+        const unlocked = level > 0;
+        const equipped = state.save.selectedSigils.includes(sigil.id);
+        const slotLocked = sigil.slot === 'resonance' && state.save.bestContractIndex < 2;
+        const shardOwned = getSigilShardCount(sigil.id);
+        const upgradeCost = getSigilUpgradeCost(sigil.id);
+        const focus = getCurrentContract().focus.includes(sigil.family);
+        const primaryLabel = unlocked
+            ? (level >= 8
+                ? text('已满', 'Maxed')
+                : text(`升 ${formatCompact(upgradeCost.gold)}G`, `Up ${formatCompact(upgradeCost.gold)}G`))
+            : text(`解 ${formatCompact(sigil.shardUnlock)}`, `Unlock ${formatCompact(sigil.shardUnlock)}`);
+        const detail = unlocked
+            ? text(`碎片 ${formatCompact(shardOwned)}/${formatCompact(upgradeCost.shards)} · 金币 ${formatCompact(state.save.gold)}/${formatCompact(upgradeCost.gold)}`, `Shards ${formatCompact(shardOwned)}/${formatCompact(upgradeCost.shards)} · Gold ${formatCompact(state.save.gold)}/${formatCompact(upgradeCost.gold)}`)
+            : text(`碎片 ${formatCompact(shardOwned)}/${formatCompact(sigil.shardUnlock)} · ${getSlotName(sigil.slot)}`, `Shards ${formatCompact(shardOwned)}/${formatCompact(sigil.shardUnlock)} · ${getSlotName(sigil.slot)}`);
+
+        return `
+            <article class="gf-compact-row ${equipped || focus ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(sigil.name)} · ${localize(familyMap[sigil.family].name)}</div>
+                    <div class="gf-compact-sub">${detail}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip">${getSlotName(sigil.slot)}</span>
+                        <span class="gf-chip">${text('战力', 'Power')} · ${formatCompact(getSigilPower(sigil.id))}</span>
+                        ${focus ? `<span class="gf-chip is-success">${text('本章焦点', 'Focus')}</span>` : ''}
+                        ${equipped ? `<span class="gf-chip is-strong">${text('已装', 'Equipped')}</span>` : ''}
+                        ${slotLocked ? `<span class="gf-chip is-warning">${text('槽位未开', 'Slot Locked')}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${unlocked ? `Lv.${level}` : text('未解', 'Locked')}</strong>
+                    <div class="gf-action-row">
+                        <button class="ghost-btn" type="button" data-action="equipSigil" data-value="${sigil.id}">${equipped ? text('已装', 'Equipped') : text('装备', 'Equip')}</button>
+                        <button class="primary-btn" type="button" data-action="${unlocked ? 'upgradeSigil' : 'unlockSigil'}" data-value="${sigil.id}">${primaryLabel}</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderWorkshopCompactRow(item) {
+        const level = getWorkshopLevel(item.id);
+        const cost = getWorkshopUpgradeCost(item.id);
+        const currentEffect = getWorkshopEffect(item.id);
+        const nextEffect = getWorkshopEffect(item.id, level + 1);
+        const maxed = level >= item.maxLevel;
+        const ready = canUpgradeWorkshop(item.id) && !maxed;
+
+        return `
+            <article class="gf-compact-row ${ready ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(item.name)} · Lv.${level}</div>
+                    <div class="gf-compact-sub">${maxed
+                        ? text(`当前效果 ${formatWorkshopEffect(item.id, currentEffect)}，该路线已封顶。`, `Current effect ${formatWorkshopEffect(item.id, currentEffect)}. This line is maxed.`)
+                        : text(`当前 ${formatWorkshopEffect(item.id, currentEffect)} → 下级 ${formatWorkshopEffect(item.id, nextEffect)}`, `Current ${formatWorkshopEffect(item.id, currentEffect)} → Next ${formatWorkshopEffect(item.id, nextEffect)}`)}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip">${text('金币', 'Gold')} · ${maxed ? '-' : formatCompact(cost.gold)}</span>
+                        <span class="gf-chip">${text('熔尘', 'Dust')} · ${maxed ? '-' : formatCompact(cost.dust)}</span>
+                        <span class="gf-chip ${ready ? 'is-success' : maxed ? 'is-strong' : 'is-warning'}">${maxed ? text('已封顶', 'Maxed') : ready ? text('可升级', 'Ready') : text('资源不足', 'Need res')}</span>
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${maxed ? text('已满', 'Maxed') : `Lv.${level + 1}`}</strong>
+                    <button class="${ready ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="upgradeWorkshop" data-value="${item.id}">${maxed ? text('已封顶', 'Maxed') : text('升级', 'Upgrade')}</button>
                 </div>
             </article>
         `;
@@ -2320,7 +2507,9 @@
     function selectContract(index) {
         if (!Number.isFinite(index) || index < 0 || index >= config.contracts.length) return;
         if (index > state.save.bestContractIndex + 1) return showToast(text('前一档还没打通。', 'Clear the previous contract first.'));
+        if (state.save.contractIndex === index) return showToast(text('当前已经是这档合同。', 'This is already your current contract.'));
         state.save.contractIndex = index;
+        showToast(text(`已切换到合同 ${config.contracts[index].id}。`, `Target switched to ${config.contracts[index].id}.`));
         saveProgress();
         renderAll();
     }
@@ -2397,6 +2586,9 @@
     }
 
     function upgradeWorkshop(workshopId) {
+        const item = workshopMap[workshopId];
+        if (!item) return showToast(text('未找到该工坊路线。', 'Workshop line not found.'));
+        if (getWorkshopLevel(workshopId) >= item.maxLevel) return showToast(text('该工坊路线已经封顶。', 'This workshop line is already maxed.'));
         if (!canUpgradeWorkshop(workshopId)) return showToast(text('资源不足，先补金币或熔尘。', 'Not enough resources. Refill gold or dust first.'));
         const cost = getWorkshopUpgradeCost(workshopId);
         state.save.gold -= cost.gold;
@@ -3412,93 +3604,67 @@
         const passives = getSigilPassives();
         const effectivePower = currentPower.total + passives.contractStability;
         const lastResult = state.save.lastResult;
-        const diagnosisCard = renderGrowthDiagnosisCard();
-        const visibleContracts = config.contracts.map((contract, index) => {
-            const unlocked = index <= state.save.bestContractIndex;
-            const selected = index === state.save.contractIndex;
-            const cleared = index < state.save.bestContractIndex;
-            const preview = index === state.save.bestContractIndex + 1;
-            const powerGap = Math.max(0, contract.recommended - effectivePower);
-            return { contract, index, unlocked, selected, cleared, preview, powerGap };
-        });
+        const diagnosis = getGrowthDiagnosis();
+        const compactContracts = getVisibleContractViews(4);
+        const currentContract = getCurrentContract();
+        const nextPreview = config.contracts[Math.min(config.contracts.length - 1, state.save.bestContractIndex + 1)] || currentContract;
+        const hiddenCount = Math.max(0, compactContracts.totalRelevant - compactContracts.visible.length);
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
                 text('合同推进', 'Contracts'),
-                text('这页只回答三件事：当前推哪一档、差多少、打赢后回什么。', 'This view answers only three things: which contract to push, how far you are, and what comes back when it clears.'),
+                '',
                 `<div class="gf-chip">${text('最高推进', 'Best')} · ${config.contracts[state.save.bestContractIndex].id}</div>`
             )}
-            <div class="gf-list">
-                ${diagnosisCard}
-            </div>
             <div class="gf-card-grid">
-                <article class="gf-card">
+                <article class="gf-card ${Math.max(0, currentContract.recommended - effectivePower) <= 0 ? 'gf-shop-card is-highlight' : ''}">
                     <div class="gf-card-head">
                         <div>
                             <div class="eyebrow">${text('当前目标', 'Current Goal')}</div>
-                            <div class="gf-card-title">${getCurrentContract().id} · ${localize(getCurrentContract().name)}</div>
+                            <div class="gf-card-title">${currentContract.id} · ${localize(currentContract.name)}</div>
                         </div>
                         <div class="gf-card-number">${formatCompact(effectivePower)}</div>
                     </div>
-                    <div class="gf-card-copy">${text('合同按“基础战力 + 符印稳定”一起结算。只看裸战力容易误判，所以这里直接展示可清线的有效战力。', 'Contracts resolve using base power plus sigil stability. Raw power alone can be misleading, so this card shows your effective clear power.')}</div>
                     ${renderKpiGrid([
                         { label: text('基础战力', 'Base Power'), value: formatCompact(currentPower.total) },
-                        { label: text('符印稳定', 'Stability'), value: `+${formatCompact(passives.contractStability)}` },
-                        { label: text('推荐战力', 'Recommended'), value: formatCompact(getCurrentContract().recommended) },
-                        { label: text('缺口', 'Gap'), value: formatCompact(Math.max(0, getCurrentContract().recommended - effectivePower)) }
+                        { label: text('稳定补正', 'Stability'), value: `+${formatCompact(passives.contractStability)}` },
+                        { label: text('推荐线', 'Recommended'), value: formatCompact(currentContract.recommended) },
+                        { label: text('缺口', 'Gap'), value: formatCompact(Math.max(0, currentContract.recommended - effectivePower)) }
                     ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        ${currentContract.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
+                        <span class="gf-chip ${Math.max(0, currentContract.recommended - effectivePower) > 0 ? 'is-warning' : 'is-success'}">${Math.max(0, currentContract.recommended - effectivePower) > 0 ? text('仍需补强', 'Need More Power') : text('已够线', 'Ready')}</span>
+                    </div>
                     <div class="gf-action-row" style="margin-top:12px;">
                         <button class="primary-btn" type="button" data-action="runContract" data-value="${state.save.contractIndex}">${text('执行当前合同', 'Run Contract')}</button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="${diagnosis.freeTab}">${diagnosis.freeLabel}</button>
                     </div>
                 </article>
                 <article class="gf-card">
                     <div class="gf-card-head">
                         <div>
-                            <div class="eyebrow">${text('奖励结构', 'Reward Mix')}</div>
-                            <div class="gf-card-title">${text('越往后越缺金币与熔尘', 'Later contracts tighten gold and dust')}</div>
+                            <div class="eyebrow">${text('推进快照', 'Route Snapshot')}</div>
+                            <div class="gf-card-title">${currentContract.id} → ${nextPreview.id}</div>
                         </div>
-                        <div class="gf-card-number">${formatCompact(getCurrentContract().reward.gold)}</div>
+                        <div class="gf-card-number">${diagnosis.freeShort}</div>
                     </div>
-                    <div class="gf-card-copy">${text('金币只覆盖一部分后续升级，熔尘和催化剂会越来越像真正卡点，所以这里既看收益，也看失败保底。', 'Gold only covers part of your next upgrades; dust and catalyst become the real walls over time, so this page shows both success rewards and failed-run fallback.')}</div>
+                    ${renderKpiGrid([
+                        { label: text('当前档', 'Current'), value: currentContract.id },
+                        { label: text('下一档', 'Next'), value: nextPreview.id },
+                        { label: text('本档金币', 'Gold'), value: formatCompact(getContractPreviewReward(currentContract).gold) },
+                        { label: text('建议', 'Next Step'), value: diagnosis.freeShort }
+                    ])}
                     <div class="gf-chip-row" style="margin-top:12px;">
-                        ${renderRewardChips(getContractPreviewReward(getCurrentContract()), { limit: 4 })}
-                        <span class="gf-chip is-warning">${text('失败也会回流一部分资源', 'Failed runs still return fallback loot')}</span>
+                        <span class="gf-chip is-strong">${diagnosis.title}</span>
+                        ${nextPreview.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
                     </div>
                 </article>
             </div>
-            ${lastResult?.type === 'contract' ? renderLatestResultCard(lastResult, { context: 'contracts' }) : ''}
-            <div class="gf-list">
-                ${visibleContracts.map(({ contract, index, unlocked, selected, cleared, preview, powerGap }) => `
-                    <article class="gf-list-card gf-contract-card ${selected ? 'is-current' : ''} ${!unlocked ? 'is-locked' : ''}">
-                        <div class="gf-row-head">
-                            <div>
-                                <div class="eyebrow">${contract.id}</div>
-                                <div class="gf-card-title">${localize(contract.name)}</div>
-                            </div>
-                            <div class="gf-card-number">${formatCompact(contract.recommended)}</div>
-                        </div>
-                        <div class="gf-card-copy">${unlocked
-                            ? (powerGap > 0
-                                ? text(`当前还差 ${formatCompact(powerGap)} 有效战力，优先补 ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')} 焦点相关收益。`, `You are ${formatCompact(powerGap)} effective power short. Focus on ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')} outputs first.`)
-                                : text('当前有效战力已经过线，直接执行合同拿资源并解锁下一档。', 'Your effective power is already on the line. Run it now for resources and the next unlock.'))
-                            : text('上一档还没打通，这里先只看推荐线和奖励，不要提前分散资源。', 'The previous step is not cleared yet, so only read the recommendation and reward for now.')}</div>
-                        <div class="gf-chip-row" style="margin-top:10px;">
-                            ${contract.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
-                            ${cleared ? `<span class="gf-chip is-success">${text('已通关', 'Cleared')}</span>` : ''}
-                            ${selected ? `<span class="gf-chip is-strong">${text('当前选中', 'Selected')}</span>` : ''}
-                            ${preview && !unlocked ? `<span class="gf-chip is-warning">${text('下一档预览', 'Next Preview')}</span>` : ''}
-                            ${!preview && !unlocked ? `<span class="gf-chip is-warning">${text('未解锁', 'Locked')}</span>` : ''}
-                        </div>
-                        <div class="gf-chip-row" style="margin-top:10px;">
-                            ${renderRewardChips(getContractPreviewReward(contract), { limit: 4 })}
-                        </div>
-                        <div class="gf-action-row" style="margin-top:12px;">
-                            <button class="ghost-btn" type="button" data-action="selectContract" data-value="${index}">${selected ? text('当前目标', 'Current Target') : text('设为目标', 'Set Target')}</button>
-                            <button class="primary-btn" type="button" data-action="runContract" data-value="${index}">${text('执行', 'Run')}</button>
-                        </div>
-                    </article>
-                `).join('')}
+            ${lastResult?.type === 'contract' ? renderContractSettlementCard(lastResult, { context: 'contracts', compact: true }) : ''}
+            <div class="gf-list gf-list--compact">
+                ${compactContracts.visible.map(renderContractCompactRow).join('')}
             </div>
+            ${hiddenCount > 0 ? `<div class="gf-empty">${text(`其余 ${hiddenCount} 档合同已折叠，只保留当前最该看的几档。`, `${hiddenCount} more contracts are collapsed so the most relevant stages stay on screen.`)}</div>` : ''}
         `;
     };
 
@@ -3513,50 +3679,74 @@
         const visibleSigils = getVisibleSigils(4);
         const summary = getSigilTabSummary();
         const hiddenCount = Math.max(0, config.sigils.length - visibleSigils.length);
+        const priorityTarget = getPrioritySigilTarget();
+        const prioritySigil = priorityTarget?.sigil || null;
+        const priorityLevel = prioritySigil ? getSigilLevel(prioritySigil.id) : 0;
+        const priorityUpgradeCost = prioritySigil ? getSigilUpgradeCost(prioritySigil.id) : { gold: 0, shards: 0 };
+        const priorityReady = priorityTarget ? (priorityLevel <= 0 ? priorityTarget.unlockReady : priorityTarget.upgradeReady) : false;
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
-                text('符印构筑', 'Sigils'),
-                text('每个符印只吃自己的碎片；顶部总碎片只是汇总，不代表任意一个符印都能直接解锁或升级。', 'Each sigil uses its own shards. The total shard number is only a summary and does not mean every sigil can be unlocked or upgraded immediately.'),
+                text('符印', 'Sigils'),
+                '',
                 `<div class="gf-chip">${text('总碎片', 'Total Shards')} · ${formatCompact(totalShards)}</div>`
             )}
-            <article class="gf-card">
-                <div class="gf-card-head">
-                    <div>
-                        <div class="eyebrow">${text('当前装配摘要', 'Loadout Summary')}</div>
-                        <div class="gf-card-title">${text('先处理可升级 / 可解锁 / 本章焦点', 'Handle upgrades, unlocks, and current focus first')}</div>
+            <div class="gf-card-grid">
+                <article class="gf-card">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('装配摘要', 'Loadout Summary')}</div>
+                            <div class="gf-card-title">${text('先处理可升级、可解锁和本章焦点。', 'Handle ready upgrades, unlocks, and current focus first.')}</div>
+                        </div>
+                        <div class="gf-card-number">${formatCompact(getSelectedSigilPower())}</div>
                     </div>
-                    <div class="gf-card-number">${formatCompact(getSelectedSigilPower())}</div>
-                </div>
-                <div class="gf-card-copy">${text('符印页压缩成“装配槽 + 关键符印”两层结构。先把可操作项做完，再去看折叠的低优先级符印，会更适合手机单屏决策。', 'The sigil page is compressed into two layers: slots and priority sigils. Finish actionable entries first, then expand into lower-priority sigils if needed for mobile-friendly decision making.')}</div>
-                ${renderKpiGrid([
-                    { label: text('已解锁', 'Unlocked'), value: formatCompact(summary.unlockedCount) },
-                    { label: text('可升级', 'Ready Up'), value: formatCompact(summary.upgradeReadyCount) },
-                    { label: text('可解锁', 'Ready Unlock'), value: formatCompact(summary.unlockReadyCount) },
-                    { label: text('本章焦点', 'Focus Sigils'), value: formatCompact(summary.focusCount) }
-                ])}
-                <div class="gf-chip-row" style="margin-top:12px;">
-                    ${summary.focusFamilies.map((familyId) => `<span class="gf-chip is-success">${localize(familyMap[familyId].name)}</span>`).join('')}
-                    ${hiddenCount > 0 ? `<span class="gf-chip">${text(`其余 ${hiddenCount} 个符印已折叠`, `${hiddenCount} more sigils collapsed`)}</span>` : ''}
-                </div>
-            </article>
-            <div class="gf-slot-grid">
-                ${slotCards.map(renderSlotCard).join('')}
+                    ${renderKpiGrid([
+                        { label: text('已解锁', 'Unlocked'), value: formatCompact(summary.unlockedCount) },
+                        { label: text('可升级', 'Ready Up'), value: formatCompact(summary.upgradeReadyCount) },
+                        { label: text('可解锁', 'Ready Unlock'), value: formatCompact(summary.unlockReadyCount) },
+                        { label: text('焦点数', 'Focus Count'), value: formatCompact(summary.focusCount) }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        ${summary.focusFamilies.map((familyId) => `<span class="gf-chip is-success">${localize(familyMap[familyId].name)}</span>`).join('')}
+                        ${hiddenCount > 0 ? `<span class="gf-chip">${text(`其余 ${hiddenCount} 个已折叠`, `${hiddenCount} more collapsed`)}</span>` : ''}
+                    </div>
+                </article>
+                <article class="gf-card ${priorityReady ? 'gf-shop-card is-highlight' : ''}">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('下一目标', 'Next Target')}</div>
+                            <div class="gf-card-title">${prioritySigil ? localize(prioritySigil.name) : text('先回熔炉刷焦点碎片', 'Forge for focus shards first')}</div>
+                        </div>
+                        <div class="gf-card-number">${prioritySigil ? formatCompact(getSigilPower(prioritySigil.id)) : '-'}</div>
+                    </div>
+                    ${prioritySigil ? renderKpiGrid([
+                        { label: text('当前', 'Current'), value: `Lv.${priorityLevel}` },
+                        { label: text('碎片', 'Shards'), value: `${formatCompact(getSigilShardCount(prioritySigil.id))}/${formatCompact(priorityLevel > 0 ? priorityUpgradeCost.shards : prioritySigil.shardUnlock)}` },
+                        { label: text('金币', 'Gold'), value: priorityLevel > 0 ? formatCompact(priorityUpgradeCost.gold) : '-' },
+                        { label: text('槽位', 'Slot'), value: getSlotName(prioritySigil.slot) }
+                    ]) : renderKpiGrid([
+                        { label: text('当前合同', 'Contract'), value: getCurrentContract().id },
+                        { label: text('建议', 'Next'), value: text('回熔炉', 'Forge') },
+                        { label: text('焦点家族', 'Focus'), value: getCurrentContract().focus.map((familyId) => localize(familyMap[familyId].name)).join('/') },
+                        { label: text('可升符印', 'Ready Up'), value: formatCompact(summary.upgradeReadyCount) }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        ${prioritySigil ? `<span class="gf-chip">${localize(familyMap[prioritySigil.family].name)}</span>` : ''}
+                        ${prioritySigil && getCurrentContract().focus.includes(prioritySigil.family) ? `<span class="gf-chip is-success">${text('本章焦点', 'Focus')}</span>` : ''}
+                        ${prioritySigil && state.save.selectedSigils.includes(prioritySigil.id) ? `<span class="gf-chip is-strong">${text('已装配', 'Equipped')}</span>` : ''}
+                    </div>
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="${priorityReady ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="${prioritySigil ? (priorityLevel > 0 ? 'upgradeSigil' : 'unlockSigil') : 'openTab'}" data-value="${prioritySigil ? prioritySigil.id : 'forge'}">${prioritySigil ? (priorityLevel > 0 ? text('立即升级', 'Upgrade Now') : text('立即解锁', 'Unlock Now')) : text('返回熔炉', 'Back to Forge')}</button>
+                    </div>
+                </article>
             </div>
-            <article class="gf-list-card">
-                <div class="gf-card-head">
-                    <div>
-                        <div class="eyebrow">${text('关键符印', 'Priority Sigils')}</div>
-                        <div class="gf-card-title">${text('单屏只保留最值得现在操作的几项', 'Only the most valuable next actions stay on screen')}</div>
-                    </div>
-                    <div class="gf-card-number">${formatCompact(visibleSigils.length)}</div>
-                </div>
-                <div class="gf-card-copy">${text('排序优先级：已装配 > 可升级 / 可解锁 > 当前合同焦点 > 最高稀有度。这样手机端不用先读完整个列表。', 'Sorting priority: equipped > ready to unlock/upgrade > current contract focus > highest rarity, so mobile players do not need to scan the full list first.')}</div>
-                <div class="gf-list" style="margin-top:12px;">
-                    ${visibleSigils.map(renderSigilRow).join('')}
-                    ${hiddenCount > 0 ? `<div class="gf-empty">${text(`剩余 ${hiddenCount} 个低优先级符印已折叠。等当前升级、解锁和焦点补强处理完，再回来看它们即可。`, `${hiddenCount} lower-priority sigils are collapsed for now. Come back to them after current upgrades, unlocks, and focus boosts are handled.`)}</div>` : ''}
-                </div>
-            </article>
+            <div class="gf-mini-slot-grid">
+                ${slotCards.map(renderMiniSlotCard).join('')}
+            </div>
+            <div class="gf-list gf-list--compact">
+                ${visibleSigils.map(renderSigilCompactRow).join('')}
+            </div>
+            ${hiddenCount > 0 ? `<div class="gf-empty">${text(`其余 ${hiddenCount} 个低优先符印已折叠，先把当前最关键的几项做完。`, `${hiddenCount} lower-priority sigils are collapsed. Finish the key ones first.`)}</div>` : ''}
         `;
     };
 

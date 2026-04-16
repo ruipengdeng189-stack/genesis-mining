@@ -376,6 +376,48 @@ input {
     color: #fff;
 }
 
+.gf-compact-side .gf-action-row {
+    justify-content: flex-end;
+}
+
+.gf-mini-slot-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.gf-mini-slot {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.gf-mini-slot.is-equipped {
+    border-color: rgba(181, 111, 255, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(181, 111, 255, 0.12);
+}
+
+.gf-mini-slot.is-locked {
+    opacity: 0.7;
+}
+
+.gf-mini-slot > span,
+.gf-mini-slot > small {
+    color: var(--gf-text-soft);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.gf-mini-slot > strong {
+    font-size: 13px;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
 .gf-list-row {
     display: flex;
     align-items: center;
@@ -1025,6 +1067,29 @@ body.modal-open {
     .gf-shell {
         width: 100%;
         padding-inline: 10px;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+    }
+
+    .gf-topline {
+        gap: 8px;
+    }
+
+    .back-link {
+        padding: 9px 12px;
+        font-size: 11px;
+        border-radius: 16px;
+    }
+
+    .lang-toggle {
+        padding: 4px;
+        border-radius: 16px;
+    }
+
+    .lang-btn {
+        min-width: 52px;
+        min-height: 34px;
+        font-size: 12px;
     }
 
     .gf-resource-strip,
@@ -1058,7 +1123,7 @@ body.modal-open {
     .gf-topbar,
     .gf-main,
     .gf-panel-content {
-        gap: 10px;
+        gap: 8px;
     }
 
     .gf-hero-card,
@@ -1079,12 +1144,21 @@ body.modal-open {
     .gf-kpi-card,
     .gf-resource-pill,
     .gf-inline-pill {
-        padding: 12px;
+        padding: 10px;
     }
 
     .gf-hero-copy h1 {
-        margin-top: 2px;
-        font-size: 22px;
+        margin-top: 1px;
+        font-size: 20px;
+    }
+
+    .gf-hero-card {
+        gap: 10px;
+    }
+
+    .gf-hero-copy .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.14em;
     }
 
     .gf-hero-copy p,
@@ -1099,7 +1173,7 @@ body.modal-open {
     }
 
     .gf-hero-copy p {
-        -webkit-line-clamp: 1;
+        display: none;
     }
 
     .gf-panel-copy,
@@ -1113,14 +1187,14 @@ body.modal-open {
     .gf-resource-pill strong,
     .gf-kpi-card strong,
     .gf-inline-pill strong {
-        margin-top: 4px;
-        font-size: 15px;
+        margin-top: 2px;
+        font-size: 14px;
     }
 
     .gf-resource-pill,
     .gf-summary-card .gf-kpi-card {
-        padding: 10px 8px;
-        border-radius: 14px;
+        padding: 8px 7px;
+        border-radius: 12px;
     }
 
     .gf-resource-pill span,
@@ -1131,18 +1205,39 @@ body.modal-open {
     .gf-summary-head h2,
     .gf-panel-head h2,
     .gf-card-title {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .gf-chip,
     .gf-mini-chip,
     .gf-tag {
-        padding: 5px 8px;
-        font-size: 11px;
+        padding: 4px 8px;
+        font-size: 10px;
     }
 
     .gf-card-number {
         font-size: 16px;
+    }
+
+    .gf-summary-card {
+        padding: 10px;
+    }
+
+    .gf-summary-card .gf-summary-head,
+    .gf-summary-card .gf-panel-head {
+        gap: 8px;
+    }
+
+    .gf-summary-card .gf-chip-row {
+        gap: 6px;
+    }
+
+    .gf-summary-status-row {
+        margin-top: 8px !important;
+    }
+
+    .gf-summary-status-row .gf-chip:nth-child(n + 5) {
+        display: none;
     }
 
     .gf-compact-row {
@@ -1157,6 +1252,15 @@ body.modal-open {
 
     .gf-compact-side > button {
         width: 100%;
+    }
+
+    .gf-compact-side .gf-action-row {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .gf-compact-side .gf-action-row > button {
+        flex: 1 1 0;
     }
 
     .gf-forge-scene {
@@ -1180,6 +1284,10 @@ body.modal-open {
     .gf-forge-meter-grid,
     .gf-forge-family-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gf-mini-slot-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .gf-payment-card {
