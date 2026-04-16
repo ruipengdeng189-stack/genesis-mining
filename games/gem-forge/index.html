@@ -41,6 +41,68 @@
         </main>
 
         <nav class="gf-tabbar" id="tabBar" aria-label="Gem Forge tabs"></nav>
+
+        <div class="gf-payment-modal is-hidden" id="gfPaymentModal">
+            <div class="gf-payment-card">
+                <div class="gf-payment-head">
+                    <div>
+                        <div class="eyebrow">VERIFIED TOP-UP</div>
+                        <h2 id="gfPaymentTitle">Gem Forge Payment</h2>
+                        <p id="gfPaymentDesc">Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.</p>
+                    </div>
+                    <button class="ghost-btn icon-btn" id="gfPaymentCloseBtn" type="button" aria-label="Close payment">×</button>
+                </div>
+
+                <div class="gf-payment-offer-grid" id="gfPaymentOfferGrid"></div>
+
+                <div class="gf-payment-order-card">
+                    <div class="gf-payment-order-top">
+                        <div>
+                            <div class="gf-payment-amount" id="gfPaymentAmount">--</div>
+                            <div class="gf-payment-meta" id="gfPaymentMeta">TRON (TRC20) · OKX Wallet</div>
+                        </div>
+                        <div class="gf-payment-order-line">
+                            <span id="gfPaymentOrderLabel">Order</span>
+                            <strong id="gfPaymentOrderId">--</strong>
+                        </div>
+                    </div>
+
+                    <div class="gf-payment-order-grid">
+                        <div class="gf-payment-stat">
+                            <span id="gfPaymentExactLabel">Exact Amount</span>
+                            <strong id="gfPaymentExactAmount">--</strong>
+                        </div>
+                        <div class="gf-payment-stat">
+                            <span id="gfPaymentExpiryLabel">Time Left</span>
+                            <strong id="gfPaymentExpiry">--:--</strong>
+                        </div>
+                    </div>
+
+                    <div class="gf-payment-address-block">
+                        <span class="gf-mini-label" id="gfPaymentAddressLabel">Recipient Address</span>
+                        <div class="gf-payment-address" id="gfPaymentWallet">--</div>
+                    </div>
+
+                    <div class="gf-payment-copy-row">
+                        <button class="ghost-btn wide-btn" id="gfPaymentCopyAddressBtn" type="button">Copy Address</button>
+                        <button class="ghost-btn wide-btn" id="gfPaymentCopyAmountBtn" type="button">Copy Exact Amount</button>
+                    </div>
+
+                    <div class="gf-payment-field">
+                        <label class="gf-mini-label" for="gfPaymentTxidInput" id="gfPaymentTxidLabel">Paste OKX Wallet txid</label>
+                        <input class="gf-payment-input" id="gfPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="Paste the on-chain txid">
+                        <p class="gf-payment-hint" id="gfPaymentTxidHint">Only payments that match the exact amount, recipient address, and valid time window can pass verification.</p>
+                    </div>
+
+                    <div class="gf-payment-status" id="gfPaymentStatus">Create an order, complete the payment in OKX Wallet, then paste the txid here.</div>
+
+                    <div class="gf-payment-actions">
+                        <button class="primary-btn wide-btn" id="gfPaymentVerifyBtn" type="button">Verify TXID</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="gf-toast" id="toast"></div>
     </div>
 

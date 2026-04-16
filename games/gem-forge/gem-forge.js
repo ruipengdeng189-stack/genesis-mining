@@ -6,6 +6,11 @@
     const SMELT_HEAT_COST = 4;
     const POWER_PER_GEM_SCORE = 0.3;
     const POWER_PER_AWAKEN_SCORE = 0.95;
+    const PAYMENT_API_BASE = '/api';
+    const PAYMENT_ORDER_STORAGE_KEY = 'genesis_gem_forge_payment_order_v1';
+    const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
+    const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
 
     const config = window.GENESIS_GEM_FORGE_CONFIG;
     if (!config) return;
@@ -23,14 +28,26 @@
     };
 
     const ui = {};
+    let currentPaymentOrder = null;
+    let selectedPaymentOfferId = config.paymentOffers[0]?.id || 'starter';
+    let paymentCountdownTimer = 0;
+    let paymentVerificationState = 'idle';
+    let paymentVerificationError = '';
+    let paymentVerificationNotice = '';
+    let paymentOrderNonce = 0;
+    let paymentOrderRequestPromise = null;
 
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
         cacheUi();
         bindEvents();
+        restoreStoredPaymentOrder();
         syncHeat();
         renderAll();
+        syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true }).catch(() => {});
+        flushPendingPaymentClaims().catch(() => {});
+        paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
     }
 
     function cacheUi() {
@@ -43,6 +60,28 @@
         ui.tabBar = document.getElementById('tabBar');
         ui.toast = document.getElementById('toast');
         ui.langButtons = Array.from(document.querySelectorAll('[data-lang-switch]'));
+        ui.paymentModal = document.getElementById('gfPaymentModal');
+        ui.paymentOfferGrid = document.getElementById('gfPaymentOfferGrid');
+        ui.paymentCloseBtn = document.getElementById('gfPaymentCloseBtn');
+        ui.paymentTitle = document.getElementById('gfPaymentTitle');
+        ui.paymentDesc = document.getElementById('gfPaymentDesc');
+        ui.paymentAmount = document.getElementById('gfPaymentAmount');
+        ui.paymentMeta = document.getElementById('gfPaymentMeta');
+        ui.paymentOrderLabel = document.getElementById('gfPaymentOrderLabel');
+        ui.paymentOrderId = document.getElementById('gfPaymentOrderId');
+        ui.paymentExactLabel = document.getElementById('gfPaymentExactLabel');
+        ui.paymentExactAmount = document.getElementById('gfPaymentExactAmount');
+        ui.paymentExpiryLabel = document.getElementById('gfPaymentExpiryLabel');
+        ui.paymentExpiry = document.getElementById('gfPaymentExpiry');
+        ui.paymentAddressLabel = document.getElementById('gfPaymentAddressLabel');
+        ui.paymentWallet = document.getElementById('gfPaymentWallet');
+        ui.paymentCopyAddressBtn = document.getElementById('gfPaymentCopyAddressBtn');
+        ui.paymentCopyAmountBtn = document.getElementById('gfPaymentCopyAmountBtn');
+        ui.paymentTxidLabel = document.getElementById('gfPaymentTxidLabel');
+        ui.paymentTxidInput = document.getElementById('gfPaymentTxidInput');
+        ui.paymentTxidHint = document.getElementById('gfPaymentTxidHint');
+        ui.paymentStatus = document.getElementById('gfPaymentStatus');
+        ui.paymentVerifyBtn = document.getElementById('gfPaymentVerifyBtn');
     }
 
     function bindEvents() {
@@ -62,6 +101,29 @@
         });
 
         ui.panelContent.addEventListener('click', onPanelAction);
+        ui.paymentCloseBtn?.addEventListener('click', closePaymentModal);
+        ui.paymentModal?.addEventListener('click', (event) => {
+            if (event.target === ui.paymentModal) closePaymentModal();
+        });
+        ui.paymentOfferGrid?.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-select-payment-offer]');
+            if (!button) return;
+            selectPaymentOffer(button.dataset.selectPaymentOffer, { refreshOrder: true });
+        });
+        ui.paymentCopyAddressBtn?.addEventListener('click', copyPaymentAddress);
+        ui.paymentCopyAmountBtn?.addEventListener('click', copyPaymentAmount);
+        ui.paymentVerifyBtn?.addEventListener('click', handlePaymentConfirm);
+        ui.paymentTxidInput?.addEventListener('input', () => {
+            paymentVerificationState = paymentVerificationState === 'verified' ? 'verified' : 'idle';
+            paymentVerificationError = '';
+            paymentVerificationNotice = paymentVerificationState === 'verified' ? paymentVerificationNotice : '';
+            refreshPaymentVerificationState();
+        });
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+                closePaymentModal();
+            }
+        });
         window.addEventListener('beforeunload', saveProgress);
     }
 
@@ -91,7 +153,8 @@
             case 'claimAllSeason': claimAllSeason(); break;
             case 'claimDailySupply': claimDailySupply(); break;
             case 'buyShopItem': buyShopItem(value); break;
-            case 'buyOffer': buyPaymentOffer(value); break;
+            case 'buyOffer': openPaymentModal(value); break;
+            case 'openPayment': openPaymentModal(value); break;
             case 'claimMilestone': claimPaymentMilestone(value); break;
             case 'openTab':
                 state.tab = tabMap[value] ? value : state.tab;
@@ -109,6 +172,725 @@
         renderHeroSummary();
         renderActiveTab();
         renderTabBar();
+        if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+            renderPaymentOfferGrid();
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+        }
+    }
+
+    function getSelectedPaymentOffer() {
+        return config.paymentOffers.find((offer) => offer.id === selectedPaymentOfferId) || config.paymentOffers[0];
+    }
+
+    function getPaymentMinerId() {
+        if (state.save.payment.minerId) return state.save.payment.minerId;
+        state.save.payment.minerId = `GEMFORGE_${Math.random().toString(16).slice(2, 10).toUpperCase()}${Date.now().toString(16).slice(-6).toUpperCase()}`;
+        saveProgress();
+        return state.save.payment.minerId;
+    }
+
+    function mapPaymentApiError(errorMessage) {
+        const raw = String(errorMessage || '').trim();
+        const lower = raw.toLowerCase();
+
+        if (!raw) return text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
+        if (lower.includes('txid not found')) return text('暂未在 TRON 主网上找到该 txid，请稍后再试。', 'This txid was not found on TRON mainnet yet.');
+        if (lower.includes('not confirmed yet')) return text('这笔转账还未确认，请稍后再试。', 'This transfer is not confirmed yet. Try again shortly.');
+        if (lower.includes('execution failed')) return text('链上交易执行失败，无法发放奖励。', 'The on-chain transaction failed, so rewards cannot be granted.');
+        if (lower.includes('not a trc20 contract transfer')) return text('这不是 TRC20 合约转账。', 'This transaction is not a TRC20 transfer.');
+        if (lower.includes('not trc20 usdt')) return text('这笔支付不是 TRC20-USDT。', 'This transaction is not a TRC20-USDT payment.');
+        if (lower.includes('recipient address')) return text('收款地址不匹配，请按当前订单地址支付。', 'Recipient address mismatch. Please pay to the address shown in the current order.');
+        if (lower.includes('amount mismatch')) return text('支付金额与当前订单的精确金额不一致。', 'The payment amount does not match the current exact order amount.');
+        if (lower.includes('before this order was created')) return text('这笔转账早于订单创建时间，不能用于当前订单。', 'This transfer happened before the order was created and cannot be used.');
+        if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单。', 'This order has expired. Please create a new order.');
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('该 txid 已被其他订单使用。', 'This txid has already been used by another order.');
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后重试。', 'The payment service is temporarily unavailable. Please try again later.');
+        return raw;
+    }
+
+    async function requestPaymentApi(path, init = {}) {
+        let response;
+        try {
+            response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+        } catch (error) {
+            throw new Error(text('支付服务暂时不可用，请检查网络后重试。', 'The payment service is temporarily unavailable. Please check your network and try again.'));
+        }
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.ok === false) {
+            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+        }
+        return payload;
+    }
+
+    function buildClientPaymentOrder(order) {
+        const createdAtRaw = order?.createdAt ?? order?.created_at;
+        const expiresAtRaw = order?.expiresAt ?? order?.expires_at;
+        return {
+            id: String(order?.orderId || order?.order_id || '--'),
+            offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
+            offerName: String(order?.offerName || order?.offer_name || ''),
+            minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
+            createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
+            expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
+            exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
+            payAddress: String(order?.payAddress || ''),
+            network: String(order?.network || 'TRON (TRC20)'),
+            status: String(order?.status || 'pending'),
+            txid: String(order?.txid || ''),
+            paidAt: String(order?.paidAt || order?.paid_at || ''),
+            rewardGranted: !!(order?.rewardGranted ?? order?.reward_granted)
+        };
+    }
+
+    function formatPaymentUsdt(value) {
+        return `${Number(value || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)} USDT`;
+    }
+
+    function isPaymentOrderExpired(order = currentPaymentOrder) {
+        if (!order) return false;
+        const status = String(order.status || 'pending');
+        if (status === 'expired' || status === 'cancelled') return true;
+        if (status === 'paid' || status === 'granted') return false;
+        return Number(order.expiresAt || 0) <= Date.now();
+    }
+
+    function isPaymentOrderSettledLocally(order = currentPaymentOrder) {
+        return !!order?.id && !!state.save.payment.claimedOrders?.[order.id];
+    }
+
+    function persistCurrentPaymentOrder() {
+        try {
+            const order = currentPaymentOrder;
+            const shouldPersist = !!order
+                && !!order.id
+                && order.id !== '--'
+                && !isPaymentOrderSettledLocally(order)
+                && String(order.status || 'pending') !== 'expired'
+                && String(order.status || 'pending') !== 'cancelled';
+
+            if (shouldPersist) {
+                localStorage.setItem(PAYMENT_ORDER_STORAGE_KEY, JSON.stringify(order));
+            } else {
+                localStorage.removeItem(PAYMENT_ORDER_STORAGE_KEY);
+            }
+        } catch (error) {}
+    }
+
+    function setCurrentPaymentOrder(order, { persist = true } = {}) {
+        currentPaymentOrder = order ? buildClientPaymentOrder(order) : null;
+        if (currentPaymentOrder?.offerId && config.paymentOffers.some((offer) => offer.id === currentPaymentOrder.offerId)) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
+        }
+        if (persist) persistCurrentPaymentOrder();
+        return currentPaymentOrder;
+    }
+
+    function restoreStoredPaymentOrder() {
+        try {
+            const raw = localStorage.getItem(PAYMENT_ORDER_STORAGE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            const storedOrder = buildClientPaymentOrder(parsed);
+            if (!storedOrder?.id || storedOrder.id === '--') {
+                localStorage.removeItem(PAYMENT_ORDER_STORAGE_KEY);
+                return null;
+            }
+            return setCurrentPaymentOrder(storedOrder, { persist: true });
+        } catch (error) {
+            try { localStorage.removeItem(PAYMENT_ORDER_STORAGE_KEY); } catch (innerError) {}
+            return null;
+        }
+    }
+
+    async function createBackendPaymentOrder(offerId) {
+        const payload = await requestPaymentApi('/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId })
+        });
+        return buildClientPaymentOrder(payload?.order);
+    }
+
+    async function verifyBackendPayment(orderId, txid) {
+        const query = new URLSearchParams({ orderId: String(orderId || ''), txid: String(txid || '') });
+        return requestPaymentApi(`/verify-payment?${query.toString()}`);
+    }
+
+    async function claimBackendPayment(orderId, txid) {
+        return requestPaymentApi('/claim-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, txid })
+        });
+    }
+
+    async function checkBackendPaymentOrder(orderId) {
+        const query = new URLSearchParams({ orderId: String(orderId || '') });
+        return requestPaymentApi(`/check-order?${query.toString()}`);
+    }
+
+    async function syncCurrentPaymentOrderStatus({ recoverRewards = false, silent = true } = {}) {
+        if (!currentPaymentOrder?.id || currentPaymentOrder.id === '--') return null;
+
+        try {
+            const payload = await checkBackendPaymentOrder(currentPaymentOrder.id);
+            const syncedOrder = buildClientPaymentOrder(payload?.order || currentPaymentOrder);
+
+            if (syncedOrder.minerId && syncedOrder.minerId !== getPaymentMinerId()) {
+                setCurrentPaymentOrder(null);
+                if (!silent) {
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = text('检测到本地缓存订单归属不一致，已自动清除。', 'The cached order belongs to a different player and was cleared.');
+                    refreshPaymentVerificationState();
+                }
+                return null;
+            }
+
+            if (syncedOrder.status === 'expired' || syncedOrder.status === 'cancelled') {
+                setCurrentPaymentOrder(null);
+                if (!silent && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = syncedOrder.status === 'expired'
+                        ? text('当前订单已过期，请重新创建订单。', 'This order has expired. Please create a new one.')
+                        : text('当前订单已失效，请重新创建订单。', 'This order is no longer valid. Please create a new one.');
+                    renderPaymentOrderUI();
+                    refreshPaymentVerificationState();
+                }
+                return null;
+            }
+
+            setCurrentPaymentOrder(syncedOrder);
+
+            if ((syncedOrder.rewardGranted || syncedOrder.status === 'granted') && state.save.payment.pendingClaims[syncedOrder.id]) {
+                delete state.save.payment.pendingClaims[syncedOrder.id];
+                saveProgress();
+            }
+
+            const needsRecovery = recoverRewards
+                && !isPaymentOrderSettledLocally(syncedOrder)
+                && !!syncedOrder.txid
+                && (syncedOrder.status === 'paid' || syncedOrder.status === 'granted' || syncedOrder.rewardGranted);
+
+            if (needsRecovery) {
+                grantPaymentRewards({
+                    orderId: syncedOrder.id,
+                    txid: syncedOrder.txid,
+                    offerId: syncedOrder.offerId,
+                    queueClaim: !(syncedOrder.rewardGranted || syncedOrder.status === 'granted')
+                });
+
+                if (syncedOrder.rewardGranted || syncedOrder.status === 'granted') {
+                    delete state.save.payment.pendingClaims[syncedOrder.id];
+                    saveProgress();
+                    paymentVerificationState = 'verified';
+                    paymentVerificationError = '';
+                    paymentVerificationNotice = text('检测到已支付订单，奖励已自动补发。', 'A paid order was found and rewards were restored automatically.');
+                    setCurrentPaymentOrder({ ...syncedOrder, status: syncedOrder.status || 'granted', rewardGranted: true });
+                } else {
+                    try {
+                        await claimBackendPayment(syncedOrder.id, syncedOrder.txid);
+                        delete state.save.payment.pendingClaims[syncedOrder.id];
+                        saveProgress();
+                        paymentVerificationState = 'verified';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = text('检测到已支付订单，奖励已自动到账并完成后台补记。', 'A paid order was found. Rewards were restored and synced automatically.');
+                        setCurrentPaymentOrder({ ...syncedOrder, status: 'granted', rewardGranted: true });
+                    } catch (claimError) {
+                        paymentVerificationState = 'verified';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = text('检测到已支付订单，奖励已自动到账；后台发奖记录将稍后自动同步。', 'A paid order was found. Rewards were restored and backend sync will retry automatically.');
+                        console.warn('Gem Forge payment recovery claim sync queued.', { orderId: syncedOrder.id, claimError });
+                        setCurrentPaymentOrder({ ...syncedOrder, status: 'paid', rewardGranted: false });
+                    }
+                }
+            }
+
+            if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+                renderPaymentOrderUI();
+                refreshPaymentVerificationState();
+            }
+            return currentPaymentOrder;
+        } catch (error) {
+            if (!silent) {
+                paymentVerificationState = 'idle';
+                paymentVerificationNotice = '';
+                paymentVerificationError = error?.message || text('订单状态同步失败，请稍后重试。', 'Failed to sync the order state. Please try again.');
+                refreshPaymentVerificationState();
+            }
+            return null;
+        }
+    }
+
+    async function flushPendingPaymentClaims({ silent = true } = {}) {
+        const pendingClaims = state.save.payment.pendingClaims || {};
+        const pendingEntries = Object.entries(pendingClaims);
+        if (!pendingEntries.length) return 0;
+
+        let syncedCount = 0;
+        for (const [orderId, txid] of pendingEntries) {
+            if (!orderId || !txid) {
+                delete pendingClaims[orderId];
+                continue;
+            }
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete pendingClaims[orderId];
+                syncedCount += 1;
+            } catch (error) {
+                if (!silent) {
+                    console.warn('Gem Forge payment claim sync failed.', { orderId, error });
+                }
+            }
+        }
+        saveProgress();
+        return syncedCount;
+    }
+
+    function getPaymentOrderCountdown(order = currentPaymentOrder) {
+        if (!order) return '--:--';
+        const status = String(order.status || 'pending');
+        if (status === 'granted') return text('已发奖', 'Granted');
+        if (status === 'paid') return text('已支付', 'Paid');
+        if (status === 'expired') return text('已过期', 'Expired');
+        const remain = Math.max(0, Number(order.expiresAt || 0) - Date.now());
+        const totalSeconds = Math.ceil(remain / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    async function copyTextToClipboard(value) {
+        const content = String(value || '').trim();
+        if (!content) return false;
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(content);
+                return true;
+            }
+        } catch (error) {}
+
+        const textarea = document.createElement('textarea');
+        textarea.value = content;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, 99999);
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch (error) {
+            copied = false;
+        }
+        textarea.remove();
+        return copied;
+    }
+
+    function renderPaymentOfferGrid() {
+        if (!ui.paymentOfferGrid) return;
+        ui.paymentOfferGrid.innerHTML = config.paymentOffers.map((offer) => {
+            const projected = getProjectedOfferImpact(offer);
+            return `
+                <button
+                    class="gf-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
+                    type="button"
+                    data-select-payment-offer="${offer.id}"
+                >
+                    <span class="pill gf-payment-offer-badge">${text('链上礼包', 'On-Chain Pack')}</span>
+                    <div class="gf-payment-offer-price">$${offer.price.toFixed(2)}</div>
+                    <h3>${localize(offer.name)}</h3>
+                    <p>${text(`立即补入 ${formatCompact(offer.reward.gold)} 金币、${formatCompact(offer.reward.dust)} 熔尘与 ${formatCompact(offer.reward.catalyst)} 催化剂。`, `Instantly grants ${formatCompact(offer.reward.gold)} gold, ${formatCompact(offer.reward.dust)} dust, and ${formatCompact(offer.reward.catalyst)} catalyst.`)}</p>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
+                        <span class="gf-chip">${text('卡点差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
+                        ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
+                    </div>
+                </button>
+            `;
+        }).join('');
+    }
+
+    function renderPaymentOrderUI() {
+        const offer = getSelectedPaymentOffer();
+        const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
+
+        if (ui.paymentTitle) ui.paymentTitle.textContent = text('Gem Forge 充值中心', 'Gem Forge Top-Up Center');
+        if (ui.paymentDesc) ui.paymentDesc.textContent = text('创建链上订单后，使用 OKX Wallet 按精确金额支付，再粘贴 txid 校验并发放奖励。', 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
+        if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = text('订单号', 'Order ID');
+        if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = text('精确金额', 'Exact Amount');
+        if (ui.paymentExpiryLabel) ui.paymentExpiryLabel.textContent = text('剩余时间', 'Expires In');
+        if (ui.paymentAddressLabel) ui.paymentAddressLabel.textContent = text('收款地址', 'Receiving Address');
+        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = text('粘贴 OKX Wallet 的 txid', 'Paste OKX Wallet txid');
+        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = text('请输入或粘贴链上 txid', 'Paste the on-chain txid from OKX Wallet');
+        if (ui.paymentTxidHint) ui.paymentTxidHint.textContent = text('只有金额、地址和有效时间都匹配的订单，才能通过校验。', 'Only payments that match the exact amount, recipient address, and valid time window can pass verification.');
+        if (ui.paymentCopyAddressBtn) ui.paymentCopyAddressBtn.textContent = text('复制地址', 'Copy Address');
+        if (ui.paymentCopyAmountBtn) ui.paymentCopyAmountBtn.textContent = text('复制精确金额', 'Copy Exact Amount');
+        if (ui.paymentVerifyBtn) ui.paymentVerifyBtn.textContent = text('校验 TXID', 'Verify TXID');
+        if (ui.paymentAmount) ui.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `$${offer.price.toFixed(2)} USDT`;
+        if (ui.paymentMeta) ui.paymentMeta.textContent = `${text('OKX 钱包', 'OKX Wallet')} · ${order?.network || 'TRON (TRC20)'} · ${localize(offer.name)}`;
+        if (ui.paymentOrderId) ui.paymentOrderId.textContent = order ? order.id : '--';
+        if (ui.paymentExactAmount) ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
+        if (ui.paymentExpiry) ui.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
+        if (ui.paymentWallet) ui.paymentWallet.textContent = order?.payAddress || '--';
+    }
+
+    function getNormalizedPaymentTxid() {
+        return String(ui.paymentTxidInput?.value || '').trim().toLowerCase();
+    }
+
+    function refreshPaymentVerificationState() {
+        if (!ui.paymentStatus || !ui.paymentVerifyBtn || !ui.paymentCopyAddressBtn || !ui.paymentCopyAmountBtn) return;
+        const txid = getNormalizedPaymentTxid();
+        const txidValid = PAYMENT_TXID_REGEX.test(txid);
+        const hasOrder = !!currentPaymentOrder;
+        const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
+
+        ui.paymentStatus.classList.remove('is-error', 'is-success');
+
+        if (paymentVerificationState === 'creating') {
+            ui.paymentStatus.textContent = text('正在创建链上订单…', 'Creating on-chain order…');
+            ui.paymentVerifyBtn.disabled = true;
+            ui.paymentCopyAddressBtn.disabled = true;
+            ui.paymentCopyAmountBtn.disabled = true;
+            return;
+        }
+
+        if (paymentVerificationState === 'verifying') {
+            ui.paymentStatus.textContent = text('正在链上校验支付…', 'Verifying payment on-chain…');
+            ui.paymentVerifyBtn.disabled = true;
+            ui.paymentCopyAddressBtn.disabled = true;
+            ui.paymentCopyAmountBtn.disabled = true;
+            return;
+        }
+
+        ui.paymentCopyAddressBtn.disabled = !hasOrder;
+        ui.paymentCopyAmountBtn.disabled = !hasOrder;
+
+        if (paymentVerificationState === 'verified') {
+            ui.paymentStatus.textContent = paymentVerificationNotice || text('支付已校验通过，奖励已发放。', 'Payment verified and rewards granted.');
+            ui.paymentStatus.classList.add('is-success');
+            ui.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        if (orderExpired) {
+            ui.paymentStatus.textContent = txidValid
+                ? text('当前订单倒计时已结束；如果你已在有效期内完成支付，仍可继续校验该 txid。', 'The order window has ended, but you can still verify this txid if the payment was completed before expiry.')
+                : text('当前订单已过期；未支付请重新创建订单，已支付可继续粘贴 txid 校验。', 'The order window has ended. Create a new order if you did not pay, or paste the txid if you already paid in time.');
+            ui.paymentStatus.classList.add('is-error');
+            ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
+            return;
+        }
+
+        if (paymentVerificationError) {
+            ui.paymentStatus.textContent = paymentVerificationError;
+            ui.paymentStatus.classList.add('is-error');
+            ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
+            return;
+        }
+
+        if (txid && !txidValid) {
+            ui.paymentStatus.textContent = text('TXID 格式不正确，请粘贴 64 位链上 txid。', 'TXID format looks invalid. Please paste the 64-character on-chain txid.');
+            ui.paymentStatus.classList.add('is-error');
+            ui.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        ui.paymentStatus.textContent = paymentVerificationNotice || text('先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。', 'Create an order, complete the payment in OKX Wallet, then paste the txid here.');
+        ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
+    }
+
+    function resetPaymentVerificationState(clearInput = false) {
+        paymentVerificationState = 'idle';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        if (clearInput && ui.paymentTxidInput) {
+            ui.paymentTxidInput.value = '';
+        }
+        refreshPaymentVerificationState();
+    }
+
+    function updatePaymentExpiryUI() {
+        if (ui.paymentExpiry && currentPaymentOrder) {
+            ui.paymentExpiry.textContent = getPaymentOrderCountdown(currentPaymentOrder);
+        }
+        if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+            refreshPaymentVerificationState();
+        }
+    }
+
+    async function syncPaymentOrderForSelectedOffer(force = false, clearInput = false) {
+        const offer = getSelectedPaymentOffer();
+        if (!force && currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !isPaymentOrderExpired(currentPaymentOrder)) {
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+            return currentPaymentOrder;
+        }
+
+        const requestId = ++paymentOrderNonce;
+        paymentVerificationState = 'creating';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        if (clearInput && ui.paymentTxidInput) ui.paymentTxidInput.value = '';
+        renderPaymentOrderUI();
+        refreshPaymentVerificationState();
+
+        const requestPromise = createBackendPaymentOrder(offer.id)
+            .then((order) => {
+                if (requestId !== paymentOrderNonce) return currentPaymentOrder || order;
+                setCurrentPaymentOrder(order);
+                paymentVerificationState = 'idle';
+                paymentVerificationError = '';
+                paymentVerificationNotice = '';
+                renderPaymentOrderUI();
+                refreshPaymentVerificationState();
+                return order;
+            })
+            .catch((error) => {
+                if (requestId === paymentOrderNonce) {
+                    setCurrentPaymentOrder(null);
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = error?.message || text('订单创建失败，请稍后重试。', 'Failed to create order. Please try again.');
+                    renderPaymentOrderUI();
+                    refreshPaymentVerificationState();
+                }
+                throw error;
+            })
+            .finally(() => {
+                if (paymentOrderRequestPromise === requestPromise) paymentOrderRequestPromise = null;
+            });
+
+        paymentOrderRequestPromise = requestPromise;
+        return requestPromise;
+    }
+
+    function selectPaymentOffer(offerId, { refreshOrder = true } = {}) {
+        const offer = config.paymentOffers.find((item) => item.id === offerId);
+        if (!offer) return;
+        selectedPaymentOfferId = offer.id;
+        renderPaymentOfferGrid();
+        renderPaymentOrderUI();
+        if (refreshOrder && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+            resetPaymentVerificationState(true);
+            syncPaymentOrderForSelectedOffer(true, true).catch(() => {});
+        }
+    }
+
+    async function openPaymentModal(offerId = null) {
+        if (!ui.paymentModal) return;
+        if (!currentPaymentOrder) restoreStoredPaymentOrder();
+        const hasRecoverableOrder = !!currentPaymentOrder && !isPaymentOrderSettledLocally(currentPaymentOrder);
+
+        if (hasRecoverableOrder) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
+        } else if (offerId && config.paymentOffers.some((offer) => offer.id === offerId)) {
+            selectedPaymentOfferId = offerId;
+        } else if (!config.paymentOffers.some((offer) => offer.id === selectedPaymentOfferId)) {
+            selectedPaymentOfferId = config.paymentOffers[0]?.id || 'starter';
+        }
+
+        flushPendingPaymentClaims().catch(() => {});
+        renderPaymentOfferGrid();
+        resetPaymentVerificationState(true);
+        renderPaymentOrderUI();
+        ui.paymentModal.classList.remove('is-hidden');
+        document.body.classList.add('modal-open');
+
+        try {
+            if (currentPaymentOrder) {
+                await syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true });
+            }
+
+            if (
+                paymentVerificationState !== 'verified' && (
+                    !currentPaymentOrder
+                    || isPaymentOrderSettledLocally(currentPaymentOrder)
+                    || currentPaymentOrder.offerId !== selectedPaymentOfferId
+                    || isPaymentOrderExpired(currentPaymentOrder)
+                )
+            ) {
+                await syncPaymentOrderForSelectedOffer(true, true);
+            }
+        } catch (error) {}
+
+        refreshPaymentVerificationState();
+    }
+
+    function closePaymentModal() {
+        if (!ui.paymentModal) return;
+        ui.paymentModal.classList.add('is-hidden');
+        document.body.classList.remove('modal-open');
+    }
+
+    async function copyPaymentAddress() {
+        const wallet = String(ui.paymentWallet?.textContent || '').trim();
+        const copied = await copyTextToClipboard(wallet);
+        paymentVerificationError = '';
+        paymentVerificationNotice = copied
+            ? text('收款地址已复制。', 'Receiving address copied.')
+            : text('自动复制不可用，请手动复制地址。', 'Automatic copy is unavailable. Please copy the address manually.');
+        paymentVerificationState = 'idle';
+        refreshPaymentVerificationState();
+    }
+
+    async function copyPaymentAmount() {
+        let order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder) ? currentPaymentOrder : null;
+        if (!order) {
+            try {
+                order = await syncPaymentOrderForSelectedOffer(true, false);
+            } catch (error) {
+                return;
+            }
+        }
+        const copied = await copyTextToClipboard(Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS));
+        paymentVerificationError = '';
+        paymentVerificationNotice = copied
+            ? text('精确金额已复制。', 'Exact amount copied.')
+            : text('自动复制不可用，请手动复制精确金额。', 'Automatic copy is unavailable. Please copy the exact amount manually.');
+        paymentVerificationState = 'idle';
+        refreshPaymentVerificationState();
+    }
+
+    function grantPaymentRewards({ orderId, txid, offerId, queueClaim = true }) {
+        const offer = config.paymentOffers.find((item) => item.id === offerId) || getSelectedPaymentOffer();
+        if (!offer || !orderId || state.save.payment.claimedOrders[orderId]) return false;
+
+        const beforeTier = getSponsorTier();
+        const normalizedTxid = PAYMENT_TXID_REGEX.test(String(txid || '').trim()) ? String(txid).trim().toLowerCase() : '';
+
+        grantReward(offer.reward);
+        state.save.payment.passUnlocked = true;
+        state.save.payment.purchaseCount += 1;
+        state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
+        state.save.permanent.heatCap += Number(offer.permanent?.heatCap || 0);
+        state.save.permanent.rareRate += Number(offer.permanent?.rareRate || 0);
+        state.save.permanent.dustYield += Number(offer.permanent?.dustYield || 0);
+        state.save.permanent.catalystYield += Number(offer.permanent?.catalystYield || 0);
+        grantFocusShards(getCurrentContract().focus, 10);
+        state.save.payment.claimedOrders[orderId] = true;
+
+        if (queueClaim && normalizedTxid) {
+            state.save.payment.pendingClaims[orderId] = normalizedTxid;
+        } else {
+            delete state.save.payment.pendingClaims[orderId];
+        }
+
+        if (normalizedTxid) {
+            state.save.payment.verifiedTxids = [normalizedTxid, ...(state.save.payment.verifiedTxids || []).filter((item) => item !== normalizedTxid)].slice(0, 100);
+        }
+
+        const afterTier = getSponsorTier();
+        const tierPromotion = afterTier.id !== beforeTier.id;
+        const milestoneReadyCount = config.paymentMilestones.filter((milestone) => {
+            const view = getMilestoneView(milestone);
+            return view && view.claimable;
+        }).length;
+
+        saveProgress();
+        showToast(
+            tierPromotion
+                ? text(`充值成功：${localize(offer.name)} 已到账，赞助档位提升到 ${localize(afterTier.title)}。${milestoneReadyCount > 0 ? ` 另有 ${milestoneReadyCount} 个里程碑奖励待领取。` : ''}`, `Top-up complete: ${localize(offer.name)} granted and sponsor tier promoted to ${localize(afterTier.title)}.${milestoneReadyCount > 0 ? ` ${milestoneReadyCount} milestone rewards are now ready.` : ''}`)
+                : text(`充值成功：${localize(offer.name)} 奖励已到账。${milestoneReadyCount > 0 ? ` 另有 ${milestoneReadyCount} 个里程碑奖励待领取。` : ''}`, `Top-up complete: ${localize(offer.name)} rewards granted.${milestoneReadyCount > 0 ? ` ${milestoneReadyCount} milestone rewards are now ready.` : ''}`)
+        );
+        renderAll();
+        return true;
+    }
+
+    async function handlePaymentConfirm() {
+        if (paymentVerificationState === 'creating' || paymentVerificationState === 'verifying') return;
+
+        const txid = getNormalizedPaymentTxid();
+        if (!PAYMENT_TXID_REGEX.test(txid)) {
+            paymentVerificationError = text('TXID 格式不正确，请检查后重新输入。', 'Invalid TXID format. Please check and try again.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if ((state.save.payment.verifiedTxids || []).includes(txid)) {
+            paymentVerificationError = text('该 txid 已经使用过，不能重复发奖。', 'This TXID has already been used and cannot grant rewards again.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if (!currentPaymentOrder) {
+            paymentVerificationError = text('当前没有可校验的订单，请先创建订单。', 'There is no active order to verify. Please create one first.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if (currentPaymentOrder.status === 'expired' || currentPaymentOrder.status === 'cancelled') {
+            paymentVerificationError = text('当前订单已失效，请重新创建订单。', 'This order is no longer valid. Please create a new one.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        const orderId = currentPaymentOrder.id;
+        paymentVerificationState = 'verifying';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        refreshPaymentVerificationState();
+
+        try {
+            const verificationResult = await verifyBackendPayment(orderId, txid);
+            const orderPayload = verificationResult?.order || {};
+            const resolvedOrder = buildClientPaymentOrder({
+                ...currentPaymentOrder,
+                ...orderPayload,
+                txid: orderPayload?.txid || txid
+            });
+            const resolvedOfferId = String(resolvedOrder.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+            const hadLocalReward = !!state.save.payment.claimedOrders[orderId];
+            setCurrentPaymentOrder(resolvedOrder);
+
+            if (resolvedOrder.rewardGranted || hadLocalReward) {
+                if (resolvedOrder.rewardGranted && !hadLocalReward) {
+                    grantPaymentRewards({ orderId, txid: resolvedOrder.txid || txid, offerId: resolvedOfferId, queueClaim: false });
+                }
+                if (resolvedOrder.rewardGranted && state.save.payment.pendingClaims[orderId]) {
+                    delete state.save.payment.pendingClaims[orderId];
+                }
+                paymentVerificationState = 'verified';
+                paymentVerificationNotice = resolvedOrder.rewardGranted && !hadLocalReward
+                    ? text('该订单已在后台完成发奖，本地奖励已自动补发。', 'This order was already granted on the backend. Local rewards were restored.')
+                    : text('该订单奖励已发放，无需重复领取。', 'Rewards for this order have already been granted.');
+                refreshPaymentVerificationState();
+                saveProgress();
+                return;
+            }
+
+            grantPaymentRewards({ orderId, txid, offerId: resolvedOfferId });
+            paymentVerificationState = 'verified';
+
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete state.save.payment.pendingClaims[orderId];
+                setCurrentPaymentOrder({ ...resolvedOrder, status: 'granted', rewardGranted: true, txid });
+                paymentVerificationNotice = text('链上校验成功，奖励已发放。', 'On-chain verification succeeded and rewards were granted.');
+                saveProgress();
+            } catch (claimError) {
+                setCurrentPaymentOrder({ ...resolvedOrder, status: 'paid', rewardGranted: false, txid });
+                paymentVerificationNotice = text('链上校验成功，奖励已到账；后台发奖记录将稍后自动同步。', 'On-chain verification succeeded and rewards were granted. Backend sync will retry automatically.');
+                console.warn('Gem Forge payment claim sync queued.', { orderId, claimError });
+            }
+            refreshPaymentVerificationState();
+        } catch (error) {
+            paymentVerificationState = 'idle';
+            paymentVerificationNotice = '';
+            paymentVerificationError = error?.message || text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
+            refreshPaymentVerificationState();
+        }
     }
 
     function applyLangState() {
@@ -697,7 +1479,7 @@
                     <span class="gf-chip is-strong">${text('稀有率', 'Rare Rate')} +${formatPercent(offer.permanent.rareRate || 0)}</span>
                 </div>
                 <div class="gf-action-row" style="margin-top:12px;">
-                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${text('模拟到账', 'Simulate Purchase')}</button>
+                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${text('链上支付', 'Pay On-Chain')}</button>
                 </div>
             </article>
         `;
@@ -925,8 +1707,14 @@
         });
         next.missionClaimed = Array.isArray(next.missionClaimed) ? Array.from(new Set(next.missionClaimed)) : [];
         next.seasonClaimed = Array.isArray(next.seasonClaimed) ? Array.from(new Set(next.seasonClaimed)) : [];
+        next.payment.minerId = typeof next.payment?.minerId === 'string' ? next.payment.minerId : '';
         next.payment.milestoneClaims = next.payment?.milestoneClaims && typeof next.payment.milestoneClaims === 'object' ? { ...next.payment.milestoneClaims } : {};
+        next.payment.claimedOrders = next.payment?.claimedOrders && typeof next.payment.claimedOrders === 'object' ? { ...next.payment.claimedOrders } : {};
+        next.payment.pendingClaims = next.payment?.pendingClaims && typeof next.payment.pendingClaims === 'object' ? { ...next.payment.pendingClaims } : {};
         next.payment.premiumSeasonClaims = next.payment?.premiumSeasonClaims && typeof next.payment.premiumSeasonClaims === 'object' ? { ...next.payment.premiumSeasonClaims } : {};
+        next.payment.verifiedTxids = Array.isArray(next.payment?.verifiedTxids)
+            ? Array.from(new Set(next.payment.verifiedTxids.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))).slice(0, 100)
+            : [];
         return next;
     }
 
@@ -1334,6 +2122,8 @@
     }
 
     function buyPaymentOffer(offerId) {
+        openPaymentModal(offerId);
+        return;
         const offer = config.paymentOffers.find((entry) => entry.id === offerId);
         if (!offer) return;
         grantReward(offer.reward);
@@ -2180,7 +2970,7 @@
                     ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text(`预计多推 ${projected.reachGain} 档`, `Est. +${projected.reachGain} stages`)}</span>` : ''}
                 </div>
                 <div class="gf-action-row" style="margin-top:12px;">
-                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${text('模拟到账', 'Simulate Purchase')}</button>
+                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${text('链上支付', 'Pay On-Chain')}</button>
                 </div>
             </article>
         `;
