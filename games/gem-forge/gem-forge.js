@@ -1359,11 +1359,47 @@
         `;
     }
 
+    function renderActivePaymentCard() {
+        const order = currentPaymentOrder;
+        if (!order || isPaymentOrderSettledLocally(order)) return '';
+
+        const offer = config.paymentOffers.find((item) => item.id === order.offerId);
+        const statusLabel = order.status === 'paid'
+            ? text('已支付待校验', 'Paid · Verify Pending')
+            : order.status === 'granted'
+                ? text('奖励已发放', 'Rewards Granted')
+                : isPaymentOrderExpired(order)
+                    ? text('订单已过期', 'Order Expired')
+                    : text('订单进行中', 'Order Active');
+
+        return `
+            <article class="gf-card gf-shop-card is-highlight">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('支付进行中', 'Payment In Progress')}</div>
+                        <div class="gf-card-title">${offer ? localize(offer.name) : text('链上订单', 'On-Chain Order')}</div>
+                    </div>
+                    <div class="gf-card-number">${statusLabel}</div>
+                </div>
+                <div class="gf-card-copy">${text('检测到你有一笔未完成或待校验的订单，可以直接继续支付流程，不用重新找礼包。', 'An unfinished or verification-pending order was found. You can resume directly without finding the pack again.')}</div>
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    <span class="gf-chip">${text('订单号', 'Order')} · ${order.id}</span>
+                    <span class="gf-chip is-strong">${text('金额', 'Amount')} · ${formatPaymentUsdt(order.exactAmount)}</span>
+                    <span class="gf-chip">${text('剩余', 'Time')} · ${getPaymentOrderCountdown(order)}</span>
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="openPayment" data-value="${order.offerId}">${text('继续支付 / 校验', 'Resume Payment')}</button>
+                </div>
+            </article>
+        `;
+    }
+
     function renderShopTab() {
         const sponsorTier = getSponsorTier();
         const milestoneViews = config.paymentMilestones.map((milestone) => getMilestoneView(milestone));
         const claimableMilestones = milestoneViews.filter((item) => item.claimable);
         const readyShopItems = config.shopItems.filter((item) => isShopItemReady(item.id));
+        const activePaymentCard = renderActivePaymentCard();
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
@@ -1405,6 +1441,7 @@
                     </div>
                 </article>
             </div>
+            ${activePaymentCard ? `<div class="gf-list">${activePaymentCard}</div><div class="gf-divider"></div>` : ''}
             <div class="gf-list">
                 ${config.shopItems.map(renderShopItemRow).join('')}
             </div>
@@ -2499,7 +2536,14 @@
     function hasWorkshopRedDot() { return config.workshop.some((item) => canUpgradeWorkshop(item.id)); }
     function hasMissionRedDot() { return config.missions.some((mission) => { const view = getMissionView(mission); return view && view.claimable; }); }
     function hasSeasonRedDot() { return config.seasonNodes.some((node) => isSeasonClaimable(node.id)) || config.sponsorSeasonNodes.some((node) => isSponsorSeasonClaimable(node.id)); }
-    function hasShopRedDot() { return isDailySupplyReady() || config.paymentMilestones.some((milestone) => { const view = getMilestoneView(milestone); return view && view.claimable; }); }
+    function hasShopRedDot() {
+        return isDailySupplyReady()
+            || (!!currentPaymentOrder && !isPaymentOrderSettledLocally(currentPaymentOrder))
+            || config.paymentMilestones.some((milestone) => {
+                const view = getMilestoneView(milestone);
+                return view && view.claimable;
+            });
+    }
 
     function hasSigilRedDot() {
         return config.sigils.some((sigil) => {
