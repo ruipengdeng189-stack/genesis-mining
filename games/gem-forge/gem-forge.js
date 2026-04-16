@@ -24,7 +24,10 @@
         lang: readLang(),
         tab: 'forge',
         save: loadSave(),
-        toastTimer: 0
+        toastTimer: 0,
+        uiMotionTimer: 0,
+        pendingUiMotion: '',
+        pendingUiMotionDuration: 420
     };
 
     const ui = {};
@@ -89,6 +92,7 @@
             button.addEventListener('click', () => {
                 state.lang = button.dataset.langSwitch === 'en' ? 'en' : 'zh';
                 try { localStorage.setItem(HUB_LANG_KEY, state.lang); } catch (error) {}
+                queueUiMotion('tab', 280);
                 renderAll();
             });
         });
@@ -97,6 +101,7 @@
             const target = event.target.closest('[data-tab]');
             if (!target) return;
             state.tab = tabMap[target.dataset.tab] ? target.dataset.tab : 'forge';
+            queueUiMotion('tab', 280);
             renderAll();
         });
 
@@ -159,11 +164,77 @@
             case 'claimAllMilestones': claimAllPaymentMilestones(); break;
             case 'openTab':
                 state.tab = tabMap[value] ? value : state.tab;
+                queueUiMotion('tab', 280);
                 renderAll();
                 break;
             default:
                 break;
         }
+    }
+
+    function queueUiMotion(kind = 'success', duration = 420) {
+        clearTimeout(state.uiMotionTimer);
+        state.pendingUiMotion = kind;
+        state.pendingUiMotionDuration = duration;
+    }
+
+    function triggerUiMotion(kind = 'success', duration = 420) {
+        state.pendingUiMotion = kind;
+        state.pendingUiMotionDuration = duration;
+        applyPendingUiMotion();
+    }
+
+    function applyPendingUiMotion() {
+        const kind = state.pendingUiMotion;
+        if (!kind) return;
+        const className = `is-feedback-${kind}`;
+        const targets = [ui.panelContent, ui.heroSummary, ui.resourceStrip, ui.tabBar].filter(Boolean);
+
+        targets.forEach((target) => {
+            Array.from(target.classList)
+                .filter((name) => name.startsWith('is-feedback-'))
+                .forEach((name) => target.classList.remove(name));
+            void target.offsetWidth;
+            target.classList.add(className);
+        });
+
+        state.pendingUiMotion = '';
+        clearTimeout(state.uiMotionTimer);
+        state.uiMotionTimer = window.setTimeout(() => {
+            targets.forEach((target) => target.classList.remove(className));
+        }, state.pendingUiMotionDuration || 420);
+    }
+
+    function getMotionSnapshot() {
+        return JSON.stringify({
+            tab: state.tab,
+            gold: Math.round(Number(state.save.gold) || 0),
+            dust: Math.round(Number(state.save.dust) || 0),
+            catalyst: Math.round(Number(state.save.catalyst) || 0),
+            seasonXp: Math.round(Number(state.save.seasonXp) || 0),
+            contractIndex: state.save.contractIndex,
+            bestContractIndex: state.save.bestContractIndex,
+            heat: Math.round(Number(state.save.heat) || 0),
+            selectedSigils: (state.save.selectedSigils || []).join('|'),
+            sigilLevels: Object.values(state.save.sigilLevels || {}).join('|'),
+            workshopLevels: Object.values(state.save.workshopLevels || {}).join('|'),
+            missionClaimed: (state.save.missionClaimed || []).length,
+            seasonClaimed: (state.save.seasonClaimed || []).length,
+            premiumSeason: Object.keys(state.save.payment?.premiumSeasonClaims || {}).length,
+            milestones: Object.keys(state.save.payment?.milestoneClaims || {}).length,
+            dailySupplyAt: Number(state.save.dailySupplyAt) || 0,
+            lastResult: state.save.lastResult?.title || ''
+        });
+    }
+
+    function wrapActionWithMotion(actionFn, kind = 'success', duration = 420) {
+        return function wrappedActionWithMotion(...args) {
+            const before = getMotionSnapshot();
+            const result = actionFn.apply(this, args);
+            const after = getMotionSnapshot();
+            if (before !== after) triggerUiMotion(kind, duration);
+            return result;
+        };
     }
 
     function renderAll() {
@@ -178,6 +249,7 @@
             renderPaymentOrderUI();
             refreshPaymentVerificationState();
         }
+        applyPendingUiMotion();
     }
 
     function getSelectedPaymentOffer() {
@@ -1934,12 +2006,20 @@
             const level = sigil ? getSigilLevel(sigil.id) : 0;
             return { slotId, sigil, locked, level };
         });
-        const familyCards = config.gemFamilies.map((family) => ({
-            ...family,
-            total: getFamilyGemCount(family.id),
-            awakened: getFamilyAwakenedCount(family.id),
-            focus: contract.focus.includes(family.id)
-        })).sort((left, right) => Number(right.focus) - Number(left.focus) || right.total - left.total).slice(0, 4);
+        const slotPills = slotCards.map((item) => ({
+            label: getSlotName(item.slotId),
+            value: item.locked
+                ? text('未开', 'Locked')
+                : item.sigil && item.level > 0
+                    ? `${localize(item.sigil.name)} Lv.${item.level}`
+                    : text('空位', 'Empty')
+        }));
+        const focusFamilies = contract.focus.map((familyId) => ({
+            family: familyMap[familyId],
+            total: getFamilyGemCount(familyId),
+            awakened: getFamilyAwakenedCount(familyId)
+        }));
+        const focusAwakened = focusFamilies.reduce((sum, item) => sum + item.awakened, 0);
         const heatEnoughOne = state.save.heat >= SMELT_HEAT_COST;
         const heatEnoughBatch = state.save.heat >= config.forgeBalance.batchSmeltHeatCost;
 
@@ -1952,7 +2032,7 @@
                     </div>
                     <div class="gf-card-number">${formatCompact(effectivePower)}</div>
                 </div>
-                <div class="gf-forge-scene">
+                <div class="gf-forge-scene gf-forge-scene--solo">
                     <div class="gf-forge-core-wrap">
                         <div class="gf-forge-core">
                             <span>${text('炉芯热量', 'Core Heat')}</span>
@@ -1972,35 +2052,30 @@
                             </div>
                         </div>
                     </div>
-                    <div class="gf-forge-side">
-                        <div class="gf-chip-row">
-                            <span class="gf-chip is-strong">${text('合同', 'Contract')} · ${contract.id}</span>
-                            ${contract.focus.map((familyId) => `<span class="gf-chip ${contract.focus.includes(familyId) ? 'is-success' : ''}">${localize(familyMap[familyId].name)}</span>`).join('')}
-                        </div>
-                        <div class="gf-forge-slot-list">
-                            ${slotCards.map((item) => `<div class="gf-forge-slot ${item.locked ? 'is-locked' : ''}">
-                                <span>${getSlotName(item.slotId)}</span>
-                                <strong>${item.locked ? text('未开', 'Locked') : item.sigil && item.level > 0 ? `${localize(item.sigil.name)} Lv.${item.level}` : text('空槽', 'Empty')}</strong>
-                            </div>`).join('')}
-                        </div>
-                        <div class="gf-forge-family-grid">
-                            ${familyCards.map((family) => `<div class="gf-forge-family ${family.focus ? 'is-focus' : ''}">
-                                <span>${localize(family.name)}</span>
-                                <strong>${formatCompact(family.total)}</strong>
-                                <small>${text('觉醒', 'Awaken')} ${formatCompact(family.awakened)}</small>
-                            </div>`).join('')}
-                        </div>
+                    <div class="gf-action-row">
+                        <button class="primary-btn" type="button" data-action="smeltOne">${heatEnoughOne ? text('立即熔炼', 'Smelt Now') : text(`热量不足 · 还差 ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))}`, `Need ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))} heat`)}</button>
+                        <button class="ghost-btn" type="button" data-action="smeltBatch">${heatEnoughBatch ? text('批量熔炼 x3', 'Batch x3') : text(`批量还差 ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`, `Need ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`)}</button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('调整符印', 'Tune Sigils')}</button>
+                    </div>
+                    <div class="gf-inline-grid gf-forge-quick-grid">
+                        ${slotPills.map((item) => `
+                            <div class="gf-inline-pill">
+                                <span>${item.label}</span>
+                                <strong>${item.value}</strong>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
-                <div class="gf-action-row" style="margin-top:12px;">
-                    <button class="primary-btn" type="button" data-action="smeltOne">${heatEnoughOne ? text('立即熔炼', 'Smelt Now') : text(`热量不足 · 还差 ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))}`, `Need ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))} heat`)}</button>
-                    <button class="ghost-btn" type="button" data-action="smeltBatch">${heatEnoughBatch ? text('批量熔炼 x3', 'Batch x3') : text(`批量还差 ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`, `Need ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`)}</button>
-                    <button class="ghost-btn" type="button" data-action="openTab" data-value="sigils">${text('调整符印', 'Tune Sigils')}</button>
+                <div class="gf-chip-row gf-forge-badge-strip" style="margin-top:12px;">
+                    <span class="gf-chip is-strong">${text('合同', 'Contract')} · ${contract.id}</span>
+                    ${focusFamilies.map((item) => `<span class="gf-chip is-success">${localize(item.family.name)} ${formatCompact(item.total)}</span>`).join('')}
+                    <span class="gf-chip ${gap > 0 ? 'is-warning' : 'is-success'}">${gap > 0 ? text(`还差 ${formatCompact(gap)}`, `Gap ${formatCompact(gap)}`) : text('已够线', 'Ready')}</span>
+                    <span class="gf-chip">${text('觉醒', 'Awaken')} · ${formatCompact(focusAwakened)}</span>
+                    <span class="gf-chip">${text('热量恢复', 'Heat Regen')} · ${formatCompact(getHeatRegenPerSecond())}/s</span>
                 </div>
             </article>
         `;
     }
-
     function renderSlotCard(item) {
         const slotName = getSlotName(item.slotId);
         const isLocked = item.slotId === 'resonance' && state.save.bestContractIndex < 2;
@@ -3800,6 +3875,26 @@
             </article>
         `;
     };
+    smeltOne = wrapActionWithMotion(smeltOne, 'forge', 420);
+    smeltBatch = wrapActionWithMotion(smeltBatch, 'forge', 420);
+    fuseGem = wrapActionWithMotion(fuseGem, 'forge', 420);
+    awakenGem = wrapActionWithMotion(awakenGem, 'upgrade', 440);
+    salvageGem = wrapActionWithMotion(salvageGem, 'forge', 380);
+    smartRecycleGems = wrapActionWithMotion(smartRecycleGems, 'forge', 400);
+    selectContract = wrapActionWithMotion(selectContract, 'tab', 280);
+    unlockSigil = wrapActionWithMotion(unlockSigil, 'upgrade', 440);
+    equipSigil = wrapActionWithMotion(equipSigil, 'tab', 280);
+    upgradeSigil = wrapActionWithMotion(upgradeSigil, 'upgrade', 440);
+    upgradeWorkshop = wrapActionWithMotion(upgradeWorkshop, 'upgrade', 440);
+    claimMission = wrapActionWithMotion(claimMission, 'claim', 440);
+    claimAllMissions = wrapActionWithMotion(claimAllMissions, 'claim', 440);
+    claimSeasonNode = wrapActionWithMotion(claimSeasonNode, 'claim', 440);
+    claimSponsorSeasonNode = wrapActionWithMotion(claimSponsorSeasonNode, 'claim', 440);
+    claimAllSeason = wrapActionWithMotion(claimAllSeason, 'claim', 440);
+    claimDailySupply = wrapActionWithMotion(claimDailySupply, 'claim', 440);
+    buyShopItem = wrapActionWithMotion(buyShopItem, 'claim', 420);
+    claimPaymentMilestone = wrapActionWithMotion(claimPaymentMilestone, 'claim', 440);
+    claimAllPaymentMilestones = wrapActionWithMotion(claimAllPaymentMilestones, 'claim', 440);
     runContract = function runContractEnhanced(index) {
         if (!Number.isFinite(index) || index < 0 || index >= config.contracts.length) return;
         if (index > state.save.bestContractIndex + 1) return showToast(text('前一档还没打通。', 'This contract is not unlocked yet.'));
@@ -3854,6 +3949,8 @@
         renderAll();
     };
 
+    runContract = wrapActionWithMotion(runContract, 'claim', 460);
+
     function readLang() { try { return localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (error) { return 'zh'; } }
     function localize(value) { if (!value) return ''; if (typeof value === 'string') return value; return value[state.lang] || value.zh || value.en || ''; }
     function text(zh, en) { return state.lang === 'en' ? en : zh; }
@@ -3861,5 +3958,15 @@
     function clampNumber(value, fallback, min = 0, max = Number.MAX_SAFE_INTEGER) { const numeric = Math.floor(Number(value)); if (!Number.isFinite(numeric)) return fallback; return Math.max(min, Math.min(max, numeric)); }
     function formatCompact(value) { const number = Number(value) || 0; if (Math.abs(number) >= 1000000) return `${(number / 1000000).toFixed(1)}M`; if (Math.abs(number) >= 1000) return `${(number / 1000).toFixed(1)}K`; return `${Math.round(number * 100) / 100}`; }
     function formatPercent(value) { return `${Math.round((Number(value) || 0) * 100)}%`; }
-    function showToast(message) { if (!message || !ui.toast) return; ui.toast.textContent = message; ui.toast.classList.add('show'); clearTimeout(state.toastTimer); state.toastTimer = setTimeout(() => ui.toast.classList.remove('show'), 2200); }
+    function showToast(message, tone = 'neutral') {
+        if (!message || !ui.toast) return;
+        ui.toast.textContent = message;
+        ui.toast.dataset.tone = tone;
+        ui.toast.classList.add('show');
+        clearTimeout(state.toastTimer);
+        state.toastTimer = setTimeout(() => {
+            ui.toast.classList.remove('show');
+            ui.toast.dataset.tone = 'neutral';
+        }, 2200);
+    }
 }());
