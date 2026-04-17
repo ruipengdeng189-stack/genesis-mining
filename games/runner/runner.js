@@ -1883,9 +1883,58 @@
         return payload;
     }
 
+    function mapPaymentApiError(errorMessage) {
+        const text = String(errorMessage || '').trim();
+        const lower = text.toLowerCase();
+
+        if (!text) {
+            return localize({ zh: '支付校验失败，请稍后重试。', en: 'Payment verification failed. Please try again.' });
+        }
+        if (lower.includes('txid not found')) {
+            return localize({ zh: '这笔 txid 还没有在 TRON 主网查到。', en: 'This txid was not found on TRON mainnet yet.' });
+        }
+        if (lower.includes('not confirmed yet')) {
+            return localize({ zh: '这笔交易还没确认，请稍后再试。', en: 'This transfer is not confirmed yet. Try again shortly.' });
+        }
+        if (lower.includes('execution failed')) {
+            return localize({ zh: '链上交易执行失败，无法发奖。', en: 'The on-chain transaction failed, so rewards cannot be granted.' });
+        }
+        if (lower.includes('not a trc20 contract transfer')) {
+            return localize({ zh: '这不是 TRC20 转账。', en: 'This transaction is not a TRC20 transfer.' });
+        }
+        if (lower.includes('not trc20 usdt')) {
+            return localize({ zh: '这不是 TRC20-USDT 支付。', en: 'This transaction is not a TRC20-USDT payment.' });
+        }
+        if (lower.includes('recipient address')) {
+            return localize({ zh: '收款地址不匹配，请按当前订单地址支付。', en: 'Recipient address mismatch. Please send to the address shown in the current order.' });
+        }
+        if (lower.includes('amount mismatch')) {
+            return localize({ zh: '支付金额和当前订单的精确金额不一致。', en: 'The payment amount does not match the current exact order amount.' });
+        }
+        if (lower.includes('before this order was created')) {
+            return localize({ zh: '这笔交易早于订单创建时间，不能用于当前订单。', en: 'This transfer happened before the order was created and cannot be used.' });
+        }
+        if (lower.includes('after the order expired') || lower.includes('order expired')) {
+            return localize({ zh: '订单已过期，请重新创建订单后再支付。', en: 'This order has expired. Create a new order before paying again.' });
+        }
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) {
+            return localize({ zh: '这笔 txid 已被其他订单使用。', en: 'This txid has already been used by another order.' });
+        }
+        if (lower.includes('minerid does not match order')) {
+            return localize({ zh: '当前订单与本地账号不匹配，请重新创建订单。', en: 'This order does not belong to the current player. Please create a new order.' });
+        }
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) {
+            return localize({ zh: '订单创建失败，请重新选择礼包。', en: 'Failed to create the payment order. Please select the pack again.' });
+        }
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) {
+            return localize({ zh: '支付接口暂时不可用，请稍后再试。', en: 'The payment service is temporarily unavailable. Please try again later.' });
+        }
+        return text;
+    }
+
     function buildClientPaymentOrder(order) {
         return {
-            id: String(order?.orderId || order?.order_id || '--'),
+            id: String(order?.id || order?.orderId || order?.order_id || '--'),
             offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
             offerName: String(order?.offerName || order?.offer_name || ''),
             minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
@@ -1932,6 +1981,25 @@
 
     function formatPaymentUsdt(value) {
         return `${Number(value || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)} USDT`;
+    }
+
+    async function verifyBackendPayment(orderId, txid) {
+        const query = new URLSearchParams({
+            orderId: String(orderId || ''),
+            txid: String(txid || ''),
+            minerId: getPaymentMinerId()
+        });
+        return requestPaymentApi(`/verify-payment?${query.toString()}`);
+    }
+
+    async function claimBackendPayment(orderId, txid) {
+        return requestPaymentApi('/claim-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orderId, txid, minerId: getPaymentMinerId() })
+        });
     }
 
     function isPaymentOrderExpired(order = currentPaymentOrder) {

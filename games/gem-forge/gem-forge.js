@@ -563,6 +563,7 @@
         if (lower.includes('before this order was created')) return text('这笔转账早于订单创建时间，不能用于当前订单。', 'This transfer happened before the order was created and cannot be used.');
         if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单。', 'This order has expired. Please create a new order.');
         if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('该 txid 已被其他订单使用。', 'This txid has already been used by another order.');
+        if (lower.includes('minerid does not match order')) return text('当前订单与本地账号不匹配，请重新创建订单。', 'This order does not belong to the current player. Please create a new order.');
         if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
         if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后重试。', 'The payment service is temporarily unavailable. Please try again later.');
         return raw;
@@ -587,7 +588,7 @@
         const createdAtRaw = order?.createdAt ?? order?.created_at;
         const expiresAtRaw = order?.expiresAt ?? order?.expires_at;
         return {
-            id: String(order?.orderId || order?.order_id || '--'),
+            id: String(order?.id || order?.orderId || order?.order_id || '--'),
             offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
             offerName: String(order?.offerName || order?.offer_name || ''),
             minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
@@ -673,7 +674,7 @@
     }
 
     async function verifyBackendPayment(orderId, txid) {
-        const query = new URLSearchParams({ orderId: String(orderId || ''), txid: String(txid || '') });
+        const query = new URLSearchParams({ orderId: String(orderId || ''), txid: String(txid || ''), minerId: getPaymentMinerId() });
         return requestPaymentApi(`/verify-payment?${query.toString()}`);
     }
 
@@ -681,12 +682,12 @@
         return requestPaymentApi('/claim-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, txid })
+            body: JSON.stringify({ orderId, txid, minerId: getPaymentMinerId() })
         });
     }
 
     async function checkBackendPaymentOrder(orderId) {
-        const query = new URLSearchParams({ orderId: String(orderId || '') });
+        const query = new URLSearchParams({ orderId: String(orderId || ''), minerId: getPaymentMinerId() });
         return requestPaymentApi(`/check-order?${query.toString()}`);
     }
 

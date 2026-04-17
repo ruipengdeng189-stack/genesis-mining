@@ -62,10 +62,18 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const orderId = String(searchParams.get('orderId') || '').trim();
+    const minerId = String(searchParams.get('minerId') || '').trim();
 
     if (!orderId) {
       return Response.json(
         { ok: false, error: 'orderId is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!minerId) {
+      return Response.json(
+        { ok: false, error: 'minerId is required' },
         { status: 400 }
       );
     }
@@ -76,6 +84,13 @@ export async function GET(request) {
       return Response.json(
         { ok: false, error: 'order not found' },
         { status: 404 }
+      );
+    }
+
+    if (String(order.miner_id || '').trim() !== minerId) {
+      return Response.json(
+        { ok: false, error: 'minerId does not match order' },
+        { status: 403 }
       );
     }
 

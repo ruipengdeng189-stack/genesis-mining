@@ -203,6 +203,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const orderId = String(searchParams.get('orderId') || '').trim();
+    const minerId = String(searchParams.get('minerId') || '').trim();
     const txid = normalizeTxid(searchParams.get('txid') || '');
 
     if (!orderId) {
@@ -212,11 +213,25 @@ export async function GET(request) {
       );
     }
 
+    if (!minerId) {
+      return Response.json(
+        { ok: false, error: 'minerId is required' },
+        { status: 400 }
+      );
+    }
+
     const order = await getOrder(orderId);
     if (!order) {
       return Response.json(
         { ok: false, error: 'order not found' },
         { status: 404 }
+      );
+    }
+
+    if (String(order.miner_id || '').trim() !== minerId) {
+      return Response.json(
+        { ok: false, error: 'minerId does not match order' },
+        { status: 403 }
       );
     }
 

@@ -40,7 +40,7 @@ async function getOrder(orderId) {
   url.searchParams.set('order_id', `eq.${orderId}`);
   url.searchParams.set(
     'select',
-    'order_id,offer_id,offer_name,status,txid,reward_granted,paid_at,expires_at'
+    'order_id,miner_id,offer_id,offer_name,status,txid,reward_granted,paid_at,expires_at'
   );
 
   const rows = await supabaseRequest(url.toString(), { method: 'GET' });
@@ -67,6 +67,7 @@ export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
     const orderId = String(body.orderId || '').trim();
+    const minerId = String(body.minerId || '').trim();
     const txid = normalizeTxid(body.txid || '');
 
     if (!orderId) {
@@ -76,11 +77,25 @@ export async function POST(request) {
       );
     }
 
+    if (!minerId) {
+      return Response.json(
+        { ok: false, error: 'minerId is required' },
+        { status: 400 }
+      );
+    }
+
     const order = await getOrder(orderId);
     if (!order) {
       return Response.json(
         { ok: false, error: 'order not found' },
         { status: 404 }
+      );
+    }
+
+    if (String(order.miner_id || '').trim() !== minerId) {
+      return Response.json(
+        { ok: false, error: 'minerId does not match order' },
+        { status: 403 }
       );
     }
 
@@ -97,6 +112,7 @@ export async function POST(request) {
         message: 'reward already marked as granted',
         order: {
           orderId: order.order_id,
+          minerId: order.miner_id,
           offerId: order.offer_id,
           offerName: order.offer_name,
           status: order.status,
@@ -125,6 +141,7 @@ export async function POST(request) {
       message: 'reward marked as granted',
       order: {
         orderId: updatedOrder.order_id,
+        minerId: updatedOrder.miner_id,
         offerId: updatedOrder.offer_id,
         offerName: updatedOrder.offer_name,
         status: updatedOrder.status,
