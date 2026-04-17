@@ -2025,6 +2025,136 @@
         `;
     }
 
+    function getForgeCollectorScore(saveSnapshot = state.save) {
+        const relics = Array.isArray(saveSnapshot.forgeRelics) ? saveSnapshot.forgeRelics : [];
+        return relics.reduce((sum, relic) => {
+            const rarityWeight = getForgeRelicRarityWeight(relic.rarity);
+            return sum + Math.round((Number(relic.score) || 0) * (0.9 + rarityWeight * 0.45));
+        }, 0);
+    }
+
+    function getForgeCollectorTier(score = getForgeCollectorScore()) {
+        if (score >= 22000) return { zh: '圣座馆长', en: 'Throne Curator' };
+        if (score >= 12000) return { zh: '星核馆长', en: 'Star Curator' };
+        if (score >= 5600) return { zh: '传奇鉴藏者', en: 'Legend Collector' };
+        if (score >= 1800) return { zh: '高阶鉴藏者', en: 'Senior Collector' };
+        if (score >= 600) return { zh: '熔炉鉴藏者', en: 'Forge Collector' };
+        return { zh: '新晋藏家', en: 'Rookie Collector' };
+    }
+
+    function getForgeRelicBreakdown(saveSnapshot = state.save) {
+        const relics = Array.isArray(saveSnapshot.forgeRelics) ? saveSnapshot.forgeRelics : [];
+        const byRarity = { rare: 0, epic: 0, legend: 0, mythic: 0 };
+        const byFamily = { ember: 0, tide: 0, volt: 0, void: 0 };
+        let topScore = 0;
+        relics.forEach((relic) => {
+            if (Object.prototype.hasOwnProperty.call(byRarity, relic.rarity)) byRarity[relic.rarity] += 1;
+            if (Object.prototype.hasOwnProperty.call(byFamily, relic.familyId)) byFamily[relic.familyId] += 1;
+            topScore = Math.max(topScore, Number(relic.score) || 0);
+        });
+        return {
+            byRarity,
+            byFamily,
+            topScore,
+            total: relics.length,
+            collectorScore: getForgeCollectorScore(saveSnapshot)
+        };
+    }
+
+    function getForgeRelicQualityLabel(qualityId = '') {
+        switch (qualityId) {
+            case 'perfect': return text('完美控火', 'Perfect Control');
+            case 'great': return text('精准控火', 'Precise Control');
+            case 'good': return text('稳定控火', 'Stable Control');
+            case 'rough': return text('擦边收炉', 'Rough Lock');
+            case 'unstable':
+            default: return text('过热收炉', 'Overheat Lock');
+        }
+    }
+
+    function getForgeTopRelics(limit = 3, saveSnapshot = state.save) {
+        const relics = Array.isArray(saveSnapshot.forgeRelics) ? saveSnapshot.forgeRelics.slice() : [];
+        return relics
+            .sort((left, right) => {
+                const rarityGap = getForgeRelicRarityWeight(right.rarity) - getForgeRelicRarityWeight(left.rarity);
+                if (rarityGap !== 0) return rarityGap;
+                return Number(right.score || 0) - Number(left.score || 0);
+            })
+            .slice(0, Math.max(0, limit));
+    }
+
+    function renderRelicCompactRow(relic, rank = 0) {
+        const family = familyMap[relic.familyId];
+        const title = localize(relic.title);
+        return `
+            <article class="gf-compact-row gf-relic-row is-${relic.rarity}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">
+                        <i class="gf-gem-dot" style="color:${family?.accent || '#fff'}; background:${family?.accent || '#fff'};"></i>
+                        ${title}
+                        <span class="gf-relic-rarity is-${relic.rarity}">${getForgeRelicRarityLabel(relic.rarity)}</span>
+                    </div>
+                    <div class="gf-compact-sub">${text(`第 ${rank + 1} 展位 · ${localize(family?.name)} 系 · ${getForgeRelicQualityLabel(relic.qualityId)}`, `Slot ${rank + 1} · ${localize(family?.name)} line · ${getForgeRelicQualityLabel(relic.qualityId)}`)}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip is-strong">T${relic.tier}</span>
+                        ${renderRewardChips(relic.reward, { limit: 2 })}
+                        ${renderPermanentChips(relic.permanent, { limit: 2 })}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${formatCompact(relic.score)}</strong>
+                    <span class="gf-mini-label">${text('收藏分', 'Score')}</span>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderRelicCabinetCard() {
+        const summary = getForgeRelicSummary();
+        const breakdown = getForgeRelicBreakdown();
+        const topRelics = getForgeTopRelics(3);
+        const collectorTier = localize(getForgeCollectorTier(breakdown.collectorScore));
+        const bestFamily = Object.entries(breakdown.byFamily)
+            .sort((left, right) => right[1] - left[1])[0];
+        const bestFamilyLabel = bestFamily && bestFamily[1] > 0
+            ? `${localize(familyMap[bestFamily[0]]?.name)} x${bestFamily[1]}`
+            : text('尚未成柜', 'No dominant line yet');
+
+        return `
+            <article class="gf-list-card gf-relic-cabinet">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('珍藏展柜', 'Relic Cabinet')}</div>
+                        <div class="gf-card-title">${collectorTier}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(breakdown.collectorScore)}</div>
+                </div>
+                ${renderKpiGrid([
+                    { label: text('收藏分', 'Collector Score'), value: formatCompact(breakdown.collectorScore) },
+                    { label: text('最高单件', 'Top Piece'), value: formatCompact(breakdown.topScore) },
+                    { label: text('神话/传说', 'Mythic/Legend'), value: `${formatCompact(breakdown.byRarity.mythic)}/${formatCompact(breakdown.byRarity.legend)}` },
+                    { label: text('主力系列', 'Main Line'), value: bestFamilyLabel }
+                ])}
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    <span class="gf-chip is-success">${text('珍稀', 'Rare')} · ${formatCompact(breakdown.byRarity.rare)}</span>
+                    <span class="gf-chip is-success">${text('史诗', 'Epic')} · ${formatCompact(breakdown.byRarity.epic)}</span>
+                    <span class="gf-chip is-strong">${text('传说', 'Legend')} · ${formatCompact(breakdown.byRarity.legend)}</span>
+                    <span class="gf-chip is-strong">${text('神话', 'Mythic')} · ${formatCompact(breakdown.byRarity.mythic)}</span>
+                    <span class="gf-chip">${text('当前保底', 'Current Pity')} · ${formatCompact(summary.pityRemain)}</span>
+                </div>
+                <div class="gf-list gf-list--compact" style="margin-top:12px;">
+                    ${topRelics.length
+                        ? topRelics.map((relic, index) => renderRelicCompactRow(relic, index)).join('')
+                        : `<div class="gf-empty">${text(`珍藏还没开张。优先打出“精准 / 完美控火”，当前再过 ${summary.pityRemain} 次至少会补出一件珍藏。`, `No relics yet. Aim for Great or Perfect control. In ${summary.pityRemain} more attempts, pity will guarantee a relic.`)}</div>`}
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="${state.forgeTiming.active ? 'stopForgeTiming' : 'startForgeTiming'}">${state.forgeTiming.active ? text('定点收炉', 'Lock Result') : text('继续冲珍藏', 'Chase Relics')}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="shop">${text('看赞助增益', 'View Sponsor Boost')}</button>
+                </div>
+            </article>
+        `;
+    }
+
     function renderMissionCompactRow(mission) {
         const route = getMissionRoute(mission.id);
         return `
@@ -4224,6 +4354,7 @@
                 <div class="gf-inline-pill"><span>${text('珍藏柜', 'Relics')}</span><strong>${formatCompact(relicSummary.count)}</strong></div>
             </div>
             ${renderLatestResultCard(lastResult, { context: 'forge', compact: true })}
+            ${renderRelicCabinetCard()}
             <article class="gf-list-card">
                 <div class="gf-card-head">
                     <div>
