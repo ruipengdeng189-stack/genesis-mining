@@ -233,6 +233,7 @@
             case 'openPayment': openPaymentModal(value); break;
             case 'claimMilestone': claimPaymentMilestone(value); break;
             case 'claimAllMilestones': claimAllPaymentMilestones(); break;
+            case 'claimRelicChase': claimRelicChase(value); break;
             case 'dismissRelicCelebration': dismissRelicCelebration(); break;
             case 'openTab':
                 state.tab = tabMap[value] ? value : state.tab;
@@ -2177,6 +2178,102 @@
             .slice(0, Math.max(0, limit));
     }
 
+    function getRelicChaseClaimKey(contractId, chaseId) {
+        return `${String(contractId || '0')}::${String(chaseId || 'focus')}`;
+    }
+
+    function getRelicCountByFamilies(familyIds = [], options = {}, saveSnapshot = state.save) {
+        const relics = Array.isArray(saveSnapshot.forgeRelics) ? saveSnapshot.forgeRelics : [];
+        const minRarityWeight = Number(options.minRarityWeight || 1);
+        return relics.filter((relic) => familyIds.includes(relic.familyId) && getForgeRelicRarityWeight(relic.rarity) >= minRarityWeight).length;
+    }
+
+    function getRelicScoreByFamilies(familyIds = [], saveSnapshot = state.save) {
+        const relics = Array.isArray(saveSnapshot.forgeRelics) ? saveSnapshot.forgeRelics : [];
+        return relics
+            .filter((relic) => familyIds.includes(relic.familyId))
+            .reduce((sum, relic) => sum + Math.round(Number(relic.score || 0)), 0);
+    }
+
+    function getRelicChaseDefinitions(contract = getCurrentContract(), saveSnapshot = state.save) {
+        const stage = Math.max(0, Number(saveSnapshot.bestContractIndex || 0));
+        const focusFamilies = (contract.focus || []).slice(0, 2);
+        const focusLabel = focusFamilies.map((familyId) => localize(familyMap[familyId]?.name)).join(' / ') || text('焦点家族', 'Focus Lines');
+        const collectorGoal = 900 + stage * 260;
+        return [
+            {
+                id: 'focusRack',
+                title: text('焦点开柜', 'Focus Rack'),
+                desc: text(`优先收集 ${focusLabel} 的珍藏，先把本章展柜立起来。`, `Collect relics from ${focusLabel} first to establish this chapter's showcase.`),
+                target: 2,
+                progress: getRelicCountByFamilies(focusFamilies, {}, saveSnapshot),
+                reward: { gold: 460 + stage * 110, dust: 28 + stage * 8, seasonXp: 36 + stage * 8 },
+                permanent: null,
+                readyTab: 'forge'
+            },
+            {
+                id: 'focusEpic',
+                title: text('高阶藏品', 'Premium Piece'),
+                desc: text(`打出 1 件 ${focusLabel} 史诗及以上珍藏，拉开和普通熔炼的差距。`, `Drop 1 epic-or-better relic from ${focusLabel} to create a clear premium spike.`),
+                target: 1,
+                progress: getRelicCountByFamilies(focusFamilies, { minRarityWeight: 2 }, saveSnapshot),
+                reward: { catalyst: 3 + Math.floor(stage / 2), seasonXp: 72 + stage * 10 },
+                permanent: { rareRate: Number((0.003 + stage * 0.0003).toFixed(4)) },
+                readyTab: 'forge'
+            },
+            {
+                id: 'collectorScore',
+                title: text('馆长陈列', 'Curator Display'),
+                desc: text(`把 ${focusLabel} 的收藏分推到 ${formatCompact(collectorGoal)}，形成这一章的炫耀资本。`, `Push ${focusLabel} collector score to ${formatCompact(collectorGoal)} to build a brag-worthy chapter display.`),
+                target: collectorGoal,
+                progress: getRelicScoreByFamilies(focusFamilies, saveSnapshot),
+                reward: { gold: 980 + stage * 180, dust: 64 + stage * 14, catalyst: 4 + Math.floor(stage / 3), seasonXp: 120 + stage * 12 },
+                permanent: { heatCap: 1 + Math.floor(stage / 3), dustYield: Number((0.003 + stage * 0.00035).toFixed(4)) },
+                readyTab: 'forge'
+            }
+        ];
+    }
+
+    function getRelicChaseViews(contract = getCurrentContract(), saveSnapshot = state.save) {
+        return getRelicChaseDefinitions(contract, saveSnapshot).map((item) => {
+            const claimKey = getRelicChaseClaimKey(contract.id, item.id);
+            const claimed = !!saveSnapshot.relicChaseClaims?.[claimKey];
+            const progress = Math.min(item.target, Math.max(0, Number(item.progress || 0)));
+            const claimable = !claimed && progress >= item.target;
+            return {
+                ...item,
+                contractId: contract.id,
+                claimKey,
+                claimed,
+                claimable,
+                progress,
+                progressRate: item.target > 0 ? Math.min(1, progress / item.target) : 1
+            };
+        });
+    }
+
+    function claimRelicChase(claimKey) {
+        const contract = getCurrentContract();
+        const view = getRelicChaseViews(contract).find((item) => item.claimKey === claimKey);
+        if (!view) return showToast(text('当前没有可领取的珍藏追逐奖励。', 'This relic chase reward is not available right now.'), 'warning');
+        if (view.claimed) return showToast(text('这档珍藏追逐奖励已经领过了。', 'This relic chase reward has already been claimed.'), 'warning');
+        if (!view.claimable) return showToast(text('还没达到这档珍藏追逐目标。', 'This relic chase target is not reached yet.'), 'warning');
+        grantReward(view.reward);
+        applyPermanentBonus(view.permanent);
+        state.save.relicChaseClaims[view.claimKey] = true;
+        state.save.lastResult = {
+            type: 'relicChase',
+            title: text(`珍藏追逐完成 · ${view.title}`, `Relic Chase Complete · ${view.title}`),
+            copy: text(`已完成 ${view.title}，奖励和永久增益已经到账。继续控火，可以顺着当前焦点家族继续冲更高档珍藏。`, `Completed ${view.title}. Rewards and permanent bonuses are already granted. Keep controlling the forge to push even higher relics in the current focus lines.`),
+            tags: [view.title, contract.id, text('已领奖', 'Claimed')],
+            reward: view.reward,
+            permanent: view.permanent
+        };
+        showToast(text(`已领取 ${view.title} 奖励。`, `Claimed ${view.title} reward.`), 'claim');
+        saveProgress();
+        renderAll();
+    }
+
     function renderRelicCompactRow(relic, rank = 0) {
         const family = familyMap[relic.familyId];
         const title = localize(relic.title);
@@ -2244,6 +2341,56 @@
                 <div class="gf-action-row" style="margin-top:12px;">
                     <button class="primary-btn" type="button" data-action="${state.forgeTiming.active ? 'stopForgeTiming' : 'startForgeTiming'}">${state.forgeTiming.active ? text('定点收炉', 'Lock Result') : text('继续冲珍藏', 'Chase Relics')}</button>
                     <button class="ghost-btn" type="button" data-action="openTab" data-value="shop">${text('看赞助增益', 'View Sponsor Boost')}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderRelicChaseRow(view) {
+        const action = view.claimed
+            ? { label: text('已领取', 'Claimed'), action: 'openTab', value: 'forge', cls: 'ghost-btn' }
+            : view.claimable
+                ? { label: text('领取', 'Claim'), action: 'claimRelicChase', value: view.claimKey, cls: 'primary-btn' }
+                : { label: text('继续冲', 'Keep Pushing'), action: 'openTab', value: view.readyTab || 'forge', cls: 'ghost-btn' };
+        return `
+            <article class="gf-compact-row ${view.claimable ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${view.title}</div>
+                    <div class="gf-compact-sub">${view.desc}</div>
+                    <div class="gf-progress gf-progress--small"><i style="width:${(view.progressRate * 100).toFixed(2)}%;"></i></div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(view.reward, { limit: 3 })}
+                        ${renderPermanentChips(view.permanent, { limit: 2 })}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${formatCompact(view.progress)}/${formatCompact(view.target)}</strong>
+                    <button class="${action.cls}" type="button" data-action="${action.action}" data-value="${action.value}">${action.label}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderRelicChaseCard(contract = getCurrentContract()) {
+        const views = getRelicChaseViews(contract);
+        const claimableCount = views.filter((item) => item.claimable).length;
+        const claimedCount = views.filter((item) => item.claimed).length;
+        return `
+            <article class="gf-list-card gf-relic-chase-card">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('珍藏追逐', 'Relic Chase')}</div>
+                        <div class="gf-card-title">${text('把当前焦点家族做成这一章的招牌展柜', 'Turn the current focus lines into this chapter’s signature cabinet')}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(claimedCount)}/${formatCompact(views.length)}</div>
+                </div>
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    <span class="gf-chip is-strong">${text('当前合同', 'Current Contract')} · ${contract.id}</span>
+                    <span class="gf-chip">${text('已完成', 'Completed')} · ${formatCompact(claimedCount)}</span>
+                    <span class="gf-chip ${claimableCount > 0 ? 'is-success' : ''}">${text('可领取', 'Ready')} · ${formatCompact(claimableCount)}</span>
+                </div>
+                <div class="gf-list gf-list--compact" style="margin-top:12px;">
+                    ${views.map(renderRelicChaseRow).join('')}
                 </div>
             </article>
         `;
@@ -2787,6 +2934,7 @@
             forgeCombo: 0,
             relicPity: 0,
             forgeRelics: [],
+            relicChaseClaims: {},
             permanent: {
                 heatCap: 0,
                 rareRate: 0,
@@ -2836,6 +2984,7 @@
             gems: { ...(save?.gems || {}) },
             awakened: { ...(save?.awakened || {}) },
             forgeRelics: Array.isArray(save?.forgeRelics) ? save.forgeRelics.slice(0, FORGE_RELIC_MAX) : [],
+            relicChaseClaims: save?.relicChaseClaims && typeof save.relicChaseClaims === 'object' ? { ...save.relicChaseClaims } : {},
             sigilLevels: { ...base.sigilLevels, ...(save?.sigilLevels || {}) },
             sigilShards: { ...base.sigilShards, ...(save?.sigilShards || {}) },
             workshopLevels: { ...base.workshopLevels, ...(save?.workshopLevels || {}) },
@@ -2858,6 +3007,7 @@
             .map(normalizeForgeRelic)
             .filter(Boolean)
             .slice(0, FORGE_RELIC_MAX);
+        next.relicChaseClaims = next.relicChaseClaims && typeof next.relicChaseClaims === 'object' ? { ...next.relicChaseClaims } : {};
         next.selectedSigils = Array.isArray(next.selectedSigils) ? next.selectedSigils.slice(0, 3) : base.selectedSigils.slice();
         while (next.selectedSigils.length < 3) next.selectedSigils.push('');
         next.selectedSigils = next.selectedSigils.map((sigilId, index) => {
@@ -4452,6 +4602,7 @@
             </div>
             ${renderLatestResultCard(lastResult, { context: 'forge', compact: true })}
             ${renderRelicCabinetCard()}
+            ${renderRelicChaseCard(contract)}
             <article class="gf-list-card">
                 <div class="gf-card-head">
                     <div>
