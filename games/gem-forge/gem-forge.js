@@ -43,10 +43,12 @@
         tab: 'forge',
         save: loadSave(),
         toastTimer: 0,
+        relicTimer: 0,
         uiMotionTimer: 0,
         pendingUiMotion: '',
         pendingUiMotionDuration: 420,
-        forgeTiming: createForgeTimingState()
+        forgeTiming: createForgeTimingState(),
+        activeRelicCelebration: null
     };
 
     const ui = {};
@@ -61,6 +63,29 @@
 
     document.addEventListener('DOMContentLoaded', init);
 
+    function ensureRelicCelebrationUi() {
+        if (document.getElementById('gfRelicModal')) return;
+        const shell = document.querySelector('.gf-shell') || document.body;
+        const host = document.createElement('div');
+        host.innerHTML = `
+            <div class="gf-relic-modal is-hidden" id="gfRelicModal">
+                <div class="gf-relic-card" id="gfRelicCard">
+                    <div class="gf-relic-glow"></div>
+                    <div class="gf-relic-ring"></div>
+                    <div class="eyebrow" id="gfRelicEyebrow">LEGEND RELIC</div>
+                    <h2 id="gfRelicTitle">Relic Drop</h2>
+                    <p id="gfRelicCopy"></p>
+                    <div class="gf-kpi-grid gf-relic-kpis" id="gfRelicStats"></div>
+                    <div class="gf-chip-row" id="gfRelicRewards"></div>
+                    <div class="gf-action-row" style="margin-top:16px;">
+                        <button class="primary-btn wide-btn" type="button" data-action="dismissRelicCelebration" id="gfRelicAction">继续</button>
+                    </div>
+                </div>
+            </div>
+        `.trim();
+        shell.appendChild(host.firstElementChild);
+    }
+
     function init() {
         cacheUi();
         bindEvents();
@@ -73,6 +98,7 @@
     }
 
     function cacheUi() {
+        ensureRelicCelebrationUi();
         ui.heroEyebrow = document.getElementById('heroEyebrow');
         ui.heroTitle = document.getElementById('heroTitle');
         ui.heroSubtitle = document.getElementById('heroSubtitle');
@@ -104,6 +130,14 @@
         ui.paymentTxidHint = document.getElementById('gfPaymentTxidHint');
         ui.paymentStatus = document.getElementById('gfPaymentStatus');
         ui.paymentVerifyBtn = document.getElementById('gfPaymentVerifyBtn');
+        ui.relicModal = document.getElementById('gfRelicModal');
+        ui.relicCard = document.getElementById('gfRelicCard');
+        ui.relicEyebrow = document.getElementById('gfRelicEyebrow');
+        ui.relicTitle = document.getElementById('gfRelicTitle');
+        ui.relicCopy = document.getElementById('gfRelicCopy');
+        ui.relicStats = document.getElementById('gfRelicStats');
+        ui.relicRewards = document.getElementById('gfRelicRewards');
+        ui.relicAction = document.getElementById('gfRelicAction');
     }
 
     function bindEvents() {
@@ -129,6 +163,10 @@
         ui.paymentModal?.addEventListener('click', (event) => {
             if (event.target === ui.paymentModal) closePaymentModal();
         });
+        ui.relicModal?.addEventListener('click', (event) => {
+            if (event.target === ui.relicModal) dismissRelicCelebration();
+        });
+        ui.relicAction?.addEventListener('click', dismissRelicCelebration);
         ui.paymentOfferGrid?.addEventListener('click', (event) => {
             const button = event.target.closest('[data-select-payment-offer]');
             if (!button) return;
@@ -151,7 +189,9 @@
             }
         });
         window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
+            if (event.key === 'Escape' && ui.relicModal && !ui.relicModal.classList.contains('is-hidden')) {
+                dismissRelicCelebration();
+            } else if (event.key === 'Escape' && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
                 closePaymentModal();
             }
         });
@@ -193,6 +233,7 @@
             case 'openPayment': openPaymentModal(value); break;
             case 'claimMilestone': claimPaymentMilestone(value); break;
             case 'claimAllMilestones': claimAllPaymentMilestones(); break;
+            case 'dismissRelicCelebration': dismissRelicCelebration(); break;
             case 'openTab':
                 state.tab = tabMap[value] ? value : state.tab;
                 queueUiMotion('tab', 280);
@@ -1049,6 +1090,59 @@
         if (!ui.paymentModal) return;
         ui.paymentModal.classList.add('is-hidden');
         document.body.classList.remove('modal-open');
+    }
+
+    function dismissRelicCelebration() {
+        clearTimeout(state.relicTimer);
+        state.relicTimer = 0;
+        state.activeRelicCelebration = null;
+        if (!ui.relicModal || !ui.relicCard) return;
+        ui.relicModal.classList.add('is-hidden');
+        ui.relicCard.classList.remove('is-legend', 'is-mythic');
+        document.body.classList.remove('relic-open');
+    }
+
+    function showRelicCelebration(relic, options = {}) {
+        const normalized = normalizeForgeRelic(relic);
+        if (!normalized || !ui.relicModal || !ui.relicCard) return;
+        const family = familyMap[normalized.familyId];
+        const rarityLabel = getForgeRelicRarityLabel(normalized.rarity);
+        const qualityLabel = getForgeRelicQualityLabel(normalized.qualityId);
+        const autoDismissMs = normalized.rarity === 'mythic' ? 4800 : 3600;
+        clearTimeout(state.relicTimer);
+        state.activeRelicCelebration = normalized;
+        ui.relicModal.classList.remove('is-hidden');
+        ui.relicCard.classList.remove('is-legend', 'is-mythic');
+        ui.relicCard.classList.add(normalized.rarity === 'mythic' ? 'is-mythic' : 'is-legend');
+        ui.relicCard.style.setProperty('--gf-relic-accent', family?.accent || '#b56fff');
+        ui.relicCard.style.setProperty('--gf-relic-accent-glow', `${family?.accent || '#b56fff'}44`);
+        ui.relicEyebrow.textContent = normalized.rarity === 'mythic'
+            ? text('神话珍藏降临', 'Mythic Relic Descends')
+            : text('传说珍藏掉落', 'Legend Relic Found');
+        ui.relicTitle.textContent = localize(normalized.title);
+        ui.relicCopy.textContent = text(
+            `${rarityLabel}珍藏已入柜。${qualityLabel}命中了高价值掉落区，本次奖励与永久增益已即时到账。`,
+            `${rarityLabel} relic archived. ${qualityLabel} hit the premium drop zone, and both the reward and permanent bonus are already granted.`
+        );
+        ui.relicStats.innerHTML = renderKpiGrid([
+            { label: text('收藏分', 'Collector Score'), value: formatCompact(normalized.score) },
+            { label: text('品质', 'Quality'), value: qualityLabel },
+            { label: text('系别', 'Family'), value: localize(family?.name) || '--' },
+            { label: text('阶位', 'Tier'), value: `T${normalized.tier}` }
+        ]);
+        ui.relicRewards.innerHTML = `
+            <span class="gf-chip is-strong">${rarityLabel}</span>
+            ${renderRewardChips(normalized.reward, { limit: 4 })}
+            ${renderPermanentChips(normalized.permanent, { limit: 3 })}
+        `;
+        ui.relicAction.textContent = normalized.rarity === 'mythic'
+            ? text('收下神话珍藏', 'Claim Mythic Relic')
+            : text('继续熔炼', 'Continue Forging');
+        document.body.classList.add('relic-open');
+        triggerUiMotion('claim', normalized.rarity === 'mythic' ? 900 : 700);
+        if (!options.sticky) {
+            state.relicTimer = window.setTimeout(() => dismissRelicCelebration(), autoDismissMs);
+        }
     }
 
     async function copyPaymentAddress() {
@@ -3178,6 +3272,9 @@
         if (!silent) {
             if (relic) {
                 showToast(text(`爆出${getForgeRelicRarityLabel(relic.rarity)}珍藏：${localize(relic.title)}`, `Dropped ${getForgeRelicRarityLabel(relic.rarity)} relic: ${localize(relic.title)}`), relic.rarity === 'legend' || relic.rarity === 'mythic' ? 'claim' : 'success');
+                if (relic.rarity === 'legend' || relic.rarity === 'mythic') {
+                    showRelicCelebration(relic);
+                }
             } else if (result.pityType) {
                 showToast(text(`${pityLabel}：${familyName} T${result.tier}`, `${pityLabel}: ${familyName} T${result.tier}`), controlLabel ? 'success' : 'neutral');
             } else {

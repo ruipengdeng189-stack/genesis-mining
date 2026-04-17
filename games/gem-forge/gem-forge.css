@@ -1139,8 +1139,125 @@ input {
     }
 }
 
+@keyframes gfRelicDropIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.92);
+        filter: brightness(0.92);
+    }
+
+    55% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.02);
+        filter: brightness(1.06);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: brightness(1);
+    }
+}
+
 body.modal-open {
     overflow: hidden;
+}
+
+body.relic-open {
+    overflow: hidden;
+}
+
+.gf-relic-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 82;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background:
+        radial-gradient(circle at center, rgba(181, 111, 255, 0.18), transparent 26%),
+        rgba(4, 9, 20, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.gf-relic-modal.is-hidden {
+    display: none;
+}
+
+.gf-relic-card {
+    --gf-relic-accent: #b56fff;
+    --gf-relic-accent-glow: rgba(181, 111, 255, 0.24);
+    position: relative;
+    overflow: hidden;
+    width: min(100%, 520px);
+    display: grid;
+    gap: 12px;
+    padding: 22px 18px 18px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background:
+        radial-gradient(circle at top, var(--gf-relic-accent-glow), transparent 38%),
+        linear-gradient(180deg, rgba(18, 20, 38, 0.98), rgba(8, 10, 22, 0.98));
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+    animation: gfRelicDropIn 0.48s cubic-bezier(.2,.9,.2,1) both;
+}
+
+.gf-relic-card.is-legend {
+    border-color: rgba(255, 212, 94, 0.34);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42), 0 0 30px rgba(255, 212, 94, 0.14);
+}
+
+.gf-relic-card.is-mythic {
+    border-color: rgba(181, 111, 255, 0.46);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.46), 0 0 36px rgba(181, 111, 255, 0.2);
+}
+
+.gf-relic-card h2 {
+    margin: 0;
+    font-size: clamp(26px, 6vw, 36px);
+    line-height: 1.06;
+}
+
+.gf-relic-card p {
+    margin: 0;
+    color: var(--gf-text-soft);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.gf-relic-kpis {
+    margin-top: 2px;
+}
+
+.gf-relic-glow,
+.gf-relic-ring {
+    position: absolute;
+    inset: auto;
+    pointer-events: none;
+}
+
+.gf-relic-glow {
+    top: -34px;
+    left: 50%;
+    width: 220px;
+    height: 220px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: radial-gradient(circle, var(--gf-relic-accent-glow), transparent 68%);
+    opacity: 0.9;
+    filter: blur(8px);
+}
+
+.gf-relic-ring {
+    top: 14px;
+    right: -38px;
+    width: 140px;
+    height: 140px;
+    border-radius: 999px;
+    border: 1px dashed rgba(255, 255, 255, 0.18);
+    animation: gf-spin 10s linear infinite;
 }
 
 .gf-payment-modal {
@@ -1519,6 +1636,20 @@ body.modal-open {
     .gf-relic-row .gf-compact-side {
         width: 100%;
         justify-items: start;
+    }
+
+    .gf-relic-modal {
+        padding: 14px;
+    }
+
+    .gf-relic-card {
+        padding: 18px 14px 14px;
+        gap: 10px;
+        border-radius: 24px;
+    }
+
+    .gf-relic-card p {
+        font-size: 13px;
     }
 
     .gf-resource-pill strong,
