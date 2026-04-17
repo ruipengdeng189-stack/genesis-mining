@@ -15,6 +15,141 @@
     --gf-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
+.gf-panel-content {
+    gap: 12px;
+}
+
+.gf-card-title,
+.gf-compact-title {
+    line-height: 1.15;
+}
+
+.gf-panel-copy,
+.gf-card-copy,
+.gf-compact-sub,
+.gf-list-sub,
+.gf-result-box p {
+    line-height: 1.4;
+}
+
+.gf-chip-row,
+.gf-action-row {
+    gap: 6px;
+}
+
+.gf-action-row > .primary-btn,
+.gf-action-row > .ghost-btn,
+.gf-action-row > a,
+.gf-row-actions > .primary-btn,
+.gf-row-actions > .ghost-btn,
+.gf-row-actions > a {
+    width: auto;
+    min-height: 42px;
+    padding: 0 14px;
+    flex: 1 1 136px;
+}
+
+.gf-forge-stage-kpis {
+    margin-top: 10px;
+    gap: 8px;
+}
+
+.gf-forge-stage-kpis .gf-inline-pill {
+    padding: 10px 10px;
+    border-radius: 16px;
+}
+
+.gf-forge-stage-kpis .gf-inline-pill span {
+    font-size: 10px;
+}
+
+.gf-forge-stage-kpis .gf-inline-pill strong {
+    margin-top: 4px;
+    font-size: 16px;
+}
+
+.gf-forge-stage-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.gf-forge-stage-actions > :first-child {
+    grid-column: 1 / -1;
+}
+
+.gf-forge-stage-actions > .primary-btn,
+.gf-forge-stage-actions > .ghost-btn {
+    width: 100%;
+}
+
+@media (max-width: 720px) {
+    .gf-card,
+    .gf-list-card,
+    .gf-slot-card {
+        padding: 12px;
+        border-radius: 18px;
+    }
+
+    .gf-panel-content {
+        gap: 10px;
+    }
+
+    .gf-card-head,
+    .gf-panel-head {
+        gap: 8px;
+    }
+
+    .gf-chip-row,
+    .gf-action-row {
+        gap: 6px;
+    }
+
+    .gf-action-row > .primary-btn,
+    .gf-action-row > .ghost-btn,
+    .gf-action-row > a,
+    .gf-row-actions > .primary-btn,
+    .gf-row-actions > .ghost-btn,
+    .gf-row-actions > a {
+        min-height: 40px;
+        padding: 0 12px;
+        font-size: 13px;
+        flex: 1 1 calc(50% - 4px);
+    }
+
+    .gf-forge-stage-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .gf-forge-stage-kpis .gf-inline-pill {
+        padding: 8px 8px;
+        border-radius: 14px;
+    }
+
+    .gf-forge-stage-kpis .gf-inline-pill span {
+        font-size: 9px;
+    }
+
+    .gf-forge-stage-kpis .gf-inline-pill strong {
+        margin-top: 3px;
+        font-size: 14px;
+    }
+
+    .gf-forge-stage-actions {
+        gap: 6px;
+    }
+
+    .gf-forge-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .gf-forge-focus-grid {
+        gap: 8px;
+    }
+}
+
 * {
     box-sizing: border-box;
 }
