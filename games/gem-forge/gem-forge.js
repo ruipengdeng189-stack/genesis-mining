@@ -4583,10 +4583,11 @@
         const fuseReady = inventoryRows.filter((row) => row.canFuse);
         const awakenReady = inventoryRows.filter((row) => row.canAwaken);
         const lastResult = state.save.lastResult;
+        const forgeResult = lastResult && lastResult.type !== 'contract' ? lastResult : null;
         const recyclePlan = getSmartRecyclePlan();
         const relicSummary = getForgeRelicSummary();
-        const actionableRows = inventoryRows.filter((row) => row.canFuse || row.canAwaken).slice(0, 4);
-        const previewRows = actionableRows.length ? actionableRows : inventoryRows.slice(0, 4);
+        const actionableRows = inventoryRows.filter((row) => row.canFuse || row.canAwaken).slice(0, 3);
+        const previewRows = actionableRows.length ? actionableRows : inventoryRows.slice(0, 3);
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
@@ -4601,9 +4602,26 @@
                 <div class="gf-inline-pill"><span>${text('可回收尘', 'Recycle Dust')}</span><strong>${formatCompact(recyclePlan.totalDust)}</strong></div>
                 <div class="gf-inline-pill"><span>${text('珍藏柜', 'Relics')}</span><strong>${formatCompact(relicSummary.count)}</strong></div>
             </div>
-            ${renderLatestResultCard(lastResult, { context: 'forge', compact: true })}
-            ${renderRelicCabinetCard()}
-            ${renderRelicChaseCard(contract)}
+            ${renderLatestResultCard(forgeResult, { context: 'forge', compact: true })}
+            <article class="gf-list-card">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('熔炉捷径', 'Forge Routes')}</div>
+                        <div class="gf-card-title">${text('熔炉页只保留控火和产出，完整藏柜与追逐改到合同页签查看。', 'Forge now focuses on control and output. Full cabinet and chase views move to Contracts.')}</div>
+                    </div>
+                    <div class="gf-card-number">${contract.id}</div>
+                </div>
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    <span class="gf-chip is-strong">${text('焦点线', 'Focus')} · ${contract.focus.map((familyId) => localize(familyMap[familyId].name)).join(' / ')}</span>
+                    <span class="gf-chip">${text('珍藏数', 'Relics')} · ${formatCompact(relicSummary.count)}</span>
+                    <span class="gf-chip">${text('连击', 'Streak')} · x${formatCompact(relicSummary.combo)}</span>
+                    <span class="gf-chip">${text('保底', 'Pity')} · ${formatCompact(relicSummary.pityRemain)}</span>
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="contracts">${text('查看章节藏柜', 'Open Cabinet')}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="contracts">${text('查看珍藏追逐', 'Open Chase')}</button>
+                </div>
+            </article>
             <article class="gf-list-card">
                 <div class="gf-card-head">
                     <div>
@@ -4692,6 +4710,8 @@
                 </article>
             </div>
             ${lastResult?.type === 'contract' ? renderContractSettlementCard(lastResult, { context: 'contracts', compact: true }) : ''}
+            ${renderRelicCabinetCard()}
+            ${renderRelicChaseCard(currentContract)}
             <div class="gf-list gf-list--compact">
                 ${compactContracts.visible.map(renderContractCompactRow).join('')}
             </div>

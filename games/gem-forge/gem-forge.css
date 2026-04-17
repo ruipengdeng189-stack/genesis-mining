@@ -1521,6 +1521,9 @@ body.relic-open {
     background: rgba(4, 9, 20, 0.82);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     z-index: 72;
 }
 
@@ -1531,7 +1534,10 @@ body.relic-open {
 .gf-payment-card {
     width: min(100%, 920px);
     max-height: min(90dvh, 960px);
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     display: grid;
     gap: 16px;
     padding: 20px;
@@ -1548,6 +1554,11 @@ body.relic-open {
     align-items: flex-start;
     gap: 12px;
     min-width: 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-bottom: 8px;
+    background: linear-gradient(180deg, rgba(15, 18, 34, 0.98), rgba(15, 18, 34, 0.92));
 }
 
 .gf-payment-head > div {
@@ -2097,6 +2108,8 @@ body.relic-open {
     .gf-payment-card {
         padding: 16px;
         border-radius: 24px;
+        width: 100%;
+        max-height: calc(100dvh - 20px);
     }
 
     .gf-payment-head {
@@ -2112,6 +2125,11 @@ body.relic-open {
     .gf-payment-copy-row,
     .gf-payment-actions {
         grid-template-columns: 1fr;
+    }
+
+    .gf-payment-modal {
+        align-items: flex-start;
+        padding: 10px;
     }
 
     .gf-payment-order-top {
