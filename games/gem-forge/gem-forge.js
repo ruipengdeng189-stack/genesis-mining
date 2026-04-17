@@ -5420,6 +5420,303 @@
         return equipped + focus + unlockReady + upgradeReady + level * 32 + sigil.baseScore;
     }
 
+    function getSigilShardCountForSave(sigilId, saveSnapshot = state.save) {
+        return Math.max(0, Number(saveSnapshot?.sigilShards?.[sigilId]) || 0);
+    }
+
+    function getGemCountForSave(familyId, tier, saveSnapshot = state.save) {
+        return Math.max(0, Number(saveSnapshot?.gems?.[buildGemKey(familyId, tier)]) || 0);
+    }
+
+    function getWorkshopLevelForSave(workshopId, saveSnapshot = state.save) {
+        return Math.max(0, Number(saveSnapshot?.workshopLevels?.[workshopId]) || 0);
+    }
+
+    function getWorkshopUpgradeCostForSave(workshopId, saveSnapshot = state.save) {
+        const item = workshopMap[workshopId];
+        const level = getWorkshopLevelForSave(workshopId, saveSnapshot);
+        if (!item) return { gold: 0, dust: 0 };
+        return {
+            gold: Math.round(item.baseCostGold + item.costGoldStep * level),
+            dust: Math.round(item.baseCostDust + item.costDustStep * level)
+        };
+    }
+
+    function getSigilUpgradeCostForSave(sigilId, saveSnapshot = state.save) {
+        const sigil = sigilMap[sigilId];
+        const level = getSigilLevelForSave(sigilId, saveSnapshot);
+        if (!sigil) return { gold: 0, shards: 0 };
+        return {
+            gold: Math.round(sigil.goldCostBase + sigil.goldCostStep * Math.max(0, level - 1)),
+            shards: Math.round(sigil.shardCostBase + sigil.shardCostStep * Math.max(0, level - 1))
+        };
+    }
+
+    function grantRewardToSave(reward, saveSnapshot) {
+        if (!reward || !saveSnapshot) return;
+        saveSnapshot.gold = Number(saveSnapshot.gold || 0) + (Number(reward.gold) || 0);
+        saveSnapshot.dust = Number(saveSnapshot.dust || 0) + (Number(reward.dust) || 0);
+        saveSnapshot.catalyst = Number(saveSnapshot.catalyst || 0) + (Number(reward.catalyst) || 0);
+        saveSnapshot.seasonXp = Number(saveSnapshot.seasonXp || 0) + (Number(reward.seasonXp) || 0);
+        if (reward.sigils) {
+            saveSnapshot.sigilShards = { ...(saveSnapshot.sigilShards || {}) };
+            Object.entries(reward.sigils).forEach(([sigilId, amount]) => {
+                saveSnapshot.sigilShards[sigilId] = getSigilShardCountForSave(sigilId, saveSnapshot) + (Number(amount) || 0);
+            });
+        }
+    }
+
+    function grantFocusShardsToSave(familyIds = [], amount = 0, saveSnapshot = state.save) {
+        if (!familyIds.length || amount <= 0 || !saveSnapshot) return;
+        saveSnapshot.sigilShards = { ...(saveSnapshot.sigilShards || {}) };
+        config.sigils.forEach((sigil) => {
+            if (familyIds.includes(sigil.family)) {
+                saveSnapshot.sigilShards[sigil.id] = getSigilShardCountForSave(sigil.id, saveSnapshot) + amount;
+            }
+        });
+    }
+
+    function getActionStateSummary(saveSnapshot = state.save) {
+        let fuseReady = 0;
+        let awakenReady = 0;
+        let sigilUnlockReady = 0;
+        let sigilUpgradeReady = 0;
+        let workshopReady = 0;
+
+        config.gemFamilies.forEach((family) => {
+            config.gemTiers.forEach((tierMeta) => {
+                const count = getGemCountForSave(family.id, tierMeta.tier, saveSnapshot);
+                if (count >= tierMeta.fuseNeed && tierMeta.tier < 5 && canAffordCost(getFuseCost(tierMeta.tier), saveSnapshot)) fuseReady += 1;
+                if (tierMeta.tier >= 3 && count >= 1 && canAffordCost(getAwakenCost(tierMeta.tier), saveSnapshot)) awakenReady += 1;
+            });
+        });
+
+        config.sigils.forEach((sigil) => {
+            const level = getSigilLevelForSave(sigil.id, saveSnapshot);
+            const shardOwned = getSigilShardCountForSave(sigil.id, saveSnapshot);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            const upgradeCost = getSigilUpgradeCostForSave(sigil.id, saveSnapshot);
+            if (level <= 0 && Number(saveSnapshot.gold || 0) >= unlockCost.gold && shardOwned >= unlockCost.shards) sigilUnlockReady += 1;
+            if (level > 0 && level < 8 && Number(saveSnapshot.gold || 0) >= upgradeCost.gold && shardOwned >= upgradeCost.shards) sigilUpgradeReady += 1;
+        });
+
+        config.workshop.forEach((item) => {
+            const level = getWorkshopLevelForSave(item.id, saveSnapshot);
+            const cost = getWorkshopUpgradeCostForSave(item.id, saveSnapshot);
+            if (level < item.maxLevel && Number(saveSnapshot.gold || 0) >= cost.gold && Number(saveSnapshot.dust || 0) >= cost.dust) workshopReady += 1;
+        });
+
+        return {
+            fuseReady,
+            awakenReady,
+            sigilUnlockReady,
+            sigilUpgradeReady,
+            workshopReady,
+            totalReady: fuseReady + awakenReady + sigilUnlockReady + sigilUpgradeReady + workshopReady
+        };
+    }
+
+    function renderOfferActionDeltaChips(projected) {
+        const chips = [];
+        if (projected.newFuseReady > 0) chips.push(`<span class="gf-chip is-success">${text('新合成', 'New Fuse')} +${projected.newFuseReady}</span>`);
+        if (projected.newAwakenReady > 0) chips.push(`<span class="gf-chip is-success">${text('新觉醒', 'New Awaken')} +${projected.newAwakenReady}</span>`);
+        if (projected.newSigilUnlockReady > 0) chips.push(`<span class="gf-chip is-warning">${text('新解锁', 'New Unlock')} +${projected.newSigilUnlockReady}</span>`);
+        if (projected.newSigilUpgradeReady > 0) chips.push(`<span class="gf-chip is-warning">${text('新升印', 'New Sigil Up')} +${projected.newSigilUpgradeReady}</span>`);
+        if (projected.newWorkshopReady > 0) chips.push(`<span class="gf-chip">${text('新工坊', 'New Workshop')} +${projected.newWorkshopReady}</span>`);
+        return chips.join('');
+    }
+
+    function getProjectedOfferImpact(offer, saveSnapshot = state.save) {
+        const projected = clone(saveSnapshot);
+        projected.payment = { ...(saveSnapshot.payment || {}) };
+        projected.permanent = { ...(saveSnapshot.permanent || {}) };
+        projected.sigilShards = { ...(saveSnapshot.sigilShards || {}) };
+        projected.workshopLevels = { ...(saveSnapshot.workshopLevels || {}) };
+        projected.gems = { ...(saveSnapshot.gems || {}) };
+        projected.awakened = { ...(saveSnapshot.awakened || {}) };
+
+        const currentSummary = getActionStateSummary(saveSnapshot);
+        const contract = config.contracts[saveSnapshot.contractIndex] || config.contracts[0];
+
+        grantRewardToSave(offer.reward, projected);
+        grantFocusShardsToSave(contract.focus || [], Number(offer.focusShards) || 0, projected);
+        applyPermanentBonus(offer.permanent, projected);
+        projected.payment.passUnlocked = true;
+        projected.payment.totalSpent = Number((Number(projected.payment.totalSpent || 0) + Number(offer.price || 0)).toFixed(2));
+        projected.payment.purchaseCount = Number(projected.payment.purchaseCount || 0) + 1;
+
+        const projectedSummary = getActionStateSummary(projected);
+        const currentPower = getCurrentPower(saveSnapshot);
+        const projectedPower = getCurrentPower(projected);
+        const currentGap = Math.max(0, contract.recommended - getEffectiveContractPower(saveSnapshot));
+        const projectedGap = Math.max(0, contract.recommended - getEffectiveContractPower(projected));
+        const currentReachIndex = getHighestClearableContractIndex(saveSnapshot);
+        const projectedReachIndex = getHighestClearableContractIndex(projected);
+
+        return {
+            contractId: contract.id,
+            currentTier: getSponsorTier(saveSnapshot),
+            projectedTier: getSponsorTier(projected),
+            powerGain: Math.max(0, projectedPower.total - currentPower.total),
+            currentGap,
+            projectedGap,
+            currentReachIndex,
+            projectedReachIndex,
+            reachGain: Math.max(0, projectedReachIndex - currentReachIndex),
+            unlocksPass: !saveSnapshot.payment?.passUnlocked,
+            newFuseReady: Math.max(0, projectedSummary.fuseReady - currentSummary.fuseReady),
+            newAwakenReady: Math.max(0, projectedSummary.awakenReady - currentSummary.awakenReady),
+            newSigilUnlockReady: Math.max(0, projectedSummary.sigilUnlockReady - currentSummary.sigilUnlockReady),
+            newSigilUpgradeReady: Math.max(0, projectedSummary.sigilUpgradeReady - currentSummary.sigilUpgradeReady),
+            newWorkshopReady: Math.max(0, projectedSummary.workshopReady - currentSummary.workshopReady),
+            actionUnlocks: Math.max(0, projectedSummary.totalReady - currentSummary.totalReady)
+        };
+    }
+
+    function renderPaymentOfferGrid() {
+        if (!ui.paymentOfferGrid) return;
+        const recommendedOfferId = getRecommendedPaymentOfferId();
+        ui.paymentOfferGrid.innerHTML = config.paymentOffers.map((offer) => {
+            const projected = getProjectedOfferImpact(offer);
+            const summary = projected.actionUnlocks > 0
+                ? text(`预计立刻打开 ${projected.actionUnlocks} 个可操作成长点。`, `Immediately opens ${projected.actionUnlocks} actionable growth steps.`)
+                : projected.currentGap > projected.projectedGap
+                    ? text(`预计缩小静态差距 ${formatCompact(projected.currentGap - projected.projectedGap)}，并立刻补一波资源。`, `Cuts the static gap by ${formatCompact(projected.currentGap - projected.projectedGap)} and instantly refills resources.`)
+                    : text('直接补金币 / 熔尘 / 催化，并抬高常驻赞助属性。', 'Directly refills gold / dust / catalyst and raises permanent sponsor stats.');
+            return `
+                <button
+                    class="gf-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
+                    type="button"
+                    data-select-payment-offer="${offer.id}"
+                >
+                    <span class="pill gf-payment-offer-badge">${text('链上礼包', 'On-Chain Pack')}</span>
+                    ${offer.id === recommendedOfferId ? `<span class="pill gf-payment-offer-badge">${text('当前推荐', 'Recommended')}</span>` : ''}
+                    <div class="gf-payment-offer-price">$${offer.price.toFixed(2)}</div>
+                    <h3>${localize(offer.name)}</h3>
+                    <p>${summary}</p>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
+                        <span class="gf-chip">${text('卡点差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
+                        ${(offer.focusShards || 0) > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(offer.focusShards || 0)}</span>` : ''}
+                        ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
+                        ${renderOfferActionDeltaChips(projected)}
+                    </div>
+                </button>
+            `;
+        }).join('');
+    }
+
+    renderPaymentOffer = function renderPaymentOfferEnhancedV2(offer) {
+        const projected = getProjectedOfferImpact(offer);
+        const summary = projected.actionUnlocks > 0
+            ? text(`预计立刻打开 ${projected.actionUnlocks} 个可操作成长点，适合直接越过当前卡点。`, `Immediately opens ${projected.actionUnlocks} actionable growth steps, making it suitable for breaking the current wall.`)
+            : projected.currentGap > projected.projectedGap
+                ? text(`预计缩小静态差距 ${formatCompact(projected.currentGap - projected.projectedGap)}，并立刻补一波资源。`, `Cuts the static gap by ${formatCompact(projected.currentGap - projected.projectedGap)} and instantly refills resources.`)
+                : text('直接补金币 / 熔尘 / 催化，并抬高常驻赞助属性。', 'Directly refills gold / dust / catalyst and raises permanent sponsor stats.');
+        return `
+            <article class="gf-compact-row ${projected.powerGain > 0 || projected.actionUnlocks > 0 ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(offer.name)}</div>
+                    <div class="gf-compact-sub">${summary}</div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(offer.reward, { limit: 3 })}
+                        <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
+                        ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
+                        ${renderOfferActionDeltaChips(projected)}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>$${offer.price.toFixed(2)}</strong>
+                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${text('链上支付', 'Pay')}</button>
+                </div>
+            </article>
+        `;
+    };
+
+    function getShopPrice(itemId) {
+        const item = config.shopItems.find((entry) => entry.id === itemId);
+        if (!item || item.free) return 0;
+        const repeatFactor = Math.pow(1 + item.repeatGrowth, getShopPurchaseCount(itemId));
+        const progressFactor = 1 + Math.max(0, state.save.contractIndex - 2) * 0.04;
+        return Math.round(item.basePrice * repeatFactor * progressFactor);
+    }
+
+    function getVisibleSigils(limit = 4) {
+        const sorted = config.sigils.slice().sort((a, b) => getSigilSortScore(b.id) - getSigilSortScore(a.id));
+        const visible = [];
+        const seen = new Set();
+
+        function pushMatches(predicate) {
+            sorted.forEach((sigil) => {
+                if (visible.length >= limit || seen.has(sigil.id) || !predicate(sigil)) return;
+                seen.add(sigil.id);
+                visible.push(sigil);
+            });
+        }
+
+        pushMatches((sigil) => state.save.selectedSigils.includes(sigil.id) && getSigilLevel(sigil.id) > 0);
+        pushMatches((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            return level <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigil.id) >= unlockCost.shards;
+        });
+        pushMatches((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const cost = getSigilUpgradeCost(sigil.id);
+            return level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigil.id) >= cost.shards;
+        });
+        pushMatches((sigil) => getCurrentContract().focus.includes(sigil.family));
+        pushMatches(() => true);
+        return visible;
+    }
+
+    function getSigilTabSummary() {
+        const unlockedCount = config.sigils.filter((sigil) => getSigilLevel(sigil.id) > 0).length;
+        const unlockReadyCount = config.sigils.filter((sigil) => {
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            return getSigilLevel(sigil.id) <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigil.id) >= unlockCost.shards;
+        }).length;
+        const upgradeReadyCount = config.sigils.filter((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const cost = getSigilUpgradeCost(sigil.id);
+            return level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigil.id) >= cost.shards;
+        }).length;
+        const focusFamilies = getCurrentContract().focus.slice();
+        const focusCount = config.sigils.filter((sigil) => focusFamilies.includes(sigil.family)).length;
+        return { unlockedCount, unlockReadyCount, upgradeReadyCount, focusCount, focusFamilies };
+    }
+
+    buyShopItem = wrapActionWithMotion(function buyShopItemEnhanced(itemId) {
+        const item = config.shopItems.find((entry) => entry.id === itemId);
+        if (!item || item.free) return;
+        if (item.requiresSponsor && !state.save.payment.passUnlocked) return showToast(text('需要先开通赞助。', 'Sponsor unlock is required first.'));
+        const price = getShopPrice(itemId);
+        if (item.priceType === 'gold') {
+            if (state.save.gold < price) return showToast(text('金币不足。', 'Not enough gold.'));
+            state.save.gold -= price;
+        } else {
+            if (state.save.dust < price) return showToast(text('熔尘不足。', 'Not enough dust.'));
+            state.save.dust -= price;
+        }
+        grantReward(item.reward);
+        grantFocusShards(getCurrentContract().focus, item.id === 'goldCrate' ? 6 : 4);
+        state.save.shopPurchases[itemId] = getShopPurchaseCount(itemId) + 1;
+        state.save.lastResult = {
+            type: 'shop',
+            title: text(`商店到账 · ${localize(item.title)}`, `Shop Delivery · ${localize(item.title)}`),
+            copy: text(`支付 ${item.priceType === 'gold' ? `${formatCompact(price)} 金币` : `${formatCompact(price)} 熔尘`} 后，补给已到账。`, `Paid ${item.priceType === 'gold' ? `${formatCompact(price)} gold` : `${formatCompact(price)} dust`} and received the supply.`),
+            tags: [
+                item.priceType === 'gold' ? `${text('花费', 'Cost')} ${formatCompact(price)}G` : `${text('花费', 'Cost')} ${formatCompact(price)}D`,
+                item.reward?.gold ? `${text('金币', 'Gold')} +${formatCompact(item.reward.gold)}` : '',
+                item.reward?.dust ? `${text('熔尘', 'Dust')} +${formatCompact(item.reward.dust)}` : '',
+                item.reward?.catalyst ? `${text('催化', 'Catalyst')} +${formatCompact(item.reward.catalyst)}` : ''
+            ].slice(0, 3)
+        };
+        showToast(text('补给已到账。', 'Shop reward delivered.'));
+        saveProgress();
+        renderAll();
+    }, 'claim', 420);
+
     function readLang() { try { return localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (error) { return 'zh'; } }
     function localize(value) { if (!value) return ''; if (typeof value === 'string') return value; return value[state.lang] || value.zh || value.en || ''; }
     function text(zh, en) { return state.lang === 'en' ? en : zh; }

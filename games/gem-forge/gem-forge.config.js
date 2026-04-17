@@ -246,27 +246,27 @@
             {
                 id: 'goldCrate',
                 priceType: 'gold',
-                basePrice: 1800,
-                repeatGrowth: 0.24,
+                basePrice: 2100,
+                repeatGrowth: 0.28,
                 title: { zh: '熔尘补给箱', en: 'Dust Crate' },
-                reward: { dust: 62, catalyst: 3 }
+                reward: { dust: 58, catalyst: 2 }
             },
             {
                 id: 'dustCrate',
                 priceType: 'dust',
-                basePrice: 120,
-                repeatGrowth: 0.22,
+                basePrice: 138,
+                repeatGrowth: 0.26,
                 title: { zh: '催化反应箱', en: 'Catalyst Crate' },
-                reward: { gold: 920, catalyst: 9 }
+                reward: { gold: 860, catalyst: 8 }
             },
             {
                 id: 'sponsorVault',
                 priceType: 'gold',
-                basePrice: 5200,
-                repeatGrowth: 0.28,
+                basePrice: 6200,
+                repeatGrowth: 0.34,
                 requiresSponsor: true,
                 title: { zh: '赞助棱镜库', en: 'Sponsor Prism Vault' },
-                reward: { dust: 188, catalyst: 14 }
+                reward: { dust: 176, catalyst: 12 }
             }
         ],
         paymentOffers: [
