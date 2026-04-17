@@ -4879,6 +4879,547 @@
 
     runContract = wrapActionWithMotion(runContract, 'claim', 460);
 
+    function getSigilUnlockCost(sigilId) {
+        const sigil = sigilMap[sigilId];
+        if (!sigil) return { gold: 0, shards: 0 };
+        const economy = config.forgeEconomy || {};
+        return {
+            gold: Math.max(0, Math.round(
+                Number(economy.sigilUnlockGoldBase || 0)
+                + Number(sigil.baseScore || 0) * Number(economy.sigilUnlockGoldPerScore || 0)
+                + Number(sigil.shardUnlock || 0) * Number(economy.sigilUnlockGoldPerShard || 0)
+            )),
+            shards: Math.max(0, Math.round(Number(sigil.shardUnlock || 0)))
+        };
+    }
+
+    function getFuseCost(tier) {
+        const preset = config.forgeEconomy?.fuseCosts?.[tier] || config.forgeEconomy?.fuseCosts?.[String(tier)] || {};
+        return {
+            gold: Math.max(0, Math.round(Number(preset.gold) || 0)),
+            dust: Math.max(0, Math.round(Number(preset.dust) || 0)),
+            catalyst: Math.max(0, Math.round(Number(preset.catalyst) || 0))
+        };
+    }
+
+    function getAwakenCost(tier) {
+        const preset = config.forgeEconomy?.awakenCosts?.[tier] || config.forgeEconomy?.awakenCosts?.[String(tier)] || {};
+        const tierMeta = getTierMeta(tier);
+        return {
+            gold: Math.max(0, Math.round(Number(preset.gold) || 0)),
+            dust: Math.max(0, Math.round(Number(preset.dust) || 0)),
+            catalyst: Math.max(0, Math.round(Number(preset.catalyst) || Number(tierMeta?.awakenCatalyst) || 0))
+        };
+    }
+
+    function canAffordCost(cost, saveSnapshot = state.save) {
+        return (Number(saveSnapshot?.gold) || 0) >= (Number(cost?.gold) || 0)
+            && (Number(saveSnapshot?.dust) || 0) >= (Number(cost?.dust) || 0)
+            && (Number(saveSnapshot?.catalyst) || 0) >= (Number(cost?.catalyst) || 0);
+    }
+
+    function getCostShortage(cost, saveSnapshot = state.save) {
+        return {
+            gold: Math.max(0, (Number(cost?.gold) || 0) - (Number(saveSnapshot?.gold) || 0)),
+            dust: Math.max(0, (Number(cost?.dust) || 0) - (Number(saveSnapshot?.dust) || 0)),
+            catalyst: Math.max(0, (Number(cost?.catalyst) || 0) - (Number(saveSnapshot?.catalyst) || 0))
+        };
+    }
+
+    function formatResourceCost(cost, options = {}) {
+        const parts = [];
+        if (Number(cost?.gold) > 0) parts.push(`${formatCompact(cost.gold)}G`);
+        if (options.dust !== false && Number(cost?.dust) > 0) parts.push(`${formatCompact(cost.dust)}D`);
+        if (options.catalyst !== false && Number(cost?.catalyst) > 0) parts.push(`${formatCompact(cost.catalyst)}C`);
+        return parts.length ? parts.join(' / ') : text('免费', 'Free');
+    }
+
+    function getGemInventoryRows() {
+        const rows = [];
+        config.gemFamilies.forEach((family) => {
+            config.gemTiers.forEach((tierMeta) => {
+                const key = buildGemKey(family.id, tierMeta.tier);
+                const count = getGemCount(family.id, tierMeta.tier);
+                const awakened = getAwakenedCount(key);
+                const fuseCost = getFuseCost(tierMeta.tier);
+                const awakenCost = getAwakenCost(tierMeta.tier);
+                const fuseBaseReady = count >= tierMeta.fuseNeed && tierMeta.tier < 5;
+                const awakenBaseReady = tierMeta.tier >= 3 && count >= 1;
+                const canFuse = fuseBaseReady && canAffordCost(fuseCost);
+                const canAwaken = awakenBaseReady && canAffordCost(awakenCost);
+                if (count > 0 || awakened > 0 || fuseBaseReady || awakenBaseReady) {
+                    rows.push({
+                        key,
+                        familyId: family.id,
+                        tier: tierMeta.tier,
+                        count,
+                        awakened,
+                        score: tierMeta.score,
+                        fuseCost,
+                        awakenCost,
+                        fuseBaseReady,
+                        awakenBaseReady,
+                        canFuse,
+                        canAwaken,
+                        sort: (canFuse ? 10000 : 0)
+                            + (canAwaken ? 5000 : 0)
+                            + (fuseBaseReady ? 1800 : 0)
+                            + (awakenBaseReady ? 1200 : 0)
+                            + awakened * 600
+                            + count * tierMeta.score
+                    });
+                }
+            });
+        });
+        return rows.sort((a, b) => b.sort - a.sort);
+    }
+
+    function renderGemRow(row) {
+        const family = familyMap[row.familyId];
+        const recycleDust = getRecycleDustValue(row.tier, 1);
+        const safeKeep = getSmartRecycleKeepCount(row.familyId, row.tier);
+        const safeOverflow = Number.isFinite(safeKeep) ? Math.max(0, row.count - safeKeep) : 0;
+        return `
+            <div class="gf-list-row">
+                <div class="gf-list-copy">
+                    <div class="gf-gem-badge">
+                        <i class="gf-gem-dot" style="color:${family.accent}; background:${family.accent};"></i>
+                        <div class="gf-list-title">${localize(family.name)} · T${row.tier}</div>
+                    </div>
+                    <div class="gf-list-sub">${text(`库存 ${row.count} · 觉醒 ${row.awakened} · 单颗战力 ${formatCompact(row.score)}`, `Owned ${row.count} · Awakened ${row.awakened} · ${formatCompact(row.score)} power each`)}</div>
+                    ${safeOverflow > 0 ? `<div class="gf-list-sub">${text(`智能回收会保留 ${safeKeep} 颗，本行还可安全回收 ${safeOverflow} 颗。`, `Smart recycle keeps ${safeKeep}. ${safeOverflow} more can be safely recycled here.`)}</div>` : ''}
+                    <div class="gf-chip-row" style="margin-top:10px;">
+                        ${row.fuseBaseReady ? `<span class="gf-chip ${row.canFuse ? 'is-success' : 'is-warning'}">${text('合成成本', 'Fuse Cost')} · ${formatResourceCost(row.fuseCost, { dust: false })}</span>` : ''}
+                        ${row.awakenBaseReady ? `<span class="gf-chip ${row.canAwaken ? 'is-warning' : ''}">${text('觉醒成本', 'Awaken Cost')} · ${formatResourceCost(row.awakenCost)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-row-actions">
+                    <button class="ghost-btn" type="button" data-action="salvageGem" data-value="${row.key}" ${row.count > 0 && recycleDust > 0 ? '' : 'disabled'}>${text(`回收 1 · +${formatCompact(recycleDust)} 尘`, `Recycle 1 · +${formatCompact(recycleDust)} dust`)}</button>
+                    <button class="ghost-btn" type="button" data-action="fuseGem" data-value="${row.key}" ${row.canFuse ? '' : 'disabled'}>${text('3 合 1', 'Fuse 3 → 1')}</button>
+                    <button class="primary-btn" type="button" data-action="awakenGem" data-value="${row.key}" ${row.canAwaken ? '' : 'disabled'}>${text('觉醒', 'Awaken')}</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCompactGemActionRow(row) {
+        const family = familyMap[row.familyId];
+        const recycleDust = getRecycleDustValue(row.tier, 1);
+        return `
+            <article class="gf-compact-row">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">
+                        <i class="gf-gem-dot" style="color:${family.accent}; background:${family.accent};"></i>
+                        ${localize(family.name)} · T${row.tier}
+                    </div>
+                    <div class="gf-compact-sub">${text(`库存 ${row.count} · 觉醒 ${row.awakened}`, `Owned ${row.count} · Awakened ${row.awakened}`)}</div>
+                </div>
+                <div class="gf-compact-side">
+                    <div class="gf-chip-row">
+                        ${row.canFuse ? `<span class="gf-chip is-success">${text('可合成', 'Fuse Ready')}</span>` : ''}
+                        ${row.canAwaken ? `<span class="gf-chip is-warning">${text('可觉醒', 'Awaken Ready')}</span>` : ''}
+                        ${row.fuseBaseReady ? `<span class="gf-chip">${text('合成', 'Fuse')} · ${formatResourceCost(row.fuseCost, { dust: false })}</span>` : ''}
+                        ${row.awakenBaseReady ? `<span class="gf-chip">${text('觉醒', 'Awaken')} · ${formatResourceCost(row.awakenCost)}</span>` : ''}
+                    </div>
+                    <div class="gf-action-row">
+                        <button class="ghost-btn" type="button" data-action="salvageGem" data-value="${row.key}" ${row.count > 0 && recycleDust > 0 ? '' : 'disabled'}>${text(`回收 +${formatCompact(recycleDust)}`, `Recycle +${formatCompact(recycleDust)}`)}</button>
+                        <button class="ghost-btn" type="button" data-action="fuseGem" data-value="${row.key}" ${row.canFuse ? '' : 'disabled'}>${text('合成', 'Fuse')}</button>
+                        <button class="primary-btn" type="button" data-action="awakenGem" data-value="${row.key}" ${row.canAwaken ? '' : 'disabled'}>${text('觉醒', 'Awaken')}</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderSigilCompactRow(sigil) {
+        const level = getSigilLevel(sigil.id);
+        const unlocked = level > 0;
+        const equipped = state.save.selectedSigils.includes(sigil.id);
+        const slotLocked = sigil.slot === 'resonance' && state.save.bestContractIndex < 2;
+        const shardOwned = getSigilShardCount(sigil.id);
+        const unlockCost = getSigilUnlockCost(sigil.id);
+        const upgradeCost = getSigilUpgradeCost(sigil.id);
+        const focus = getCurrentContract().focus.includes(sigil.family);
+        const unlockReady = !unlocked && state.save.gold >= unlockCost.gold && shardOwned >= unlockCost.shards;
+        const upgradeReady = unlocked && level < 8 && state.save.gold >= upgradeCost.gold && shardOwned >= upgradeCost.shards;
+        const primaryLabel = unlocked
+            ? (level >= 8
+                ? text('已满', 'Maxed')
+                : text(`升 ${formatCompact(upgradeCost.gold)}G`, `Up ${formatCompact(upgradeCost.gold)}G`))
+            : text(`解 ${formatCompact(unlockCost.gold)}G`, `Unlock ${formatCompact(unlockCost.gold)}G`);
+        const detail = unlocked
+            ? text(`碎片 ${formatCompact(shardOwned)}/${formatCompact(upgradeCost.shards)} · 金币 ${formatCompact(state.save.gold)}/${formatCompact(upgradeCost.gold)}`, `Shards ${formatCompact(shardOwned)}/${formatCompact(upgradeCost.shards)} · Gold ${formatCompact(state.save.gold)}/${formatCompact(upgradeCost.gold)}`)
+            : text(`碎片 ${formatCompact(shardOwned)}/${formatCompact(unlockCost.shards)} · 金币 ${formatCompact(state.save.gold)}/${formatCompact(unlockCost.gold)} · ${getSlotName(sigil.slot)}`, `Shards ${formatCompact(shardOwned)}/${formatCompact(unlockCost.shards)} · Gold ${formatCompact(state.save.gold)}/${formatCompact(unlockCost.gold)} · ${getSlotName(sigil.slot)}`);
+
+        return `
+            <article class="gf-compact-row ${equipped || focus ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(sigil.name)} · ${localize(familyMap[sigil.family].name)}</div>
+                    <div class="gf-compact-sub">${detail}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip">${getSlotName(sigil.slot)}</span>
+                        <span class="gf-chip">${text('战力', 'Power')} · ${formatCompact(getSigilPower(sigil.id))}</span>
+                        ${focus ? `<span class="gf-chip is-success">${text('本章焦点', 'Focus')}</span>` : ''}
+                        ${equipped ? `<span class="gf-chip is-strong">${text('已装', 'Equipped')}</span>` : ''}
+                        ${slotLocked ? `<span class="gf-chip is-warning">${text('槽位未开', 'Slot Locked')}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${unlocked ? `Lv.${level}` : text('未解', 'Locked')}</strong>
+                    <div class="gf-action-row">
+                        <button class="ghost-btn" type="button" data-action="equipSigil" data-value="${sigil.id}">${equipped ? text('已装', 'Equipped') : text('装备', 'Equip')}</button>
+                        <button class="primary-btn" type="button" data-action="${unlocked ? 'upgradeSigil' : 'unlockSigil'}" data-value="${sigil.id}" ${(unlocked ? !upgradeReady || level >= 8 : !unlockReady) ? 'disabled' : ''}>${primaryLabel}</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderSigilRow(sigil) {
+        const level = getSigilLevel(sigil.id);
+        const unlocked = level > 0;
+        const equipped = state.save.selectedSigils.includes(sigil.id);
+        const slotLocked = sigil.slot === 'resonance' && state.save.bestContractIndex < 2;
+        const shardOwned = getSigilShardCount(sigil.id);
+        const unlockCost = getSigilUnlockCost(sigil.id);
+        const unlockReady = !unlocked && state.save.gold >= unlockCost.gold && shardOwned >= unlockCost.shards;
+        const upgradeCost = getSigilUpgradeCost(sigil.id);
+        const upgradeReady = unlocked && level < 8 && state.save.gold >= upgradeCost.gold && shardOwned >= upgradeCost.shards;
+        const focus = getCurrentContract().focus.includes(sigil.family);
+        return `
+            <article class="gf-list-card gf-sigil-card ${equipped ? 'is-equipped' : ''} ${!unlocked ? 'is-locked' : ''}">
+                <div class="gf-row-head">
+                    <div>
+                        <div class="eyebrow">${getSlotName(sigil.slot)} · ${localize(familyMap[sigil.family].name)}</div>
+                        <div class="gf-card-title">${localize(sigil.name)} · Lv.${level}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(getSigilPower(sigil.id))}</div>
+                </div>
+                <div class="gf-card-copy">${localize(sigil.effect)}</div>
+                <div class="gf-chip-row" style="margin-top:10px;">
+                    <span class="gf-chip">${text('碎片', 'Shards')} · ${formatCompact(shardOwned)}</span>
+                    ${!unlocked ? `<span class="gf-chip ${unlockReady ? 'is-success' : ''}">${text('解锁成本', 'Unlock Cost')} · ${formatCompact(unlockCost.gold)}G / ${formatCompact(unlockCost.shards)}S</span>` : ''}
+                    ${focus ? `<span class="gf-chip is-success">${text('本章焦点', 'Current Focus')}</span>` : ''}
+                    ${equipped ? `<span class="gf-chip is-strong">${text('已装备', 'Equipped')}</span>` : ''}
+                    ${slotLocked ? `<span class="gf-chip is-warning">${text('槽位未开', 'Slot Locked')}</span>` : ''}
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="ghost-btn" type="button" data-action="equipSigil" data-value="${sigil.id}">${equipped ? text('当前已装', 'Equipped') : text('装到槽位', 'Equip')}</button>
+                    <button class="primary-btn" type="button" data-action="${unlocked ? 'upgradeSigil' : 'unlockSigil'}" data-value="${sigil.id}" ${(unlocked ? !upgradeReady || level >= 8 : !unlockReady) ? 'disabled' : ''}>${unlocked
+                        ? (level >= 8 ? text('已满级', 'Maxed') : text(`升级 · ${formatCompact(upgradeCost.gold)}G / ${formatCompact(upgradeCost.shards)} 碎片`, `Upgrade · ${formatCompact(upgradeCost.gold)}G / ${formatCompact(upgradeCost.shards)} shards`))
+                        : text(`解锁 · ${formatCompact(unlockCost.gold)}G / ${formatCompact(unlockCost.shards)} 碎片`, `Unlock · ${formatCompact(unlockCost.gold)}G / ${formatCompact(unlockCost.shards)} shards`)}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    fuseGem = wrapActionWithMotion(function fuseGemRebalanced(key) {
+        const { familyId, tier } = parseGemKey(key);
+        const tierMeta = getTierMeta(tier);
+        const count = getGemCount(familyId, tier);
+        const cost = getFuseCost(tier);
+        if (!familyId || !tierMeta || tier >= 5) return;
+        if (count < tierMeta.fuseNeed) return showToast(text('同阶宝石不足 3 颗。', 'Need 3 gems of the same tier first.'));
+        if (state.save.gold < cost.gold) return showToast(text('金币不足，先补金币再合成。', 'Not enough gold to fuse yet.'));
+        if (state.save.catalyst < cost.catalyst) return showToast(text('催化剂不足，先补催化剂再冲高阶。', 'Not enough catalyst to push this higher-tier fuse.'));
+        state.save.gold -= cost.gold;
+        state.save.catalyst -= cost.catalyst;
+        addGem(familyId, tier, -tierMeta.fuseNeed);
+        addGem(familyId, tier + 1, 1);
+        state.save.stats.fuses += 1;
+        state.save.stats.highestTier = Math.max(state.save.stats.highestTier, tier + 1);
+        state.save.seasonXp += 12 + tier * 4;
+        const familyName = localize(familyMap[familyId].name);
+        state.save.lastResult = {
+            title: text(`合成成功 · ${familyName} T${tier + 1}`, `Fusion Complete · ${familyName} T${tier + 1}`),
+            copy: text(`消耗 3 颗 T${tier}，并支付 ${formatResourceCost(cost, { dust: false })}，合成出 1 颗 T${tier + 1}。现在高阶宝石会开始明显拉升合同战力。`, `Three T${tier} gems plus ${formatResourceCost(cost, { dust: false })} fused into one T${tier + 1}. Higher tiers now start making a visible difference in contract power.`),
+            tags: [familyName, `T${tier} → T${tier + 1}`, text('战力提升', 'Power Up'), `${text('成本', 'Cost')} ${formatResourceCost(cost, { dust: false })}`]
+        };
+        showToast(text(`合成成功，已支付 ${formatResourceCost(cost, { dust: false })}。`, `Fusion complete. Paid ${formatResourceCost(cost, { dust: false })}.`));
+        saveProgress();
+        renderAll();
+    }, 'forge', 420);
+
+    awakenGem = wrapActionWithMotion(function awakenGemRebalanced(key) {
+        const { familyId, tier } = parseGemKey(key);
+        const tierMeta = getTierMeta(tier);
+        const cost = getAwakenCost(tier);
+        if (!familyId || !tierMeta || tier < 3) return showToast(text('至少 T3 才能觉醒。', 'Awakening starts at T3.'));
+        if (getGemCount(familyId, tier) < 1) return showToast(text('缺少可觉醒的本体宝石。', 'Missing the base gem to awaken.'));
+        if (state.save.gold < cost.gold) return showToast(text('金币不足，先补金币再觉醒。', 'Not enough gold to awaken yet.'));
+        if (state.save.dust < cost.dust) return showToast(text('熔尘不足，先补熔尘再觉醒。', 'Not enough dust to awaken yet.'));
+        if (state.save.catalyst < cost.catalyst) return showToast(text('催化剂不足。', 'Not enough catalyst.'));
+        state.save.gold -= cost.gold;
+        state.save.dust -= cost.dust;
+        addGem(familyId, tier, -1);
+        state.save.catalyst -= cost.catalyst;
+        state.save.awakened[key] = (Number(state.save.awakened[key]) || 0) + 1;
+        state.save.stats.awakenings += 1;
+        state.save.seasonXp += 28 + tier * 6;
+        const familyName = localize(familyMap[familyId].name);
+        state.save.lastResult = {
+            title: text(`觉醒成功 · ${familyName} T${tier}`, `Awakened · ${familyName} T${tier}`),
+            copy: text(`消耗 1 颗 T${tier} 本体，并支付 ${formatResourceCost(cost)}，换来永久觉醒战力。`, `Consumed one T${tier} gem and ${formatResourceCost(cost)} for permanent awakened power.`),
+            tags: [familyName, `T${tier}`, text('永久加成', 'Permanent Bonus'), `${text('成本', 'Cost')} ${formatResourceCost(cost)}`]
+        };
+        showToast(text(`觉醒完成，已支付 ${formatResourceCost(cost)}。`, `Awakening complete. Paid ${formatResourceCost(cost)}.`));
+        saveProgress();
+        renderAll();
+    }, 'upgrade', 440);
+
+    unlockSigil = wrapActionWithMotion(function unlockSigilRebalanced(sigilId) {
+        const sigil = sigilMap[sigilId];
+        const cost = getSigilUnlockCost(sigilId);
+        if (!sigil) return;
+        if (getSigilLevel(sigilId) > 0) return showToast(text('该符印已经解锁。', 'This sigil is already unlocked.'));
+        if (state.save.gold < cost.gold) return showToast(text('金币不足，先补金币再解锁。', 'Not enough gold to unlock this sigil.'));
+        if (getSigilShardCount(sigilId) < cost.shards) return showToast(text('符印碎片不足。', 'Not enough sigil shards.'));
+        state.save.gold -= cost.gold;
+        state.save.sigilShards[sigilId] -= cost.shards;
+        state.save.sigilLevels[sigilId] = 1;
+        state.save.lastResult = {
+            type: 'sigil',
+            title: text(`符印解锁 · ${localize(sigil.name)}`, `Sigil Unlocked · ${localize(sigil.name)}`),
+            copy: text(`支付 ${formatCompact(cost.gold)}G 与 ${formatCompact(cost.shards)} 碎片后，该符印已可投入构筑。`, `Paid ${formatCompact(cost.gold)}G and ${formatCompact(cost.shards)} shards to unlock this sigil for your build.`),
+            tags: [localize(familyMap[sigil.family].name), getSlotName(sigil.slot), `${text('成本', 'Cost')} ${formatCompact(cost.gold)}G / ${formatCompact(cost.shards)}S`]
+        };
+        showToast(text(`符印已解锁，已支付 ${formatCompact(cost.gold)}G。`, `Sigil unlocked. Paid ${formatCompact(cost.gold)}G.`));
+        saveProgress();
+        renderAll();
+    }, 'upgrade', 440);
+
+    function getPrioritySigilTarget() {
+        const candidates = config.sigils.map((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const shardOwned = getSigilShardCount(sigil.id);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            const upgradeCost = getSigilUpgradeCost(sigil.id);
+            const cost = level > 0 ? upgradeCost : unlockCost;
+            const focus = getCurrentContract().focus.includes(sigil.family);
+            const unlockReady = level <= 0 && state.save.gold >= unlockCost.gold && shardOwned >= unlockCost.shards;
+            const upgradeReady = level > 0 && level < 8 && state.save.gold >= upgradeCost.gold && shardOwned >= upgradeCost.shards;
+            return {
+                sigil,
+                level,
+                shardOwned,
+                cost,
+                focus,
+                unlockReady,
+                upgradeReady,
+                missingGold: Math.max(0, cost.gold - state.save.gold),
+                missingShards: Math.max(0, cost.shards - shardOwned),
+                score: (focus ? 1000 : 0) + (unlockReady ? 800 : 0) + (upgradeReady ? 700 : 0) + sigil.baseScore - level * 10
+            };
+        }).sort((left, right) => right.score - left.score);
+        return candidates[0] || null;
+    }
+
+    function getGrowthDiagnosis() {
+        const contract = getCurrentContract();
+        const power = getCurrentPower().total;
+        const effectivePower = getEffectiveContractPower();
+        const powerGap = Math.max(0, contract.recommended - effectivePower);
+        const inventoryRows = getGemInventoryRows();
+        const fuseReadyCount = inventoryRows.filter((row) => row.canFuse).length;
+        const awakenReadyCount = inventoryRows.filter((row) => row.canAwaken).length;
+        const fuseCandidates = inventoryRows.filter((row) => row.fuseBaseReady).length;
+        const awakenCandidates = inventoryRows.filter((row) => row.awakenBaseReady).length;
+        const sigilReadyCount = config.sigils.filter((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            const upgradeCost = getSigilUpgradeCost(sigil.id);
+            return (level <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigil.id) >= unlockCost.shards)
+                || (level > 0 && level < 8 && state.save.gold >= upgradeCost.gold && getSigilShardCount(sigil.id) >= upgradeCost.shards);
+        }).length;
+        const workshopReadyCount = config.workshop.filter((item) => canUpgradeWorkshop(item.id)).length;
+        const workshopTarget = getPriorityWorkshopTarget();
+        const sigilTarget = getPrioritySigilTarget();
+        const fuseTarget = inventoryRows.filter((row) => row.fuseBaseReady).sort((a, b) => b.sort - a.sort)[0] || null;
+        const awakenTarget = inventoryRows.filter((row) => row.awakenBaseReady).sort((a, b) => b.sort - a.sort)[0] || null;
+        const economy = config.forgeEconomy || {};
+
+        const targetGoldReserve = Number(economy.goldReserveBase || 600) + state.save.contractIndex * Number(economy.goldReserveStep || 360);
+        const targetDustReserve = Number(economy.dustReserveBase || 70) + state.save.contractIndex * Number(economy.dustReserveStep || 45);
+        const targetCatalystReserve = state.save.contractIndex <= 2
+            ? 6 + state.save.contractIndex * 2
+            : state.save.contractIndex <= 5
+                ? 14 + state.save.contractIndex * 4
+                : 28 + state.save.contractIndex * 6;
+
+        const goldPressure = Math.max(
+            0,
+            targetGoldReserve - state.save.gold,
+            workshopTarget?.missingGold || 0,
+            sigilTarget?.missingGold || 0,
+            fuseTarget ? Math.max(0, fuseTarget.fuseCost.gold - state.save.gold) : 0,
+            awakenTarget ? Math.max(0, awakenTarget.awakenCost.gold - state.save.gold) : 0
+        );
+        const dustPressure = Math.max(
+            0,
+            targetDustReserve - state.save.dust,
+            workshopTarget?.missingDust || 0,
+            awakenTarget ? Math.max(0, awakenTarget.awakenCost.dust - state.save.dust) : 0
+        );
+        const catalystPressure = Math.max(
+            0,
+            targetCatalystReserve - state.save.catalyst,
+            fuseTarget ? Math.max(0, fuseTarget.fuseCost.catalyst - state.save.catalyst) : 0,
+            awakenTarget ? Math.max(0, awakenTarget.awakenCost.catalyst - state.save.catalyst) : 0,
+            awakenCandidates > awakenReadyCount || fuseCandidates > fuseReadyCount ? targetCatalystReserve - state.save.catalyst : 0
+        );
+
+        let pressureId = 'power';
+        let title = text('战力仍有缺口', 'Power Gap Remains');
+        let summary = text('当前最直接的推进问题，仍然是合同有效战力不够。', 'The main issue right now is still not having enough effective contract power.');
+        let freeTab = 'sigils';
+        let freeLabel = text('去补符印', 'Raise Sigils');
+        let freeShort = text('补符印', 'Sigils');
+
+        if (powerGap <= 0) {
+            pressureId = 'push';
+            title = text('已经够线，直接推进', 'Ready to Push');
+            summary = text(`当前已经达到合同 ${contract.id} 推荐线，优先去合同页推进，别让热量和免费补给空转。`, `You already meet the ${contract.id} contract line. Push contracts now so heat and free supplies do not sit idle.`);
+            freeTab = 'contracts';
+            freeLabel = text('去跑合同', 'Run Contract');
+            freeShort = text('推进合同', 'Push');
+        } else if (fuseReadyCount > 0 || awakenReadyCount > 0) {
+            pressureId = 'forge';
+            title = text('现有库存就能补强', 'Actionable Inventory Ready');
+            summary = text(`你手上已经有 ${fuseReadyCount} 条可合成、${awakenReadyCount} 条可觉醒库存，先把现成成长吃掉，通常比直接充值更划算。`, `You already have ${fuseReadyCount} fuse-ready and ${awakenReadyCount} awaken-ready rows. Use this growth first; it is usually more efficient than topping up immediately.`);
+            freeTab = 'forge';
+            freeLabel = text('去熔炉处理', 'Open Forge');
+            freeShort = text('先合成', 'Forge');
+        } else if (sigilReadyCount > 0) {
+            pressureId = 'sigil';
+            title = text('符印可升，优先补主印', 'Sigils Are Ready');
+            summary = text(`当前至少有 ${sigilReadyCount} 个符印已经能解锁或升级，先补本章焦点符印，通常是最快的过线方式。`, `At least ${sigilReadyCount} sigils can already be unlocked or upgraded. Focus sigils are usually the fastest path to clear the current wall.`);
+            freeTab = 'sigils';
+            freeLabel = text('去补符印', 'Raise Sigils');
+            freeShort = text('补符印', 'Sigils');
+        } else if (workshopReadyCount > 0) {
+            pressureId = 'workshop';
+            title = text('工坊可点，先拉效率', 'Workshop Upgrade Ready');
+            summary = text(`当前至少有 ${workshopReadyCount} 个工坊升级已经能点，优先补热量恢复和稀有率，熔炼效率会更平滑。`, `At least ${workshopReadyCount} workshop upgrades are already affordable. Prioritize heat regen and rare rate for smoother forge efficiency.`);
+            freeTab = 'workshop';
+            freeLabel = text('去点工坊', 'Open Workshop');
+            freeShort = text('补工坊', 'Workshop');
+        } else if (catalystPressure >= dustPressure && catalystPressure >= goldPressure && state.save.contractIndex >= 4) {
+            pressureId = 'catalyst';
+            title = text('催化剂开始卡档', 'Catalyst Starts Gating');
+            summary = text(`进入 ${contract.id} 后，催化剂会同时卡住高阶合成与 T3+ 觉醒，当前更像是“材料门槛”而不是纯战力门槛。`, `From ${contract.id} onward, catalyst starts gating both high-tier fusion and T3+ awakening. The wall is now more about materials than pure power.`);
+            freeTab = 'contracts';
+            freeLabel = text('去刷合同回收', 'Farm Contracts');
+            freeShort = text('补催化剂', 'Catalyst');
+        } else if (dustPressure >= goldPressure && dustPressure > 0) {
+            pressureId = 'dust';
+            title = text('熔尘开始吃紧', 'Dust Is Tight');
+            summary = text(`你现在更缺的是中段熔尘，不补的话会拖慢觉醒节奏与后续构筑转化。`, `Dust is the tighter resource right now. Without more of it, awakening tempo and later build conversion both slow down.`);
+            freeTab = 'forge';
+            freeLabel = text('去熔炉刷库存', 'Farm Forge');
+            freeShort = text('补熔尘', 'Dust');
+        } else if (goldPressure > 0) {
+            pressureId = 'gold';
+            title = text('金币开始吃紧', 'Gold Is Tight');
+            summary = text(`当前主要被金币储备卡住：符印、工坊、合成与觉醒都会吃金，但手头金币不够把这条成长链连起来。`, `Gold is the main bottleneck now: sigils, workshop, fusion, and awakening all compete for gold, but your current reserve cannot keep the growth chain connected.`);
+            freeTab = 'contracts';
+            freeLabel = text('去跑合同回金币', 'Farm Gold');
+            freeShort = text('补金币', 'Gold');
+        }
+
+        let recommendedOfferId = 'starter';
+        if (pressureId === 'push') {
+            recommendedOfferId = state.save.payment.passUnlocked ? 'accelerator' : 'starter';
+        } else if (pressureId === 'forge' || pressureId === 'sigil') {
+            recommendedOfferId = state.save.contractIndex <= 2 ? 'starter' : state.save.contractIndex <= 5 ? 'accelerator' : 'rush';
+        } else if (pressureId === 'workshop' || pressureId === 'gold') {
+            recommendedOfferId = state.save.contractIndex <= 1 ? 'starter' : state.save.contractIndex <= 3 ? 'accelerator' : state.save.contractIndex <= 5 ? 'rush' : state.save.contractIndex <= 7 ? 'sovereign' : 'nexus';
+        } else if (pressureId === 'dust') {
+            recommendedOfferId = state.save.contractIndex <= 3 ? 'accelerator' : state.save.contractIndex <= 5 ? 'rush' : state.save.contractIndex <= 7 ? 'sovereign' : 'nexus';
+        } else if (pressureId === 'catalyst') {
+            recommendedOfferId = state.save.contractIndex <= 5 ? 'sovereign' : state.save.contractIndex <= 7 ? 'nexus' : 'throne';
+        } else if (powerGap > 1800) {
+            recommendedOfferId = 'throne';
+        } else if (powerGap > 1100) {
+            recommendedOfferId = 'nexus';
+        } else if (powerGap > 700) {
+            recommendedOfferId = 'sovereign';
+        } else if (powerGap > 360) {
+            recommendedOfferId = 'rush';
+        } else if (powerGap > 160) {
+            recommendedOfferId = 'accelerator';
+        }
+
+        return {
+            pressureId,
+            title,
+            summary,
+            freeTab,
+            freeLabel,
+            freeShort,
+            contractId: contract.id,
+            power,
+            effectivePower,
+            powerGap,
+            goldPressure,
+            dustPressure,
+            catalystPressure,
+            recommendedOfferId
+        };
+    }
+
+    function getNextProgressSuggestion() {
+        const contract = getCurrentContract();
+        const power = getCurrentPower().total;
+        const gap = contract.recommended - power;
+        const inventoryRows = getGemInventoryRows();
+        if (gap <= 0) return text('当前合同已经够线，优先去合同页执行推进，然后回熔炉把可合成的 T2/T3 继续往上抬。', 'You are already on the contract line, so run contracts first and then return to the forge to push fuse-ready T2/T3 gems further upward.');
+        const fuseReady = inventoryRows.filter((row) => row.canFuse).length;
+        if (fuseReady > 0) return text(`当前有 ${fuseReady} 条可合成库存，先把高阶宝石做出来，再决定是否补符印或工坊。`, `You already have ${fuseReady} fuse-ready rows, so forge higher-tier gems first and then decide whether sigils or workshop need more resources.`);
+        const blockedAwaken = inventoryRows.find((row) => row.awakenBaseReady && !row.canAwaken);
+        if (blockedAwaken) {
+            const missing = getCostShortage(blockedAwaken.awakenCost);
+            return text(`你已经有可觉醒本体，但还差 ${formatResourceCost(missing)}；先把这段资源补齐，再回头点觉醒最划算。`, `You already have an awakenable base gem, but still need ${formatResourceCost(missing)}. Refill that gap first for the best next step.`);
+        }
+        const blockedFuse = inventoryRows.find((row) => row.fuseBaseReady && !row.canFuse);
+        if (blockedFuse) {
+            const missing = getCostShortage(blockedFuse.fuseCost);
+            return text(`你已经攒够同阶宝石，但还差 ${formatResourceCost(missing, { dust: false })} 才能合成；先补资源再冲高阶。`, `You already have the gems needed, but still need ${formatResourceCost(missing, { dust: false })} to fuse. Refill that gap before pushing higher tiers.`);
+        }
+        const sigilReady = config.sigils.some((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            const cost = getSigilUpgradeCost(sigil.id);
+            return (level <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigil.id) >= unlockCost.shards)
+                || (level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigil.id) >= cost.shards);
+        });
+        if (sigilReady) return text('符印已经有可升级项，优先补主印和共鸣槽，通常比盲目刷熔炼更快过线。', 'A sigil upgrade is already ready. Push your main and resonance slots first, which is usually faster than blind forging.');
+        if (hasWorkshopRedDot()) return text('工坊已有可点项，优先热量恢复 / 稀有率强化，把熔炼效率拉上来。', 'The workshop already has an upgrade ready. Prioritize heat regen or rare rate to lift forge efficiency.');
+        return text('当前还是资源积累阶段：继续熔炼、做每日免费，并在合同焦点家族上滚库存。', 'You are still in the resource build-up phase: keep forging, claim the daily free box, and stack stock on the current contract focus families.');
+    }
+
+    function hasSigilRedDot() {
+        return config.sigils.some((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            const unlockReady = level <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigil.id) >= unlockCost.shards;
+            const cost = getSigilUpgradeCost(sigil.id);
+            const upgradeReady = level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigil.id) >= cost.shards;
+            return unlockReady || upgradeReady;
+        });
+    }
+
+    function getSigilSortScore(sigilId) {
+        const sigil = sigilMap[sigilId];
+        const level = getSigilLevel(sigilId);
+        const equipped = state.save.selectedSigils.includes(sigilId) ? 1000 : 0;
+        const focus = getCurrentContract().focus.includes(sigil.family) ? 220 : 0;
+        const unlockCost = getSigilUnlockCost(sigilId);
+        const unlockReady = level <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigilId) >= unlockCost.shards ? 420 : 0;
+        const cost = getSigilUpgradeCost(sigilId);
+        const upgradeReady = level > 0 && level < 8 && state.save.gold >= cost.gold && getSigilShardCount(sigilId) >= cost.shards ? 360 : 0;
+        return equipped + focus + unlockReady + upgradeReady + level * 32 + sigil.baseScore;
+    }
+
     function readLang() { try { return localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (error) { return 'zh'; } }
     function localize(value) { if (!value) return ''; if (typeof value === 'string') return value; return value[state.lang] || value.zh || value.en || ''; }
     function text(zh, en) { return state.lang === 'en' ? en : zh; }

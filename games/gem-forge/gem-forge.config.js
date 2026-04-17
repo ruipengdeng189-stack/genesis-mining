@@ -186,6 +186,26 @@
                 tier3: 0.04
             }
         },
+        forgeEconomy: {
+            sigilUnlockGoldBase: 240,
+            sigilUnlockGoldPerScore: 2.4,
+            sigilUnlockGoldPerShard: 14,
+            fuseCosts: {
+                1: { gold: 90, catalyst: 0 },
+                2: { gold: 220, catalyst: 0 },
+                3: { gold: 560, catalyst: 2 },
+                4: { gold: 1480, catalyst: 8 }
+            },
+            awakenCosts: {
+                3: { gold: 360, dust: 26 },
+                4: { gold: 920, dust: 72 },
+                5: { gold: 2380, dust: 180 }
+            },
+            goldReserveBase: 760,
+            goldReserveStep: 420,
+            dustReserveBase: 90,
+            dustReserveStep: 52
+        },
         missions: [
             { id: 'm1', title: { zh: '开炉 10 次', en: 'Forge 10 Times' }, target: 10, reward: { gold: 220, dust: 16 } },
             { id: 'm2', title: { zh: '完成 3 次合成', en: 'Fuse 3 Times' }, target: 3, reward: { gold: 260, dust: 18 } },
