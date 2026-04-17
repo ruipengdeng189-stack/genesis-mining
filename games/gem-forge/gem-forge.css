@@ -24,6 +24,13 @@
     line-height: 1.15;
 }
 
+.gf-card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+}
+
 .gf-panel-copy,
 .gf-card-copy,
 .gf-compact-sub,
@@ -2238,6 +2245,15 @@ body.relic-open {
 
     .gf-mini-slot-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .gf-mini-slot {
+        padding: 8px;
+        gap: 4px;
+    }
+
+    .gf-mini-slot > strong {
+        font-size: 12px;
     }
 
     .gf-payment-card {
