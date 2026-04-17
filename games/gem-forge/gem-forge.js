@@ -5717,6 +5717,325 @@
         renderAll();
     }, 'claim', 420);
 
+    function getForgeTimingBadgeLabel(outcome) {
+        switch (outcome?.id) {
+            case 'perfect': return text('完美窗', 'Perfect');
+            case 'great': return text('甜区', 'Sweet');
+            case 'good': return text('稳定区', 'Stable');
+            case 'rough': return text('擦边', 'Rough');
+            case 'unstable': return text('过热', 'Overheat');
+            default: return text('待开炉', 'Ready');
+        }
+    }
+
+    function getForgeTimingPreviewText(outcome) {
+        if (!outcome || outcome.id === 'idle') {
+            return text('甜区收炉更容易出珍藏，完美区还能把跳阶和双掉一起抬起来。', 'Sweet-zone stops are best for relics, while Perfect also boosts tier jumps and doubles.');
+        }
+        const parts = [];
+        const relicChance = Math.max(0, Number(outcome.relicChance) || 0);
+        const jumpChance = Math.max(0, Number(outcome.jumpChance) || 0);
+        const doubleChance = Math.max(0, Number(outcome.doubleChance) || 0);
+        const dustBonus = Math.max(0, Number(outcome.dustBonus) || 0);
+        const streak = Math.max(0, Number(state.save.forgeCombo) || 0);
+
+        if (relicChance > 0) parts.push(text(`珍藏 +${Math.round(relicChance * 100)}%`, `Relic +${Math.round(relicChance * 100)}%`));
+        if (jumpChance > 0) parts.push(text(`跳阶 +${Math.round(jumpChance * 100)}%`, `Tier Jump +${Math.round(jumpChance * 100)}%`));
+        if (doubleChance > 0) parts.push(text(`双掉 +${Math.round(doubleChance * 100)}%`, `Double +${Math.round(doubleChance * 100)}%`));
+        if (dustBonus > 0) parts.push(text(`熔尘 +${formatCompact(dustBonus)}`, `Dust +${formatCompact(dustBonus)}`));
+        if (streak > 0) parts.push(text(`连击 x${formatCompact(streak)}`, `Streak x${formatCompact(streak)}`));
+        if (!parts.length) parts.push(text(`XP +${formatCompact(outcome.xpBonus || 0)}`, `XP +${formatCompact(outcome.xpBonus || 0)}`));
+        return parts.slice(0, 3).join(' · ');
+    }
+
+    function getForgeTimingLadderLines(outcomeId) {
+        const meta = getForgeTimingMeta(outcomeId);
+        if (!meta) return { lead: '', sub: '' };
+        if (meta.id === 'unstable') {
+            return {
+                lead: text(`熔尘 +${formatCompact(meta.dustBonus)}`, `Dust +${formatCompact(meta.dustBonus)}`),
+                sub: text('练手区', 'Practice')
+            };
+        }
+        if (meta.id === 'rough') {
+            return {
+                lead: text(`熔尘 +${formatCompact(meta.dustBonus)}`, `Dust +${formatCompact(meta.dustBonus)}`),
+                sub: text('会断连', 'Breaks streak')
+            };
+        }
+        return {
+            lead: meta.relicChance > 0
+                ? text(`珍藏 +${Math.round(meta.relicChance * 100)}%`, `Relic +${Math.round(meta.relicChance * 100)}%`)
+                : text(`XP +${formatCompact(meta.xpBonus || 0)}`, `XP +${formatCompact(meta.xpBonus || 0)}`),
+            sub: meta.jumpChance > 0
+                ? text(`跳阶 +${Math.round(meta.jumpChance * 100)}%`, `Tier Jump +${Math.round(meta.jumpChance * 100)}%`)
+                : meta.doubleChance > 0
+                    ? text(`双掉 +${Math.round(meta.doubleChance * 100)}%`, `Double +${Math.round(meta.doubleChance * 100)}%`)
+                    : text(`XP +${formatCompact(meta.xpBonus || 0)}`, `XP +${formatCompact(meta.xpBonus || 0)}`)
+        };
+    }
+
+    function renderForgeTimingLadder(activeOutcomeId = 'idle') {
+        return `
+            <div class="gf-forge-ladder">
+                ${['perfect', 'great', 'good', 'rough', 'unstable'].map((outcomeId) => {
+                    const meta = getForgeTimingMeta(outcomeId);
+                    const lines = getForgeTimingLadderLines(outcomeId);
+                    return `
+                        <div class="gf-forge-ladder-chip is-${outcomeId} ${activeOutcomeId === outcomeId ? 'is-active' : ''}">
+                            <strong>${text(meta.shortZh, meta.shortEn)}</strong>
+                            <span>${lines.lead}</span>
+                            <small>${lines.sub}</small>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    function getForgeStagePrimaryChase(contract = getCurrentContract()) {
+        const views = getRelicChaseViews(contract);
+        return views.find((item) => item.claimable)
+            || views.find((item) => !item.claimed)
+            || views[0]
+            || null;
+    }
+
+    function getForgeStageChaseSummary(view) {
+        if (!view) return text('先开一炉，拿到第一批库存和第一件珍藏，再开始滚动养成。', 'Forge once to get the first stock and first relic, then start the growth loop.');
+        if (view.claimed) return text('这一档追逐已经完成，当前更适合继续冲更高稀有和更高收藏分。', 'This chase tier is done. The next best move is pushing for higher rarity and collector score.');
+        if (view.claimable) return text('这一档已经达标，建议先领掉奖励，再继续冲下一档更高价值目标。', 'This chase tier is ready. Claim it first, then keep pushing the next higher-value target.');
+        const remain = Math.max(0, Number(view.target || 0) - Number(view.progress || 0));
+        if (Number(view.target || 0) <= 3) {
+            return text(`还差 ${formatCompact(remain)} 步，优先盯准甜区和完美区收炉。`, `${formatCompact(remain)} steps left. Prioritize Sweet and Perfect stops.`);
+        }
+        return text(`还差 ${formatCompact(remain)}，继续抬高焦点线的收藏分即可推进。`, `${formatCompact(remain)} more. Keep raising collector score in the focus lines.`);
+    }
+
+    function renderForgeStageChaseCard(contract, chaseView) {
+        if (!chaseView) return '';
+        const action = chaseView.claimable
+            ? { label: text('领取追逐', 'Claim Chase'), action: 'claimRelicChase', value: chaseView.claimKey, cls: 'primary-btn' }
+            : state.forgeTiming.active
+                ? { label: text('立即收炉', 'Stop Now'), action: 'stopForgeTiming', value: '', cls: 'primary-btn' }
+                : { label: text('继续冲珍藏', 'Chase Relics'), action: 'startForgeTiming', value: '', cls: 'ghost-btn' };
+        const rewardChips = renderRewardChips(chaseView.reward, { limit: 2 });
+        const permanentChips = renderPermanentChips(chaseView.permanent, { limit: 1 });
+        return `
+            <article class="gf-forge-focus-card ${chaseView.claimable ? 'is-ready' : ''}">
+                <div class="gf-forge-focus-head">
+                    <span>${text('当前追逐', 'Current Chase')}</span>
+                    <strong>${chaseView.title}</strong>
+                </div>
+                <p class="gf-forge-focus-copy">${getForgeStageChaseSummary(chaseView)}</p>
+                <div class="gf-progress gf-progress--small"><i style="width:${(chaseView.progressRate * 100).toFixed(2)}%;"></i></div>
+                <div class="gf-chip-row" style="margin-top:10px;">
+                    <span class="gf-chip is-strong">${contract.id}</span>
+                    <span class="gf-chip ${chaseView.claimable ? 'is-success' : ''}">${formatCompact(chaseView.progress)}/${formatCompact(chaseView.target)}</span>
+                    ${rewardChips}
+                    ${permanentChips}
+                </div>
+                <div class="gf-action-row gf-forge-mini-actions" style="margin-top:10px;">
+                    <button class="${action.cls}" type="button" data-action="${action.action}" ${action.value ? `data-value="${action.value}"` : ''}>${action.label}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderForgeStageCollectionCard(contract, relicSummary) {
+        const breakdown = getForgeRelicBreakdown();
+        const bestRelic = relicSummary.best;
+        const bestLabel = bestRelic
+            ? `${localize(bestRelic.title)} · ${getForgeRelicRarityLabel(bestRelic.rarity)}`
+            : text('尚未入柜', 'No relic yet');
+        const focusLabel = contract.focus.map((familyId) => localize(familyMap[familyId]?.name)).join(' / ');
+        const nextRelicCopy = relicSummary.pityRemain <= 1
+            ? text('下炉至少出 1 件珍藏', 'Next forge guarantees a relic')
+            : text(`再控 ${formatCompact(relicSummary.pityRemain)} 炉保底珍藏`, `Relic pity in ${formatCompact(relicSummary.pityRemain)}`);
+        return `
+            <article class="gf-forge-focus-card is-secondary">
+                <div class="gf-forge-focus-head">
+                    <span>${text('当前藏柜', 'Current Cabinet')}</span>
+                    <strong>${bestLabel}</strong>
+                </div>
+                ${renderKpiGrid([
+                    { label: text('珍藏数', 'Relics'), value: formatCompact(relicSummary.count) },
+                    { label: text('收藏分', 'Collector'), value: formatCompact(breakdown.collectorScore) },
+                    { label: text('最高单件', 'Top Piece'), value: formatCompact(breakdown.topScore) }
+                ])}
+                <div class="gf-chip-row" style="margin-top:10px;">
+                    <span class="gf-chip">${nextRelicCopy}</span>
+                    <span class="gf-chip">${text('焦点', 'Focus')} · ${focusLabel || text('通用池', 'Mixed Pool')}</span>
+                    <span class="gf-chip ${relicSummary.combo > 0 ? 'is-success' : ''}">${text('连击', 'Streak')} · x${formatCompact(relicSummary.combo)}</span>
+                </div>
+            </article>
+        `;
+    }
+
+    getForgeTimingRestingState = function getForgeTimingRestingStateEnhanced() {
+        const lastOutcome = state.forgeTiming.lastOutcome && state.forgeTiming.lastOutcome !== 'idle'
+            ? getForgeTimingMeta(state.forgeTiming.lastOutcome)
+            : null;
+        return {
+            id: lastOutcome ? lastOutcome.id : 'idle',
+            status: lastOutcome
+                ? text(`上次手感 · ${lastOutcome.shortZh}`, `Last touch · ${lastOutcome.shortEn}`)
+                : text('手动控火', 'Manual Control'),
+            hint: lastOutcome
+                ? text(`保持节奏，再把收炉点压进更中间的甜区，珍藏和跳阶会更稳。`, 'Keep the rhythm and stop closer to the center to stabilize relic and tier-jump odds.')
+                : text('先点开始控火，指针扫过甜区或完美区时再次点击收炉。', 'Tap Start Control, then stop again when the pointer crosses the Sweet or Perfect zone.'),
+            tone: lastOutcome?.tone || 'neutral'
+        };
+    };
+
+    renderForgeStageCard = function renderForgeStageCardEnhancedV3(options = {}) {
+        const contract = options.contract || getCurrentContract();
+        const effectivePower = Number(options.effectivePower || 0);
+        const gap = Math.max(0, contract.recommended - effectivePower);
+        const heatMax = Math.max(1, getHeatMax());
+        const heatPercent = Math.min(100, (state.save.heat / heatMax) * 100);
+        const t3Remain = Math.max(0, config.forgeBalance.pityTier3Need - state.save.pity.t3);
+        const t4Remain = Math.max(0, config.forgeBalance.pityTier4Need - state.save.pity.t4);
+        const slotCards = SLOT_ORDER.map((slotId, index) => {
+            const sigilId = state.save.selectedSigils[index];
+            const sigil = sigilMap[sigilId];
+            const locked = slotId === 'resonance' && state.save.bestContractIndex < 2;
+            const level = sigil ? getSigilLevel(sigil.id) : 0;
+            return { slotId, sigil, locked, level };
+        });
+        const slotPills = slotCards.map((item) => ({
+            label: getSlotName(item.slotId),
+            value: item.locked
+                ? text('未开', 'Locked')
+                : item.sigil && item.level > 0
+                    ? `${localize(item.sigil.name)} Lv.${item.level}`
+                    : text('空位', 'Empty')
+        }));
+        const focusFamilies = contract.focus.map((familyId) => ({
+            family: familyMap[familyId],
+            total: getFamilyGemCount(familyId),
+            awakened: getFamilyAwakenedCount(familyId)
+        }));
+        const focusAwakened = focusFamilies.reduce((sum, item) => sum + item.awakened, 0);
+        const heatEnoughOne = state.save.heat >= SMELT_HEAT_COST;
+        const heatEnoughBatch = state.save.heat >= config.forgeBalance.batchSmeltHeatCost;
+        const timingOutcome = state.forgeTiming.active ? evaluateForgeTiming(state.forgeTiming.pointer) : getForgeTimingRestingState();
+        const timingQualityId = state.forgeTiming.active ? timingOutcome.id : String(state.forgeTiming.lastOutcome || 'idle');
+        const relicSummary = getForgeRelicSummary();
+        const timingNeedleLeft = `${(state.forgeTiming.pointer * 100).toFixed(2)}%`;
+        const focusLabel = contract.focus.map((familyId) => localize(familyMap[familyId]?.name)).join(' / ');
+        const chaseView = getForgeStagePrimaryChase(contract);
+
+        return `
+            <article id="gfForgeStageCard" class="gf-card gf-forge-stage" data-quality="${timingQualityId}">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('熔炉主舞台', 'Forge Stage')}</div>
+                        <div class="gf-card-title">${gap > 0 ? text(`距离 ${contract.id} 还差 ${formatCompact(gap)}`, `${formatCompact(gap)} short of ${contract.id}`) : text(`${contract.id} 已可稳定推进`, `${contract.id} ready`)}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(effectivePower)}</div>
+                </div>
+                ${renderKpiGrid([
+                    { label: gap > 0 ? text('合同缺口', 'Contract Gap') : text('推进状态', 'Push Status'), value: gap > 0 ? formatCompact(gap) : text('可推进', 'Ready') },
+                    { label: text('热量恢复', 'Heat Regen'), value: `${formatCompact(getHeatRegenPerSecond())}/s` },
+                    { label: text('珍藏保底', 'Relic Pity'), value: relicSummary.pityRemain <= 0 ? text('本炉', 'Now') : formatCompact(relicSummary.pityRemain) },
+                    { label: text('焦点觉醒', 'Awakened'), value: formatCompact(focusAwakened) }
+                ])}
+                <div id="gfForgeScene" class="gf-forge-scene gf-forge-scene--solo" data-quality="${timingQualityId}">
+                    <div class="gf-forge-core-wrap">
+                        <div class="gf-forge-core">
+                            <div id="gfForgeCoreBadge" class="gf-forge-core-badge is-${timingQualityId}">${state.forgeTiming.active ? text('控火中', 'Live') : text('待开炉', 'Ready')} · ${getForgeTimingBadgeLabel(timingOutcome)}</div>
+                            <span>${text('炉芯热量', 'Core Heat')}</span>
+                            <strong>${formatCompact(Math.floor(state.save.heat))}</strong>
+                            <small>${heatPercent.toFixed(0)}% · ${text('上限', 'Cap')} ${formatCompact(heatMax)}</small>
+                            <div class="gf-forge-core-sub">${text('焦点线', 'Focus')} · ${focusLabel || text('通用池', 'Mixed Pool')}</div>
+                        </div>
+                        <div class="gf-forge-meter-grid">
+                            <div class="gf-forge-meter">
+                                <span>T3 ${text('保底', 'Pity')}</span>
+                                <strong>${t3Remain}</strong>
+                                <div class="gf-progress gf-progress--small"><i style="width:${Math.min(100, (state.save.pity.t3 / Math.max(1, config.forgeBalance.pityTier3Need)) * 100).toFixed(2)}%;"></i></div>
+                            </div>
+                            <div class="gf-forge-meter">
+                                <span>T4 ${text('保底', 'Pity')}</span>
+                                <strong>${t4Remain}</strong>
+                                <div class="gf-progress gf-progress--small"><i style="width:${Math.min(100, (state.save.pity.t4 / Math.max(1, config.forgeBalance.pityTier4Need)) * 100).toFixed(2)}%;"></i></div>
+                            </div>
+                        </div>
+                        <div class="gf-forge-control">
+                            <div class="gf-forge-control-head">
+                                <span>${state.forgeTiming.active ? text('控火进行中', 'Control Live') : text('手动控火', 'Manual Control')}</span>
+                                <strong id="gfForgeTimingStatus">${timingOutcome.status}</strong>
+                            </div>
+                            <div id="gfForgeTimingPreview" class="gf-forge-timing-preview">${getForgeTimingPreviewText(timingOutcome)}</div>
+                            <button id="gfForgeTimingBar" class="gf-forge-timing-bar ${state.forgeTiming.active ? 'is-active' : ''}" type="button" data-action="${state.forgeTiming.active ? 'stopForgeTiming' : 'startForgeTiming'}" data-quality="${timingQualityId}">
+                                <span class="gf-forge-timing-zone is-good"></span>
+                                <span class="gf-forge-timing-zone is-great"></span>
+                                <span class="gf-forge-timing-zone is-perfect"></span>
+                                <span class="gf-forge-timing-center"></span>
+                                <i id="gfForgeTimingNeedle" class="gf-forge-timing-needle" style="left:${timingNeedleLeft};"></i>
+                                <b id="gfForgeTimingAimTag" class="gf-forge-timing-tag is-${timingQualityId}">${getForgeTimingBadgeLabel(timingOutcome)}</b>
+                            </button>
+                            <div id="gfForgeTimingHint" class="gf-forge-control-copy">${timingOutcome.hint}</div>
+                            ${renderForgeTimingLadder(timingQualityId)}
+                        </div>
+                    </div>
+                    <div class="gf-forge-focus-grid">
+                        ${renderForgeStageChaseCard(contract, chaseView)}
+                        ${renderForgeStageCollectionCard(contract, relicSummary)}
+                    </div>
+                    <div class="gf-action-row">
+                        <button class="primary-btn" type="button" data-action="${state.forgeTiming.active ? 'stopForgeTiming' : 'startForgeTiming'}">${state.forgeTiming.active
+                            ? text('定点收炉', 'Lock Result')
+                            : (heatEnoughOne ? text('开始控火', 'Start Control') : text(`热量不足 · 还差 ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))}`, `Need ${formatCompact(Math.max(0, SMELT_HEAT_COST - state.save.heat))} heat`))}</button>
+                        <button class="ghost-btn" type="button" data-action="smeltOne">${heatEnoughOne ? text('速熔 1 次', 'Quick Smelt') : text('等待热量', 'Wait Heat')}</button>
+                        <button class="ghost-btn" type="button" data-action="smeltBatch">${heatEnoughBatch ? text('批量速熔 x3', 'Batch x3') : text(`批量还差 ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`, `Need ${formatCompact(Math.max(0, config.forgeBalance.batchSmeltHeatCost - state.save.heat))}`)}</button>
+                    </div>
+                    <div class="gf-inline-grid gf-forge-quick-grid">
+                        ${slotPills.map((item) => `
+                            <div class="gf-inline-pill">
+                                <span>${item.label}</span>
+                                <strong>${item.value}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </article>
+        `;
+    };
+
+    syncForgeTimingUi = function syncForgeTimingUiEnhanced() {
+        const bar = document.getElementById('gfForgeTimingBar');
+        const needle = document.getElementById('gfForgeTimingNeedle');
+        const status = document.getElementById('gfForgeTimingStatus');
+        const hint = document.getElementById('gfForgeTimingHint');
+        const preview = document.getElementById('gfForgeTimingPreview');
+        const aimTag = document.getElementById('gfForgeTimingAimTag');
+        const coreBadge = document.getElementById('gfForgeCoreBadge');
+        const scene = document.getElementById('gfForgeScene');
+        const stage = document.getElementById('gfForgeStageCard');
+        const qualityId = state.forgeTiming.active ? evaluateForgeTiming(state.forgeTiming.pointer).id : String(state.forgeTiming.lastOutcome || 'idle');
+        const outcome = state.forgeTiming.active ? evaluateForgeTiming(state.forgeTiming.pointer) : getForgeTimingRestingState();
+
+        [bar, scene, stage].forEach((node) => {
+            if (!node) return;
+            if (node === bar) node.classList.toggle('is-active', !!state.forgeTiming.active);
+            node.dataset.quality = qualityId;
+        });
+        if (needle) needle.style.left = `${(state.forgeTiming.pointer * 100).toFixed(2)}%`;
+        if (status) status.textContent = outcome.status;
+        if (hint) hint.textContent = outcome.hint;
+        if (preview) preview.textContent = getForgeTimingPreviewText(outcome);
+        if (aimTag) {
+            aimTag.textContent = getForgeTimingBadgeLabel(outcome);
+            aimTag.className = `gf-forge-timing-tag is-${qualityId}`;
+        }
+        if (coreBadge) {
+            coreBadge.textContent = `${state.forgeTiming.active ? text('控火中', 'Live') : text('待开炉', 'Ready')} · ${getForgeTimingBadgeLabel(outcome)}`;
+            coreBadge.className = `gf-forge-core-badge is-${qualityId}`;
+        }
+    };
+
     function readLang() { try { return localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (error) { return 'zh'; } }
     function localize(value) { if (!value) return ''; if (typeof value === 'string') return value; return value[state.lang] || value.zh || value.en || ''; }
     function text(zh, en) { return state.lang === 'en' ? en : zh; }
