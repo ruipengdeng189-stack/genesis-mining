@@ -6056,6 +6056,165 @@
         }
     };
 
+    function renderRelicCabinetCompactCard(contract = getCurrentContract()) {
+        const summary = getForgeRelicSummary();
+        const breakdown = getForgeRelicBreakdown();
+        const topRelic = getForgeTopRelics(1)[0] || null;
+        const collectorTier = localize(getForgeCollectorTier(breakdown.collectorScore));
+        const focusFamilies = (contract.focus || []).slice();
+        const focusRelicCount = focusFamilies.reduce((sum, familyId) => sum + Math.max(0, Number(breakdown.byFamily[familyId]) || 0), 0);
+        const mainLine = Object.entries(breakdown.byFamily)
+            .sort((left, right) => right[1] - left[1])[0];
+        const mainLineLabel = mainLine && mainLine[1] > 0
+            ? `${localize(familyMap[mainLine[0]]?.name)} x${mainLine[1]}`
+            : text('尚未成柜', 'No main line yet');
+
+        return `
+            <article class="gf-card gf-relic-cabinet">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('章节藏柜', 'Chapter Cabinet')}</div>
+                        <div class="gf-card-title">${collectorTier}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(breakdown.collectorScore)}</div>
+                </div>
+                ${renderKpiGrid([
+                    { label: text('收藏分', 'Collector'), value: formatCompact(breakdown.collectorScore) },
+                    { label: text('焦点藏品', 'Focus Relics'), value: formatCompact(focusRelicCount) },
+                    { label: text('最高单件', 'Top Piece'), value: formatCompact(breakdown.topScore) },
+                    { label: text('保底', 'Pity'), value: formatCompact(summary.pityRemain) }
+                ])}
+                <div class="gf-chip-row" style="margin-top:12px;">
+                    <span class="gf-chip is-strong">${text('主力线', 'Main Line')} · ${mainLineLabel}</span>
+                    <span class="gf-chip">${text('神话/传说', 'Mythic/Legend')} · ${formatCompact(breakdown.byRarity.mythic)}/${formatCompact(breakdown.byRarity.legend)}</span>
+                </div>
+                <div class="gf-list gf-list--compact" style="margin-top:12px;">
+                    ${topRelic
+                        ? renderRelicCompactRow(topRelic, 0)
+                        : `<div class="gf-empty">${text('当前还没有珍藏，先回熔炉把第一件焦点藏品打出来。', 'No relics yet. Return to Forge and drop the first focus relic.')}</div>`}
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="primary-btn" type="button" data-action="openTab" data-value="forge">${text('回熔炉冲藏品', 'Back to Forge')}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="shop">${text('看赞助增益', 'Sponsor Boost')}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    function renderRelicChaseCompactCard(contract = getCurrentContract()) {
+        const views = getRelicChaseViews(contract);
+        const claimableCount = views.filter((item) => item.claimable).length;
+        const claimedCount = views.filter((item) => item.claimed).length;
+        const visibleViews = [...views.filter((item) => item.claimable), ...views.filter((item) => !item.claimed && !item.claimable)]
+            .slice(0, 2);
+        const primaryView = visibleViews[0] || views[0] || null;
+        const action = primaryView
+            ? (primaryView.claimable
+                ? { label: text('领取追逐', 'Claim Chase'), action: 'claimRelicChase', value: primaryView.claimKey, cls: 'primary-btn' }
+                : { label: text('继续冲目标', 'Keep Pushing'), action: 'openTab', value: 'forge', cls: 'primary-btn' })
+            : { label: text('去熔炉开炉', 'Go Forge'), action: 'openTab', value: 'forge', cls: 'primary-btn' };
+
+        return `
+            <article class="gf-card gf-relic-chase-card">
+                <div class="gf-card-head">
+                    <div>
+                        <div class="eyebrow">${text('章节追逐', 'Chapter Chase')}</div>
+                        <div class="gf-card-title">${primaryView ? primaryView.title : text('暂无追逐', 'No Chase Yet')}</div>
+                    </div>
+                    <div class="gf-card-number">${formatCompact(claimedCount)}/${formatCompact(views.length || 0)}</div>
+                </div>
+                ${renderKpiGrid([
+                    { label: text('当前合同', 'Contract'), value: contract.id },
+                    { label: text('已完成', 'Done'), value: formatCompact(claimedCount) },
+                    { label: text('可领取', 'Ready'), value: formatCompact(claimableCount) },
+                    { label: text('焦点线', 'Focus'), value: contract.focus.map((familyId) => localize(familyMap[familyId].name)).join('/') || '-' }
+                ])}
+                <div class="gf-list gf-list--compact" style="margin-top:12px;">
+                    ${visibleViews.length
+                        ? visibleViews.map(renderRelicChaseRow).join('')
+                        : `<div class="gf-empty">${text('这一章的追逐还没开启，先推进当前合同并回熔炉打第一轮。', 'This chapter chase is not active yet. Push the current contract and start forging first.')}</div>`}
+                </div>
+                <div class="gf-action-row" style="margin-top:12px;">
+                    <button class="${action.cls}" type="button" data-action="${action.action}" data-value="${action.value}">${action.label}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="forge">${text('回熔炉', 'Open Forge')}</button>
+                </div>
+            </article>
+        `;
+    }
+
+    renderContractsTab = function renderContractsTabEnhancedV2() {
+        const currentPower = getCurrentPower();
+        const passives = getSigilPassives();
+        const effectivePower = currentPower.total + passives.contractStability;
+        const lastResult = state.save.lastResult;
+        const diagnosis = getGrowthDiagnosis();
+        const compactContracts = getVisibleContractViews(3);
+        const currentContract = getCurrentContract();
+        const nextPreview = config.contracts[Math.min(config.contracts.length - 1, state.save.bestContractIndex + 1)] || currentContract;
+        const hiddenCount = Math.max(0, compactContracts.totalRelevant - compactContracts.visible.length);
+
+        ui.panelContent.innerHTML = `
+            ${renderPanelHead(
+                text('合同推进', 'Contracts'),
+                '',
+                `<div class="gf-chip">${text('最高推进', 'Best')} · ${config.contracts[state.save.bestContractIndex].id}</div>`
+            )}
+            <div class="gf-card-grid">
+                <article class="gf-card ${Math.max(0, currentContract.recommended - effectivePower) <= 0 ? 'gf-shop-card is-highlight' : ''}">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('当前目标', 'Current Goal')}</div>
+                            <div class="gf-card-title">${currentContract.id} · ${localize(currentContract.name)}</div>
+                        </div>
+                        <div class="gf-card-number">${formatCompact(effectivePower)}</div>
+                    </div>
+                    ${renderKpiGrid([
+                        { label: text('基础战力', 'Base'), value: formatCompact(currentPower.total) },
+                        { label: text('稳定补正', 'Stability'), value: `+${formatCompact(passives.contractStability)}` },
+                        { label: text('推荐线', 'Recommended'), value: formatCompact(currentContract.recommended) },
+                        { label: text('缺口', 'Gap'), value: formatCompact(Math.max(0, currentContract.recommended - effectivePower)) }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        ${currentContract.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
+                        <span class="gf-chip ${Math.max(0, currentContract.recommended - effectivePower) > 0 ? 'is-warning' : 'is-success'}">${Math.max(0, currentContract.recommended - effectivePower) > 0 ? text('仍需补强', 'Need More Power') : text('已可推进', 'Ready')}</span>
+                    </div>
+                    <div class="gf-action-row" style="margin-top:12px;">
+                        <button class="primary-btn" type="button" data-action="runContract" data-value="${state.save.contractIndex}">${text('执行当前合同', 'Run Contract')}</button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="${diagnosis.freeTab}">${diagnosis.freeLabel}</button>
+                    </div>
+                </article>
+                <article class="gf-card">
+                    <div class="gf-card-head">
+                        <div>
+                            <div class="eyebrow">${text('路线快照', 'Route Snapshot')}</div>
+                            <div class="gf-card-title">${currentContract.id} → ${nextPreview.id}</div>
+                        </div>
+                        <div class="gf-card-number">${diagnosis.freeShort}</div>
+                    </div>
+                    ${renderKpiGrid([
+                        { label: text('当前档', 'Current'), value: currentContract.id },
+                        { label: text('下一档', 'Next'), value: nextPreview.id },
+                        { label: text('本档金币', 'Gold'), value: formatCompact(getContractPreviewReward(currentContract).gold) },
+                        { label: text('建议', 'Next Step'), value: diagnosis.freeShort }
+                    ])}
+                    <div class="gf-chip-row" style="margin-top:12px;">
+                        <span class="gf-chip is-strong">${diagnosis.title}</span>
+                        ${nextPreview.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
+                    </div>
+                </article>
+            </div>
+            ${lastResult?.type === 'contract' ? renderContractSettlementCard(lastResult, { context: 'contracts', compact: true }) : ''}
+            <div class="gf-card-grid">
+                ${renderRelicCabinetCompactCard(currentContract)}
+                ${renderRelicChaseCompactCard(currentContract)}
+            </div>
+            <div class="gf-list gf-list--compact">
+                ${compactContracts.visible.map(renderContractCompactRow).join('')}
+            </div>
+            ${hiddenCount > 0 ? `<div class="gf-empty">${text(`其余 ${hiddenCount} 档合同已折叠，只保留当前最相关的几档。`, `${hiddenCount} more contracts are collapsed so only the most relevant stages stay visible.`)}</div>` : ''}
+        `;
+    };
+
     function readLang() { try { return localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (error) { return 'zh'; } }
     function localize(value) { if (!value) return ''; if (typeof value === 'string') return value; return value[state.lang] || value.zh || value.en || ''; }
     function text(zh, en) { return state.lang === 'en' ? en : zh; }
