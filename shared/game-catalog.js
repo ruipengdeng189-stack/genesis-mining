@@ -318,12 +318,12 @@
                             "en":  "Great for loadouts, affixes, part upgrades, rare drops, and assembly-driven monetization."
                         },
         "icon":  "DS",
-        "href":  "/games/coming-soon/?id=drone-squad",
+        "href":  "/games/drone-squad/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u5df2\u4e0a\u7ebf",
+                      "en":  "Live"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
                       "zh":  "\u65e0\u4eba\u673a\u7f16\u961f",
                       "en":  "Drone Squad"
