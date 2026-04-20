@@ -65,12 +65,16 @@
         state.tab = tabMap[state.save.tab] ? state.save.tab : 'sortie';
         cacheUi();
         bindEvents();
+        const grantedDailyRevive = applyDailyReviveGrant({ silent: true });
         restoreStoredPaymentOrder();
         if (!paymentCountdownTimer) {
             paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
         }
         flushPendingPaymentClaims().catch(() => {});
         renderAll();
+        if (grantedDailyRevive) {
+            showToast(text(`Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`, `Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`), 'success');
+        }
     }
 
     function cacheUi() {
@@ -423,6 +427,9 @@
                     ${renderStageGuideBox(text('Extra Cost', 'Extra Cost'), String(getSortieCost(chapter)))}
                     ${renderStageGuideBox(text('Boss Spawn', 'Boss Spawn'), `${config.battle.bossSpawnSecond}s`)}
                 </div>
+                <div class="ds-inline-note" style="margin-top:10px;">${escapeHtml(isChapterFirstClearPending(chapter)
+                    ? `${text('First Clear Pack', 'First Clear Pack')} · ${getRewardText(getFirstClearReward(chapter))}`
+                    : text('First clear reward already secured on this stage.', 'First clear reward already secured on this stage.'))}</div>
 
                 <div class="ds-action-row" style="margin-top: 10px;">
                     <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('Cast Skill', 'Cast Skill'))}</button>
@@ -523,6 +530,7 @@
                     <strong class="ds-stat-value">+${escapeHtml(String(result.seasonXp || 0))}</strong>
                 </div>
             </div>
+            ${result.firstClear ? `<div class="ds-inline-note">${escapeHtml(`${text('首通奖励', 'First Clear Pack')} · ${getRewardText(result.firstClear)}`)}</div>` : ''}
         `;
     }
 
@@ -746,15 +754,17 @@
 
     function renderBlueprintsTab() {
         return `
+            ${renderBlueprintPlanCard()}
+
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
                         <h3>${escapeHtml(text('永久蓝图', 'Permanent Blueprints'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('研究负责永久成长，制造负责当前机库的战斗风格。', 'Research handles permanent growth while crafting shapes your current combat build.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('研究是永久战力成长，现在同时消耗核芯与合金；制造则用来定义当前出击的模组风格。', 'Research is permanent power growth and now consumes both core chips and alloy, while crafting shapes the current sortie build.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag">${escapeHtml(text('核芯', 'Core Chips'))}</span>
-                        <strong>${escapeHtml(String(state.save.coreChips))}</strong>
+                        <span class="ds-tag">${escapeHtml(text('核芯 / 合金', 'Chips / Alloy'))}</span>
+                        <strong>${escapeHtml(`${state.save.coreChips} / ${state.save.alloy}`)}</strong>
                     </div>
                 </div>
                 <div class="ds-unit-grid">
@@ -816,6 +826,7 @@
         const level = getResearchLevel(research.id);
         const maxed = level >= research.maxLevel;
         const cost = getResearchCost(research.id);
+        const affordable = canUpgradeResearch(research.id);
         return `
             <article class="ds-unit-card">
                 <div class="ds-card-head">
@@ -832,14 +843,119 @@
                     </div>
                     <div class="ds-stat-box">
                         <span class="ds-stat-label">${escapeHtml(text('下次费用', 'Next Cost'))}</span>
-                        <strong class="ds-stat-value">${escapeHtml(maxed ? text('已满', 'Max') : `${cost}`)}</strong>
+                        <strong class="ds-stat-value">${escapeHtml(maxed ? text('已满', 'Max') : formatResearchCost(cost))}</strong>
                     </div>
                 </div>
+                <div class="ds-inline-note">${escapeHtml(getResearchRoleText(research.id))}</div>
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${research.id}" ${!maxed && state.save.coreChips >= cost ? '' : 'disabled'}>${escapeHtml(maxed ? text('已满级', 'Maxed') : `${text('升级研究', 'Upgrade')} · ${cost}`)}</button>
+                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${research.id}" ${affordable ? '' : 'disabled'}>${escapeHtml(maxed ? text('已满级', 'Maxed') : `${text('升级研究', 'Upgrade')} · ${formatResearchCost(cost, true)}`)}</button>
                 </div>
             </article>
         `;
+    }
+
+    function getChapterBuildPlan(chapter) {
+        const plans = {
+            '1-1': { primaryResearch: 'weaponSync', primaryTarget: 1, secondaryResearch: 'shieldVolume', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-1 先学拖动走位，研究不用投入太多，主机等级是最便宜的突破点。', 'For 1-1, learn the dodge rhythm first. Don’t overinvest in research yet; chassis levels are the cheapest early break point.') },
+            '1-2': { primaryResearch: 'weaponSync', primaryTarget: 2, secondaryResearch: 'magnetField', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-2 开始查伤害，主机等级 + 武器同步是最直接的推进速度。', '1-2 starts checking damage. Chassis levels plus Weapon Sync are the cleanest way to speed up pushes.') },
+            '1-3': { primaryResearch: 'weaponSync', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 1, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('1-3 是第一个精英墙，先把伤害和穿透补起来，再进入第 2 章。', '1-3 is the first elite wall. Add damage and pierce first before moving into Chapter 2.') },
+            '2-1': { primaryResearch: 'bountyProtocol', primaryTarget: 2, secondaryResearch: 'shieldVolume', secondaryTarget: 2, wingmanId: 'magnetWing', moduleId: 'aegisShell', note: text('2-1 开始查合金缺口，先开赏金协议，让后续升级和制造都更好起跑。', '2-1 starts the alloy gap. Open Bounty Protocol early so later upgrades and crafting scale better.') },
+            '2-2': { primaryResearch: 'shieldVolume', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 2, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('2-2 是护盾墙，先稳生存；如果还缺战力，就去升主机星级。', '2-2 is a shield wall. Stabilize survival first; if power is still short, star up the chassis.') },
+            '2-3': { primaryResearch: 'weaponSync', primaryTarget: 4, secondaryResearch: 'bountyProtocol', secondaryTarget: 3, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('2-3 开始需要更稳定的穿透和刷怪速度，稀有武器模组的价值开始明显。', '2-3 wants steadier pierce and faster elite clears, and rare weapon modules start to matter a lot.') },
+            '3-1': { primaryResearch: 'energyLoop', primaryTarget: 3, secondaryResearch: 'weaponSync', secondaryTarget: 5, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('3-1 开始重点查 Boss 爆发，Boss 模组和爆发型研究加成最明显。', '3-1 starts checking boss burst. Boss modules and burst-oriented research are the biggest jumps here.') },
+            '3-2': { primaryResearch: 'shieldVolume', primaryTarget: 5, secondaryResearch: 'bountyProtocol', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('3-2 是续航墙，护盾、合金收益和星级养成会同时决定你能不能扛住长时间战斗。', '3-2 is a sustain wall. Shield, alloy income, and star growth together decide if you can last through long fights.') },
+            '3-3': { primaryResearch: 'weaponSync', primaryTarget: 6, secondaryResearch: 'shieldVolume', secondaryTarget: 6, wingmanId: 'interceptorWing', moduleId: 'hunterNode', note: text('3-3 开始同时查爆发和生存，史诗模组在这个阶段会有非常明显的体感。', '3-3 checks burst and survival together, and epic modules start giving very noticeable returns.') },
+            '4-1': { primaryResearch: 'shieldVolume', primaryTarget: 7, secondaryResearch: 'energyLoop', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('4-1 是后期生存检查点，合金可以先投到星级、模组和护盾研究中。', '4-1 is a late-game survival check. Alloy should first flow into stars, modules, and shield research.') },
+            '4-2': { primaryResearch: 'weaponSync', primaryTarget: 8, secondaryResearch: 'magnetField', secondaryTarget: 4, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('4-2 精英非常密，穿透、收取节奏和稀有模组是打平所需要的三根支点。', '4-2 packs elites tightly. Pierce, pickup tempo, and rare modules are the three levers that smooth it out.') },
+            '4-3': { primaryResearch: 'weaponSync', primaryTarget: 9, secondaryResearch: 'shieldVolume', secondaryTarget: 8, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('4-3 是当前终局 Boss 墙，高星主机、Boss 增伤和史诗模组是最清晰的突破线。', '4-3 is the current endgame boss wall. High-star chassis, boss damage, and epic modules are the clearest breakthrough line.') }
+        };
+        return plans[chapter?.id] || plans['1-1'];
+    }
+
+    function renderBlueprintPlanCard() {
+        const chapter = getSelectedChapter();
+        const plan = getChapterBuildPlan(chapter);
+        const power = getCurrentPower();
+        const gap = Math.max(0, chapter.recommended - power);
+        const primaryResearch = researchMap[plan.primaryResearch] || config.research[0];
+        const secondaryResearch = researchMap[plan.secondaryResearch] || config.research[1] || primaryResearch;
+        const wing = wingmanMap[plan.wingmanId];
+        const module = moduleMap[plan.moduleId];
+        const firstClearReward = getFirstClearReward(chapter);
+
+        return `
+            <section class="ds-card">
+                <div class="ds-panel-head">
+                    <div>
+                        <h3>${escapeHtml(text('养成路线', 'Growth Route'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('研究的作用会直接反馈到出击界面：攻击、护盾、技能、收取范围和农资效率都会变强。', 'Research feeds directly back into the sortie screen: attack, shield, skill charge, pickup radius, and farming efficiency all improve here.'))}</div>
+                    </div>
+                    <div class="ds-head-kpi">
+                        <span class="ds-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('当前卡点', 'Current Wall'))}</span>
+                        <strong>${escapeHtml(gap > 0 ? `-${gap}` : text('可推进', 'Ready'))}</strong>
+                    </div>
+                </div>
+                <div class="ds-stat-grid">
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('压力', 'Pressure'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(localize(chapter.pressure || chapter.name))}</strong>
+                    </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('主要研究', 'Primary Research'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(`${localize(primaryResearch.name)} ${getResearchLevel(primaryResearch.id)}/${plan.primaryTarget}`)}</strong>
+                    </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('补充研究', 'Backup Research'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(`${localize(secondaryResearch.name)} ${getResearchLevel(secondaryResearch.id)}/${plan.secondaryTarget}`)}</strong>
+                    </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('僚机', 'Wing'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(wing ? localize(wing.name) : '--')}</strong>
+                    </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('模组', 'Module'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(module ? localize(module.name) : '--')}</strong>
+                    </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('战力', 'Power'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(`${power}/${chapter.recommended}`)}</strong>
+                    </div>
+                </div>
+                <div class="ds-inline-note">${escapeHtml(plan.note)}</div>
+                <div class="ds-inline-note">${escapeHtml(`${text('首通奖励', 'First Clear Pack')} · ${getRewardText(firstClearReward)}`)}</div>
+            </section>
+        `;
+    }
+
+    function isChapterFirstClearPending(chapter) {
+        return !!chapter && !state.save.clearedChapters.includes(chapter.id);
+    }
+
+    function getFirstClearReward(chapter) {
+        if (!chapter) return {};
+        const stageNumber = Math.max(1, Number(String(chapter.id || '').split('-')[1]) || 1);
+        const chapterNumber = Math.max(1, Number(chapter.chapter) || 1);
+        const reward = {
+            credits: Math.round((chapter.reward.credits * 0.72) + (chapterNumber * 110) + (stageNumber * 60)),
+            alloy: Math.max(6, Math.round((chapter.reward.alloy * 0.78) + (chapterNumber * 3) + stageNumber)),
+            seasonXp: Math.round((chapter.reward.seasonXp * 0.85) + (chapterNumber * 8))
+        };
+
+        if (chapterNumber >= 2) {
+            reward.coreChips = Math.max(1, Math.round((chapter.reward.coreChips || 0) + ((chapterNumber - 1) * 0.8) + (stageNumber === 3 ? 1 : 0)));
+        } else if (stageNumber === 3) {
+            reward.coreChips = 1;
+        }
+
+        if (stageNumber === 3 && chapterNumber >= 2) {
+            reward.reviveChips = Math.max(1, chapterNumber - 1);
+        }
+
+        if (chapterNumber >= 4 && stageNumber === 3) {
+            reward.epicModuleCrates = 1;
+        }
+
+        return reward;
     }
 
     function renderModuleInventoryCard(module) {
@@ -2199,7 +2315,8 @@
             credits: reward.credits,
             alloy: reward.alloy,
             coreChips: reward.coreChips,
-            seasonXp: reward.seasonXp
+            seasonXp: reward.seasonXp,
+            firstClear: reward.firstClear || null
         };
         saveProgress();
         drawBattleCanvas();
@@ -2212,24 +2329,40 @@
         const creditMultiplier = getCreditRewardMultiplier();
         const alloyMultiplier = getAlloyRewardMultiplier();
         const sponsorTier = getSponsorTier();
-        const chapterIndex = getChapterIndex(chapter.id);
-        const clearBonus = win && !state.save.clearedChapters.includes(chapter.id) ? 1 : 0;
+        const firstClear = win && isChapterFirstClearPending(chapter) ? getFirstClearReward(chapter) : null;
 
-        const credits = Math.floor(((chapter.reward.credits * (win ? 1 : 0.58)) + state.battle.collectedCredits + (clearBonus ? 120 + (chapterIndex * 80) : 0)) * creditMultiplier);
-        const alloy = Math.floor(((chapter.reward.alloy * (win ? 1 : 0.62)) + state.battle.collectedAlloy + (clearBonus ? 4 + chapter.chapter : 0)) * alloyMultiplier);
-        const coreChips = win ? chapter.reward.coreChips + Math.floor(chapter.reward.coreChips * sponsorTier.bossChipBonus) : 0;
-        const seasonXp = Math.floor(chapter.reward.seasonXp * (win ? 1 : 0.55));
+        let credits = Math.floor(((chapter.reward.credits * (win ? 1 : 0.58)) + state.battle.collectedCredits) * creditMultiplier);
+        let alloy = Math.floor(((chapter.reward.alloy * (win ? 1 : 0.62)) + state.battle.collectedAlloy) * alloyMultiplier);
+        let coreChips = win ? chapter.reward.coreChips + Math.floor(chapter.reward.coreChips * sponsorTier.bossChipBonus) : 0;
+        let seasonXp = Math.floor(chapter.reward.seasonXp * (win ? 1 : 0.55));
+        let reviveChips = 0;
+        let epicModuleCrates = 0;
+        let legendModuleCrates = 0;
         const shardReward = {};
         shardReward[state.save.selectedChassisId] = (win ? 6 : 2);
         state.save.selectedWingmen.filter(Boolean).forEach((wingId) => {
             shardReward[wingId] = (shardReward[wingId] || 0) + (win ? 4 : 1);
         });
 
+        if (firstClear) {
+            credits += Number(firstClear.credits || 0);
+            alloy += Number(firstClear.alloy || 0);
+            coreChips += Number(firstClear.coreChips || 0);
+            seasonXp += Number(firstClear.seasonXp || 0);
+            reviveChips += Number(firstClear.reviveChips || 0);
+            epicModuleCrates += Number(firstClear.epicModuleCrates || 0);
+            legendModuleCrates += Number(firstClear.legendModuleCrates || 0);
+        }
+
         state.save.credits += credits;
         state.save.alloy += alloy;
         state.save.coreChips += coreChips;
         state.save.seasonXp += seasonXp;
+        state.save.reviveChips += reviveChips;
         Object.entries(shardReward).forEach(([unitId, amount]) => addShards(unitId, amount));
+        if (epicModuleCrates || legendModuleCrates) {
+            grantRewardModuleCrates({ epicModuleCrates, legendModuleCrates });
+        }
 
         if (win) {
             state.save.stats.wins += 1;
@@ -2248,6 +2381,10 @@
             alloy,
             coreChips,
             seasonXp,
+            reviveChips,
+            epicModuleCrates,
+            legendModuleCrates,
+            firstClear,
             shards: shardReward
         };
     }
@@ -2529,6 +2666,7 @@
                         </div>
                     </div>
                     <div class="ds-inline-note">${escapeHtml(getShardSummaryText(reward.shards))}</div>
+                    ${reward.firstClear ? `<div class="ds-inline-note">${escapeHtml(`${text('首通奖励', 'First Clear Pack')} · ${getRewardText(reward.firstClear)}`)}</div>` : ''}
                     <div class="ds-stage-overlay-actions">
                         <button class="ghost-btn" type="button" data-action="closeBattleResult">${escapeHtml(text('整理机库', 'Back to Hangar'))}</button>
                         ${state.battle.result.win && nextChapter ? `<button class="primary-btn" type="button" data-action="closeBattleResult" data-value="${nextChapter}">${escapeHtml(text('推进下一章', 'Next Chapter'))}</button>` : `<button class="primary-btn" type="button" data-action="closeBattleResult">${escapeHtml(text('继续出击', 'Continue'))}</button>`}
@@ -2636,11 +2774,12 @@
         if (!research) return;
         const level = getResearchLevel(researchId);
         const cost = getResearchCost(researchId);
-        if (level >= research.maxLevel || state.save.coreChips < cost) {
-            showToast(text('核芯不足或已满级。', 'Not enough chips or already maxed.'), 'warning');
+        if (level >= research.maxLevel || !canUpgradeResearch(researchId)) {
+            showToast(text('核芯 / 合金不足或已满级。', 'Not enough chips or alloy, or already maxed.'), 'warning');
             return;
         }
-        state.save.coreChips -= cost;
+        state.save.coreChips -= cost.coreChips;
+        state.save.alloy -= cost.alloy;
         state.save.researchLevels[researchId] = level + 1;
         saveProgress();
         showToast(text('研究升级完成。', 'Research upgraded.'), 'success');
@@ -3050,6 +3189,7 @@
         if (state.save.freeSortieDayKey !== key) {
             state.save.freeSortieDayKey = key;
             state.save.freeSortiesUsedToday = 0;
+            applyDailyReviveGrant({ silent: true });
         }
     }
 
@@ -3079,6 +3219,20 @@
 
     function getAlloyRewardMultiplier() {
         return 1 + (getResearchLevel('bountyProtocol') * 0.03) + Number(getSponsorTier().alloyYieldBonus || 0) + getPermanentBonusValue('alloyYield');
+    }
+
+    function applyDailyReviveGrant({ silent = false } = {}) {
+        const grant = Math.max(0, Number(config.battle.reviveChipDailyGrant || 0));
+        if (!grant) return 0;
+        const key = getDayKey(Date.now());
+        if (state.save.reviveGrantDayKey === key) return 0;
+        state.save.reviveGrantDayKey = key;
+        state.save.reviveChips += grant;
+        saveProgress();
+        if (!silent) {
+            showToast(text(`每日复活芯片 +${grant}`, `Daily revive chip +${grant}`), 'success');
+        }
+        return grant;
     }
 
     function applyPermanentBonus(permanent = {}) {
@@ -3255,10 +3409,43 @@
         return clampNumber(state.save.researchLevels[researchId], 0, 0, 999);
     }
 
+    function getResearchAlloyBase(researchId) {
+        if (researchId === 'weaponSync') return 24;
+        if (researchId === 'shieldVolume') return 24;
+        if (researchId === 'energyLoop') return 30;
+        if (researchId === 'magnetField') return 18;
+        if (researchId === 'bountyProtocol') return 28;
+        return 24;
+    }
+
     function getResearchCost(researchId) {
         const research = researchMap[researchId];
         const level = getResearchLevel(researchId);
-        return Math.round(research.baseCost * Math.pow(research.growth, level));
+        return {
+            coreChips: Math.round(research.baseCost * Math.pow(research.growth, level)),
+            alloy: Math.round(getResearchAlloyBase(researchId) * Math.pow(1.34, level))
+        };
+    }
+
+    function formatResearchCost(cost, short = false) {
+        if (!cost) return '--';
+        if (short) {
+            return state.lang === 'en'
+                ? `${cost.coreChips}C / ${cost.alloy}A`
+                : `${cost.coreChips}芯 / ${cost.alloy}合`;
+        }
+        return state.lang === 'en'
+            ? `${cost.coreChips} chips / ${cost.alloy} alloy`
+            : `${cost.coreChips} 核芯 / ${cost.alloy} 合金`;
+    }
+
+    function canUpgradeResearch(researchId) {
+        const research = researchMap[researchId];
+        if (!research) return false;
+        const level = getResearchLevel(researchId);
+        if (level >= research.maxLevel) return false;
+        const cost = getResearchCost(researchId);
+        return state.save.coreChips >= cost.coreChips && state.save.alloy >= cost.alloy;
     }
 
     function getResearchEffectText(researchId, level) {
@@ -3268,6 +3455,15 @@
         if (researchId === 'magnetField') return `+${level * 16}px`;
         if (researchId === 'bountyProtocol') return `+${Math.round(level * 4)}%`;
         return '--';
+    }
+
+    function getResearchRoleText(researchId) {
+        if (researchId === 'weaponSync') return text('直接提升全队攻击，是打精英和 Boss 最稳定的永久战力。', 'Directly raises squad attack and is the steadiest permanent damage gain for elites and bosses.');
+        if (researchId === 'shieldVolume') return text('直接提升最大护盾，长时间战斗和 Boss 爆发更容易扛过。', 'Directly raises max shield so long runs and boss bursts are much safer.');
+        if (researchId === 'energyLoop') return text('直接提升技能充能速度，意味着每局会多出更多爆发窗口。', 'Directly speeds up skill charge, which means more burst windows per run.');
+        if (researchId === 'magnetField') return text('直接扩大收取范围，让资源回收和续航都更稳定。', 'Directly expands pickup radius so resource collection and sustain are more stable.');
+        if (researchId === 'bountyProtocol') return text('直接提高关卡金币与合金收益，会加速后续一切升级与制造。', 'Directly raises stage credits and alloy income, which speeds up every later upgrade and craft.');
+        return text('研究效果会直接映射到出击属性上。', 'Research effects feed directly into sortie combat stats.');
     }
 
     function canUseFreeCraft() {
@@ -3594,6 +3790,7 @@
         next.reviveChips = clampNumber(next.reviveChips, base.reviveChips, 0, Number.MAX_SAFE_INTEGER);
         next.unlockedChapterIndex = clampNumber(next.unlockedChapterIndex, base.unlockedChapterIndex, 0, config.chapters.length - 1);
         next.freeSortieDayKey = typeof next.freeSortieDayKey === 'string' ? next.freeSortieDayKey : '';
+        next.reviveGrantDayKey = typeof next.reviveGrantDayKey === 'string' ? next.reviveGrantDayKey : '';
         next.freeSortiesUsedToday = clampNumber(next.freeSortiesUsedToday, 0, 0, 999);
         next.dailySupplyAt = Math.max(0, Number(next.dailySupplyAt) || 0);
         next.crafting.totalCrafts = clampNumber(next.crafting.totalCrafts, 0, 0, Number.MAX_SAFE_INTEGER);
@@ -3642,6 +3839,7 @@
             coreChips: base.coreChips,
             seasonXp: base.seasonXp,
             reviveChips: base.reviveChips,
+            reviveGrantDayKey: '',
             selectedWingmen: ['interceptorWing', ''],
             selectedModules: { core: '', weapon: '', shield: '', boss: '' },
             shardInventory: {
