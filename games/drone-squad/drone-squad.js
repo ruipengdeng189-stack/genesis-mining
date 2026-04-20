@@ -263,25 +263,88 @@
         if (ui.heroSubtitle) ui.heroSubtitle.textContent = localize(config.meta.subtitle);
     }
 
+    function getTabIcon(tabId) {
+        if (tabId === 'sortie') return '&#10022;';
+        if (tabId === 'hangar') return '&#9992;';
+        if (tabId === 'blueprints') return '&#10070;';
+        if (tabId === 'missions') return '&#9776;';
+        if (tabId === 'season') return '&#10039;';
+        if (tabId === 'shop') return '&#9670;';
+        return '&#8226;';
+    }
+
+    function getResearchIcon(researchId) {
+        if (researchId === 'weaponSync') return '&#10022;';
+        if (researchId === 'shieldVolume') return '&#10010;';
+        if (researchId === 'energyLoop') return '&#9889;';
+        if (researchId === 'magnetField') return '&#9673;';
+        if (researchId === 'bountyProtocol') return '&#9679;';
+        return '&#10070;';
+    }
+
+    function renderIconLabel(icon, label, small = '') {
+        return `
+            <span class="ds-titleline">
+                <span class="ds-title-icon" aria-hidden="true">${icon}</span>
+                <span>${escapeHtml(label)}</span>
+                ${small ? `<small>${escapeHtml(small)}</small>` : ''}
+            </span>
+        `;
+    }
+
+    function getRewardPillEntries(reward) {
+        const entries = [];
+        if (reward.credits) entries.push({ icon: '&#9679;', label: text('Credits', 'Credits'), value: `+${formatCompact(reward.credits)}` });
+        if (reward.alloy) entries.push({ icon: '&#10010;', label: text('Alloy', 'Alloy'), value: `+${formatCompact(reward.alloy)}` });
+        if (reward.coreChips) entries.push({ icon: '&#9671;', label: text('Core', 'Core'), value: `+${formatCompact(reward.coreChips)}` });
+        if (reward.seasonXp) entries.push({ icon: '&#10039;', label: 'XP', value: `+${formatCompact(reward.seasonXp)}` });
+        if (reward.reviveChips) entries.push({ icon: '&#10057;', label: text('Revive', 'Revive'), value: `+${formatCompact(reward.reviveChips)}` });
+        if (reward.chassisShards) entries.push({ icon: '&#9992;', label: text('Chassis', 'Chassis'), value: `+${formatCompact(reward.chassisShards)}` });
+        if (reward.wingmanShards) entries.push({ icon: '&#9651;', label: text('Wing', 'Wing'), value: `+${formatCompact(reward.wingmanShards)}` });
+        if (reward.epicModuleCrates) entries.push({ icon: '&#9638;', label: text('Epic', 'Epic'), value: `+${formatCompact(reward.epicModuleCrates)}` });
+        if (reward.legendModuleCrates) entries.push({ icon: '&#9733;', label: text('Legend', 'Legend'), value: `+${formatCompact(reward.legendModuleCrates)}` });
+        return entries;
+    }
+
+    function renderRewardPills(reward, maxItems = 4) {
+        const entries = getRewardPillEntries(reward).slice(0, maxItems);
+        if (!entries.length) return '';
+        return `
+            <div class="ds-reward-row">
+                ${entries.map((entry) => `
+                    <div class="ds-reward-pill" title="${escapeHtml(entry.label)}">
+                        <span class="ds-reward-icon" aria-hidden="true">${entry.icon}</span>
+                        <strong>${escapeHtml(entry.value)}</strong>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
     function renderResourceStrip() {
         if (!ui.resourceStrip) return;
         const freeLeft = getRemainingFreeSorties();
         const sponsorTier = getSponsorTier();
-        ui.resourceStrip.innerHTML = [
-            renderResourcePill(text('金币', 'Credits'), formatCompact(state.save.credits)),
-            renderResourcePill(text('合金', 'Alloy'), formatCompact(state.save.alloy)),
-            renderResourcePill(text('核芯', 'Core Chips'), formatCompact(state.save.coreChips)),
-            renderResourcePill(text('免费出击', 'Free Sorties'), `${freeLeft}/${getDailyFreeSortiesLimit()}`),
-            renderResourcePill(text('复活芯片', 'Revive Chips'), formatCompact(state.save.reviveChips)),
-            renderResourcePill(text('赞助等级', 'Sponsor'), localize(sponsorTier.title))
-        ].join('');
+        const items = [
+            { icon: '&#9679;', label: text('Credits', 'Credits'), value: formatCompact(state.save.credits), meta: text('Wallet', 'Wallet') },
+            { icon: '&#10010;', label: text('Alloy', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('Upgrade', 'Upgrade') },
+            { icon: '&#9671;', label: text('Core', 'Core'), value: formatCompact(state.save.coreChips), meta: text('Research', 'Research') },
+            { icon: '&#9655;', label: text('Free', 'Free'), value: `${freeLeft}/${getDailyFreeSortiesLimit()}`, meta: text('Sorties', 'Sorties') },
+            { icon: '&#10057;', label: text('Revive', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('Safety', 'Safety') },
+            { icon: '&#9733;', label: text('Sponsor', 'Sponsor'), value: localize(sponsorTier.title), meta: text('Tier', 'Tier') }
+        ];
+        ui.resourceStrip.innerHTML = items.map((item) => renderResourcePill(item.icon, item.label, item.value, item.meta)).join('');
     }
 
-    function renderResourcePill(label, value) {
+    function renderResourcePill(icon, label, value, meta = '') {
         return `
             <div class="ds-resource-pill">
-                <span>${escapeHtml(label)}</span>
+                <div class="ds-pill-head">
+                    <span class="ds-resource-icon" aria-hidden="true">${icon}</span>
+                    <span>${escapeHtml(label)}</span>
+                </div>
                 <strong>${escapeHtml(String(value))}</strong>
+                ${meta ? `<small>${escapeHtml(meta)}</small>` : ''}
             </div>
         `;
     }
@@ -293,29 +356,34 @@
         const gap = Math.max(0, chapter.recommended - currentPower);
         const chapterProgress = `${Math.max(0, getHighestClearedChapterIndex() + 1)}/${config.chapters.length}`;
         const readyMissions = getClaimableMissionCount();
+        const items = [
+            { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
+            { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
+            { icon: '&#9661;', label: text('Gap', 'Gap'), value: gap > 0 ? `-${gap}` : text('Ready', 'Ready'), tone: gap > 0 ? 'is-warning' : 'is-good' },
+            { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' },
+            { icon: '&#9636;', label: text('Missions', 'Missions'), value: readyMissions, tone: readyMissions > 0 ? 'is-good' : '' },
+            { icon: '&#9638;', label: text('Modules', 'Modules'), value: state.save.moduleInventory.length, tone: '' },
+            { icon: '&#9674;', label: text('Progress', 'Progress'), value: chapterProgress, tone: '' },
+            { icon: '&#9655;', label: text('Supply', 'Supply'), value: canClaimDailySupply() ? text('Ready', 'Ready') : text('Cooldown', 'Cooldown'), tone: canClaimDailySupply() ? 'is-good' : '' }
+        ];
         ui.heroSummary.innerHTML = `
             <div class="ds-summary-grid">
-                ${renderSummaryItem(text('当前战力', 'Power'), currentPower)}
-                ${renderSummaryItem(text('推荐战力', 'Recommended'), chapter.recommended)}
-                ${renderSummaryItem(text('章节推进', 'Chapter Progress'), chapterProgress)}
-                ${renderSummaryItem(text('当前卡点', 'Current Gap'), gap > 0 ? `-${gap}` : text('可推进', 'Ready'))}
-                ${renderSummaryItem(text('赛季经验', 'Season XP'), formatCompact(state.save.seasonXp))}
-                ${renderSummaryItem(text('任务可领', 'Mission Ready'), readyMissions)}
-                ${renderSummaryItem(text('模组库存', 'Modules'), state.save.moduleInventory.length)}
-                ${renderSummaryItem(text('今日免费', 'Daily Supply'), canClaimDailySupply() ? text('可领', 'Ready') : text('冷却中', 'Cooling'))}
+                ${items.map((item) => renderSummaryItem(item.icon, item.label, item.value, item.tone)).join('')}
             </div>
         `;
     }
 
-    function renderSummaryItem(label, value) {
+    function renderSummaryItem(icon, label, value, tone = '') {
         return `
-            <div class="ds-summary-item">
-                <span>${escapeHtml(label)}</span>
+            <div class="ds-summary-item ${tone}">
+                <div class="ds-summary-head">
+                    <span class="ds-summary-icon" aria-hidden="true">${icon}</span>
+                    <span>${escapeHtml(label)}</span>
+                </div>
                 <strong>${escapeHtml(String(value))}</strong>
             </div>
         `;
     }
-
     function renderPanel() {
         if (!ui.panelContent) return;
         switch (state.tab) {
@@ -353,19 +421,21 @@
         ui.tabBar.innerHTML = config.tabs.map((tab) => {
             const isActive = state.tab === tab.id;
             let subline = '';
-            if (tab.id === 'missions') subline = claimableMissionCount > 0 ? text('可领', 'Ready') : text('目标', 'Goals');
-            if (tab.id === 'season') subline = claimableSeasonCount > 0 ? text('结算', 'Claim') : text('通行证', 'Pass');
-            if (tab.id === 'shop') subline = canClaimShop ? text('免费', 'Free') : text('补给', 'Supply');
-            if (!subline) subline = localize(tab.label);
+            if (tab.id === 'missions') subline = claimableMissionCount > 0 ? text('\u53ef\u9886', 'Ready') : text('\u76ee\u6807', 'Goals');
+            if (tab.id === 'season') subline = claimableSeasonCount > 0 ? text('\u7ed3\u7b97', 'Claim') : text('\u901a\u884c', 'Pass');
+            if (tab.id === 'shop') subline = canClaimShop ? text('\u514d\u8d39', 'Free') : text('\u8865\u7ed9', 'Supply');
+            const hasAlert = (tab.id === 'missions' && claimableMissionCount > 0)
+                || (tab.id === 'season' && claimableSeasonCount > 0)
+                || (tab.id === 'shop' && canClaimShop);
             return `
-                <button class="ds-tab-btn ${isActive ? 'is-active' : ''}" data-tab="${tab.id}" type="button">
+                <button class="ds-tab-btn ${isActive ? 'is-active' : ''} ${hasAlert ? 'has-alert' : ''}" data-tab="${tab.id}" type="button" aria-label="${escapeHtml(localize(tab.label))}">
+                    <span class="ds-tab-icon" aria-hidden="true">${getTabIcon(tab.id)}</span>
                     <strong>${escapeHtml(localize(tab.label))}</strong>
-                    <span>${escapeHtml(subline)}</span>
+                    <span>${subline ? escapeHtml(subline) : '&nbsp;'}</span>
                 </button>
             `;
         }).join('');
     }
-
     function renderSortieTab() {
         const chapter = getSelectedChapter();
         const chapterIndex = getChapterIndex(chapter.id);
@@ -378,8 +448,8 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('Chapter Route', 'Chapter Route'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('Check the wall type, prep route, and power gap before committing to the run.', 'Check the wall type, prep route, and power gap before committing to the run.'))}</div>
+                        <h3>${renderIconLabel('&#9674;', text('Chapter Route', 'Chapter Route'), chapter.id)}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Check pressure, reward focus, and current gap before pushing.', 'Check pressure, reward focus, and current gap before pushing.'))}</div>
                     </div>
                     <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
                 </div>
@@ -391,8 +461,8 @@
             <section class="ds-stage-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(localize(chapter.name))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('Drag to dodge while auto-firing. Check what this stage is asking for before deciding to push or pivot back to the hangar.', 'Drag to dodge while auto-firing. Check what this stage is asking for before deciding to push or pivot back to the hangar.'))}</div>
+                        <h3>${renderIconLabel('&#10022;', localize(chapter.name), localize(chapter.pressure || chapter.name))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('Drag to dodge, auto-fire, and read the stage pressure before committing.', 'Drag to dodge, auto-fire, and read the stage pressure before committing.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Recommended', 'Recommended'))} ${chapter.recommended}</span>
@@ -420,16 +490,20 @@
                 </div>
 
                 <div class="ds-stage-guide-grid">
-                    ${renderStageGuideBox(text('Pressure', 'Pressure'), localize(chapter.pressure || chapter.name), pressureTone)}
-                    ${renderStageGuideBox(text('Prep', 'Prep'), localize(chapter.prep || chapter.name))}
-                    ${renderStageGuideBox(text('Focus', 'Focus'), localize(chapter.rewardFocus || chapter.name))}
-                    ${renderStageGuideBox(text('Free', 'Free'), `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`)}
-                    ${renderStageGuideBox(text('Extra Cost', 'Extra Cost'), String(getSortieCost(chapter)))}
-                    ${renderStageGuideBox(text('Boss Spawn', 'Boss Spawn'), `${config.battle.bossSpawnSecond}s`)}
+                    ${renderStageGuideBox('&#9888;', text('Pressure', 'Pressure'), localize(chapter.pressure || chapter.name), pressureTone)}
+                    ${renderStageGuideBox('&#9638;', text('Prep', 'Prep'), localize(chapter.prep || chapter.name))}
+                    ${renderStageGuideBox('&#9679;', text('Focus', 'Focus'), localize(chapter.rewardFocus || chapter.name))}
+                    ${renderStageGuideBox('&#9655;', text('Free', 'Free'), `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`)}
+                    ${renderStageGuideBox('&#10010;', text('Extra', 'Extra'), String(getSortieCost(chapter)))}
+                    ${renderStageGuideBox('&#10039;', text('Boss', 'Boss'), `${config.battle.bossSpawnSecond}s`)}
                 </div>
-                <div class="ds-inline-note" style="margin-top:10px;">${escapeHtml(isChapterFirstClearPending(chapter)
-                    ? `${text('First Clear Pack', 'First Clear Pack')} · ${getRewardText(getFirstClearReward(chapter))}`
-                    : text('First clear reward already secured on this stage.', 'First clear reward already secured on this stage.'))}</div>
+
+                <div class="ds-inline-note ds-inline-note-rich" style="margin-top:10px;">
+                    ${renderIconLabel('&#9733;', text('First Clear Pack', 'First Clear Pack'), isChapterFirstClearPending(chapter) ? text('Pending', 'Pending') : text('Claimed', 'Claimed'))}
+                    ${isChapterFirstClearPending(chapter)
+                        ? renderRewardPills(getFirstClearReward(chapter), 5)
+                        : `<div class="ds-note-mini">${escapeHtml(text('First clear reward already secured.', 'First clear reward already secured.'))}</div>`}
+                </div>
 
                 <div class="ds-action-row" style="margin-top: 10px;">
                     <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('Cast Skill', 'Cast Skill'))}</button>
@@ -440,7 +514,7 @@
             <section class="ds-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                 <article class="ds-card">
                     <div class="ds-card-head">
-                        <h3>${escapeHtml(text('Push Snapshot', 'Push Snapshot'))}</h3>
+                        <h3>${renderIconLabel('&#9636;', text('Push Snapshot', 'Push Snapshot'))}</h3>
                         <span class="ds-mini-badge ${pressureTone}">${escapeHtml(localize(chapter.pressure || { zh: 'Current Wall', en: 'Current Wall' }))}</span>
                     </div>
                     <div class="ds-stat-grid">
@@ -453,11 +527,11 @@
                             <strong class="ds-stat-value">${escapeHtml(`+${chapter.reward.alloy}`)}</strong>
                         </div>
                         <div class="ds-stat-box">
-                            <span class="ds-stat-label">${escapeHtml(text('Core Drop', 'Core Drop'))}</span>
+                            <span class="ds-stat-label">${escapeHtml(text('Core', 'Core Drop'))}</span>
                             <strong class="ds-stat-value">${escapeHtml(`+${chapter.reward.coreChips || 0}`)}</strong>
                         </div>
                         <div class="ds-stat-box">
-                            <span class="ds-stat-label">${escapeHtml(text('Upgrade Picks', 'Upgrade Picks'))}</span>
+                            <span class="ds-stat-label">${escapeHtml(text('Perks', 'Perks'))}</span>
                             <strong class="ds-stat-value">${escapeHtml(String(config.battle.upgradePickSeconds.length))}</strong>
                         </div>
                     </div>
@@ -465,7 +539,7 @@
 
                 <article class="ds-card">
                     <div class="ds-card-head">
-                        <h3>${escapeHtml(text('Latest Report', 'Latest Report'))}</h3>
+                        <h3>${renderIconLabel('&#9776;', text('Latest Report', 'Latest Report'))}</h3>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('Open Hangar', 'Open Hangar'))}</button>
                     </div>
                     ${result ? renderLatestResult(result) : `<div class="ds-empty-state">${escapeHtml(text('No battle report yet. Launch your first sortie.', 'No battle report yet. Launch your first sortie.'))}</div>`}
@@ -473,7 +547,6 @@
             </section>
         `;
     }
-
     function renderChapterChip(chapter, index) {
         const isActive = chapter.id === state.save.selectedChapterId;
         const unlocked = isChapterUnlocked(index);
@@ -487,15 +560,17 @@
         `;
     }
 
-    function renderStageGuideBox(label, value, tone = '') {
+    function renderStageGuideBox(icon, label, value, tone = '') {
         return `
             <div class="ds-stat-box ds-stage-guide-box ${tone}">
-                <span class="ds-stat-label">${escapeHtml(label)}</span>
+                <div class="ds-pill-head">
+                    <span class="ds-guide-icon" aria-hidden="true">${icon}</span>
+                    <span class="ds-stat-label">${escapeHtml(label)}</span>
+                </div>
                 <strong class="ds-stat-value">${escapeHtml(String(value || '--'))}</strong>
             </div>
         `;
     }
-
     function getChapterPressureTone(chapter, powerGap) {
         if (powerGap <= 0) return 'is-good';
         if ((chapter?.chapter || 1) >= 4 || powerGap >= 2200) return 'is-danger';
@@ -541,16 +616,16 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('机库总览', 'Hangar Overview'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('主机决定底盘，翼机负责补足功能，模组决定冲关方式。', 'The chassis sets the baseline, wingmen fill the gaps, and modules decide how you break through walls.'))}</div>
+                        <h3>${renderIconLabel('&#9992;', text('Hangar Overview', 'Hangar Overview'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Chassis sets the base, wingmen patch holes, and modules shape the run.', 'Chassis sets the base, wingmen patch holes, and modules shape the run.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag is-good">${escapeHtml(text('当前战力', 'Power'))}</span>
+                        <span class="ds-tag is-good">${escapeHtml(text('Power', 'Power'))}</span>
                         <strong>${escapeHtml(String(getCurrentPower()))}</strong>
                     </div>
                 </div>
                 <div class="ds-roster-slots">
-                    ${renderSlotCard(text('主机', 'Chassis'), localize(selectedChassis.name), `${text('Lv', 'Lv')}.${getUnitLevel(state.save.chassisLevels, selectedChassis.id)} · ${getStarsText(getUnitStar(state.save.chassisStars, selectedChassis.id))}`)}
+                    ${renderSlotCard('&#9992;', text('Chassis', 'Chassis'), localize(selectedChassis.name), `${text('Lv', 'Lv')}.${getUnitLevel(state.save.chassisLevels, selectedChassis.id)} 路 ${getStarsText(getUnitStar(state.save.chassisStars, selectedChassis.id))}`)}
                     ${renderWingSlotCard(0)}
                     ${renderWingSlotCard(1)}
                 </div>
@@ -559,8 +634,8 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('主机编队', 'Chassis Fleet'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('优先养成 1 台主机，再补 2 台翼机，成长线最清晰。', 'Grow one main chassis first, then build out both wingmen for the cleanest curve.'))}</div>
+                        <h3>${renderIconLabel('&#9881;', text('Chassis Fleet', 'Chassis Fleet'))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('Raise one chassis first, then round out both wingmen.', 'Raise one chassis first, then round out both wingmen.'))}</div>
                     </div>
                 </div>
                 <div class="ds-unit-grid">
@@ -571,10 +646,10 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('翼机库', 'Wingman Bay'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('同名翼机不能同时上两路，避免只养一个就通吃。', 'The same wingman cannot fill both slots, so one unit alone cannot cover everything.'))}</div>
+                        <h3>${renderIconLabel('&#9651;', text('Wingman Bay', 'Wingman Bay'))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('The same wingman cannot fill both slots at once.', 'The same wingman cannot fill both slots at once.'))}</div>
                     </div>
-                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('去蓝图', 'Open Blueprints'))}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Open Blueprints', 'Open Blueprints'))}</button>
                 </div>
                 <div class="ds-unit-grid">
                     ${config.wingmen.map(renderWingmanCard).join('')}
@@ -584,10 +659,10 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('已装模组', 'Equipped Modules'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('想冲 Boss 伤害，就去蓝图里补模组和研究。', 'If you need boss damage, head to Blueprints for modules and permanent research.'))}</div>
+                        <h3>${renderIconLabel('&#9638;', text('Equipped Modules', 'Equipped Modules'))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('When you hit a wall, go back to Blueprints for modules and research.', 'When you hit a wall, go back to Blueprints for modules and research.'))}</div>
                     </div>
-                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('管理模组', 'Manage Modules'))}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Manage Modules', 'Manage Modules'))}</button>
                 </div>
                 <div class="ds-module-grid">
                     ${['core', 'weapon', 'shield', 'boss'].map((slot) => renderEquippedModuleCard(slot, selectedModules[slot])).join('')}
@@ -596,10 +671,13 @@
         `;
     }
 
-    function renderSlotCard(label, name, subline) {
+    function renderSlotCard(icon, label, name, subline) {
         return `
             <div class="ds-slot-card">
-                <span class="ds-mini-label">${escapeHtml(label)}</span>
+                <div class="ds-slot-title">
+                    <span class="ds-title-icon" aria-hidden="true">${icon}</span>
+                    <span class="ds-mini-label">${escapeHtml(label)}</span>
+                </div>
                 <strong>${escapeHtml(name)}</strong>
                 <div class="ds-panel-copy">${escapeHtml(subline)}</div>
             </div>
@@ -610,19 +688,22 @@
         const unlocked = isWingSlotUnlocked(slotIndex);
         const wingId = state.save.selectedWingmen[slotIndex] || '';
         const wing = wingmanMap[wingId];
-        const title = slotIndex === 0 ? text('左翼位', 'Left Wing') : text('右翼位', 'Right Wing');
+        const title = slotIndex === 0 ? text('Left Wing', 'Left Wing') : text('Right Wing', 'Right Wing');
+        const icon = slotIndex === 0 ? '&#9651;' : '&#9633;';
         if (!unlocked) {
             return `
                 <div class="ds-slot-card is-locked">
-                    <span class="ds-mini-label">${escapeHtml(title)}</span>
-                    <strong>${escapeHtml(text('未解锁', 'Locked'))}</strong>
-                    <div class="ds-panel-copy">${escapeHtml(text(`通关 ${WING_SLOT_UNLOCK_STAGES[slotIndex]} 后解锁`, `Unlocks after clearing ${WING_SLOT_UNLOCK_STAGES[slotIndex]}`))}</div>
+                    <div class="ds-slot-title">
+                        <span class="ds-title-icon" aria-hidden="true">${icon}</span>
+                        <span class="ds-mini-label">${escapeHtml(title)}</span>
+                    </div>
+                    <strong>${escapeHtml(text('Locked', 'Locked'))}</strong>
+                    <div class="ds-panel-copy">${escapeHtml(text(`Unlocks after clearing ${WING_SLOT_UNLOCK_STAGES[slotIndex]}`, `Unlocks after clearing ${WING_SLOT_UNLOCK_STAGES[slotIndex]}`))}</div>
                 </div>
             `;
         }
-        return renderSlotCard(title, wing ? localize(wing.name) : text('空槽位', 'Empty Slot'), wing ? `${text('Lv', 'Lv')}.${getUnitLevel(state.save.wingmanLevels, wing.id)} · ${getStarsText(getUnitStar(state.save.wingmanStars, wing.id))}` : text('可装配任意已解锁翼机', 'Equip any unlocked wingman'));
+        return renderSlotCard(icon, title, wing ? localize(wing.name) : text('Empty Slot', 'Empty Slot'), wing ? `${text('Lv', 'Lv')}.${getUnitLevel(state.save.wingmanLevels, wing.id)} 路 ${getStarsText(getUnitStar(state.save.wingmanStars, wing.id))}` : text('Equip any unlocked wingman', 'Equip any unlocked wingman'));
     }
-
     function renderChassisCard(chassis) {
         const unlocked = isChapterClearedOrReached(chassis.unlockStage);
         const selected = state.save.selectedChassisId === chassis.id;
@@ -759,11 +840,11 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('永久蓝图', 'Permanent Blueprints'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('研究是永久战力成长，现在同时消耗核芯与合金；制造则用来定义当前出击的模组风格。', 'Research is permanent power growth and now consumes both core chips and alloy, while crafting shapes the current sortie build.'))}</div>
+                        <h3>${renderIconLabel('&#10070;', text('Permanent Blueprints', 'Permanent Blueprints'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Research is permanent growth and spends both chips and alloy.', 'Research is permanent growth and spends both chips and alloy.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag">${escapeHtml(text('核芯 / 合金', 'Chips / Alloy'))}</span>
+                        <span class="ds-tag">${escapeHtml(text('Chips / Alloy', 'Chips / Alloy'))}</span>
                         <strong>${escapeHtml(`${state.save.coreChips} / ${state.save.alloy}`)}</strong>
                     </div>
                 </div>
@@ -775,48 +856,48 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('模组制造', 'Module Crafting'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('每天 1 次免费制造，其余用金币与合金继续做。', 'You get one free craft every day, then continue with credits and alloy.'))}</div>
+                        <h3>${renderIconLabel('&#9638;', text('Module Crafting', 'Module Crafting'))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('One free craft per day, then pay with credits and alloy.', 'One free craft per day, then pay with credits and alloy.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${canUseFreeCraft() ? 'is-good' : ''}">${escapeHtml(canUseFreeCraft() ? text('免费可用', 'Free Ready') : text('已消耗', 'Used'))}</span>
+                        <span class="ds-tag ${canUseFreeCraft() ? 'is-good' : ''}">${escapeHtml(canUseFreeCraft() ? text('Free Ready', 'Free Ready') : text('Used', 'Used'))}</span>
                         <strong>${escapeHtml(String(state.save.moduleInventory.length))}</strong>
                     </div>
                 </div>
                 <div class="ds-stat-grid" style="margin-bottom: 10px;">
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('稀有保底', 'Rare Pity'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Rare Pity', 'Rare Pity'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(`${state.save.crafting.rarePity}/${config.moduleCrafting.rarePity}`)}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('史诗保底', 'Epic Pity'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Epic Pity', 'Epic Pity'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(`${state.save.crafting.epicPity}/${getEpicPityTarget()}`)}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('本日付费制造', 'Paid Crafts Today'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Paid Today', 'Paid Today'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(String(state.save.crafting.craftsToday || 0))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('当前成本', 'Current Cost'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Current Cost', 'Current Cost'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(getCraftCostLabel())}</strong>
                     </div>
                 </div>
                 <div class="ds-action-row">
-                    <button class="primary-btn wide-btn" type="button" data-action="craftModule" ${canCraftModule() ? '' : 'disabled'}>${escapeHtml(text('立即制造', 'Craft Now'))}</button>
-                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('返回机库', 'Back To Hangar'))}</button>
+                    <button class="primary-btn wide-btn" type="button" data-action="craftModule" ${canCraftModule() ? '' : 'disabled'}>${escapeHtml(text('Craft Now', 'Craft Now'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('Back To Hangar', 'Back To Hangar'))}</button>
                 </div>
             </section>
 
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('模组库存', 'Module Inventory'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('不同槽位有不同作用，优先补齐 4 个核心槽位。', 'Each slot does a different job. Fill all four core slots before chasing perfect rolls.'))}</div>
+                        <h3>${renderIconLabel('&#9776;', text('Module Inventory', 'Module Inventory'))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('Fill the four core slots first, then chase rarer rolls.', 'Fill the four core slots first, then chase rarer rolls.'))}</div>
                     </div>
                 </div>
                 ${state.save.moduleInventory.length
                     ? `<div class="ds-module-grid ds-list-scroll">${state.save.moduleInventory.map(renderModuleInventoryCard).join('')}</div>`
-                    : `<div class="ds-empty-state">${escapeHtml(text('当前还没有模组，先做一次免费制造。', 'No modules yet. Start with your free craft.'))}</div>`
+                    : `<div class="ds-empty-state">${escapeHtml(text('No modules yet. Start with your free craft.', 'No modules yet. Start with your free craft.'))}</div>`
                 }
             </section>
         `;
@@ -831,29 +912,28 @@
             <article class="ds-unit-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(localize(research.name))}</h3>
+                        <h3>${renderIconLabel(getResearchIcon(research.id), localize(research.name), `${text('Lv', 'Lv')}.${level}/${research.maxLevel}`)}</h3>
                         <div class="ds-card-copy">${escapeHtml(localize(research.desc))}</div>
                     </div>
-                    <span class="ds-tag">${escapeHtml(`${text('Lv', 'Lv')}.${level}/${research.maxLevel}`)}</span>
+                    <span class="ds-tag">${escapeHtml(maxed ? text('Max', 'Max') : formatResearchCost(cost, true))}</span>
                 </div>
                 <div class="ds-stat-grid">
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('当前效果', 'Current Effect'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Current', 'Current'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(getResearchEffectText(research.id, level))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('下次费用', 'Next Cost'))}</span>
-                        <strong class="ds-stat-value">${escapeHtml(maxed ? text('已满', 'Max') : formatResearchCost(cost))}</strong>
+                        <span class="ds-stat-label">${escapeHtml(text('Next Cost', 'Next Cost'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(maxed ? text('Maxed', 'Maxed') : formatResearchCost(cost))}</strong>
                     </div>
                 </div>
                 <div class="ds-inline-note">${escapeHtml(getResearchRoleText(research.id))}</div>
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${research.id}" ${affordable ? '' : 'disabled'}>${escapeHtml(maxed ? text('已满级', 'Maxed') : `${text('升级研究', 'Upgrade')} · ${formatResearchCost(cost, true)}`)}</button>
+                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${research.id}" ${affordable ? '' : 'disabled'}>${escapeHtml(maxed ? text('Maxed', 'Maxed') : `${text('Upgrade', 'Upgrade')} 路 ${formatResearchCost(cost, true)}`)}</button>
                 </div>
             </article>
         `;
     }
-
     function getChapterBuildPlan(chapter) {
         const plans = {
             '1-1': { primaryResearch: 'weaponSync', primaryTarget: 1, secondaryResearch: 'shieldVolume', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-1 先学拖动走位，研究不用投入太多，主机等级是最便宜的突破点。', 'For 1-1, learn the dodge rhythm first. Don’t overinvest in research yet; chassis levels are the cheapest early break point.') },
@@ -887,46 +967,48 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('养成路线', 'Growth Route'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('研究的作用会直接反馈到出击界面：攻击、护盾、技能、收取范围和农资效率都会变强。', 'Research feeds directly back into the sortie screen: attack, shield, skill charge, pickup radius, and farming efficiency all improve here.'))}</div>
+                        <h3>${renderIconLabel('&#9674;', text('Growth Route', 'Growth Route'), chapter.id)}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Research feeds directly back into sortie damage, shield, skill charge, and farming.', 'Research feeds directly back into sortie damage, shield, skill charge, and farming.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('当前卡点', 'Current Wall'))}</span>
-                        <strong>${escapeHtml(gap > 0 ? `-${gap}` : text('可推进', 'Ready'))}</strong>
+                        <span class="ds-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Current Wall', 'Current Wall'))}</span>
+                        <strong>${escapeHtml(gap > 0 ? `-${gap}` : text('Ready', 'Ready'))}</strong>
                     </div>
                 </div>
                 <div class="ds-stat-grid">
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('压力', 'Pressure'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Pressure', 'Pressure'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(localize(chapter.pressure || chapter.name))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('主要研究', 'Primary Research'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Primary', 'Primary'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(`${localize(primaryResearch.name)} ${getResearchLevel(primaryResearch.id)}/${plan.primaryTarget}`)}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('补充研究', 'Backup Research'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Backup', 'Backup'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(`${localize(secondaryResearch.name)} ${getResearchLevel(secondaryResearch.id)}/${plan.secondaryTarget}`)}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('僚机', 'Wing'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Wing', 'Wing'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(wing ? localize(wing.name) : '--')}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('模组', 'Module'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Module', 'Module'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(module ? localize(module.name) : '--')}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('战力', 'Power'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Power', 'Power'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(`${power}/${chapter.recommended}`)}</strong>
                     </div>
                 </div>
                 <div class="ds-inline-note">${escapeHtml(plan.note)}</div>
-                <div class="ds-inline-note">${escapeHtml(`${text('首通奖励', 'First Clear Pack')} · ${getRewardText(firstClearReward)}`)}</div>
+                <div class="ds-inline-note ds-inline-note-rich">
+                    ${renderIconLabel('&#9733;', text('First Clear Pack', 'First Clear Pack'))}
+                    ${renderRewardPills(firstClearReward, 5)}
+                </div>
             </section>
         `;
     }
-
     function isChapterFirstClearPending(chapter) {
         return !!chapter && !state.save.clearedChapters.includes(chapter.id);
     }
@@ -996,21 +1078,22 @@
             const progress = getMissionProgress(mission.id);
             const claimed = state.save.missionClaimed.includes(mission.id);
             const ready = !claimed && progress >= mission.target;
+            const icon = claimed ? '&#10003;' : ready ? '&#9733;' : '&#9679;';
             return `
                 <article class="ds-mission-card ${ready ? 'is-ready' : ''}">
                     <div class="ds-card-head">
                         <div>
-                            <h3>${escapeHtml(localize(mission.title))}</h3>
+                            <h3>${renderIconLabel(icon, localize(mission.title), `${progress}/${mission.target}`)}</h3>
                             <div class="ds-card-copy">${escapeHtml(getMissionHint(mission.id))}</div>
                         </div>
-                        <span class="ds-tag ${ready ? 'is-good' : ''}">${escapeHtml(claimed ? text('已领取', 'Claimed') : `${progress}/${mission.target}`)}</span>
+                        <span class="ds-tag ${ready ? 'is-good' : ''}">${escapeHtml(claimed ? text('Claimed', 'Claimed') : `${progress}/${mission.target}`)}</span>
                     </div>
                     <div class="ds-progress">
                         <div class="ds-progress-fill" style="width:${Math.min(100, (progress / mission.target) * 100)}%"></div>
                     </div>
-                    <div class="ds-inline-note">${escapeHtml(getRewardText(mission.reward))}</div>
+                    ${renderRewardPills(mission.reward, 5)}
                     <div class="ds-row-actions">
-                        <button class="primary-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${ready ? '' : 'disabled'}>${escapeHtml(claimed ? text('已结算', 'Claimed') : text('领取奖励', 'Claim Reward'))}</button>
+                        <button class="primary-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${ready ? '' : 'disabled'}>${escapeHtml(claimed ? text('Claimed', 'Claimed') : text('Claim Reward', 'Claim Reward'))}</button>
                     </div>
                 </article>
             `;
@@ -1020,11 +1103,11 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('协议任务', 'Protocol Missions'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('这里只保留可领、快完成和长期目标，不堆无效文本。', 'This view only keeps claimable, near-finished, and long-term goals.'))}</div>
+                        <h3>${renderIconLabel('&#9776;', text('Protocol Missions', 'Protocol Missions'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Only claimable, near-finished, and long-term goals stay here.', 'Only claimable, near-finished, and long-term goals stay here.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${getClaimableMissionCount() ? 'is-good' : ''}">${escapeHtml(text('可领取', 'Ready'))}</span>
+                        <span class="ds-tag ${getClaimableMissionCount() ? 'is-good' : ''}">${escapeHtml(text('Ready', 'Ready'))}</span>
                         <strong>${escapeHtml(String(getClaimableMissionCount()))}</strong>
                     </div>
                 </div>
@@ -1032,7 +1115,6 @@
             </section>
         `;
     }
-
     function renderSeasonTab() {
         const freeTrack = config.seasonFreeTrack.map((node) => renderSeasonNode('free', node)).join('');
         const premiumTrack = config.seasonPremiumTrack.map((node) => renderSeasonNode('premium', node)).join('');
@@ -1041,11 +1123,11 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('赛季航线', 'Season Route'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('出击、击败精英与 Boss 都会为赛季通行证充能。', 'Sorties, elite kills, and boss clears all charge your season route.'))}</div>
+                        <h3>${renderIconLabel('&#10039;', text('Season Route', 'Season Route'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Sorties, elite kills, and boss clears all charge your season route.', 'Sorties, elite kills, and boss clears all charge your season route.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${getClaimableSeasonCount() ? 'is-good' : ''}">${escapeHtml(text('赛季经验', 'Season XP'))}</span>
+                        <span class="ds-tag ${getClaimableSeasonCount() ? 'is-good' : ''}">${escapeHtml(text('Season XP', 'Season XP'))}</span>
                         <strong>${escapeHtml(String(state.save.seasonXp))}</strong>
                     </div>
                 </div>
@@ -1053,8 +1135,8 @@
                     <article class="ds-list-card">
                         <div class="ds-card-head">
                             <div>
-                                <h3>${escapeHtml(text('免费轨', 'Free Track'))}</h3>
-                                <div class="ds-card-copy">${escapeHtml(text('所有玩家都能拿。', 'Available to every player.'))}</div>
+                                <h3>${renderIconLabel('&#9733;', text('Free Track', 'Free Track'))}</h3>
+                                <div class="ds-card-copy">${escapeHtml(text('Available to every player.', 'Available to every player.'))}</div>
                             </div>
                         </div>
                         <div class="ds-track-grid ds-list-scroll">${freeTrack}</div>
@@ -1062,10 +1144,10 @@
                     <article class="ds-list-card">
                         <div class="ds-card-head">
                             <div>
-                                <h3>${escapeHtml(text('赞助轨', 'Sponsor Track'))}</h3>
-                                <div class="ds-card-copy">${escapeHtml(passUnlocked ? text('赞助轨已解锁，可直接领取满足 XP 条件的赞助奖励。', 'Sponsor track is unlocked and premium rewards can now be claimed when their XP is ready.') : text('首充后解锁赞助轨，同时同步开启额外赛季奖励与每日福利增幅。', 'Your first verified top-up unlocks the sponsor track, premium season rewards, and stronger daily benefits.'))}</div>
+                                <h3>${renderIconLabel('&#9734;', text('Sponsor Track', 'Sponsor Track'))}</h3>
+                                <div class="ds-card-copy">${escapeHtml(passUnlocked ? text('Unlocked and ready for premium reward claims.', 'Unlocked and ready for premium reward claims.') : text('Your first top-up unlocks the sponsor track and extra rewards.', 'Your first top-up unlocks the sponsor track and extra rewards.'))}</div>
                             </div>
-                            <span class="ds-tag ${passUnlocked ? 'is-good' : 'is-warning'}">${escapeHtml(passUnlocked ? text('已开启', 'Unlocked') : text('首充解锁', 'First Top-Up'))}</span>
+                            <span class="ds-tag ${passUnlocked ? 'is-good' : 'is-warning'}">${escapeHtml(passUnlocked ? text('Unlocked', 'Unlocked') : text('First Top-Up', 'First Top-Up'))}</span>
                         </div>
                         <div class="ds-track-grid ds-list-scroll">${premiumTrack}</div>
                     </article>
@@ -1078,17 +1160,18 @@
         const ready = state.save.seasonXp >= node.xp;
         const claimed = state.save.seasonClaimed.includes(`${trackType}:${node.id}`);
         const lockedByPass = trackType === 'premium' && !isSeasonPassUnlocked();
+        const trackIcon = trackType === 'premium' ? '&#9734;' : '&#9733;';
         return `
             <article class="ds-track-card ${ready && !claimed && !lockedByPass ? 'is-ready' : ''}">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(`${trackType === 'premium' ? text('赞助', 'Sponsor') : text('免费', 'Free')} · ${node.id.toUpperCase()}`)}</h3>
-                        <div class="ds-card-copy">${escapeHtml(getRewardText(node.reward))}</div>
+                        <h3>${renderIconLabel(trackIcon, `${trackType === 'premium' ? text('Sponsor', 'Sponsor') : text('Free', 'Free')} 路 ${node.id.toUpperCase()}`)}</h3>
                     </div>
-                    <span class="ds-tag ${claimed ? 'is-good' : ready ? 'is-warning' : ''}">${escapeHtml(claimed ? text('已领', 'Claimed') : `${node.xp} XP`)}</span>
+                    <span class="ds-tag ${claimed ? 'is-good' : ready ? 'is-warning' : ''}">${escapeHtml(claimed ? text('Claimed', 'Claimed') : `${node.xp} XP`)}</span>
                 </div>
+                ${renderRewardPills(node.reward, 5)}
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="${lockedByPass ? 'openPayment' : trackType === 'premium' ? 'claimSponsorSeason' : 'claimSeason'}" data-value="${lockedByPass ? getRecommendedOfferId() : node.id}" ${ready && !claimed && !lockedByPass ? '' : lockedByPass ? '' : 'disabled'}>${escapeHtml(lockedByPass ? text('解锁赞助', 'Unlock Sponsor') : claimed ? text('已领取', 'Claimed') : text('领取', 'Claim'))}</button>
+                    <button class="primary-btn" type="button" data-action="${lockedByPass ? 'openPayment' : trackType === 'premium' ? 'claimSponsorSeason' : 'claimSeason'}" data-value="${lockedByPass ? getRecommendedOfferId() : node.id}" ${ready && !claimed && !lockedByPass ? '' : lockedByPass ? '' : 'disabled'}>${escapeHtml(lockedByPass ? text('Unlock Sponsor', 'Unlock Sponsor') : claimed ? text('Claimed', 'Claimed') : text('Claim', 'Claim'))}</button>
                 </div>
             </article>
         `;
@@ -1103,8 +1186,8 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('补给中心', 'Supply Hub'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('免费补给、软货币补给、充值礼包都在这里，不再把信息铺成长页面。', 'Free supply, soft-currency supply, and premium packs all live here in one compact page.'))}</div>
+                        <h3>${renderIconLabel('&#9733;', text('Supply Hub', 'Supply Hub'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Free supply, soft-currency items, and premium packs all live here.', 'Free supply, soft-currency items, and premium packs all live here.'))}</div>
                     </div>
                 </div>
                 <div class="ds-offer-grid">
@@ -1116,8 +1199,8 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('赞助礼包', 'Sponsor Packs'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('礼包已接入链上订单校验，支付成功后会立即发放资源、模块奖励和永久增幅。', 'These packs now use the verified on-chain order flow and grant resources, module rewards, and permanent boosts right away.'))}</div>
+                        <h3>${renderIconLabel('&#9670;', text('Sponsor Packs', 'Sponsor Packs'))}</h3>
+                        <div class="ds-card-copy">${escapeHtml(text('Packs use verified on-chain orders and grant resources plus permanent boosts right away.', 'Packs use verified on-chain orders and grant resources plus permanent boosts right away.'))}</div>
                     </div>
                 </div>
                 <div class="ds-offer-grid">${premiumItems}</div>
@@ -1132,8 +1215,8 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('赞助状态', 'Sponsor Status'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('这里会直接显示充值后的长期收益：赞助档位、赛季轨、每日免费次数、永久战斗增幅。', 'This panel shows the long-term payment impact directly: sponsor tier, season unlock, daily freebies, and permanent combat boosts.'))}</div>
+                        <h3>${renderIconLabel('&#9734;', text('Sponsor Status', 'Sponsor Status'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('This panel shows your lasting top-up impact: tier, season access, and permanent bonuses.', 'This panel shows your lasting top-up impact: tier, season access, and permanent bonuses.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag ${isSeasonPassUnlocked() ? 'is-good' : 'is-warning'}">${escapeHtml(localize(sponsorTier.title))}</span>
@@ -1142,25 +1225,25 @@
                 </div>
                 <div class="ds-stat-grid" style="margin-bottom: 10px;">
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('攻击常驻', 'Attack Boost'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Attack', 'Attack'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('attackBoost')))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('护盾常驻', 'Shield Boost'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Shield', 'Shield'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('shieldBoost')))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('Boss 增伤', 'Boss Damage'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Boss Dmg', 'Boss Dmg'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('bossDamage')))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('合金加成', 'Alloy Yield'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('Alloy Yield', 'Alloy Yield'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('alloyYield')))}</strong>
                     </div>
                 </div>
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(recommendedOffer.id)}">${escapeHtml(text('打开推荐礼包', 'Open Recommended Pack'))}</button>
-                    <button class="ghost-btn" type="button" data-action="openTab" data-value="season">${escapeHtml(text('查看赞助赛季', 'Open Sponsor Season'))}</button>
+                    <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(recommendedOffer.id)}">${escapeHtml(text('Open Recommended Pack', 'Open Recommended Pack'))}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="season">${escapeHtml(text('Open Season', 'Open Season'))}</button>
                 </div>
             </section>
         `;
@@ -1172,13 +1255,13 @@
             <article class="ds-offer-card ${ready ? 'is-recommended' : ''}">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(text('每日免费补给', 'Daily Free Supply'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(getRewardText(shopMap.dailySupply.reward))}</div>
+                        <h3>${renderIconLabel('&#9733;', text('Daily Free Supply', 'Daily Free Supply'))}</h3>
                     </div>
-                    <span class="ds-tag ${ready ? 'is-good' : ''}">${escapeHtml(ready ? text('可领取', 'Ready') : getDailySupplyCooldownText())}</span>
+                    <span class="ds-tag ${ready ? 'is-good' : ''}">${escapeHtml(ready ? text('Ready', 'Ready') : getDailySupplyCooldownText())}</span>
                 </div>
+                ${renderRewardPills(shopMap.dailySupply.reward, 5)}
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="claimDailySupply" ${ready ? '' : 'disabled'}>${escapeHtml(text('领取补给', 'Claim Supply'))}</button>
+                    <button class="primary-btn" type="button" data-action="claimDailySupply" ${ready ? '' : 'disabled'}>${escapeHtml(text('Claim Supply', 'Claim Supply'))}</button>
                 </div>
             </article>
         `;
@@ -1189,13 +1272,13 @@
             <article class="ds-offer-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(localize(item.title))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(getRewardText(item.reward))}</div>
+                        <h3>${renderIconLabel('&#9638;', localize(item.title))}</h3>
                     </div>
                     <strong class="ds-offer-price">${escapeHtml(String(item.price))}</strong>
                 </div>
+                ${renderRewardPills(item.reward, 5)}
                 <div class="ds-row-actions">
-                    <button class="ghost-btn" type="button" data-action="buyShopItem" data-value="${item.id}" ${state.save.credits >= item.price ? '' : 'disabled'}>${escapeHtml(text('立即购买', 'Buy Now'))}</button>
+                    <button class="ghost-btn" type="button" data-action="buyShopItem" data-value="${item.id}" ${state.save.credits >= item.price ? '' : 'disabled'}>${escapeHtml(text('Buy Now', 'Buy Now'))}</button>
                 </div>
             </article>
         `;
@@ -1207,19 +1290,18 @@
             <article class="ds-offer-card is-premium ${recommended ? 'is-recommended' : ''}">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${escapeHtml(localize(offer.name))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(getRewardText(offer.reward))}</div>
+                        <h3>${renderIconLabel('&#9670;', localize(offer.name), recommended ? text('Recommended', 'Recommended') : '')}</h3>
                     </div>
                     <strong class="ds-offer-price">${escapeHtml(`${offer.price} USDT`)}</strong>
                 </div>
+                ${renderRewardPills(offer.reward, 5)}
                 <div class="ds-inline-note">${escapeHtml(getOfferImpactText(offer))}</div>
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">${escapeHtml(text('立即支付', 'Open Payment'))}</button>
+                    <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">${escapeHtml(text('Open Payment', 'Open Payment'))}</button>
                 </div>
             </article>
         `;
     }
-
     function renderModal() {
         if (!ui.modalRoot || !ui.modalBody || !ui.modalActions) return;
         if (!state.modal) {

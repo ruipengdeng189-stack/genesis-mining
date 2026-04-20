@@ -116,6 +116,10 @@ canvas {
     color: var(--ds-text-soft);
     font-size: 14px;
     line-height: 1.45;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .ds-resource-strip,
@@ -129,16 +133,82 @@ canvas {
 }
 
 .ds-resource-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .ds-resource-pill {
     min-width: 0;
-    padding: 12px 14px;
+    min-height: 82px;
+    padding: 12px 12px 10px;
     display: grid;
-    gap: 4px;
+    gap: 6px;
+    align-content: start;
     border-radius: 18px;
     background: linear-gradient(180deg, rgba(104, 183, 255, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.ds-pill-head,
+.ds-summary-head,
+.ds-slot-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ds-titleline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.ds-titleline small,
+.ds-resource-pill small,
+.ds-note-mini {
+    color: var(--ds-text-soft);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.ds-title-icon,
+.ds-resource-icon,
+.ds-summary-icon,
+.ds-tab-icon,
+.ds-guide-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 999px;
+}
+
+.ds-title-icon {
+    width: 26px;
+    height: 26px;
+    background: rgba(104, 183, 255, 0.16);
+    font-size: 14px;
+}
+
+.ds-resource-icon,
+.ds-summary-icon {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 13px;
+}
+
+.ds-guide-icon {
+    width: 22px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+}
+
+.ds-tab-icon {
+    font-size: 18px;
+    line-height: 1;
 }
 
 .ds-resource-pill span,
@@ -190,6 +260,16 @@ canvas {
     gap: 6px;
 }
 
+.ds-summary-item.is-good {
+    border-color: rgba(100, 255, 178, 0.18);
+    background: linear-gradient(180deg, rgba(100, 255, 178, 0.1), rgba(255, 255, 255, 0.03));
+}
+
+.ds-summary-item.is-warning {
+    border-color: rgba(255, 215, 102, 0.22);
+    background: linear-gradient(180deg, rgba(255, 215, 102, 0.08), rgba(255, 255, 255, 0.03));
+}
+
 .ds-summary-item strong {
     font-size: 17px;
 }
@@ -223,6 +303,14 @@ canvas {
     color: var(--ds-text-soft);
     font-size: 13px;
     line-height: 1.5;
+}
+
+.ds-panel-copy,
+.ds-card-copy {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .ds-chip-grid {
@@ -321,6 +409,7 @@ canvas {
     border: 1px solid rgba(255, 255, 255, 0.08);
     display: grid;
     gap: 3px;
+    backdrop-filter: blur(12px);
 }
 
 .ds-stage-center {
@@ -348,6 +437,10 @@ canvas {
 .ds-stage-guide-box .ds-stat-value {
     font-size: 13px;
     line-height: 1.35;
+}
+
+.ds-stage-guide-box .ds-pill-head {
+    margin-bottom: 4px;
 }
 
 .ds-stage-guide-box.is-good {
@@ -532,6 +625,38 @@ canvas {
     border: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
+.ds-inline-note-rich {
+    display: grid;
+    gap: 10px;
+}
+
+.ds-reward-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ds-reward-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ds-reward-pill strong {
+    font-size: 12px;
+    line-height: 1;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.ds-reward-icon {
+    font-size: 14px;
+}
+
 .ds-roster-slots {
     display: grid;
     gap: 8px;
@@ -595,6 +720,7 @@ canvas {
 }
 
 .ds-tab-btn {
+    position: relative;
     min-width: 0;
     min-height: 58px;
     padding: 8px 6px;
@@ -613,9 +739,25 @@ canvas {
     background: linear-gradient(180deg, rgba(104, 183, 255, 0.16), rgba(255, 255, 255, 0.03));
 }
 
+.ds-tab-btn.has-alert::after {
+    content: '';
+    position: absolute;
+    top: 7px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--ds-danger);
+    box-shadow: 0 0 0 2px rgba(6, 9, 18, 0.95);
+}
+
 .ds-tab-btn strong {
     font-size: 11px;
     line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .ds-tab-btn span {
@@ -684,6 +826,7 @@ canvas {
     border-radius: 22px;
     box-shadow: var(--ds-shadow);
     backdrop-filter: blur(16px);
+    overscroll-behavior: contain;
 }
 
 .ds-payment-head,
@@ -927,7 +1070,28 @@ canvas {
 
 @media (max-width: 720px) {
     .ds-shell {
+        width: 100%;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
         padding-inline: 12px;
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+    }
+
+    .ds-topbar {
+        gap: 8px;
+    }
+
+    .ds-topline {
+        position: sticky;
+        top: max(0px, env(safe-area-inset-top, 0px));
+        z-index: 12;
+        margin: 0 -2px;
+        padding: 8px 10px;
+        gap: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 18px;
+        background: rgba(8, 12, 22, 0.84);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
     }
 
     .ds-hero-card,
@@ -941,26 +1105,50 @@ canvas {
         border-radius: 20px;
     }
 
+    .ds-hero-card {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .ds-hero-copy h1 {
+        font-size: clamp(22px, 6.6vw, 30px);
+        line-height: 1;
+    }
+
+    .ds-hero-copy p {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.35;
+        -webkit-line-clamp: 1;
+    }
+
     .ds-resource-strip,
     .ds-summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
     }
 
     .ds-chip-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ds-perk-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ds-perk-grid,
     .ds-unit-grid,
     .ds-module-grid,
     .ds-mission-grid,
     .ds-track-grid,
-    .ds-roster-slots,
+    .ds-roster-slots {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .ds-stage-overlay-actions,
     .ds-action-row,
     .ds-row-actions,
     .ds-modal-actions {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .ds-unit-kpis,
@@ -969,16 +1157,32 @@ canvas {
     }
 
     .ds-stage-guide-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .ds-stage-hud {
-        gap: 6px;
-        padding: 8px;
+        gap: 5px;
+        padding: 6px;
     }
 
     .ds-stage-hud-card {
-        padding: 8px;
+        padding: 6px 7px;
+        border-radius: 12px;
+        gap: 2px;
+    }
+
+    .ds-stage-hud-card .ds-tag,
+    .ds-stage-hud-card .ds-stat-label {
+        font-size: 10px;
+    }
+
+    .ds-stage-hud-card strong,
+    .ds-stage-hud-card .ds-stat-value {
+        font-size: 13px;
+    }
+
+    .ds-stage-canvas {
+        height: clamp(280px, 44dvh, 360px);
     }
 
     .ds-tabbar {
@@ -988,6 +1192,7 @@ canvas {
     .ds-tab-btn {
         min-height: 54px;
         padding: 6px 4px;
+        gap: 4px;
     }
 
     .ds-tab-btn strong {
@@ -995,7 +1200,15 @@ canvas {
     }
 
     .ds-tab-btn span {
-        font-size: 8px;
+        display: none;
+    }
+
+    .ds-tab-icon {
+        font-size: 17px;
+    }
+
+    .ds-list-scroll {
+        max-height: min(34dvh, 340px);
     }
 
     .ds-modal-card {
@@ -1004,10 +1217,19 @@ canvas {
         max-height: calc(100dvh - 20px);
     }
 
+    .ds-payment-modal {
+        align-items: end;
+        padding: 0;
+    }
+
     .ds-payment-card {
-        padding: 16px;
         width: 100%;
-        max-height: calc(100dvh - 20px);
+        max-height: min(88dvh, 88dvh);
+        margin: 0;
+        padding: 14px 14px calc(env(safe-area-inset-bottom, 0px) + 16px);
+        border-radius: 24px 24px 0 0;
+        border-bottom: 0;
+        box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.38);
     }
 
     .ds-modal-head {
@@ -1018,12 +1240,34 @@ canvas {
         align-items: flex-start;
     }
 
+    .ds-payment-head {
+        position: sticky;
+        top: -14px;
+        z-index: 2;
+        margin: -14px -14px 0;
+        padding: 14px 14px 10px;
+        background: rgba(8, 12, 22, 0.96);
+        backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
     .ds-modal-head h2 {
         font-size: 24px;
     }
 
     .ds-payment-head h2 {
-        font-size: 24px;
+        font-size: 22px;
+        line-height: 1.05;
+    }
+
+    .ds-payment-head p {
+        margin-top: 6px;
+        font-size: 12px;
+        line-height: 1.4;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
     }
 
     #modalCloseBtn {
@@ -1042,7 +1286,22 @@ canvas {
         border-radius: 12px;
     }
 
-    .ds-payment-offer-grid,
+    .ds-payment-offer-grid {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 4px;
+        scroll-snap-type: x proximity;
+    }
+
+    .ds-payment-offer {
+        flex: 0 0 min(76vw, 248px);
+        min-height: 100%;
+        padding: 12px;
+        scroll-snap-align: start;
+    }
+
     .ds-payment-order-grid,
     .ds-payment-copy-row,
     .ds-payment-actions {
@@ -1065,13 +1324,18 @@ canvas {
         padding-inline: 10px;
     }
 
+    .ds-topline {
+        padding: 7px 8px;
+        border-radius: 16px;
+    }
+
     .ds-hero-card {
-        padding: 14px;
-        gap: 12px;
+        padding: 11px;
+        gap: 8px;
     }
 
     .ds-hero-copy h1 {
-        font-size: 26px;
+        font-size: 24px;
     }
 
     .ds-hero-copy p,
@@ -1083,7 +1347,7 @@ canvas {
     }
 
     .ds-stage-canvas {
-        height: clamp(280px, 42dvh, 360px);
+        height: clamp(250px, 38dvh, 312px);
     }
 
     .ds-summary-card,
@@ -1105,7 +1369,62 @@ canvas {
         padding: 12px;
     }
 
+    .ds-resource-pill {
+        min-height: 68px;
+        padding: 9px;
+        gap: 4px;
+    }
+
+    .ds-resource-pill strong,
+    .ds-summary-item strong {
+        font-size: 15px;
+    }
+
+    .ds-title-icon,
+    .ds-resource-icon,
+    .ds-summary-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
+
+    .ds-tab-icon {
+        font-size: 16px;
+    }
+
+    .ds-stage-hud {
+        gap: 4px;
+        padding: 5px;
+    }
+
+    .ds-stage-hud-card {
+        padding: 5px 6px;
+    }
+
+    .ds-reward-row {
+        gap: 6px;
+    }
+
+    .ds-reward-pill {
+        min-height: 28px;
+        padding: 5px 8px;
+    }
+
     .ds-stage-overlay-card {
         padding: 14px;
+    }
+
+    .ds-payment-card {
+        padding-inline: 12px;
+    }
+
+    .ds-payment-head {
+        top: -12px;
+        margin-inline: -12px;
+        padding: 12px 12px 9px;
+    }
+
+    .ds-payment-offer {
+        flex-basis: min(82vw, 228px);
     }
 }
