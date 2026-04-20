@@ -449,7 +449,7 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9674;', text('Chapter Route', 'Chapter Route'), chapter.id)}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('Check pressure, reward focus, and current gap before pushing.', 'Check pressure, reward focus, and current gap before pushing.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('先看压力、奖励和卡点。', 'Check pressure, rewards, and gap first.'))}</div>
                     </div>
                     <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
                 </div>
@@ -462,7 +462,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#10022;', localize(chapter.name), localize(chapter.pressure || chapter.name))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('Drag to dodge, auto-fire, and read the stage pressure before committing.', 'Drag to dodge, auto-fire, and read the stage pressure before committing.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('拖动闪避，读懂压力再推进。', 'Drag to dodge and read pressure before pushing.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Recommended', 'Recommended'))} ${chapter.recommended}</span>
@@ -578,34 +578,39 @@
     }
 
     function renderLatestResult(result) {
+        const reward = {
+            credits: result.credits || 0,
+            alloy: result.alloy || 0,
+            coreChips: result.coreChips || 0,
+            seasonXp: result.seasonXp || 0
+        };
         return `
             <div class="ds-result-grid">
-                <div class="ds-result-item">
-                    <span class="ds-stat-label">${escapeHtml(text('章节', 'Chapter'))}</span>
-                    <strong class="ds-stat-value">${escapeHtml(result.chapterId)}</strong>
-                </div>
-                <div class="ds-result-item">
-                    <span class="ds-stat-label">${escapeHtml(text('结果', 'Outcome'))}</span>
-                    <strong class="ds-stat-value">${escapeHtml(result.win ? text('胜利', 'Win') : text('撤离', 'Retreat'))}</strong>
-                </div>
-                <div class="ds-result-item">
-                    <span class="ds-stat-label">${escapeHtml(text('金币', 'Credits'))}</span>
-                    <strong class="ds-stat-value">+${escapeHtml(String(result.credits || 0))}</strong>
-                </div>
-                <div class="ds-result-item">
-                    <span class="ds-stat-label">${escapeHtml(text('合金', 'Alloy'))}</span>
-                    <strong class="ds-stat-value">+${escapeHtml(String(result.alloy || 0))}</strong>
-                </div>
-                <div class="ds-result-item">
-                    <span class="ds-stat-label">${escapeHtml(text('核芯', 'Core Chips'))}</span>
-                    <strong class="ds-stat-value">+${escapeHtml(String(result.coreChips || 0))}</strong>
-                </div>
-                <div class="ds-result-item">
-                    <span class="ds-stat-label">${escapeHtml(text('赛季经验', 'Season XP'))}</span>
-                    <strong class="ds-stat-value">+${escapeHtml(String(result.seasonXp || 0))}</strong>
-                </div>
+                ${renderResultItem('&#9674;', text('章节', 'Chapter'), result.chapterId || '--')}
+                ${renderResultItem(result.win ? '&#10003;' : '&#10005;', text('结果', 'Outcome'), result.win ? text('胜利', 'Win') : text('撤离', 'Retreat'))}
+                ${renderResultItem('&#9679;', text('金币', 'Credits'), `+${reward.credits}`)}
+                ${renderResultItem('&#10010;', text('合金', 'Alloy'), `+${reward.alloy}`)}
+                ${renderResultItem('&#9671;', text('核芯', 'Core Chips'), `+${reward.coreChips}`)}
+                ${renderResultItem('&#10039;', text('赛季经验', 'Season XP'), `+${reward.seasonXp}`)}
             </div>
-            ${result.firstClear ? `<div class="ds-inline-note">${escapeHtml(`${text('首通奖励', 'First Clear Pack')} · ${getRewardText(result.firstClear)}`)}</div>` : ''}
+            ${result.firstClear ? `
+                <div class="ds-inline-note ds-inline-note-rich">
+                    ${renderIconLabel('&#9733;', text('首通奖励', 'First Clear Pack'))}
+                    ${renderRewardPills(result.firstClear, 5)}
+                </div>
+            ` : ''}
+        `;
+    }
+
+    function renderResultItem(icon, label, value) {
+        return `
+            <div class="ds-result-item">
+                <div class="ds-pill-head">
+                    <span class="ds-guide-icon" aria-hidden="true">${icon}</span>
+                    <span class="ds-stat-label">${escapeHtml(label)}</span>
+                </div>
+                <strong class="ds-stat-value">${escapeHtml(String(value))}</strong>
+            </div>
         `;
     }
 
@@ -617,7 +622,7 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9992;', text('Hangar Overview', 'Hangar Overview'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('Chassis sets the base, wingmen patch holes, and modules shape the run.', 'Chassis sets the base, wingmen patch holes, and modules shape the run.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('主机定底盘，僚机补短板，模组定玩法。', 'Chassis sets base, wingmen patch gaps, modules define the run.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag is-good">${escapeHtml(text('Power', 'Power'))}</span>
@@ -635,7 +640,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9881;', text('Chassis Fleet', 'Chassis Fleet'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('Raise one chassis first, then round out both wingmen.', 'Raise one chassis first, then round out both wingmen.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('先养一台主机，再补双僚机。', 'Raise one chassis first, then fill both wingmen.'))}</div>
                     </div>
                 </div>
                 <div class="ds-unit-grid">
@@ -647,7 +652,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9651;', text('Wingman Bay', 'Wingman Bay'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('The same wingman cannot fill both slots at once.', 'The same wingman cannot fill both slots at once.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('同一僚机不能同时上双翼。', 'The same wingman cannot fill both slots.'))}</div>
                     </div>
                     <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Open Blueprints', 'Open Blueprints'))}</button>
                 </div>
@@ -660,7 +665,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9638;', text('Equipped Modules', 'Equipped Modules'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('When you hit a wall, go back to Blueprints for modules and research.', 'When you hit a wall, go back to Blueprints for modules and research.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('卡关时回蓝图补研究和模组。', 'Hit a wall? Return to Blueprints for research and modules.'))}</div>
                     </div>
                     <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Manage Modules', 'Manage Modules'))}</button>
                 </div>
@@ -679,7 +684,7 @@
                     <span class="ds-mini-label">${escapeHtml(label)}</span>
                 </div>
                 <strong>${escapeHtml(name)}</strong>
-                <div class="ds-panel-copy">${escapeHtml(subline)}</div>
+                <div class="ds-note-mini">${escapeHtml(subline)}</div>
             </div>
         `;
     }
@@ -740,7 +745,7 @@
                     </div>
                 </div>
                 <div class="ds-row-actions">
-                    <button class="ghost-btn" type="button" data-action="selectChassis" data-value="${chassis.id}" ${unlocked ? '' : 'disabled'}>${escapeHtml(selected ? text('已装备', 'Equipped') : text('设为主机', 'Equip'))}</button>
+                    <button class="ghost-btn" type="button" data-action="selectChassis" data-value="${chassis.id}" ${unlocked ? '' : 'disabled'}>${escapeHtml(selected ? text('已装备', 'Equipped') : text('装配', 'Equip'))}</button>
                     <button class="ghost-btn" type="button" data-action="upgradeUnit" data-type="chassis" data-value="${chassis.id}" ${unlocked && state.save.credits >= upgradeCost ? '' : 'disabled'}>${escapeHtml(`${text('升级', 'Upgrade')} · ${upgradeCost}`)}</button>
                     <button class="ghost-btn" type="button" data-action="starUnit" data-type="chassis" data-value="${chassis.id}" ${canStarUnit(chassis.id, stars) ? '' : 'disabled'}>${escapeHtml(starCost ? `${text('升星', 'Star Up')} · ${starCost.shards}` : text('满星', 'Max'))}</button>
                 </div>
@@ -785,8 +790,8 @@
                     </div>
                 </div>
                 <div class="ds-row-actions">
-                    <button class="ghost-btn" type="button" data-action="equipWing" data-slot="0" data-value="${wingman.id}" ${canEquipWing(0, wingman.id) ? '' : 'disabled'}>${escapeHtml(inLeft ? text('左翼已装', 'Left Ready') : text('装到左翼', 'Equip Left'))}</button>
-                    <button class="ghost-btn" type="button" data-action="equipWing" data-slot="1" data-value="${wingman.id}" ${canEquipWing(1, wingman.id) ? '' : 'disabled'}>${escapeHtml(inRight ? text('右翼已装', 'Right Ready') : text('装到右翼', 'Equip Right'))}</button>
+                    <button class="ghost-btn" type="button" data-action="equipWing" data-slot="0" data-value="${wingman.id}" ${canEquipWing(0, wingman.id) ? '' : 'disabled'}>${escapeHtml(inLeft ? text('左翼中', 'Left Ready') : text('装左翼', 'Equip Left'))}</button>
+                    <button class="ghost-btn" type="button" data-action="equipWing" data-slot="1" data-value="${wingman.id}" ${canEquipWing(1, wingman.id) ? '' : 'disabled'}>${escapeHtml(inRight ? text('右翼中', 'Right Ready') : text('装右翼', 'Equip Right'))}</button>
                     <button class="ghost-btn" type="button" data-action="upgradeUnit" data-type="wingman" data-value="${wingman.id}" ${unlocked && state.save.credits >= upgradeCost ? '' : 'disabled'}>${escapeHtml(`${text('升级', 'Upgrade')} · ${upgradeCost}`)}</button>
                     <button class="ghost-btn" type="button" data-action="starUnit" data-type="wingman" data-value="${wingman.id}" ${canStarUnit(wingman.id, stars) ? '' : 'disabled'}>${escapeHtml(starCost ? `${text('升星', 'Star Up')} · ${starCost.shards}` : text('满星', 'Max'))}</button>
                 </div>
@@ -802,7 +807,7 @@
                     <div class="ds-card-head">
                         <div>
                             <h3>${escapeHtml(slotLabel)}</h3>
-                            <div class="ds-card-copy">${escapeHtml(text('当前为空，可去蓝图页装配。', 'Empty right now. Equip one in Blueprints.'))}</div>
+                            <div class="ds-card-copy">${escapeHtml(text('当前空置，去蓝图装配。', 'Empty now. Equip in Blueprints.'))}</div>
                         </div>
                         <span class="ds-tag">${escapeHtml(text('空', 'Empty'))}</span>
                     </div>
@@ -841,7 +846,7 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10070;', text('Permanent Blueprints', 'Permanent Blueprints'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('Research is permanent growth and spends both chips and alloy.', 'Research is permanent growth and spends both chips and alloy.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('研究是常驻成长，消耗核芯与合金。', 'Research is permanent growth and costs chips plus alloy.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag">${escapeHtml(text('Chips / Alloy', 'Chips / Alloy'))}</span>
@@ -857,7 +862,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9638;', text('Module Crafting', 'Module Crafting'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('One free craft per day, then pay with credits and alloy.', 'One free craft per day, then pay with credits and alloy.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('每日一次免费，之后消耗金币与合金。', 'One free craft daily, then spend credits and alloy.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag ${canUseFreeCraft() ? 'is-good' : ''}">${escapeHtml(canUseFreeCraft() ? text('Free Ready', 'Free Ready') : text('Used', 'Used'))}</span>
@@ -892,7 +897,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9776;', text('Module Inventory', 'Module Inventory'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('Fill the four core slots first, then chase rarer rolls.', 'Fill the four core slots first, then chase rarer rolls.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('先补满四个槽位，再追高稀有度。', 'Fill the four slots first, then chase rarer drops.'))}</div>
                     </div>
                 </div>
                 ${state.save.moduleInventory.length
@@ -936,18 +941,18 @@
     }
     function getChapterBuildPlan(chapter) {
         const plans = {
-            '1-1': { primaryResearch: 'weaponSync', primaryTarget: 1, secondaryResearch: 'shieldVolume', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-1 先学拖动走位，研究不用投入太多，主机等级是最便宜的突破点。', 'For 1-1, learn the dodge rhythm first. Don’t overinvest in research yet; chassis levels are the cheapest early break point.') },
-            '1-2': { primaryResearch: 'weaponSync', primaryTarget: 2, secondaryResearch: 'magnetField', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-2 开始查伤害，主机等级 + 武器同步是最直接的推进速度。', '1-2 starts checking damage. Chassis levels plus Weapon Sync are the cleanest way to speed up pushes.') },
-            '1-3': { primaryResearch: 'weaponSync', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 1, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('1-3 是第一个精英墙，先把伤害和穿透补起来，再进入第 2 章。', '1-3 is the first elite wall. Add damage and pierce first before moving into Chapter 2.') },
-            '2-1': { primaryResearch: 'bountyProtocol', primaryTarget: 2, secondaryResearch: 'shieldVolume', secondaryTarget: 2, wingmanId: 'magnetWing', moduleId: 'aegisShell', note: text('2-1 开始查合金缺口，先开赏金协议，让后续升级和制造都更好起跑。', '2-1 starts the alloy gap. Open Bounty Protocol early so later upgrades and crafting scale better.') },
-            '2-2': { primaryResearch: 'shieldVolume', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 2, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('2-2 是护盾墙，先稳生存；如果还缺战力，就去升主机星级。', '2-2 is a shield wall. Stabilize survival first; if power is still short, star up the chassis.') },
-            '2-3': { primaryResearch: 'weaponSync', primaryTarget: 4, secondaryResearch: 'bountyProtocol', secondaryTarget: 3, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('2-3 开始需要更稳定的穿透和刷怪速度，稀有武器模组的价值开始明显。', '2-3 wants steadier pierce and faster elite clears, and rare weapon modules start to matter a lot.') },
-            '3-1': { primaryResearch: 'energyLoop', primaryTarget: 3, secondaryResearch: 'weaponSync', secondaryTarget: 5, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('3-1 开始重点查 Boss 爆发，Boss 模组和爆发型研究加成最明显。', '3-1 starts checking boss burst. Boss modules and burst-oriented research are the biggest jumps here.') },
-            '3-2': { primaryResearch: 'shieldVolume', primaryTarget: 5, secondaryResearch: 'bountyProtocol', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('3-2 是续航墙，护盾、合金收益和星级养成会同时决定你能不能扛住长时间战斗。', '3-2 is a sustain wall. Shield, alloy income, and star growth together decide if you can last through long fights.') },
-            '3-3': { primaryResearch: 'weaponSync', primaryTarget: 6, secondaryResearch: 'shieldVolume', secondaryTarget: 6, wingmanId: 'interceptorWing', moduleId: 'hunterNode', note: text('3-3 开始同时查爆发和生存，史诗模组在这个阶段会有非常明显的体感。', '3-3 checks burst and survival together, and epic modules start giving very noticeable returns.') },
-            '4-1': { primaryResearch: 'shieldVolume', primaryTarget: 7, secondaryResearch: 'energyLoop', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('4-1 是后期生存检查点，合金可以先投到星级、模组和护盾研究中。', '4-1 is a late-game survival check. Alloy should first flow into stars, modules, and shield research.') },
-            '4-2': { primaryResearch: 'weaponSync', primaryTarget: 8, secondaryResearch: 'magnetField', secondaryTarget: 4, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('4-2 精英非常密，穿透、收取节奏和稀有模组是打平所需要的三根支点。', '4-2 packs elites tightly. Pierce, pickup tempo, and rare modules are the three levers that smooth it out.') },
-            '4-3': { primaryResearch: 'weaponSync', primaryTarget: 9, secondaryResearch: 'shieldVolume', secondaryTarget: 8, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('4-3 是当前终局 Boss 墙，高星主机、Boss 增伤和史诗模组是最清晰的突破线。', '4-3 is the current endgame boss wall. High-star chassis, boss damage, and epic modules are the clearest breakthrough line.') }
+            '1-1': { primaryResearch: 'weaponSync', primaryTarget: 1, secondaryResearch: 'shieldVolume', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-1 先练走位，主机升 1-2 级即可过。', '1-1: learn dodge rhythm; 1-2 chassis levels are enough.') },
+            '1-2': { primaryResearch: 'weaponSync', primaryTarget: 2, secondaryResearch: 'magnetField', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-2 补基础伤害，优先武器同步。', '1-2: add base damage and prioritize Weapon Sync.') },
+            '1-3': { primaryResearch: 'weaponSync', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 1, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('1-3 补穿透与爆发，再进第 2 章。', '1-3: add pierce and burst before Chapter 2.') },
+            '2-1': { primaryResearch: 'bountyProtocol', primaryTarget: 2, secondaryResearch: 'shieldVolume', secondaryTarget: 2, wingmanId: 'magnetWing', moduleId: 'aegisShell', note: text('2-1 先补合金收入，保证后续养成。', '2-1: fix alloy income for later growth.') },
+            '2-2': { primaryResearch: 'shieldVolume', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 2, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('2-2 是生存墙，优先护盾与星级。', '2-2: survival wall, prioritize shield and stars.') },
+            '2-3': { primaryResearch: 'weaponSync', primaryTarget: 4, secondaryResearch: 'bountyProtocol', secondaryTarget: 3, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('2-3 开始追稀有武器模组。', '2-3: start chasing rare weapon modules.') },
+            '3-1': { primaryResearch: 'energyLoop', primaryTarget: 3, secondaryResearch: 'weaponSync', secondaryTarget: 5, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('3-1 是 Boss 墙，补爆发和 Boss 增伤。', '3-1: boss wall, add burst and boss damage.') },
+            '3-2': { primaryResearch: 'shieldVolume', primaryTarget: 5, secondaryResearch: 'bountyProtocol', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('3-2 是续航墙，护盾和收益一起拉。', '3-2: sustain wall, lift shield and income together.') },
+            '3-3': { primaryResearch: 'weaponSync', primaryTarget: 6, secondaryResearch: 'shieldVolume', secondaryTarget: 6, wingmanId: 'interceptorWing', moduleId: 'hunterNode', note: text('3-3 爆发与生存并重，史诗模组起效。', '3-3: balance burst and survival; epic modules matter.') },
+            '4-1': { primaryResearch: 'shieldVolume', primaryTarget: 7, secondaryResearch: 'energyLoop', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('4-1 是后期生存关，优先星级与护盾。', '4-1: late survival check, prioritize stars and shield.') },
+            '4-2': { primaryResearch: 'weaponSync', primaryTarget: 8, secondaryResearch: 'magnetField', secondaryTarget: 4, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('4-2 精英密集，穿透和收取都要补。', '4-2: elites are dense, add pierce and pickup support.') },
+            '4-3': { primaryResearch: 'weaponSync', primaryTarget: 9, secondaryResearch: 'shieldVolume', secondaryTarget: 8, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('4-3 是终局 Boss 墙，高星主机和 Boss 模组最关键。', '4-3: endgame boss wall, high-star chassis and boss modules are key.') }
         };
         return plans[chapter?.id] || plans['1-1'];
     }
@@ -1065,7 +1070,7 @@
                     </div>
                 </div>
                 <div class="ds-row-actions">
-                    <button class="ghost-btn" type="button" data-action="equipModule" data-value="${module.uid}">${escapeHtml(equipped ? text('已装备', 'Equipped') : text('装备模组', 'Equip'))}</button>
+                    <button class="ghost-btn" type="button" data-action="equipModule" data-value="${module.uid}">${escapeHtml(equipped ? text('已装备', 'Equipped') : text('装配', 'Equip'))}</button>
                     <button class="ghost-btn" type="button" data-action="upgradeModule" data-value="${module.uid}" ${canUpgradeModule(module) ? '' : 'disabled'}>${escapeHtml(`${text('升级', 'Upgrade')} · ${cost.credits}`)}</button>
                     ${equipped ? `<button class="ghost-btn" type="button" data-action="unequipModule" data-slot="${slot}">${escapeHtml(text('卸下', 'Unequip'))}</button>` : ''}
                 </div>

@@ -1128,8 +1128,33 @@ canvas {
         gap: 8px;
     }
 
+    .ds-panel-head h3,
+    .ds-card-head h3,
+    .ds-card-title {
+        font-size: 16px;
+    }
+
     .ds-chip-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ds-chip-btn,
+    .ds-inline-chip {
+        min-height: 40px;
+        padding: 8px 10px;
+        gap: 3px;
+        border-radius: 14px;
+    }
+
+    .ds-chip-btn strong,
+    .ds-inline-chip strong {
+        font-size: 13px;
+    }
+
+    .ds-chip-btn span,
+    .ds-chip-note,
+    .ds-note-mini {
+        font-size: 10px;
     }
 
     .ds-perk-grid {
@@ -1139,9 +1164,12 @@ canvas {
     .ds-unit-grid,
     .ds-module-grid,
     .ds-mission-grid,
-    .ds-track-grid,
-    .ds-roster-slots {
+    .ds-track-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ds-roster-slots {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .ds-stage-overlay-actions,
@@ -1183,6 +1211,49 @@ canvas {
 
     .ds-stage-canvas {
         height: clamp(280px, 44dvh, 360px);
+    }
+
+    .ds-card-copy,
+    .ds-panel-copy,
+    .ds-inline-note,
+    .ds-empty-state {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .ds-unit-card,
+    .ds-module-card,
+    .ds-mission-card,
+    .ds-track-card,
+    .ds-offer-card {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .ds-slot-card {
+        padding: 10px;
+        gap: 5px;
+    }
+
+    .ds-unit-kpis,
+    .ds-result-grid {
+        gap: 6px;
+    }
+
+    .ds-stat-box,
+    .ds-result-item {
+        padding: 8px 9px;
+        border-radius: 12px;
+    }
+
+    .ds-action-row > .primary-btn,
+    .ds-action-row > .ghost-btn,
+    .ds-row-actions > .primary-btn,
+    .ds-row-actions > .ghost-btn {
+        min-height: 40px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 12px;
     }
 
     .ds-tabbar {
@@ -1329,6 +1400,12 @@ canvas {
         border-radius: 16px;
     }
 
+    .ds-panel-head h3,
+    .ds-card-head h3,
+    .ds-card-title {
+        font-size: 15px;
+    }
+
     .ds-hero-card {
         padding: 11px;
         gap: 8px;
@@ -1366,7 +1443,13 @@ canvas {
     .ds-mission-card,
     .ds-track-card,
     .ds-offer-card {
-        padding: 12px;
+        padding: 10px;
+        gap: 7px;
+    }
+
+    .ds-slot-card {
+        padding: 9px;
+        gap: 4px;
     }
 
     .ds-resource-pill {
@@ -1399,6 +1482,26 @@ canvas {
 
     .ds-stage-hud-card {
         padding: 5px 6px;
+    }
+
+    .ds-chip-btn,
+    .ds-inline-chip {
+        min-height: 38px;
+        padding: 7px 8px;
+    }
+
+    .ds-stat-box,
+    .ds-result-item {
+        padding: 7px 8px;
+    }
+
+    .ds-action-row > .primary-btn,
+    .ds-action-row > .ghost-btn,
+    .ds-row-actions > .primary-btn,
+    .ds-row-actions > .ghost-btn {
+        min-height: 38px;
+        padding: 7px 8px;
+        font-size: 11px;
     }
 
     .ds-reward-row {
