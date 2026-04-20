@@ -55,7 +55,11 @@
     let paymentOrderNonce = 0;
     let paymentOrderRequestPromise = null;
 
-    document.addEventListener('DOMContentLoaded', init);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     function init() {
         state.tab = tabMap[state.save.tab] ? state.save.tab : 'sortie';
@@ -364,15 +368,16 @@
         const chapterPower = getCurrentPower();
         const powerGap = chapter.recommended - chapterPower;
         const result = state.save.lastResult;
+        const pressureTone = getChapterPressureTone(chapter, powerGap);
 
         return `
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${escapeHtml(text('章节部署', 'Chapter Route'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('先看当前章节和战力差，再进入战斗。', 'Check the chapter pressure and your power gap before entering the fight.'))}</div>
+                        <h3>${escapeHtml(text('Chapter Route', 'Chapter Route'))}</h3>
+                        <div class="ds-panel-copy">${escapeHtml(text('Check the wall type, prep route, and power gap before committing to the run.', 'Check the wall type, prep route, and power gap before committing to the run.'))}</div>
                     </div>
-                    <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('差距', 'Gap')} ${powerGap}` : text('可推进', 'Ready'))}</div>
+                    <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
                 </div>
                 <div class="ds-chip-grid">
                     ${config.chapters.map((item, index) => renderChapterChip(item, index)).join('')}
@@ -383,10 +388,10 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${escapeHtml(localize(chapter.name))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('拖动主机走位，自动射击。战斗内只会出现两次强化选择。', 'Drag your chassis to dodge while it auto-fires. Only two upgrade picks appear per run.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('Drag to dodge while auto-firing. Check what this stage is asking for before deciding to push or pivot back to the hangar.', 'Drag to dodge while auto-firing. Check what this stage is asking for before deciding to push or pivot back to the hangar.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('推荐', 'Recommended'))} ${chapter.recommended}</span>
+                        <span class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Recommended', 'Recommended'))} ${chapter.recommended}</span>
                         <strong>${escapeHtml(String(chapterPower))}</strong>
                     </div>
                 </div>
@@ -395,23 +400,32 @@
                     <canvas class="ds-stage-canvas" id="sortieCanvas"></canvas>
                     <div class="ds-stage-hud">
                         <div class="ds-stage-hud-card">
-                            <span>${escapeHtml(text('护盾', 'Shield'))}</span>
-                            <strong id="battleHudShield">${escapeHtml(text('待机', 'Standby'))}</strong>
+                            <span>${escapeHtml(text('Shield', 'Shield'))}</span>
+                            <strong id="battleHudShield">${escapeHtml(text('Standby', 'Standby'))}</strong>
                         </div>
                         <div class="ds-stage-hud-card">
-                            <span>${escapeHtml(text('技能', 'Skill'))}</span>
+                            <span>${escapeHtml(text('Skill', 'Skill'))}</span>
                             <strong id="battleHudCharge">0%</strong>
                         </div>
                         <div class="ds-stage-hud-card">
-                            <span>${escapeHtml(text('战况', 'Status'))}</span>
-                            <strong id="battleHudStatus">${escapeHtml(text('待机', 'Standby'))}</strong>
+                            <span>${escapeHtml(text('Status', 'Status'))}</span>
+                            <strong id="battleHudStatus">${escapeHtml(text('Standby', 'Standby'))}</strong>
                         </div>
                     </div>
                     <div class="ds-stage-center" id="sortieCenter"></div>
                 </div>
 
+                <div class="ds-stage-guide-grid">
+                    ${renderStageGuideBox(text('Pressure', 'Pressure'), localize(chapter.pressure || chapter.name), pressureTone)}
+                    ${renderStageGuideBox(text('Prep', 'Prep'), localize(chapter.prep || chapter.name))}
+                    ${renderStageGuideBox(text('Focus', 'Focus'), localize(chapter.rewardFocus || chapter.name))}
+                    ${renderStageGuideBox(text('Free', 'Free'), `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`)}
+                    ${renderStageGuideBox(text('Extra Cost', 'Extra Cost'), String(getSortieCost(chapter)))}
+                    ${renderStageGuideBox(text('Boss Spawn', 'Boss Spawn'), `${config.battle.bossSpawnSecond}s`)}
+                </div>
+
                 <div class="ds-action-row" style="margin-top: 10px;">
-                    <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('释放技能', 'Cast Skill'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('Cast Skill', 'Cast Skill'))}</button>
                     <button class="primary-btn wide-btn" type="button" data-action="startSortie" ${state.battle.active ? 'disabled' : ''}>${escapeHtml(getStartSortieButtonLabel(chapterIndex))}</button>
                 </div>
             </section>
@@ -419,24 +433,24 @@
             <section class="ds-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                 <article class="ds-card">
                     <div class="ds-card-head">
-                        <h3>${escapeHtml(text('战斗提示', 'Battle Tips'))}</h3>
-                        <span class="ds-mini-badge">${escapeHtml(text('短局', 'Short Run'))}</span>
+                        <h3>${escapeHtml(text('Push Snapshot', 'Push Snapshot'))}</h3>
+                        <span class="ds-mini-badge ${pressureTone}">${escapeHtml(localize(chapter.pressure || { zh: 'Current Wall', en: 'Current Wall' }))}</span>
                     </div>
                     <div class="ds-stat-grid">
                         <div class="ds-stat-box">
-                            <span class="ds-stat-label">${escapeHtml(text('免费出击', 'Free Sorties'))}</span>
-                            <strong class="ds-stat-value">${escapeHtml(`${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`)}</strong>
+                            <span class="ds-stat-label">${escapeHtml(text('Credits', 'Credits'))}</span>
+                            <strong class="ds-stat-value">${escapeHtml(`+${chapter.reward.credits}`)}</strong>
                         </div>
                         <div class="ds-stat-box">
-                            <span class="ds-stat-label">${escapeHtml(text('额外门票', 'Extra Cost'))}</span>
-                            <strong class="ds-stat-value">${escapeHtml(String(getSortieCost(chapter)))}</strong>
+                            <span class="ds-stat-label">${escapeHtml(text('Alloy', 'Alloy'))}</span>
+                            <strong class="ds-stat-value">${escapeHtml(`+${chapter.reward.alloy}`)}</strong>
                         </div>
                         <div class="ds-stat-box">
-                            <span class="ds-stat-label">${escapeHtml(text('Boss 刷新', 'Boss Spawn'))}</span>
-                            <strong class="ds-stat-value">${escapeHtml(`${config.battle.bossSpawnSecond}s`)}</strong>
+                            <span class="ds-stat-label">${escapeHtml(text('Core Drop', 'Core Drop'))}</span>
+                            <strong class="ds-stat-value">${escapeHtml(`+${chapter.reward.coreChips || 0}`)}</strong>
                         </div>
                         <div class="ds-stat-box">
-                            <span class="ds-stat-label">${escapeHtml(text('强化次数', 'Upgrade Picks'))}</span>
+                            <span class="ds-stat-label">${escapeHtml(text('Upgrade Picks', 'Upgrade Picks'))}</span>
                             <strong class="ds-stat-value">${escapeHtml(String(config.battle.upgradePickSeconds.length))}</strong>
                         </div>
                     </div>
@@ -444,10 +458,10 @@
 
                 <article class="ds-card">
                     <div class="ds-card-head">
-                        <h3>${escapeHtml(text('最近战报', 'Latest Report'))}</h3>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('去机库', 'Open Hangar'))}</button>
+                        <h3>${escapeHtml(text('Latest Report', 'Latest Report'))}</h3>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('Open Hangar', 'Open Hangar'))}</button>
                     </div>
-                    ${result ? renderLatestResult(result) : `<div class="ds-empty-state">${escapeHtml(text('还没有战斗记录，开始第一局试飞吧。', 'No battle report yet. Launch your first sortie.'))}</div>`}
+                    ${result ? renderLatestResult(result) : `<div class="ds-empty-state">${escapeHtml(text('No battle report yet. Launch your first sortie.', 'No battle report yet. Launch your first sortie.'))}</div>`}
                 </article>
             </section>
         `;
@@ -456,14 +470,29 @@
     function renderChapterChip(chapter, index) {
         const isActive = chapter.id === state.save.selectedChapterId;
         const unlocked = isChapterUnlocked(index);
-        const gap = chapter.recommended - getCurrentPower();
         return `
             <button class="ds-chip-btn ${isActive ? 'is-active' : ''} ${unlocked ? '' : 'is-locked'}" type="button" data-action="selectChapter" data-value="${chapter.id}" ${unlocked ? '' : 'disabled'}>
                 <span>${escapeHtml(chapter.id)}</span>
                 <strong>${escapeHtml(localize(chapter.name))}</strong>
-                <span>${escapeHtml(unlocked ? `${text('推荐', 'Power')} ${chapter.recommended}` : text('未解锁', 'Locked'))}</span>
+                <span>${escapeHtml(unlocked ? `${text('Power', 'Power')} ${chapter.recommended}` : text('Locked', 'Locked'))}</span>
+                ${unlocked ? `<small class="ds-chip-note">${escapeHtml(localize(chapter.pressure || chapter.name))}</small>` : ''}
             </button>
         `;
+    }
+
+    function renderStageGuideBox(label, value, tone = '') {
+        return `
+            <div class="ds-stat-box ds-stage-guide-box ${tone}">
+                <span class="ds-stat-label">${escapeHtml(label)}</span>
+                <strong class="ds-stat-value">${escapeHtml(String(value || '--'))}</strong>
+            </div>
+        `;
+    }
+
+    function getChapterPressureTone(chapter, powerGap) {
+        if (powerGap <= 0) return 'is-good';
+        if ((chapter?.chapter || 1) >= 4 || powerGap >= 2200) return 'is-danger';
+        return 'is-warning';
     }
 
     function renderLatestResult(result) {
@@ -2999,9 +3028,12 @@
 
     function getSortieCost(chapter) {
         if (!chapter) return config.battle.sortieCostByChapter.chapter1;
-        if (chapter.chapter >= 3) return config.battle.sortieCostByChapter.chapter3;
-        if (chapter.chapter >= 2) return config.battle.sortieCostByChapter.chapter2;
-        return config.battle.sortieCostByChapter.chapter1;
+        const chapterKey = `chapter${Math.max(1, Number(chapter.chapter) || 1)}`;
+        return config.battle.sortieCostByChapter[chapterKey]
+            || config.battle.sortieCostByChapter.chapter4
+            || config.battle.sortieCostByChapter.chapter3
+            || config.battle.sortieCostByChapter.chapter2
+            || config.battle.sortieCostByChapter.chapter1;
     }
 
     function getRemainingFreeSorties() {
@@ -3337,23 +3369,33 @@
             case 'm8': return countThreeStarUnits();
             case 'm9': return state.save.stats.bossesKilled;
             case 'm10': return Math.max(0, getHighestClearedChapterIndex() + 1);
+            case 'm11': return Math.max(0, getHighestClearedChapterIndex() + 1);
+            case 'm12': return countOwnedModulesByMinimumRarity('epic');
+            case 'm13': return getTotalResearchLevels();
+            case 'm14': return getHighestChassisLevel();
+            case 'm15': return Math.max(0, getHighestClearedChapterIndex() + 1);
             default: return 0;
         }
     }
 
     function getMissionHint(missionId) {
         switch (missionId) {
-            case 'm1': return text('先打满免费 3 局，熟悉拖拽走位。', 'Use your first three free sorties to learn the drag-dodge rhythm.');
-            case 'm2': return text('精英会在中途三次入场。', 'Elites arrive three times during a run.');
-            case 'm3': return text('推进到 1-2 就会解锁第二翼位。', 'Clearing 1-2 unlocks the second wing slot.');
-            case 'm4': return text('通过 1-3 后，第二章战力墙会开始成型。', 'After 1-3, the first real power wall starts forming.');
-            case 'm5': return text('主机等级永远是最直接的战力提升。', 'Chassis levels are always your most direct power gain.');
-            case 'm6': return text('免费制造之后再补几次，就能见到稀有模组。', 'Use the free craft, then craft a few more to start seeing rare modules.');
-            case 'm7': return text('2-2 是第一波合金压力墙。', '2-2 is the first real alloy pressure wall.');
-            case 'm8': return text('至少把主机和两翼都拉到 3 星。', 'Push the chassis and both wingmen to 3 stars.');
-            case 'm9': return text('首个 Boss 是检验机库成型度的关键点。', 'The first boss is the key test for your early hangar.');
-            case 'm10': return text('3-3 是首个完整版本终点。', '3-3 is the first full-version finish line.');
-            default: return text('继续推进。', 'Keep pushing.');
+            case 'm1': return text('Use your first three free sorties to learn the drag-dodge rhythm.', 'Use your first three free sorties to learn the drag-dodge rhythm.');
+            case 'm2': return text('Elites arrive three times during a run.', 'Elites arrive three times during a run.');
+            case 'm3': return text('Clearing 1-2 unlocks the second wing slot.', 'Clearing 1-2 unlocks the second wing slot.');
+            case 'm4': return text('After 1-3, the first real power wall starts forming.', 'After 1-3, the first real power wall starts forming.');
+            case 'm5': return text('Chassis levels are always your most direct power gain.', 'Chassis levels are always your most direct power gain.');
+            case 'm6': return text('Use the free craft, then craft a few more to start seeing rare modules.', 'Use the free craft, then craft a few more to start seeing rare modules.');
+            case 'm7': return text('2-2 is the first real alloy pressure wall.', '2-2 is the first real alloy pressure wall.');
+            case 'm8': return text('Push the chassis and both wingmen to 3 stars.', 'Push the chassis and both wingmen to 3 stars.');
+            case 'm9': return text('The first boss is the key test for your early hangar.', 'The first boss is the key test for your early hangar.');
+            case 'm10': return text('3-3 is the first full-version finish line before late-game chapters begin.', '3-3 is the first full-version finish line before late-game chapters begin.');
+            case 'm11': return text('4-1 starts checking shield, levels, and whether your daily investment kept up.', '4-1 starts checking shield, levels, and whether your daily investment kept up.');
+            case 'm12': return text('Epic modules mostly come from pity cycles, higher season rewards, and premium packs.', 'Epic modules mostly come from pity cycles, higher season rewards, and premium packs.');
+            case 'm13': return text('Research is permanent growth that directly improves combat stats and farming efficiency.', 'Research is permanent growth that directly improves combat stats and farming efficiency.');
+            case 'm14': return text('Chassis levels are the most stable late-game power source and the cheapest wall breaker.', 'Chassis levels are the most stable late-game power source and the cheapest wall breaker.');
+            case 'm15': return text('4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.', '4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.');
+            default: return text('Keep pushing.', 'Keep pushing.');
         }
     }
 
@@ -3366,6 +3408,19 @@
             const stars = state.save.chassisStars[unitId] || state.save.wingmanStars[unitId] || 1;
             return count + (stars >= 3 ? 1 : 0);
         }, 0);
+    }
+
+    function countOwnedModulesByMinimumRarity(minimumRarity) {
+        const minimumScore = MODULE_RARITY_SCORE[minimumRarity] || 0;
+        return state.save.moduleInventory.reduce((count, module) => count + ((MODULE_RARITY_SCORE[module.rarity] || 0) >= minimumScore ? 1 : 0), 0);
+    }
+
+    function getTotalResearchLevels() {
+        return config.research.reduce((total, item) => total + getResearchLevel(item.id), 0);
+    }
+
+    function getHighestChassisLevel() {
+        return config.chassis.reduce((highest, item) => Math.max(highest, getUnitLevel(state.save.chassisLevels, item.id)), 1);
     }
 
     function getClaimableMissionCount() {
@@ -3404,22 +3459,26 @@
     }
 
     function getOfferImpactText(offer) {
-        if (offer.id === 'starter') return text('适合跨过 1-3，并且立刻形成双翼机雏形。', 'Best for clearing 1-3 and stabilizing your first dual-wing setup.');
-        if (offer.id === 'accelerator') return text('适合补 2 章前半合金压力。', 'Best for solving the alloy wall in early Chapter 2.');
-        if (offer.id === 'rush') return text('适合直接跨 2-3 章节墙。', 'Best for punching through the 2-3 wall.');
-        if (offer.id === 'sovereign') return text('适合提升 3 章前半 Boss 效率。', 'Best for improving early Chapter 3 boss efficiency.');
-        return text('适合后期冲榜、追高稀有模组和缩短保底。', 'Best for late-game ladder pushes, rare modules, and faster pity cycles.');
+        if (offer.id === 'starter') return text('Best for unlocking dual-wing tempo, clearing 1-3, and opening sponsor season value.', 'Best for unlocking dual-wing tempo, clearing 1-3, and opening sponsor season value.');
+        if (offer.id === 'accelerator') return text('Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.', 'Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.');
+        if (offer.id === 'rush') return text('Best for breaking the 2-3 to 3-1 pierce wall and stabilizing midgame modules fast.', 'Best for breaking the 2-3 to 3-1 pierce wall and stabilizing midgame modules fast.');
+        if (offer.id === 'sovereign') return text('Best for Chapter 3 boss walls and the survival pressure before 4-1, with better sustain and boss damage.', 'Best for Chapter 3 boss walls and the survival pressure before 4-1, with better sustain and boss damage.');
+        return text('Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.', 'Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.');
     }
 
     function getRecommendedOfferId() {
         const chapter = getSelectedChapter();
         const power = getCurrentPower();
         const gap = chapter.recommended - power;
-        if (gap <= 0 && chapter.chapter <= 1) return 'starter';
-        if (chapter.chapter === 1) return 'starter';
-        if (chapter.chapter === 2 && gap < 700) return 'accelerator';
-        if (chapter.chapter === 2) return 'rush';
-        return gap > 1400 ? 'nexus' : 'sovereign';
+        const epicModules = countOwnedModulesByMinimumRarity('epic');
+        if (chapter.chapter <= 1) return 'starter';
+        if (chapter.chapter === 2) return gap > 900 ? 'rush' : 'accelerator';
+        if (chapter.chapter === 3) {
+            if (gap > 1700 || epicModules <= 0) return 'sovereign';
+            return 'rush';
+        }
+        if (gap > 2200 || epicModules < 2) return 'nexus';
+        return 'sovereign';
     }
 
     function getShardSummaryText(shardReward) {

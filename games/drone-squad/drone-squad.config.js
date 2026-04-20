@@ -26,9 +26,10 @@
             bossSpawnSecond: 78,
             freeSortiesPerDay: 3,
             sortieCostByChapter: {
-                chapter1: 600,
-                chapter2: 900,
-                chapter3: 1400
+                chapter1: 650,
+                chapter2: 980,
+                chapter3: 1580,
+                chapter4: 2380
             },
             reviveChipDailyGrant: 1,
             waveScaling: {
@@ -120,15 +121,18 @@
             }
         ],
         chapters: [
-            { id: '1-1', name: { zh: '港区试飞', en: 'Dock Trial' }, recommended: 220, reward: { credits: 180, alloy: 10, coreChips: 0, seasonXp: 18 }, chapter: 1 },
-            { id: '1-2', name: { zh: '低轨巡航', en: 'Low Orbit Run' }, recommended: 380, reward: { credits: 250, alloy: 14, coreChips: 0, seasonXp: 22 }, chapter: 1 },
-            { id: '1-3', name: { zh: '裂缝截击', en: 'Rift Intercept' }, recommended: 620, reward: { credits: 340, alloy: 18, coreChips: 1, seasonXp: 28 }, chapter: 1 },
-            { id: '2-1', name: { zh: '废舰残带', en: 'Wreck Belt' }, recommended: 980, reward: { credits: 470, alloy: 24, coreChips: 1, seasonXp: 36 }, chapter: 2 },
-            { id: '2-2', name: { zh: '雾化前哨', en: 'Mist Outpost' }, recommended: 1500, reward: { credits: 620, alloy: 30, coreChips: 2, seasonXp: 42 }, chapter: 2 },
-            { id: '2-3', name: { zh: '磁暴走廊', en: 'Storm Corridor' }, recommended: 2200, reward: { credits: 820, alloy: 38, coreChips: 2, seasonXp: 50 }, chapter: 2 },
-            { id: '3-1', name: { zh: '裂星带', en: 'Star Fracture' }, recommended: 3200, reward: { credits: 1080, alloy: 48, coreChips: 3, seasonXp: 62 }, chapter: 3 },
-            { id: '3-2', name: { zh: '深域舰坟', en: 'Deep Graveyard' }, recommended: 4500, reward: { credits: 1380, alloy: 60, coreChips: 4, seasonXp: 76 }, chapter: 3 },
-            { id: '3-3', name: { zh: '终端母巢', en: 'Terminal Hive' }, recommended: 6200, reward: { credits: 1760, alloy: 74, coreChips: 5, seasonXp: 92 }, chapter: 3 }
+            { id: '1-1', name: { zh: '港区试飞', en: 'Dock Trial' }, recommended: 220, reward: { credits: 180, alloy: 10, coreChips: 0, seasonXp: 18 }, chapter: 1, pressure: { zh: '走位热身', en: 'Dodge Warmup' }, prep: { zh: '先熟悉拖拽走位', en: 'Learn drag-dodge first' }, rewardFocus: { zh: '基础金币', en: 'Starter credits' } },
+            { id: '1-2', name: { zh: '低轨巡航', en: 'Low Orbit Run' }, recommended: 380, reward: { credits: 250, alloy: 14, coreChips: 0, seasonXp: 22 }, chapter: 1, pressure: { zh: '火力校准', en: 'Firepower Check' }, prep: { zh: '开始补主机等级', en: 'Start chassis levels' }, rewardFocus: { zh: '解锁双僚机', en: 'Unlock wing slot' } },
+            { id: '1-3', name: { zh: '裂隙拦截', en: 'Rift Intercept' }, recommended: 620, reward: { credits: 340, alloy: 18, coreChips: 1, seasonXp: 28 }, chapter: 1, pressure: { zh: '首个精英墙', en: 'First Elite Wall' }, prep: { zh: '补火力与僚机', en: 'Add damage and wing' }, rewardFocus: { zh: '核心芯片', en: 'Core chip drop' } },
+            { id: '2-1', name: { zh: '废舰残带', en: 'Wreck Belt' }, recommended: 980, reward: { credits: 470, alloy: 24, coreChips: 1, seasonXp: 36 }, chapter: 2, pressure: { zh: '合金缺口', en: 'Alloy Gap' }, prep: { zh: '开始做研究与升星', en: 'Open research and stars' }, rewardFocus: { zh: '合金加速', en: 'Alloy income' } },
+            { id: '2-2', name: { zh: '雾化前哨', en: 'Mist Outpost' }, recommended: 1500, reward: { credits: 620, alloy: 30, coreChips: 2, seasonXp: 42 }, chapter: 2, pressure: { zh: '护盾压测', en: 'Shield Pressure' }, prep: { zh: '补护盾模组与机体', en: 'Add shield module' }, rewardFocus: { zh: '主机碎片', en: 'Chassis growth' } },
+            { id: '2-3', name: { zh: '磁暴走廊', en: 'Storm Corridor' }, recommended: 2200, reward: { credits: 820, alloy: 38, coreChips: 2, seasonXp: 50 }, chapter: 2, pressure: { zh: '穿透门槛', en: 'Pierce Gate' }, prep: { zh: '武器模组与穿甲僚机', en: 'Weapon + pierce wing' }, rewardFocus: { zh: '中期金币', en: 'Midgame credits' } },
+            { id: '3-1', name: { zh: '裂星带', en: 'Star Fracture' }, recommended: 3200, reward: { credits: 1080, alloy: 48, coreChips: 3, seasonXp: 62 }, chapter: 3, pressure: { zh: 'Boss 爆发检定', en: 'Boss Burst Check' }, prep: { zh: '补 Boss 模组', en: 'Add boss module' }, rewardFocus: { zh: '芯片加量', en: 'More core chips' } },
+            { id: '3-2', name: { zh: '深域船坟', en: 'Deep Graveyard' }, recommended: 4500, reward: { credits: 1380, alloy: 60, coreChips: 4, seasonXp: 76 }, chapter: 3, pressure: { zh: '生存续航墙', en: 'Sustain Wall' }, prep: { zh: '护盾研究+恢复僚机', en: 'Shield research + sustain' }, rewardFocus: { zh: '高阶合金', en: 'High alloy gain' } },
+            { id: '3-3', name: { zh: '终端母巢', en: 'Terminal Hive' }, recommended: 6200, reward: { credits: 1760, alloy: 74, coreChips: 5, seasonXp: 92 }, chapter: 3, pressure: { zh: '终章双检定', en: 'Dual Wall' }, prep: { zh: '爆发与续航都要够', en: 'Need burst and sustain' }, rewardFocus: { zh: '首轮毕业芯片', en: 'End-of-loop chips' } },
+            { id: '4-1', name: { zh: '虚空航标', en: 'Void Beacon' }, recommended: 8200, reward: { credits: 2140, alloy: 88, coreChips: 6, seasonXp: 108 }, chapter: 4, pressure: { zh: '高压掉血', en: 'Heavy Chip Damage' }, prep: { zh: '优先抬护盾与等级', en: 'Prioritize shield and levels' }, rewardFocus: { zh: '后期合金', en: 'Late alloy gain' } },
+            { id: '4-2', name: { zh: '湮灭航道', en: 'Null Corridor' }, recommended: 10400, reward: { credits: 2620, alloy: 104, coreChips: 8, seasonXp: 126 }, chapter: 4, pressure: { zh: '精英密集', en: 'Elite Rush' }, prep: { zh: '补穿透与稀有模组', en: 'Need pierce and rare modules' }, rewardFocus: { zh: '史诗前置', en: 'Epic setup' } },
+            { id: '4-3', name: { zh: '王冠裂界', en: 'Crown Break' }, recommended: 12900, reward: { credits: 3240, alloy: 126, coreChips: 10, seasonXp: 148 }, chapter: 4, pressure: { zh: '终局 Boss 墙', en: 'Endgame Boss Wall' }, prep: { zh: '高星主机+Boss 增伤', en: 'High-star chassis + boss dmg' }, rewardFocus: { zh: '顶级芯片', en: 'Top-tier chips' } }
         ],
         upgradeCurves: {
             chassisCreditBase: 80,
@@ -199,14 +203,19 @@
         missions: [
             { id: 'm1', title: { zh: '出击 5 次', en: 'Sortie 5 Times' }, target: 5, reward: { credits: 240, alloy: 12 } },
             { id: 'm2', title: { zh: '击败 3 个精英', en: 'Defeat 3 Elites' }, target: 3, reward: { credits: 320, alloy: 14 } },
-            { id: 'm3', title: { zh: '解锁第 2 个翼机位', en: 'Unlock Wing Slot 2' }, target: 1, reward: { credits: 420, alloy: 18, coreChips: 1 } },
+            { id: 'm3', title: { zh: '解锁第 2 个僚机位', en: 'Unlock Wing Slot 2' }, target: 1, reward: { credits: 420, alloy: 18, coreChips: 1 } },
             { id: 'm4', title: { zh: '通关 1-3', en: 'Clear 1-3' }, target: 3, reward: { credits: 560, alloy: 24, coreChips: 1 } },
             { id: 'm5', title: { zh: '主机升到 Lv10', en: 'Reach Chassis Lv10' }, target: 10, reward: { credits: 760, alloy: 28 } },
             { id: 'm6', title: { zh: '制造 2 个稀有模组', en: 'Craft 2 Rare Modules' }, target: 2, reward: { credits: 980, alloy: 34, coreChips: 2 } },
             { id: 'm7', title: { zh: '通关 2-2', en: 'Clear 2-2' }, target: 5, reward: { credits: 1260, alloy: 42, coreChips: 2 } },
             { id: 'm8', title: { zh: '3 台机体达到 3★', en: 'Reach 3 Star on 3 Units' }, target: 3, reward: { credits: 1680, alloy: 56, coreChips: 3 } },
             { id: 'm9', title: { zh: '击败首个章节 Boss', en: 'Defeat First Chapter Boss' }, target: 1, reward: { credits: 2120, alloy: 68, coreChips: 4 } },
-            { id: 'm10', title: { zh: '通关 3-3', en: 'Clear 3-3' }, target: 9, reward: { credits: 2860, alloy: 88, coreChips: 6, seasonXp: 120 } }
+            { id: 'm10', title: { zh: '通关 3-3', en: 'Clear 3-3' }, target: 9, reward: { credits: 2860, alloy: 88, coreChips: 6, seasonXp: 120 } },
+            { id: 'm11', title: { zh: '通关 4-1', en: 'Clear 4-1' }, target: 10, reward: { credits: 3980, alloy: 114, coreChips: 7, seasonXp: 140 } },
+            { id: 'm12', title: { zh: '拥有 3 个史诗及以上模组', en: 'Own 3 Epic+ Modules' }, target: 3, reward: { credits: 4820, alloy: 136, coreChips: 8, seasonXp: 160 } },
+            { id: 'm13', title: { zh: '研究总等级达到 20', en: 'Reach Total Research Lv20' }, target: 20, reward: { credits: 5660, alloy: 154, coreChips: 10, chassisShards: 18 } },
+            { id: 'm14', title: { zh: '主机升到 Lv18', en: 'Reach Chassis Lv18' }, target: 18, reward: { credits: 6520, alloy: 182, coreChips: 12, wingmanShards: 28 } },
+            { id: 'm15', title: { zh: '通关 4-3', en: 'Clear 4-3' }, target: 12, reward: { credits: 8640, alloy: 248, coreChips: 16, seasonXp: 240, epicModuleCrates: 1 } }
         ],
         seasonFreeTrack: [
             { id: 's1', xp: 80, reward: { credits: 180, alloy: 10 } },
@@ -216,14 +225,18 @@
             { id: 's5', xp: 720, reward: { credits: 560, alloy: 24, coreChips: 1 } },
             { id: 's6', xp: 980, reward: { credits: 720, alloy: 28 } },
             { id: 's7', xp: 1280, reward: { credits: 940, alloy: 34, coreChips: 2 } },
-            { id: 's8', xp: 1620, reward: { credits: 1180, alloy: 42 } }
+            { id: 's8', xp: 1620, reward: { credits: 1180, alloy: 42 } },
+            { id: 's9', xp: 2060, reward: { credits: 1560, alloy: 54, coreChips: 2 } },
+            { id: 's10', xp: 2520, reward: { credits: 1940, alloy: 68, chassisShards: 20 } }
         ],
         seasonPremiumTrack: [
             { id: 'sp1', xp: 80, reward: { credits: 420, alloy: 24, reviveChips: 1 } },
             { id: 'sp2', xp: 320, reward: { credits: 820, alloy: 46, coreChips: 2 } },
             { id: 'sp3', xp: 720, reward: { credits: 1380, alloy: 76, chassisShards: 18 } },
             { id: 'sp4', xp: 1280, reward: { credits: 2120, alloy: 124, coreChips: 4 } },
-            { id: 'sp5', xp: 1620, reward: { credits: 3180, alloy: 188, epicModuleCrates: 1 } }
+            { id: 'sp5', xp: 1620, reward: { credits: 3180, alloy: 188, epicModuleCrates: 1 } },
+            { id: 'sp6', xp: 2060, reward: { credits: 4340, alloy: 248, coreChips: 6, wingmanShards: 32 } },
+            { id: 'sp7', xp: 2520, reward: { credits: 5860, alloy: 336, coreChips: 8, epicModuleCrates: 1, reviveChips: 2 } }
         ],
         shopItems: [
             {
