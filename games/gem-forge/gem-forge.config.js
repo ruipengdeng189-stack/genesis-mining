@@ -23,7 +23,7 @@
         gemFamilies: [
             { id: 'ember', name: { zh: '余烬', en: 'Ember' }, accent: '#ff8b57' },
             { id: 'tide', name: { zh: '潮汐', en: 'Tide' }, accent: '#57c7ff' },
-            { id: 'volt', name: { zh: '雷霆', en: 'Volt' }, accent: '#ffe56a' },
+            { id: 'volt', name: { zh: '雷涌', en: 'Volt' }, accent: '#ffe56a' },
             { id: 'void', name: { zh: '虚空', en: 'Void' }, accent: '#ba7cff' }
         ],
         gemTiers: [
@@ -60,21 +60,21 @@
                 shardCostStep: 8,
                 goldCostBase: 300,
                 goldCostStep: 140,
-                effect: { zh: '提高热量恢复并降低批量熔炼压力。', en: 'Improves heat recovery and batch-forge comfort.' }
+                effect: { zh: '提高热量恢复，并降低批量熔炼的压力。', en: 'Improves heat recovery and batch-forge comfort.' }
             },
             {
                 id: 'voltRelay',
                 slot: 'resonance',
                 family: 'volt',
                 rarity: 'epic',
-                name: { zh: '雷霆继电', en: 'Volt Relay' },
+                name: { zh: '雷涌继电', en: 'Volt Relay' },
                 shardUnlock: 26,
                 baseScore: 102,
                 shardCostBase: 22,
                 shardCostStep: 10,
                 goldCostBase: 420,
                 goldCostStep: 180,
-                effect: { zh: '提高双倍产出和高阶跳升触发率。', en: 'Raises double-output and tier-jump odds.' }
+                effect: { zh: '提高双倍产出与高阶跃升触发率。', en: 'Raises double-output and tier-jump odds.' }
             },
             {
                 id: 'voidMirror',
@@ -106,167 +106,182 @@
             }
         ],
         contracts: [
-            { id: '1-1', name: { zh: '暖炉启封', en: 'Warm Kiln' }, recommended: 180, reward: { gold: 180, dust: 18, catalyst: 2, seasonXp: 28 }, focus: ['ember', 'tide'] },
-            { id: '1-2', name: { zh: '合金试压', en: 'Alloy Pressure' }, recommended: 320, reward: { gold: 280, dust: 24, catalyst: 2, seasonXp: 36 }, focus: ['tide', 'volt'] },
-            { id: '1-3', name: { zh: '棱镜试炼', en: 'Prism Trial' }, recommended: 540, reward: { gold: 420, dust: 34, catalyst: 3, seasonXp: 48 }, focus: ['volt', 'ember'] },
-            { id: '2-1', name: { zh: '晶压炉室', en: 'Crystal Press' }, recommended: 860, reward: { gold: 620, dust: 48, catalyst: 4, seasonXp: 66 }, focus: ['ember', 'void'] },
-            { id: '2-2', name: { zh: '余烬反应堆', en: 'Ember Reactor' }, recommended: 1260, reward: { gold: 860, dust: 62, catalyst: 5, seasonXp: 88 }, focus: ['ember', 'volt'] },
-            { id: '2-3', name: { zh: '共鸣熔芯', en: 'Resonance Core' }, recommended: 1780, reward: { gold: 1160, dust: 84, catalyst: 7, seasonXp: 116 }, focus: ['tide', 'void'] },
-            { id: '3-1', name: { zh: '虚空镜厅', en: 'Void Mirror' }, recommended: 2440, reward: { gold: 1520, dust: 112, catalyst: 9, seasonXp: 146 }, focus: ['void', 'volt'] },
-            { id: '3-2', name: { zh: '符印之心', en: 'Sigil Heart' }, recommended: 3260, reward: { gold: 1960, dust: 146, catalyst: 12, seasonXp: 182 }, focus: ['void', 'ember'] },
-            { id: '3-3', name: { zh: '创世砧核', en: 'Genesis Anvil' }, recommended: 4320, reward: { gold: 2520, dust: 192, catalyst: 16, seasonXp: 228 }, focus: ['void', 'tide'] }
+            { id: '1-1', name: { zh: '暖炉启封', en: 'Warm Kiln' }, recommended: 180, reward: { gold: 160, dust: 14, catalyst: 2, seasonXp: 24 }, focus: ['ember', 'tide'] },
+            { id: '1-2', name: { zh: '合金试压', en: 'Alloy Pressure' }, recommended: 360, reward: { gold: 230, dust: 18, catalyst: 2, seasonXp: 30 }, focus: ['tide', 'volt'] },
+            { id: '1-3', name: { zh: '棱镜试炼', en: 'Prism Trial' }, recommended: 640, reward: { gold: 320, dust: 24, catalyst: 3, seasonXp: 40 }, focus: ['volt', 'ember'] },
+            { id: '2-1', name: { zh: '晶压炉室', en: 'Crystal Press' }, recommended: 1080, reward: { gold: 440, dust: 34, catalyst: 4, seasonXp: 54 }, focus: ['ember', 'void'] },
+            { id: '2-2', name: { zh: '余烬反应堆', en: 'Ember Reactor' }, recommended: 1620, reward: { gold: 620, dust: 44, catalyst: 5, seasonXp: 70 }, focus: ['ember', 'volt'] },
+            { id: '2-3', name: { zh: '共鸣熔芯', en: 'Resonance Core' }, recommended: 2360, reward: { gold: 860, dust: 58, catalyst: 7, seasonXp: 92 }, focus: ['tide', 'void'] },
+            { id: '3-1', name: { zh: '虚空镜厅', en: 'Void Mirror' }, recommended: 3380, reward: { gold: 1160, dust: 78, catalyst: 9, seasonXp: 118 }, focus: ['void', 'volt'] },
+            { id: '3-2', name: { zh: '符印之心', en: 'Sigil Heart' }, recommended: 4720, reward: { gold: 1520, dust: 102, catalyst: 12, seasonXp: 152 }, focus: ['void', 'ember'] },
+            { id: '3-3', name: { zh: '创世砧核', en: 'Genesis Anvil' }, recommended: 6480, reward: { gold: 1980, dust: 134, catalyst: 15, seasonXp: 192 }, focus: ['void', 'tide'] }
         ],
         workshop: [
             {
                 id: 'heatCap',
                 name: { zh: '热量上限', en: 'Heat Cap' },
                 maxLevel: 12,
-                baseCostGold: 240,
-                costGoldStep: 130,
-                baseCostDust: 0,
-                costDustStep: 4,
-                effectBase: 20,
-                effectStep: 12
+                baseCostGold: 320,
+                costGoldStep: 180,
+                baseCostDust: 2,
+                costDustStep: 8,
+                effectBase: 24,
+                effectStep: 14
             },
             {
                 id: 'heatRegen',
                 name: { zh: '热量恢复', en: 'Heat Regen' },
                 maxLevel: 12,
-                baseCostGold: 220,
-                costGoldStep: 120,
-                baseCostDust: 0,
-                costDustStep: 4,
-                effectBase: 0.2,
-                effectStep: 0.14
+                baseCostGold: 300,
+                costGoldStep: 160,
+                baseCostDust: 2,
+                costDustStep: 8,
+                effectBase: 0.22,
+                effectStep: 0.16
             },
             {
                 id: 'rareRate',
                 name: { zh: '稀有率强化', en: 'Rare Rate' },
                 maxLevel: 10,
-                baseCostGold: 320,
-                costGoldStep: 160,
-                baseCostDust: 10,
-                costDustStep: 8,
-                effectBase: 0.015,
-                effectStep: 0.01
+                baseCostGold: 460,
+                costGoldStep: 240,
+                baseCostDust: 14,
+                costDustStep: 12,
+                effectBase: 0.018,
+                effectStep: 0.012
             },
             {
                 id: 'dustYield',
                 name: { zh: '熔尘回收', en: 'Dust Yield' },
                 maxLevel: 10,
-                baseCostGold: 340,
-                costGoldStep: 170,
-                baseCostDust: 12,
-                costDustStep: 8,
-                effectBase: 0.08,
-                effectStep: 0.05
+                baseCostGold: 480,
+                costGoldStep: 250,
+                baseCostDust: 16,
+                costDustStep: 12,
+                effectBase: 0.1,
+                effectStep: 0.06
             },
             {
                 id: 'catalystRefine',
-                name: { zh: '催化剂提炼', en: 'Catalyst Refine' },
+                name: { zh: '催化提炼', en: 'Catalyst Refine' },
                 maxLevel: 8,
-                baseCostGold: 480,
-                costGoldStep: 220,
-                baseCostDust: 20,
-                costDustStep: 12,
-                effectBase: 0.05,
-                effectStep: 0.04
+                baseCostGold: 680,
+                costGoldStep: 320,
+                baseCostDust: 26,
+                costDustStep: 16,
+                effectBase: 0.06,
+                effectStep: 0.05
             }
         ],
         forgeBalance: {
             heatMax: 120,
-            batchSmeltHeatCost: 12,
-            batchSmeltGoldGain: 18,
-            batchSmeltDustGain: 2,
-            pityTier3Need: 18,
-            pityTier4Need: 60,
+            batchSmeltHeatCost: 14,
+            batchSmeltGoldGain: 12,
+            batchSmeltDustGain: 1,
+            pityTier3Need: 22,
+            pityTier4Need: 76,
             dropRates: {
-                tier1: 0.78,
-                tier2: 0.18,
-                tier3: 0.04
+                tier1: 0.8,
+                tier2: 0.17,
+                tier3: 0.03
             }
         },
         forgeEconomy: {
-            sigilUnlockGoldBase: 240,
-            sigilUnlockGoldPerScore: 2.4,
-            sigilUnlockGoldPerShard: 14,
+            sigilUnlockGoldBase: 320,
+            sigilUnlockGoldPerScore: 3.2,
+            sigilUnlockGoldPerShard: 18,
             fuseCosts: {
-                1: { gold: 90, catalyst: 0 },
-                2: { gold: 220, catalyst: 0 },
-                3: { gold: 560, catalyst: 2 },
-                4: { gold: 1480, catalyst: 8 }
+                1: { gold: 130, catalyst: 0 },
+                2: { gold: 320, catalyst: 0 },
+                3: { gold: 780, catalyst: 3 },
+                4: { gold: 2080, catalyst: 10 }
             },
             awakenCosts: {
-                3: { gold: 360, dust: 26 },
-                4: { gold: 920, dust: 72 },
-                5: { gold: 2380, dust: 180 }
+                3: { gold: 520, dust: 36, catalyst: 2 },
+                4: { gold: 1380, dust: 108, catalyst: 8 },
+                5: { gold: 3480, dust: 300, catalyst: 18 }
             },
-            goldReserveBase: 760,
-            goldReserveStep: 420,
-            dustReserveBase: 90,
-            dustReserveStep: 52
+            goldReserveBase: 980,
+            goldReserveStep: 560,
+            dustReserveBase: 110,
+            dustReserveStep: 68,
+            failRewardGoldFactor: 0.46,
+            failRewardDustFactor: 0.52,
+            failRewardCatalystFactor: 0.28,
+            failRewardXpFactor: 0.42,
+            shopProgressFactorStep: 0.08,
+            freeShardFlow: {
+                contractSuccessBase: 5,
+                contractSuccessStep: 1,
+                contractFailBase: 2,
+                contractFailStep: 1,
+                dailySupply: 4,
+                shopGoldCrate: 6,
+                shopDustCrate: 4,
+                shopSponsorVault: 6
+            }
         },
         missions: [
-            { id: 'm1', title: { zh: '开炉 10 次', en: 'Forge 10 Times' }, target: 10, reward: { gold: 220, dust: 16 } },
-            { id: 'm2', title: { zh: '完成 3 次合成', en: 'Fuse 3 Times' }, target: 3, reward: { gold: 260, dust: 18 } },
-            { id: 'm3', title: { zh: '符印升级 2 次', en: 'Upgrade 2 Sigils' }, target: 2, reward: { gold: 320, dust: 20, catalyst: 2 } },
-            { id: 'm4', title: { zh: '推进至 1-3', en: 'Reach 1-3' }, target: 3, reward: { gold: 420, dust: 28, catalyst: 3 } },
-            { id: 'm5', title: { zh: '工坊升级 5 次', en: 'Upgrade Workshop 5 Times' }, target: 5, reward: { gold: 560, dust: 34 } },
-            { id: 'm6', title: { zh: '获得 1 颗 T3 宝石', en: 'Obtain 1 T3 Gem' }, target: 1, reward: { gold: 720, dust: 40, catalyst: 4 } },
-            { id: 'm7', title: { zh: '推进至 2-2', en: 'Reach 2-2' }, target: 5, reward: { gold: 980, dust: 62, catalyst: 5 } },
-            { id: 'm8', title: { zh: '完成 20 次合成', en: 'Fuse 20 Times' }, target: 20, reward: { gold: 1280, dust: 84, catalyst: 6 } },
-            { id: 'm9', title: { zh: '获得 3 颗 T4 宝石', en: 'Obtain 3 T4 Gems' }, target: 3, reward: { gold: 1820, dust: 116, catalyst: 10 } },
-            { id: 'm10', title: { zh: '推进至 3-3', en: 'Reach 3-3' }, target: 9, reward: { gold: 2560, dust: 168, catalyst: 14, seasonXp: 180 } }
+            { id: 'm1', title: { zh: '开炉 10 次', en: 'Forge 10 Times' }, target: 10, reward: { gold: 180, dust: 12 } },
+            { id: 'm2', title: { zh: '完成 3 次合成', en: 'Fuse 3 Times' }, target: 3, reward: { gold: 220, dust: 14 } },
+            { id: 'm3', title: { zh: '符印升级 2 次', en: 'Upgrade 2 Sigils' }, target: 2, reward: { gold: 280, dust: 16, catalyst: 2 } },
+            { id: 'm4', title: { zh: '推进至 1-3', en: 'Reach 1-3' }, target: 3, reward: { gold: 360, dust: 24, catalyst: 2 } },
+            { id: 'm5', title: { zh: '工坊升级 5 次', en: 'Upgrade Workshop 5 Times' }, target: 5, reward: { gold: 460, dust: 28 } },
+            { id: 'm6', title: { zh: '获得 1 颗 T3 宝石', en: 'Obtain 1 T3 Gem' }, target: 1, reward: { gold: 600, dust: 34, catalyst: 3 } },
+            { id: 'm7', title: { zh: '推进至 2-2', en: 'Reach 2-2' }, target: 5, reward: { gold: 820, dust: 50, catalyst: 4 } },
+            { id: 'm8', title: { zh: '完成 20 次合成', en: 'Fuse 20 Times' }, target: 20, reward: { gold: 1080, dust: 70, catalyst: 5 } },
+            { id: 'm9', title: { zh: '获得 3 颗 T4 宝石', en: 'Obtain 3 T4 Gems' }, target: 3, reward: { gold: 1480, dust: 96, catalyst: 8 } },
+            { id: 'm10', title: { zh: '推进至 3-3', en: 'Reach 3-3' }, target: 9, reward: { gold: 2100, dust: 132, catalyst: 12, seasonXp: 120 } }
         ],
         seasonNodes: [
-            { id: 's1', xp: 120, reward: { gold: 280, dust: 18 } },
-            { id: 's2', xp: 280, reward: { gold: 420, dust: 24 } },
-            { id: 's3', xp: 500, reward: { gold: 620, dust: 36, catalyst: 2 } },
-            { id: 's4', xp: 780, reward: { gold: 860, dust: 48 } },
-            { id: 's5', xp: 1120, reward: { gold: 1180, dust: 64, catalyst: 3 } },
-            { id: 's6', xp: 1520, reward: { gold: 1540, dust: 82 } },
-            { id: 's7', xp: 1980, reward: { gold: 1960, dust: 104, catalyst: 4 } },
-            { id: 's8', xp: 2500, reward: { gold: 2480, dust: 132, catalyst: 5 } }
+            { id: 's1', xp: 120, reward: { gold: 220, dust: 14 } },
+            { id: 's2', xp: 280, reward: { gold: 320, dust: 18 } },
+            { id: 's3', xp: 500, reward: { gold: 480, dust: 28, catalyst: 2 } },
+            { id: 's4', xp: 780, reward: { gold: 660, dust: 36 } },
+            { id: 's5', xp: 1120, reward: { gold: 920, dust: 48, catalyst: 3 } },
+            { id: 's6', xp: 1520, reward: { gold: 1180, dust: 62 } },
+            { id: 's7', xp: 1980, reward: { gold: 1500, dust: 80, catalyst: 4 } },
+            { id: 's8', xp: 2500, reward: { gold: 1880, dust: 104, catalyst: 5 } }
         ],
         sponsorSeasonNodes: [
-            { id: 'sp1', xp: 120, reward: { gold: 360, dust: 24, catalyst: 2 } },
-            { id: 'sp2', xp: 500, reward: { gold: 740, dust: 54, catalyst: 3 } },
-            { id: 'sp3', xp: 1120, reward: { gold: 1320, dust: 96, catalyst: 5 } },
-            { id: 'sp4', xp: 1980, reward: { gold: 2180, dust: 150, catalyst: 8 } },
-            { id: 'sp5', xp: 2500, reward: { gold: 2960, dust: 210, catalyst: 12 } }
+            { id: 'sp1', xp: 120, reward: { gold: 460, dust: 30, catalyst: 2 } },
+            { id: 'sp2', xp: 500, reward: { gold: 980, dust: 72, catalyst: 4 } },
+            { id: 'sp3', xp: 1120, reward: { gold: 1760, dust: 128, catalyst: 6 } },
+            { id: 'sp4', xp: 1980, reward: { gold: 2860, dust: 210, catalyst: 10 } },
+            { id: 'sp5', xp: 2500, reward: { gold: 4180, dust: 320, catalyst: 16 } }
         ],
         shopItems: [
             {
                 id: 'dailySupply',
                 free: true,
-                cooldownHours: 20,
+                cooldownHours: 24,
                 title: { zh: '每日引火箱', en: 'Daily Spark Box' },
-                reward: { gold: 240, dust: 18, catalyst: 1 }
+                reward: { gold: 180, dust: 10, catalyst: 1 }
             },
             {
                 id: 'goldCrate',
                 priceType: 'gold',
-                basePrice: 2100,
-                repeatGrowth: 0.28,
+                basePrice: 3600,
+                repeatGrowth: 0.34,
                 title: { zh: '熔尘补给箱', en: 'Dust Crate' },
-                reward: { dust: 58, catalyst: 2 }
+                reward: { dust: 72, catalyst: 3 }
             },
             {
                 id: 'dustCrate',
                 priceType: 'dust',
-                basePrice: 138,
-                repeatGrowth: 0.26,
+                basePrice: 220,
+                repeatGrowth: 0.32,
                 title: { zh: '催化反应箱', en: 'Catalyst Crate' },
-                reward: { gold: 860, catalyst: 8 }
+                reward: { gold: 1150, catalyst: 10 }
             },
             {
                 id: 'sponsorVault',
                 priceType: 'gold',
-                basePrice: 6200,
-                repeatGrowth: 0.34,
+                basePrice: 10800,
+                repeatGrowth: 0.42,
                 requiresSponsor: true,
                 title: { zh: '赞助棱镜库', en: 'Sponsor Prism Vault' },
-                reward: { dust: 176, catalyst: 12 }
+                reward: { dust: 260, catalyst: 18 }
             }
         ],
         paymentOffers: [
@@ -274,88 +289,88 @@
                 id: 'starter',
                 price: 1.0,
                 name: { zh: '火种补给', en: 'Spark Starter' },
-                reward: { gold: 1800, dust: 72, catalyst: 8 },
-                focusShards: 10,
-                permanent: { heatCap: 20, rareRate: 0.03 }
+                reward: { gold: 2400, dust: 90, catalyst: 10 },
+                focusShards: 16,
+                permanent: { heatCap: 24, rareRate: 0.035, contractStability: 90 }
             },
             {
                 id: 'accelerator',
                 price: 2.99,
                 name: { zh: '熔炉加速箱', en: 'Forge Booster' },
-                reward: { gold: 6200, dust: 220, catalyst: 20 },
-                focusShards: 18,
-                permanent: { heatCap: 36, rareRate: 0.05, dustYield: 0.08 }
+                reward: { gold: 8800, dust: 300, catalyst: 26 },
+                focusShards: 30,
+                permanent: { heatCap: 42, rareRate: 0.06, dustYield: 0.1, contractStability: 180 }
             },
             {
                 id: 'rush',
                 price: 3.99,
                 name: { zh: '卡点突围包', en: 'Wall Breaker' },
-                reward: { gold: 11800, dust: 420, catalyst: 38 },
-                focusShards: 28,
-                permanent: { heatCap: 52, rareRate: 0.08, dustYield: 0.12 }
+                reward: { gold: 15800, dust: 520, catalyst: 46 },
+                focusShards: 46,
+                permanent: { heatCap: 60, rareRate: 0.09, dustYield: 0.14, catalystYield: 0.05, contractStability: 300 }
             },
             {
                 id: 'sovereign',
                 price: 5.99,
                 name: { zh: '棱镜统御包', en: 'Prism Dominion' },
-                reward: { gold: 22800, dust: 760, catalyst: 68 },
-                focusShards: 40,
-                permanent: { heatCap: 80, rareRate: 0.12, dustYield: 0.18, catalystYield: 0.08 }
+                reward: { gold: 28600, dust: 940, catalyst: 82 },
+                focusShards: 66,
+                permanent: { heatCap: 88, rareRate: 0.13, dustYield: 0.2, catalystYield: 0.09, contractStability: 460 }
             },
             {
                 id: 'nexus',
                 price: 9.99,
                 name: { zh: '棱核中枢包', en: 'Prism Nexus' },
-                reward: { gold: 30800, dust: 1020, catalyst: 92 },
-                focusShards: 54,
-                permanent: { heatCap: 94, rareRate: 0.14, dustYield: 0.21, catalystYield: 0.11 }
+                reward: { gold: 43800, dust: 1460, catalyst: 124 },
+                focusShards: 92,
+                permanent: { heatCap: 108, rareRate: 0.17, dustYield: 0.26, catalystYield: 0.13, contractStability: 680 }
             },
             {
                 id: 'throne',
                 price: 12.99,
                 name: { zh: '创世砧核', en: 'Genesis Anvil' },
-                reward: { gold: 38800, dust: 1280, catalyst: 120 },
-                focusShards: 70,
-                permanent: { heatCap: 110, rareRate: 0.16, dustYield: 0.24, catalystYield: 0.14 }
+                reward: { gold: 56800, dust: 1960, catalyst: 168 },
+                focusShards: 124,
+                permanent: { heatCap: 132, rareRate: 0.2, dustYield: 0.32, catalystYield: 0.18, contractStability: 900 }
             }
         ],
         sponsorTiers: [
-            { id: 'locked', threshold: 0, title: { zh: '未激活', en: 'Locked' }, heatCapBonus: 0, rareRateBonus: 0, dustYieldBonus: 0, catalystYieldBonus: 0, contractSlotBonus: 0 },
-            { id: 'spark', threshold: 1, title: { zh: '火种赞助', en: 'Spark Sponsor' }, heatCapBonus: 20, rareRateBonus: 0.03, dustYieldBonus: 0.08, catalystYieldBonus: 0.04, contractSlotBonus: 1 },
-            { id: 'relay', threshold: 5, title: { zh: '继电赞助', en: 'Relay Sponsor' }, heatCapBonus: 42, rareRateBonus: 0.06, dustYieldBonus: 0.14, catalystYieldBonus: 0.08, contractSlotBonus: 1 },
-            { id: 'dominion', threshold: 12, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, heatCapBonus: 72, rareRateBonus: 0.1, dustYieldBonus: 0.22, catalystYieldBonus: 0.14, contractSlotBonus: 2 },
-            { id: 'genesis', threshold: 25, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, heatCapBonus: 110, rareRateBonus: 0.15, dustYieldBonus: 0.32, catalystYieldBonus: 0.22, contractSlotBonus: 2 }
+            { id: 'locked', threshold: 0, title: { zh: '未激活', en: 'Locked' }, heatCapBonus: 0, rareRateBonus: 0, dustYieldBonus: 0, catalystYieldBonus: 0, contractStabilityBonus: 0, contractSlotBonus: 0 },
+            { id: 'spark', threshold: 1, title: { zh: '火种赞助', en: 'Spark Sponsor' }, heatCapBonus: 24, rareRateBonus: 0.035, dustYieldBonus: 0.1, catalystYieldBonus: 0.05, contractStabilityBonus: 120, contractSlotBonus: 1 },
+            { id: 'relay', threshold: 4, title: { zh: '继电赞助', en: 'Relay Sponsor' }, heatCapBonus: 52, rareRateBonus: 0.075, dustYieldBonus: 0.18, catalystYieldBonus: 0.1, contractStabilityBonus: 260, contractSlotBonus: 1 },
+            { id: 'dominion', threshold: 10, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, heatCapBonus: 90, rareRateBonus: 0.12, dustYieldBonus: 0.28, catalystYieldBonus: 0.16, contractStabilityBonus: 440, contractSlotBonus: 2 },
+            { id: 'genesis', threshold: 20, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, heatCapBonus: 136, rareRateBonus: 0.18, dustYieldBonus: 0.4, catalystYieldBonus: 0.24, contractStabilityBonus: 700, contractSlotBonus: 2 }
         ],
         paymentMilestones: [
             {
                 id: 'tier1',
                 threshold: 1,
-                reward: { gold: 1200, dust: 60, catalyst: 6 },
-                permanent: { heatCap: 8, rareRate: 0.01 }
+                reward: { gold: 1500, dust: 72, catalyst: 8 },
+                permanent: { heatCap: 10, rareRate: 0.012, contractStability: 40 }
             },
             {
                 id: 'tier2',
-                threshold: 5,
-                reward: { gold: 4200, dust: 180, catalyst: 16 },
-                permanent: { heatCap: 12, dustYield: 0.03, catalystYield: 0.02 }
+                threshold: 4,
+                reward: { gold: 5600, dust: 240, catalyst: 20 },
+                permanent: { heatCap: 16, dustYield: 0.04, catalystYield: 0.025, contractStability: 70 }
             },
             {
                 id: 'tier3',
-                threshold: 12,
-                reward: { gold: 11800, dust: 460, catalyst: 42 },
-                permanent: { heatCap: 16, rareRate: 0.02, dustYield: 0.04 }
+                threshold: 10,
+                reward: { gold: 14800, dust: 560, catalyst: 48 },
+                permanent: { heatCap: 22, rareRate: 0.024, dustYield: 0.05, contractStability: 110 }
             },
             {
                 id: 'tier4',
-                threshold: 25,
-                reward: { gold: 25800, dust: 980, catalyst: 92 },
-                permanent: { heatCap: 22, rareRate: 0.03, dustYield: 0.06, catalystYield: 0.04 }
+                threshold: 20,
+                reward: { gold: 33800, dust: 1260, catalyst: 112 },
+                permanent: { heatCap: 30, rareRate: 0.036, dustYield: 0.08, catalystYield: 0.05, contractStability: 160 }
             }
         ],
         baseSave: {
-            gold: 2400,
-            dust: 80,
-            catalyst: 24,
+            gold: 2200,
+            dust: 72,
+            catalyst: 22,
             seasonXp: 0,
             contractIndex: 0,
             bestContractIndex: 0,

@@ -1951,10 +1951,10 @@
                     </div>
                     <div class="gf-chip-row" style="margin-top:12px;">
                         ${dailySupply ? renderRewardChips(dailySupply.reward, { limit: 3 }) : ''}
-                        <span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +4</span>
+                        <span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(getForgeFreeShardFlow().dailySupply)}</span>
                     </div>
                     <div class="gf-chip-row" style="margin-top:12px;">
-                        <span class="gf-chip">${dailyReady ? text('当前可直接领取。', 'Ready to claim now.') : text('20 小时刷新一次。', 'Refreshes every 20 hours.')}</span>
+                        <span class="gf-chip">${dailyReady ? text('当前可直接领取。', 'Ready to claim now.') : text('24 小时刷新一次。', 'Refreshes every 24 hours.')}</span>
                     </div>
                     <div class="gf-action-row" style="margin-top:12px;">
                         <button class="${dailyAction.cls}" type="button" data-action="${dailyAction.action}" data-value="${dailyAction.value}">${dailyAction.label}</button>
@@ -2940,7 +2940,8 @@
                 heatCap: 0,
                 rareRate: 0,
                 dustYield: 0,
-                catalystYield: 0
+                catalystYield: 0,
+                contractStability: 0
             },
             stats: {
                 smelts: 0,
@@ -6640,10 +6641,10 @@
                     </div>
                     <div class="gf-chip-row" style="margin-top:12px;">
                         ${dailySupply ? renderRewardChips(dailySupply.reward, { limit: 2 }) : ''}
-                        <span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +4</span>
+                        <span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(getForgeFreeShardFlow().dailySupply)}</span>
                     </div>
                     <div class="gf-chip-row" style="margin-top:12px;">
-                        <span class="gf-chip">${dailyReady ? text('当前可直接领取。', 'Ready to claim now.') : text('20 小时刷新一次。', 'Refreshes every 20 hours.')}</span>
+                        <span class="gf-chip">${dailyReady ? text('当前可直接领取。', 'Ready to claim now.') : text('24 小时刷新一次。', 'Refreshes every 24 hours.')}</span>
                     </div>
                     <div class="gf-action-row" style="margin-top:12px;">
                         <button class="${dailyAction.cls}" type="button" data-action="${dailyAction.action}" data-value="${dailyAction.value}">${dailyAction.label}</button>
@@ -6781,6 +6782,767 @@
                 ${visibleSigils.map(renderSigilCompactRow).join('')}
             </div>
             ${hiddenCount > 0 ? `<div class="gf-empty">${text(`其余 ${hiddenCount} 个符印已折叠，先处理最关键的 3 个。`, `${hiddenCount} more sigils are collapsed. Focus on the top 3 first.`)}</div>` : ''}
+        `;
+    };
+
+    function getForgeEconomyNumber(value, fallback = 0) {
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? Math.max(0, numeric) : fallback;
+    }
+
+    function getForgeFreeShardFlow() {
+        const flow = config.forgeEconomy?.freeShardFlow || {};
+        return {
+            contractSuccessBase: Math.round(getForgeEconomyNumber(flow.contractSuccessBase, 8)),
+            contractSuccessStep: Math.round(getForgeEconomyNumber(flow.contractSuccessStep, 2)),
+            contractFailBase: Math.round(getForgeEconomyNumber(flow.contractFailBase, 4)),
+            contractFailStep: Math.round(getForgeEconomyNumber(flow.contractFailStep, 1)),
+            dailySupply: Math.round(getForgeEconomyNumber(flow.dailySupply, 4)),
+            shopGoldCrate: Math.round(getForgeEconomyNumber(flow.shopGoldCrate, 6)),
+            shopDustCrate: Math.round(getForgeEconomyNumber(flow.shopDustCrate, 4)),
+            shopSponsorVault: Math.round(getForgeEconomyNumber(flow.shopSponsorVault, 6))
+        };
+    }
+
+    function getContractFocusShardGrant(contractIndex, success = true) {
+        const flow = getForgeFreeShardFlow();
+        const safeIndex = Math.max(0, Number(contractIndex) || 0);
+        return success
+            ? flow.contractSuccessBase + safeIndex * flow.contractSuccessStep
+            : flow.contractFailBase + safeIndex * flow.contractFailStep;
+    }
+
+    function getShopFocusShardGrant(itemId) {
+        const flow = getForgeFreeShardFlow();
+        switch (itemId) {
+            case 'goldCrate':
+                return flow.shopGoldCrate;
+            case 'dustCrate':
+                return flow.shopDustCrate;
+            case 'sponsorVault':
+                return flow.shopSponsorVault;
+            default:
+                return 0;
+        }
+    }
+
+    function buildFocusSigilReward(familyIds = [], amount = 0) {
+        const shardAmount = Math.round(getForgeEconomyNumber(amount, 0));
+        if (!Array.isArray(familyIds) || !familyIds.length || shardAmount <= 0) return null;
+        const reward = {};
+        config.sigils.forEach((sigil) => {
+            if (familyIds.includes(sigil.family)) reward[sigil.id] = shardAmount;
+        });
+        return Object.keys(reward).length ? reward : null;
+    }
+
+    applyPermanentBonus = function applyPermanentBonusEconomyLinked(permanent, saveSnapshot = state.save) {
+        if (!permanent || !saveSnapshot) {
+            return { heatCap: 0, rareRate: 0, dustYield: 0, catalystYield: 0, contractStability: 0 };
+        }
+        const normalized = {
+            heatCap: getForgeEconomyNumber(permanent.heatCap, 0),
+            rareRate: getForgeEconomyNumber(permanent.rareRate, 0),
+            dustYield: getForgeEconomyNumber(permanent.dustYield, 0),
+            catalystYield: getForgeEconomyNumber(permanent.catalystYield, 0),
+            contractStability: Math.round(getForgeEconomyNumber(permanent.contractStability, 0))
+        };
+        saveSnapshot.permanent = {
+            heatCap: getForgeEconomyNumber(saveSnapshot.permanent?.heatCap, 0),
+            rareRate: getForgeEconomyNumber(saveSnapshot.permanent?.rareRate, 0),
+            dustYield: getForgeEconomyNumber(saveSnapshot.permanent?.dustYield, 0),
+            catalystYield: getForgeEconomyNumber(saveSnapshot.permanent?.catalystYield, 0),
+            contractStability: Math.round(getForgeEconomyNumber(saveSnapshot.permanent?.contractStability, 0))
+        };
+        saveSnapshot.permanent.heatCap += normalized.heatCap;
+        saveSnapshot.permanent.rareRate += normalized.rareRate;
+        saveSnapshot.permanent.dustYield += normalized.dustYield;
+        saveSnapshot.permanent.catalystYield += normalized.catalystYield;
+        saveSnapshot.permanent.contractStability += normalized.contractStability;
+        return normalized;
+    };
+
+    renderPermanentChips = function renderPermanentChipsEconomyLinked(permanent, options = {}) {
+        const limit = Number.isFinite(options.limit) ? options.limit : Infinity;
+        const chips = [];
+        if (!permanent) return '';
+        if (permanent.contractStability) chips.push(`<span class="gf-chip is-strong">${text('永久稳定', 'Perm Stability')} +${formatCompact(permanent.contractStability)}</span>`);
+        if (permanent.heatCap) chips.push(`<span class="gf-chip is-strong">${text('永久热量', 'Perm Heat')} +${formatCompact(permanent.heatCap)}</span>`);
+        if (permanent.rareRate) chips.push(`<span class="gf-chip is-strong">${text('永久稀有率', 'Perm Rare')} +${formatPercent(permanent.rareRate)}</span>`);
+        if (permanent.dustYield) chips.push(`<span class="gf-chip is-success">${text('永久熔尘', 'Perm Dust')} +${formatPercent(permanent.dustYield)}</span>`);
+        if (permanent.catalystYield) chips.push(`<span class="gf-chip is-success">${text('永久催化', 'Perm Catalyst')} +${formatPercent(permanent.catalystYield)}</span>`);
+        if (chips.length > limit) return [...chips.slice(0, limit), `<span class="gf-chip">+${chips.length - limit}</span>`].join('');
+        return chips.join('');
+    };
+
+    getSigilPassives = function getSigilPassivesEconomyLinked(saveSnapshot = state.save) {
+        const passive = {
+            heatRegen: 0,
+            rareRate: 0,
+            dustYield: 0,
+            catalystYield: 0,
+            goldBonus: 0,
+            doubleChance: 0,
+            jumpChance: 0,
+            batchDustBonus: 0,
+            contractStability: 0,
+            awakenPowerBonus: 0,
+            bonusExtraGemChance: 0
+        };
+        getSelectedSigils(saveSnapshot).forEach((sigil) => {
+            const level = getSigilLevelForSave(sigil.id, saveSnapshot);
+            switch (sigil.id) {
+                case 'emberCore':
+                    passive.goldBonus += 0.08 + level * 0.025;
+                    passive.bonusExtraGemChance += 0.02 + level * 0.01;
+                    break;
+                case 'tideLoop':
+                    passive.heatRegen += 0.12 + level * 0.08;
+                    passive.batchDustBonus += 1 + Math.floor(level / 2);
+                    break;
+                case 'voltRelay':
+                    passive.doubleChance += 0.05 + level * 0.025;
+                    passive.jumpChance += 0.02 + level * 0.015;
+                    break;
+                case 'voidMirror':
+                    passive.rareRate += 0.04 + level * 0.02;
+                    passive.contractStability += 36 + level * 18;
+                    break;
+                case 'prismCrown':
+                    passive.rareRate += 0.05 + level * 0.03;
+                    passive.catalystYield += 0.04 + level * 0.02;
+                    passive.awakenPowerBonus += 0.12 + level * 0.05;
+                    break;
+                default:
+                    break;
+            }
+        });
+        const sponsor = getSponsorTier(saveSnapshot);
+        passive.contractStability += Math.round(getForgeEconomyNumber(saveSnapshot.permanent?.contractStability, 0));
+        passive.contractStability += Math.round(getForgeEconomyNumber(sponsor.contractStabilityBonus, 0));
+        return passive;
+    };
+
+    getContractPreviewReward = function getContractPreviewRewardEconomyLinked(contract, success = true, saveSnapshot = state.save) {
+        if (!contract) return { gold: 0, dust: 0, catalyst: 0, seasonXp: 0 };
+        const economy = config.forgeEconomy || {};
+        const goldFactor = success
+            ? 1 + getGoldBonus(saveSnapshot)
+            : getForgeEconomyNumber(economy.failRewardGoldFactor, 0.58) + getGoldBonus(saveSnapshot) * 0.4;
+        const dustFactor = success
+            ? 1 + getDustBonus(saveSnapshot)
+            : getForgeEconomyNumber(economy.failRewardDustFactor, 0.64) + getDustBonus(saveSnapshot) * 0.4;
+        const catalystFactor = success
+            ? 1 + getCatalystBonus(saveSnapshot)
+            : getForgeEconomyNumber(economy.failRewardCatalystFactor, 0.42) + getCatalystBonus(saveSnapshot) * 0.35;
+        const xpFactor = success ? 1 : getForgeEconomyNumber(economy.failRewardXpFactor, 0.55);
+        const baseCatalyst = Number(contract.reward?.catalyst || 0);
+        return {
+            gold: Math.max(0, Math.round(Number(contract.reward?.gold || 0) * goldFactor)),
+            dust: Math.max(0, Math.round(Number(contract.reward?.dust || 0) * dustFactor)),
+            catalyst: Math.max(baseCatalyst > 0 ? 1 : 0, Math.round(baseCatalyst * catalystFactor)),
+            seasonXp: Math.max(0, Math.round(Number(contract.reward?.seasonXp || 0) * xpFactor))
+        };
+    };
+
+    getShopPrice = function getShopPriceEconomyLinked(itemId) {
+        const item = config.shopItems.find((entry) => entry.id === itemId);
+        if (!item || item.free) return 0;
+        const repeatFactor = Math.pow(1 + getForgeEconomyNumber(item.repeatGrowth, 0), getShopPurchaseCount(itemId));
+        const progressIndex = Math.max(Number(state.save.bestContractIndex || 0), Number(state.save.contractIndex || 0));
+        const progressStep = getForgeEconomyNumber(config.forgeEconomy?.shopProgressFactorStep, 0.04);
+        const progressFactor = 1 + Math.max(0, progressIndex - 1) * progressStep;
+        return Math.round(Number(item.basePrice || 0) * repeatFactor * progressFactor);
+    };
+
+    getProjectedOfferImpact = function getProjectedOfferImpactEconomyLinked(offer, saveSnapshot = state.save) {
+        const projected = clone(saveSnapshot);
+        projected.payment = { ...(saveSnapshot.payment || {}) };
+        projected.permanent = { ...(saveSnapshot.permanent || {}) };
+        projected.sigilShards = { ...(saveSnapshot.sigilShards || {}) };
+        projected.workshopLevels = { ...(saveSnapshot.workshopLevels || {}) };
+        projected.gems = { ...(saveSnapshot.gems || {}) };
+        projected.awakened = { ...(saveSnapshot.awakened || {}) };
+
+        const currentSummary = getActionStateSummary(saveSnapshot);
+        const contract = config.contracts[saveSnapshot.contractIndex] || config.contracts[0];
+        const currentEffectivePower = getEffectiveContractPower(saveSnapshot);
+        const currentStability = getSigilPassives(saveSnapshot).contractStability;
+
+        grantRewardToSave(offer.reward, projected);
+        grantFocusShardsToSave(contract.focus || [], Number(offer.focusShards) || 0, projected);
+        applyPermanentBonus(offer.permanent, projected);
+        projected.payment.passUnlocked = true;
+        projected.payment.totalSpent = Number((Number(projected.payment.totalSpent || 0) + Number(offer.price || 0)).toFixed(2));
+        projected.payment.purchaseCount = Number(projected.payment.purchaseCount || 0) + 1;
+
+        const projectedSummary = getActionStateSummary(projected);
+        const projectedEffectivePower = getEffectiveContractPower(projected);
+        const projectedStability = getSigilPassives(projected).contractStability;
+        const currentGap = Math.max(0, Number(contract.recommended || 0) - currentEffectivePower);
+        const projectedGap = Math.max(0, Number(contract.recommended || 0) - projectedEffectivePower);
+        const currentReachIndex = getHighestClearableContractIndex(saveSnapshot);
+        const projectedReachIndex = getHighestClearableContractIndex(projected);
+
+        return {
+            contractId: contract.id,
+            currentTier: getSponsorTier(saveSnapshot),
+            projectedTier: getSponsorTier(projected),
+            powerGain: Math.max(0, Math.round(projectedEffectivePower - currentEffectivePower)),
+            stabilityGain: Math.max(0, Math.round(projectedStability - currentStability)),
+            currentGap,
+            projectedGap,
+            currentReachIndex,
+            projectedReachIndex,
+            reachGain: Math.max(0, projectedReachIndex - currentReachIndex),
+            unlocksPass: !saveSnapshot.payment?.passUnlocked,
+            newFuseReady: Math.max(0, projectedSummary.fuseReady - currentSummary.fuseReady),
+            newAwakenReady: Math.max(0, projectedSummary.awakenReady - currentSummary.awakenReady),
+            newSigilUnlockReady: Math.max(0, projectedSummary.sigilUnlockReady - currentSummary.sigilUnlockReady),
+            newSigilUpgradeReady: Math.max(0, projectedSummary.sigilUpgradeReady - currentSummary.sigilUpgradeReady),
+            newWorkshopReady: Math.max(0, projectedSummary.workshopReady - currentSummary.workshopReady),
+            actionUnlocks: Math.max(0, projectedSummary.totalReady - currentSummary.totalReady)
+        };
+    };
+
+    renderPaymentOffer = function renderPaymentOfferEconomyLinked(offer) {
+        const projected = getProjectedOfferImpact(offer);
+        const offerSummary = projected.currentGap > projected.projectedGap
+            ? text(
+                '预计缩小卡点差距 ' + formatCompact(projected.currentGap - projected.projectedGap) + '，并同步补当前焦点碎片。',
+                'Cuts the active wall by ' + formatCompact(projected.currentGap - projected.projectedGap) + ' and also refills current focus shards.'
+            )
+            : text(
+                '直接补金币 / 熔尘 / 催化剂，并抬高合同稳定与常驻成长。',
+                'Directly refills gold / dust / catalyst while lifting contract stability and permanent growth.'
+            );
+        return `
+            <article class="gf-compact-row ${projected.powerGain > 0 ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(offer.name)}</div>
+                    <div class="gf-compact-sub">${offerSummary}</div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(offer.reward, { limit: 2 })}
+                        <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
+                        ${projected.stabilityGain > 0 ? `<span class="gf-chip is-success">${text('稳定补正', 'Stability')} +${formatCompact(projected.stabilityGain)}</span>` : ''}
+                        ${(offer.focusShards || 0) > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(offer.focusShards || 0)}</span>` : ''}
+                        ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>$${offer.price.toFixed(2)}</strong>
+                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${text('链上支付', 'Pay')}</button>
+                </div>
+            </article>
+        `;
+    };
+
+    renderShopItemRow = function renderShopItemRowEconomyLinked(item) {
+        const ready = isShopItemReady(item.id);
+        const locked = !!item.requiresSponsor && !state.save.payment.passUnlocked;
+        const price = getShopPrice(item.id);
+        const shardGrant = getShopFocusShardGrant(item.id);
+        const fallback = item.priceType === 'dust'
+            ? { tab: 'forge', label: text('去拿熔尘', 'Get Dust') }
+            : { tab: 'contracts', label: text('去拿金币', 'Get Gold') };
+        const action = locked
+            ? { action: 'openPayment', value: getRecommendedPaymentOfferId(), label: text('开赞助', 'Unlock Sponsor'), cls: 'ghost-btn' }
+            : ready
+                ? { action: item.free ? 'claimDailySupply' : 'buyShopItem', value: item.id, label: item.free ? text('领取', 'Claim') : text('购买', 'Buy'), cls: item.free ? 'primary-btn' : 'ghost-btn' }
+                : { action: 'openTab', value: fallback.tab, label: fallback.label, cls: 'ghost-btn' };
+        const priceLabel = item.free
+            ? text('免费', 'Free')
+            : `${formatCompact(price)} ${item.priceType === 'gold' ? 'G' : 'D'}`;
+        const summary = locked
+            ? text('先开赞助，再买这类后段补给。', 'Unlock sponsor before buying this mid-late supply.')
+            : ready
+                ? text('可直接补当前缺口，并顺带给本章焦点符印加碎片。', 'Fix the current shortage and also feed shards into the active contract focus.')
+                : item.priceType === 'gold'
+                    ? text('金币不够时先去合同页回金。', 'Farm contracts first when gold is short.')
+                    : text('熔尘不够时先回熔炉补材料。', 'Return to the forge when dust is short.');
+
+        return `
+            <article class="gf-compact-row ${ready && !locked ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(item.title)}</div>
+                    <div class="gf-compact-sub">${summary}</div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(item.reward, { limit: 2 })}
+                        ${shardGrant > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(shardGrant)}</span>` : ''}
+                        ${locked ? `<span class="gf-chip is-warning">${text('需赞助', 'Sponsor')}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${priceLabel}</strong>
+                    <button class="${action.cls}" type="button" data-action="${action.action}" data-value="${action.value}">${action.label}</button>
+                </div>
+            </article>
+        `;
+    };
+
+    claimDailySupply = wrapActionWithMotion(function claimDailySupplyEconomyLinked() {
+        if (!isDailySupplyReady()) {
+            const remainingLabel = formatDurationCompact(getDailySupplyRemainingMs());
+            return showToast(text(
+                '每日补给冷却中，' + remainingLabel + ' 后可领。',
+                'Daily supply is cooling down. Ready in ' + remainingLabel + '.'
+            ));
+        }
+        const item = config.shopItems.find((entry) => entry.id === 'dailySupply');
+        const shardGrant = getForgeFreeShardFlow().dailySupply;
+        const shardReward = buildFocusSigilReward(getCurrentContract().focus, shardGrant);
+        const reward = mergeRewards(item?.reward || {}, shardReward ? { sigils: shardReward } : null);
+        grantReward(reward);
+        state.save.dailySupplyAt = Date.now();
+        const shardLabel = formatCompact(shardGrant);
+        showToast(text(
+            '\u4eca\u65e5\u8865\u7ed9\u5230\u8d26\uff0c\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + '\u3002',
+            'Daily supply delivered. Focus sigils +' + shardLabel + '.'
+        ));
+        saveProgress();
+        renderAll();
+    }, 'claim', 440);
+
+    buyShopItem = wrapActionWithMotion(function buyShopItemEconomyLinked(itemId) {
+        const item = config.shopItems.find((entry) => entry.id === itemId);
+        if (!item || item.free) return;
+        if (item.requiresSponsor && !state.save.payment.passUnlocked) return showToast(text('\u9700\u8981\u5148\u5f00\u901a\u8d5e\u52a9\u3002', 'Sponsor unlock is required first.'));
+        const price = getShopPrice(itemId);
+        if (item.priceType === 'gold') {
+            if (state.save.gold < price) return showToast(text('\u91d1\u5e01\u4e0d\u8db3\u3002', 'Not enough gold.'));
+            state.save.gold -= price;
+        } else {
+            if (state.save.dust < price) return showToast(text('\u7194\u5c18\u4e0d\u8db3\u3002', 'Not enough dust.'));
+            state.save.dust -= price;
+        }
+
+        const shardGrant = getShopFocusShardGrant(item.id);
+        const shardReward = buildFocusSigilReward(getCurrentContract().focus, shardGrant);
+        const reward = mergeRewards(item.reward, shardReward ? { sigils: shardReward } : null);
+        grantReward(reward);
+        state.save.shopPurchases[itemId] = getShopPurchaseCount(itemId) + 1;
+        const priceLabelZh = item.priceType === 'gold' ? `${formatCompact(price)} 金币` : `${formatCompact(price)} 熔尘`;
+        const priceLabelEn = item.priceType === 'gold' ? `${formatCompact(price)} gold` : `${formatCompact(price)} dust`;
+        const shardLabel = formatCompact(shardGrant);
+        state.save.lastResult = {
+            type: 'shop',
+            title: text('商店到账 · ' + localize(item.title), 'Shop Delivery · ' + localize(item.title)),
+            copy: text('\u652f\u4ed8 ' + priceLabelZh + ' \u540e\uff0c\u8865\u7ed9\u5230\u8d26\uff0c\u5e76\u7ed9\u672c\u7ae0\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + ' \u788e\u7247\u3002', 'Paid ' + priceLabelEn + ' and received the supply plus +' + shardLabel + ' shards for each current-focus sigil.'),
+            reward,
+            tags: [
+                item.priceType === 'gold' ? `${text('花费', 'Cost')} ${formatCompact(price)}G` : `${text('花费', 'Cost')} ${formatCompact(price)}D`,
+                `${text('焦点碎片', 'Focus Shards')} +${shardLabel}`,
+                item.reward?.catalyst ? `${text('催化', 'Catalyst')} +${formatCompact(item.reward.catalyst)}` : ''
+            ].filter(Boolean).slice(0, 3)
+        };
+        showToast(text('\u8865\u7ed9\u5df2\u5230\u8d26\u3002', 'Shop reward delivered.'));
+        saveProgress();
+        renderAll();
+    }, 'claim', 420);
+
+    runContract = wrapActionWithMotion(function runContractEconomyLinked(index) {
+        if (!Number.isFinite(index) || index < 0 || index >= config.contracts.length) return;
+        if (index > state.save.bestContractIndex + 1) return showToast(text('\u524d\u4e00\u6863\u8fd8\u6ca1\u6253\u901a\u3002', 'This contract is not unlocked yet.'));
+
+        const contract = config.contracts[index];
+        const bestBefore = state.save.bestContractIndex;
+        const power = getCurrentPower().total;
+        const passives = getSigilPassives();
+        const effectivePower = power + passives.contractStability;
+        const success = effectivePower >= contract.recommended;
+        const shardGrant = getContractFocusShardGrant(index, success);
+        const shardReward = buildFocusSigilReward(contract.focus, shardGrant);
+        const reward = mergeRewards(getContractPreviewReward(contract, success), shardReward ? { sigils: shardReward } : null);
+
+        grantReward(reward);
+        state.save.stats.contractRuns += 1;
+        if (success) {
+            state.save.stats.contractWins += 1;
+            if (index >= state.save.bestContractIndex) state.save.bestContractIndex = Math.min(config.contracts.length - 1, index + 1);
+            state.save.contractIndex = Math.min(config.contracts.length - 1, Math.max(state.save.contractIndex, index + 1));
+        }
+
+        const nextContractIndex = success ? Math.min(config.contracts.length - 1, index + 1) : index;
+        const nextContract = config.contracts[nextContractIndex] || null;
+        const unlockedNext = success && index >= bestBefore && index < config.contracts.length - 1;
+        const titleCopy = success
+            ? text('合同完成 · ' + contract.id, 'Contract Cleared · ' + contract.id)
+            : text('合同未稳过线 · ' + contract.id, 'Contract Missed · ' + contract.id);
+        const resultCopy = success
+            ? (unlockedNext
+                ? text('\u5df2\u901a\u5173\u5e76\u89e3\u9501\u4e0b\u4e00\u6863\uff0c\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u5df2\u5230\u8d26\u3002\u5148\u8865\u7126\u70b9\u7b26\u5370\uff0c\u518d\u7ee7\u7eed\u63a8\u8fdb\u3002', 'You crossed the recommended line, claimed the contract rewards plus focus-sigil shards, and unlocked the next contract. Raise the current focus sigils first, then keep pushing.')
+                : text('\u672c\u6863\u5df2\u7a33\u5b9a\u901a\u5173\uff0c\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u5df2\u5230\u8d26\u3002\u53ef\u7ee7\u7eed\u51b2\u7ebf\uff0c\u6216\u56de\u7194\u7089\u8865\u9ad8\u9636\u5b9d\u77f3\u3002', 'You cleared this contract cleanly and claimed both rewards and focus-sigil shards. This tier is now stable to farm, so you can push forward or return to the forge for higher-tier gems.'))
+            : text('\u5f53\u524d\u4ecd\u6709\u6218\u529b\u7f3a\u53e3\uff0c\u53ea\u53d1\u653e\u4fdd\u5e95\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u3002\u5efa\u8bae\u5148\u8865\u7b26\u5370\u3001\u5de5\u574a\u548c\u9ad8\u9636\u5b9d\u77f3\u3002', 'There is still a power gap, so only fallback rewards and focus-sigil shards were granted. Raise sigils, workshop, and higher-tier gems before retrying.');
+        const shardLabel = formatCompact(shardGrant);
+
+        state.save.lastResult = {
+            type: 'contract',
+            success,
+            title: titleCopy,
+            copy: resultCopy,
+            tags: [
+                contract.id,
+                success ? text('\u63a8\u8fdb\u6210\u529f', 'Cleared') : text('\u8fd8\u5dee\u4e00\u70b9', 'Almost'),
+                `${text('稳定补正', 'Stability')} +${formatCompact(passives.contractStability)}`,
+                `${text('焦点碎片', 'Focus Shards')} +${shardLabel}`
+            ],
+            contractId: contract.id,
+            contractIndex: index,
+            recommended: contract.recommended,
+            power,
+            stability: passives.contractStability,
+            effectivePower,
+            gap: Math.max(0, contract.recommended - effectivePower),
+            reward,
+            focusFamilies: contract.focus.slice(),
+            unlockedNext,
+            nextContractId: success && index < config.contracts.length - 1 ? nextContract?.id || '' : '',
+            nextContractIndex,
+            nextGap: success && index < config.contracts.length - 1 ? Math.max(0, nextContract.recommended - effectivePower) : Math.max(0, contract.recommended - effectivePower),
+            atCap: success && index === config.contracts.length - 1
+        };
+
+        showToast(
+            success
+                ? text('\u5408\u540c ' + contract.id + ' \u5b8c\u6210\uff0c\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + '\u3002', 'Contract ' + contract.id + ' cleared. Focus sigils +' + shardLabel + '.')
+                : text('\u5408\u540c ' + contract.id + ' \u4ecd\u6709\u7f3a\u53e3\uff0c\u4fdd\u5e95\u7ed9\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + '\u3002', 'Contract ' + contract.id + ' still has a gap. Focus sigils +' + shardLabel + ' as fallback.')
+        );
+        saveProgress();
+        renderAll();
+    }, 'claim', 460);
+
+    function getGemForgeOfferRank(offerId) {
+        const index = config.paymentOffers.findIndex((offer) => offer.id === offerId);
+        return index >= 0 ? index : 0;
+    }
+
+    function getGemForgeOfferByRank(rank = 0) {
+        const safeRank = Math.max(0, Math.min(config.paymentOffers.length - 1, Math.round(Number(rank) || 0)));
+        return config.paymentOffers[safeRank] || config.paymentOffers[0];
+    }
+
+    function getGemForgeSpendLane(saveSnapshot = state.save) {
+        const spent = Number(saveSnapshot?.payment?.totalSpent || 0);
+        const progressIndex = Math.max(Number(saveSnapshot?.bestContractIndex || 0), Number(saveSnapshot?.contractIndex || 0));
+
+        if (spent >= 20) {
+            return {
+                id: 'apex',
+                title: text('\u9ad8\u4ed8\u8d39\u7ebf', 'Apex Spend'),
+                summary: text('\u9ad8\u4ed8\u8d39\u9636\u6bb5\u5df2\u8fdb\u5165\u540e\u671f\u517b\u6210\uff0c\u5e94\u4ee5\u50ac\u5316\u3001\u9ad8\u9636\u89c9\u9192\u548c\u91cc\u7a0b\u7891\u4e3a\u4e3b\uff0c\u4f4e\u6863\u5305\u5df2\u7ecf\u4e0d\u591f\u63a8\u7ebf\u3002', 'You are in late monetized progression. Focus on catalyst, high-tier awakening, and milestone chaining because lower packs no longer move the wall enough.'),
+                minOfferId: progressIndex >= 7 ? 'throne' : 'nexus',
+                reserveScalar: 1.28
+            };
+        }
+        if (spent >= 10) {
+            return {
+                id: 'core',
+                title: text('\u6838\u5fc3\u4ed8\u8d39\u7ebf', 'Core Spend'),
+                summary: text('\u6838\u5fc3\u4ed8\u8d39\u9636\u6bb5\u8981\u628a\u8d5e\u52a9\u6863\u4f4d\u3001\u91cc\u7a0b\u7891\u548c\u5408\u540c\u7a33\u5b9a\u4e32\u5728\u4e00\u8d77\uff0c\u7528\u4e2d\u9ad8\u6863\u5305\u8de8\u8d44\u6e90\u65ad\u5c42\u3002', 'Core spenders should chain sponsor tiers, milestones, and contract stability together, using mid-high packs to bridge resource breaks.'),
+                minOfferId: progressIndex >= 6 ? 'nexus' : 'sovereign',
+                reserveScalar: 1.2
+            };
+        }
+        if (spent >= 4) {
+            return {
+                id: 'light',
+                title: text('\u8f7b\u4ed8\u8d39\u7ebf', 'Light Spend'),
+                summary: text('\u8f7b\u4ed8\u8d39\u9636\u6bb5\u9002\u5408\u7528\u4e2d\u6863\u5305\u63a8\u5f00 2-2 \u81f3 3-1 \u7684\u91d1\u5e01\u3001\u7194\u5c18\u548c\u50ac\u5316\u65ad\u5c42\u3002', 'Light spenders should use mid packs to break the gold, dust, and catalyst wall around 2-2 to 3-1.'),
+                minOfferId: progressIndex >= 4 ? 'sovereign' : 'rush',
+                reserveScalar: 1.12
+            };
+        }
+        if (spent >= 1) {
+            return {
+                id: 'starter',
+                title: text('\u9996\u5145\u7ebf', 'Starter Spend'),
+                summary: text('\u9996\u5145\u540e\u5e94\u91cd\u70b9\u8865\u91d1\u5e01\u3001\u7a33\u5b9a\u4e0e\u7126\u70b9\u7b26\u5370\uff0c\u7528\u5c0f\u989d\u4ed8\u8d39\u5c3d\u5feb\u8de8\u8fc7\u7b2c\u4e00\u9053\u771f\u6b63\u5361\u70b9\u3002', 'After the first top-up, lean on gold, stability, and focus sigils to cross the first real wall quickly.'),
+                minOfferId: progressIndex >= 3 ? 'rush' : 'accelerator',
+                reserveScalar: 1.06
+            };
+        }
+        return {
+            id: 'free',
+            title: text('\u514d\u8d39\u7ebf', 'Free Line'),
+            summary: text('\u514d\u8d39\u7ebf\u5148\u5403\u6389\u624b\u4e0a\u80fd\u76f4\u63a5\u6210\u957f\u7684\u5185\u5bb9\uff0c\u5982\u679c\u60f3\u7f29\u77ed\u5361\u70b9\uff0c\u9996\u5145\u6700\u6709\u611f\u7684\u4f5c\u7528\u662f\u63d0\u5347\u5408\u540c\u7a33\u5b9a\u548c\u91d1\u5e01\u5468\u8f6c\u3002', 'The free line should first consume all immediately usable growth. If you want to shorten walls, the first top-up matters most for contract stability and gold turnover.'),
+            minOfferId: progressIndex >= 2 ? 'accelerator' : 'starter',
+            reserveScalar: 1
+        };
+    }
+
+    function getGemForgePrimaryPressure(diagnosis) {
+        const entries = [
+            { id: 'gold', value: Math.max(0, Number(diagnosis?.goldPressure || 0)), label: text('\u91d1\u5e01', 'Gold') },
+            { id: 'dust', value: Math.max(0, Number(diagnosis?.dustPressure || 0)), label: text('\u7194\u5c18', 'Dust') },
+            { id: 'catalyst', value: Math.max(0, Number(diagnosis?.catalystPressure || 0)), label: text('\u50ac\u5316', 'Catalyst') }
+        ].sort((left, right) => right.value - left.value);
+        return entries[0];
+    }
+
+    function getGemForgeRecommendedOfferId(diagnosis, spendLane, saveSnapshot = state.save) {
+        let rank = getGemForgeOfferRank(diagnosis?.recommendedOfferId || 'starter');
+        const contractIndex = Math.max(Number(saveSnapshot?.contractIndex || 0), Number(saveSnapshot?.bestContractIndex || 0));
+        const powerGap = Math.max(0, Number(diagnosis?.powerGap || 0));
+
+        rank = Math.max(rank, getGemForgeOfferRank(spendLane?.minOfferId || 'starter'));
+
+        if (!saveSnapshot?.payment?.passUnlocked && contractIndex >= 2) {
+            rank = Math.max(rank, getGemForgeOfferRank('accelerator'));
+        }
+        if (diagnosis?.pressureId === 'gold' || diagnosis?.pressureId === 'workshop') {
+            rank = Math.max(rank, getGemForgeOfferRank(contractIndex >= 5 ? 'rush' : 'accelerator'));
+        }
+        if (diagnosis?.pressureId === 'dust') {
+            rank = Math.max(rank, getGemForgeOfferRank(contractIndex >= 5 ? 'sovereign' : 'rush'));
+        }
+        if (diagnosis?.pressureId === 'catalyst') {
+            rank = Math.max(rank, getGemForgeOfferRank(contractIndex >= 7 ? 'throne' : contractIndex >= 5 ? 'nexus' : 'sovereign'));
+        }
+
+        if (powerGap > 2400) {
+            rank = Math.max(rank, getGemForgeOfferRank('throne'));
+        } else if (powerGap > 1500) {
+            rank = Math.max(rank, getGemForgeOfferRank('nexus'));
+        } else if (powerGap > 900) {
+            rank = Math.max(rank, getGemForgeOfferRank('sovereign'));
+        } else if (powerGap > 420) {
+            rank = Math.max(rank, getGemForgeOfferRank('rush'));
+        } else if (powerGap > 180) {
+            rank = Math.max(rank, getGemForgeOfferRank('accelerator'));
+        }
+
+        return getGemForgeOfferByRank(rank).id;
+    }
+
+    getGrowthDiagnosis = function getGrowthDiagnosisSpendTierLinked() {
+        const contract = getCurrentContract();
+        const power = getCurrentPower().total;
+        const effectivePower = getEffectiveContractPower();
+        const powerGap = Math.max(0, contract.recommended - effectivePower);
+        const inventoryRows = getGemInventoryRows();
+        const fuseReadyCount = inventoryRows.filter((row) => row.canFuse).length;
+        const awakenReadyCount = inventoryRows.filter((row) => row.canAwaken).length;
+        const fuseCandidates = inventoryRows.filter((row) => row.fuseBaseReady).length;
+        const awakenCandidates = inventoryRows.filter((row) => row.awakenBaseReady).length;
+        const sigilReadyCount = config.sigils.filter((sigil) => {
+            const level = getSigilLevel(sigil.id);
+            const unlockCost = getSigilUnlockCost(sigil.id);
+            const upgradeCost = getSigilUpgradeCost(sigil.id);
+            return (level <= 0 && state.save.gold >= unlockCost.gold && getSigilShardCount(sigil.id) >= unlockCost.shards)
+                || (level > 0 && level < 8 && state.save.gold >= upgradeCost.gold && getSigilShardCount(sigil.id) >= upgradeCost.shards);
+        }).length;
+        const workshopReadyCount = config.workshop.filter((item) => canUpgradeWorkshop(item.id)).length;
+        const workshopTarget = getPriorityWorkshopTarget();
+        const sigilTarget = getPrioritySigilTarget();
+        const fuseTarget = inventoryRows.filter((row) => row.fuseBaseReady).sort((a, b) => b.sort - a.sort)[0] || null;
+        const awakenTarget = inventoryRows.filter((row) => row.awakenBaseReady).sort((a, b) => b.sort - a.sort)[0] || null;
+        const economy = config.forgeEconomy || {};
+        const spendLane = getGemForgeSpendLane();
+
+        const targetGoldReserve = (Number(economy.goldReserveBase || 600) + state.save.contractIndex * Number(economy.goldReserveStep || 360)) * spendLane.reserveScalar;
+        const targetDustReserve = (Number(economy.dustReserveBase || 70) + state.save.contractIndex * Number(economy.dustReserveStep || 45)) * Math.max(1, spendLane.reserveScalar - 0.02);
+        const targetCatalystReserve = (state.save.contractIndex <= 2
+            ? 6 + state.save.contractIndex * 2
+            : state.save.contractIndex <= 5
+                ? 14 + state.save.contractIndex * 4
+                : 28 + state.save.contractIndex * 6) * Math.max(1, spendLane.reserveScalar - 0.01);
+
+        const goldPressure = Math.max(
+            0,
+            Math.round(targetGoldReserve - state.save.gold),
+            workshopTarget?.missingGold || 0,
+            sigilTarget?.missingGold || 0,
+            fuseTarget ? Math.max(0, fuseTarget.fuseCost.gold - state.save.gold) : 0,
+            awakenTarget ? Math.max(0, awakenTarget.awakenCost.gold - state.save.gold) : 0
+        );
+        const dustPressure = Math.max(
+            0,
+            Math.round(targetDustReserve - state.save.dust),
+            workshopTarget?.missingDust || 0,
+            awakenTarget ? Math.max(0, awakenTarget.awakenCost.dust - state.save.dust) : 0
+        );
+        const catalystPressure = Math.max(
+            0,
+            Math.round(targetCatalystReserve - state.save.catalyst),
+            fuseTarget ? Math.max(0, fuseTarget.fuseCost.catalyst - state.save.catalyst) : 0,
+            awakenTarget ? Math.max(0, awakenTarget.awakenCost.catalyst - state.save.catalyst) : 0,
+            awakenCandidates > awakenReadyCount || fuseCandidates > fuseReadyCount ? Math.round(targetCatalystReserve - state.save.catalyst) : 0
+        );
+
+        let pressureId = 'power';
+        let title = text('\u6218\u529b\u4ecd\u6709\u7f3a\u53e3', 'Power Gap Remains');
+        let summary = text('\u5f53\u524d\u6700\u76f4\u63a5\u7684\u63a8\u8fdb\u95ee\u9898\uff0c\u4ecd\u7136\u662f\u5408\u540c\u6709\u6548\u6218\u529b\u4e0d\u591f\u3002', 'The main issue right now is still not having enough effective contract power.');
+        let freeTab = 'sigils';
+        let freeLabel = text('\u53bb\u8865\u7b26\u5370', 'Raise Sigils');
+        let freeShort = text('\u8865\u7b26\u5370', 'Sigils');
+
+        if (powerGap <= 0) {
+            pressureId = 'push';
+            title = text('\u5df2\u7ecf\u5920\u7ebf\uff0c\u76f4\u63a5\u63a8\u8fdb', 'Ready to Push');
+            summary = text('\u5f53\u524d\u5df2\u7ecf\u8fbe\u5230\u672c\u6863\u63a8\u8350\u7ebf\uff0c\u4f18\u5148\u53bb\u5408\u540c\u9875\u63a8\u8fdb\uff0c\u522b\u8ba9\u70ed\u91cf\u548c\u514d\u8d39\u8865\u7ed9\u7a7a\u8f6c\u3002', 'You already meet this contract line. Push now so heat and free supplies do not sit idle.');
+            freeTab = 'contracts';
+            freeLabel = text('\u53bb\u8dd1\u5408\u540c', 'Run Contract');
+            freeShort = text('\u63a8\u8fdb', 'Push');
+        } else if (fuseReadyCount > 0 || awakenReadyCount > 0) {
+            pressureId = 'forge';
+            title = text('\u73b0\u6709\u5e93\u5b58\u5c31\u80fd\u8865\u5f3a', 'Actionable Inventory Ready');
+            summary = text('\u4f60\u624b\u4e0a\u5df2\u7ecf\u6709 ' + fuseReadyCount + ' \u6761\u53ef\u5408\u6210\u548c ' + awakenReadyCount + ' \u6761\u53ef\u89c9\u9192\u5e93\u5b58\uff0c\u5148\u5403\u6389\u73b0\u6210\u6210\u957f\uff0c\u901a\u5e38\u6bd4\u76f4\u63a5\u5145\u503c\u66f4\u5212\u7b97\u3002', 'You already have ' + fuseReadyCount + ' fuse-ready and ' + awakenReadyCount + ' awaken-ready rows. Use this growth first; it is usually more efficient than topping up immediately.');
+            freeTab = 'forge';
+            freeLabel = text('\u53bb\u7194\u7089\u5904\u7406', 'Open Forge');
+            freeShort = text('\u5148\u5408\u6210', 'Forge');
+        } else if (sigilReadyCount > 0) {
+            pressureId = 'sigil';
+            title = text('\u7b26\u5370\u53ef\u5347\uff0c\u4f18\u5148\u8865\u4e3b\u5370', 'Sigils Are Ready');
+            summary = text('\u5f53\u524d\u81f3\u5c11\u6709 ' + sigilReadyCount + ' \u4e2a\u7b26\u5370\u5df2\u7ecf\u80fd\u89e3\u9501\u6216\u5347\u7ea7\uff0c\u5148\u8865\u672c\u7ae0\u7126\u70b9\u7b26\u5370\uff0c\u901a\u5e38\u662f\u6700\u5feb\u7684\u8fc7\u7ebf\u65b9\u5f0f\u3002', 'At least ' + sigilReadyCount + ' sigils can already be unlocked or upgraded. Focus sigils are usually the fastest path to clear the current wall.');
+            freeTab = 'sigils';
+            freeLabel = text('\u53bb\u8865\u7b26\u5370', 'Raise Sigils');
+            freeShort = text('\u8865\u7b26\u5370', 'Sigils');
+        } else if (workshopReadyCount > 0) {
+            pressureId = 'workshop';
+            title = text('\u5de5\u574a\u53ef\u70b9\uff0c\u5148\u62c9\u6548\u7387', 'Workshop Upgrade Ready');
+            summary = text('\u5f53\u524d\u81f3\u5c11\u6709 ' + workshopReadyCount + ' \u4e2a\u5de5\u574a\u5347\u7ea7\u5df2\u80fd\u70b9\uff0c\u4f18\u5148\u8865\u70ed\u91cf\u6062\u590d\u548c\u7a00\u6709\u7387\uff0c\u7194\u70bc\u6548\u7387\u4f1a\u66f4\u5e73\u6ed1\u3002', 'At least ' + workshopReadyCount + ' workshop upgrades are already affordable. Prioritize heat regen and rare rate for smoother forge efficiency.');
+            freeTab = 'workshop';
+            freeLabel = text('\u53bb\u70b9\u5de5\u574a', 'Open Workshop');
+            freeShort = text('\u8865\u5de5\u574a', 'Workshop');
+        } else if (catalystPressure >= dustPressure && catalystPressure >= goldPressure && state.save.contractIndex >= 4) {
+            pressureId = 'catalyst';
+            title = text('\u50ac\u5316\u5f00\u59cb\u5361\u5173', 'Catalyst Starts Gating');
+            summary = text('\u8fdb\u5165 ' + contract.id + ' \u540e\uff0c\u50ac\u5316\u4f1a\u540c\u65f6\u5361\u4f4f\u9ad8\u9636\u5408\u6210\u548c T3+ \u89c9\u9192\uff0c\u5f53\u524d\u66f4\u50cf\u662f\u201c\u6750\u6599\u95e8\u69db\u201d\u800c\u4e0d\u662f\u7eaf\u6218\u529b\u95e8\u69db\u3002', 'From ' + contract.id + ' onward, catalyst starts gating both high-tier fusion and T3+ awakening. The wall is now more about materials than pure power.');
+            freeTab = 'contracts';
+            freeLabel = text('\u53bb\u5237\u5408\u540c\u56de\u6536', 'Farm Contracts');
+            freeShort = text('\u8865\u50ac\u5316', 'Catalyst');
+        } else if (dustPressure >= goldPressure && dustPressure > 0) {
+            pressureId = 'dust';
+            title = text('\u7194\u5c18\u5f00\u59cb\u7d27\u5f20', 'Dust Is Tight');
+            summary = text('\u4f60\u73b0\u5728\u66f4\u7f3a\u7684\u662f\u4e2d\u540e\u671f\u7194\u5c18\uff0c\u4e0d\u8865\u7684\u8bdd\u4f1a\u62d6\u6162\u89c9\u9192\u8282\u594f\u548c\u540e\u7eed\u8f6c\u5316\u3002', 'Dust is the tighter resource right now. Without more of it, awakening tempo and later build conversion both slow down.');
+            freeTab = 'forge';
+            freeLabel = text('\u53bb\u7194\u7089\u5237\u5e93\u5b58', 'Farm Forge');
+            freeShort = text('\u8865\u7194\u5c18', 'Dust');
+        } else if (goldPressure > 0) {
+            pressureId = 'gold';
+            title = text('\u91d1\u5e01\u5f00\u59cb\u5403\u7d27', 'Gold Is Tight');
+            summary = text('\u5f53\u524d\u4e3b\u8981\u88ab\u91d1\u5e01\u50a8\u5907\u5361\u4f4f\uff1a\u7b26\u5370\u3001\u5de5\u574a\u3001\u5408\u6210\u548c\u89c9\u9192\u90fd\u5728\u5403\u91d1\uff0c\u4f46\u624b\u5934\u8d44\u91d1\u8fd8\u4e0d\u591f\u628a\u6210\u957f\u94fe\u63a5\u8d77\u6765\u3002', 'Gold is the main bottleneck now: sigils, workshop, fusion, and awakening all compete for gold, but your current reserve cannot keep the growth chain connected.');
+            freeTab = 'contracts';
+            freeLabel = text('\u53bb\u8dd1\u5408\u540c\u56de\u91d1\u5e01', 'Farm Gold');
+            freeShort = text('\u8865\u91d1\u5e01', 'Gold');
+        }
+
+        const recommendedOfferId = getGemForgeRecommendedOfferId({
+            pressureId,
+            powerGap,
+            goldPressure,
+            dustPressure,
+            catalystPressure,
+            recommendedOfferId: 'starter'
+        }, spendLane);
+        const primaryPressure = getGemForgePrimaryPressure({ goldPressure, dustPressure, catalystPressure });
+        const recommendedOffer = config.paymentOffers.find((offer) => offer.id === recommendedOfferId) || config.paymentOffers[0];
+
+        return {
+            pressureId,
+            title,
+            summary,
+            freeTab,
+            freeLabel,
+            freeShort,
+            contractId: contract.id,
+            power,
+            effectivePower,
+            powerGap,
+            goldPressure,
+            dustPressure,
+            catalystPressure,
+            recommendedOfferId,
+            recommendedOfferName: localize(recommendedOffer.name),
+            spendLaneId: spendLane.id,
+            spendLaneTitle: spendLane.title,
+            spendLaneSummary: spendLane.summary,
+            spendLaneMinOfferId: spendLane.minOfferId,
+            primaryPressureId: primaryPressure.id,
+            primaryPressureLabel: primaryPressure.label,
+            primaryPressureValue: primaryPressure.value
+        };
+    };
+
+    getRecommendedShopItemId = function getRecommendedShopItemIdSpendTierLinked() {
+        const diagnosis = getGrowthDiagnosis();
+        if (diagnosis.primaryPressureId === 'catalyst') {
+            return state.save.payment.passUnlocked ? 'sponsorVault' : 'dustCrate';
+        }
+        if (diagnosis.primaryPressureId === 'dust') {
+            return state.save.payment.passUnlocked && diagnosis.powerGap > 720 ? 'sponsorVault' : 'goldCrate';
+        }
+        if (diagnosis.primaryPressureId === 'gold') {
+            return diagnosis.spendLaneId === 'core' || diagnosis.spendLaneId === 'apex'
+                ? (state.save.payment.passUnlocked ? 'sponsorVault' : 'dustCrate')
+                : 'dustCrate';
+        }
+        return state.save.payment.passUnlocked ? 'sponsorVault' : 'goldCrate';
+    };
+
+    renderGrowthDiagnosisCard = function renderGrowthDiagnosisCardSpendTierLinked() {
+        const diagnosis = getGrowthDiagnosis();
+        const offer = config.paymentOffers.find((item) => item.id === diagnosis.recommendedOfferId) || config.paymentOffers[0];
+        return `
+            <article class="gf-compact-row ${diagnosis.powerGap > 0 ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${diagnosis.title}</div>
+                    <div class="gf-compact-sub">${diagnosis.summary}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip">${text('\u5408\u540c', 'Contract')} 路 ${diagnosis.contractId}</span>
+                        <span class="gf-chip is-strong">${text('\u4ed8\u8d39\u8282\u594f', 'Spend Lane')} 路 ${diagnosis.spendLaneTitle}</span>
+                        ${diagnosis.powerGap > 0 ? `<span class="gf-chip is-warning">${text('\u5dee\u8ddd', 'Gap')} 路 ${formatCompact(diagnosis.powerGap)}</span>` : `<span class="gf-chip is-success">${text('\u5df2\u5920\u7ebf', 'Ready')}</span>`}
+                        <span class="gf-chip">${text('\u514d\u8d39\u8def\u7ebf', 'Free')} 路 ${diagnosis.freeShort}</span>
+                    </div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip is-warning">${diagnosis.primaryPressureLabel} 路 ${formatCompact(diagnosis.primaryPressureValue)}</span>
+                        ${diagnosis.goldPressure > 0 ? `<span class="gf-chip">${text('\u91d1\u5e01', 'Gold')} ${formatCompact(diagnosis.goldPressure)}</span>` : ''}
+                        ${diagnosis.dustPressure > 0 ? `<span class="gf-chip">${text('\u7194\u5c18', 'Dust')} ${formatCompact(diagnosis.dustPressure)}</span>` : ''}
+                        ${diagnosis.catalystPressure > 0 ? `<span class="gf-chip">${text('\u50ac\u5316', 'Catalyst')} ${formatCompact(diagnosis.catalystPressure)}</span>` : ''}
+                        <span class="gf-chip is-success">${localize(offer.name)}</span>
+                    </div>
+                    <div class="gf-compact-sub" style="margin-top:8px;">${diagnosis.spendLaneSummary}</div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${diagnosis.powerGap > 0 ? `-${formatCompact(diagnosis.powerGap)}` : text('Ready', 'Ready')}</strong>
+                    <div class="gf-action-row">
+                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">${text('\u6253\u5f00\u793c\u5305', 'Open Pack')}</button>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="${diagnosis.freeTab}">${diagnosis.freeLabel}</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    };
+
+    renderHeroSummary = function renderHeroSummarySpendTierLinked() {
+        const contract = getCurrentContract();
+        const power = getCurrentPower();
+        const effectivePower = getEffectiveContractPower();
+        const powerGap = Math.max(0, contract.recommended - effectivePower);
+        const sponsorTier = getSponsorTier();
+        const heatMax = getHeatMax();
+        const diagnosis = getGrowthDiagnosis();
+
+        ui.heroSummary.innerHTML = `
+            ${renderPanelHead(
+                text('\u5f53\u524d\u63a8\u8fdb', 'Current Route'),
+                '',
+                `<div class="gf-chip is-strong">${text('\u5f53\u524d\u5408\u540c', 'Contract')} 路 ${contract.id}</div>`
+            )}
+            <div class="gf-kpi-grid">
+                <div class="gf-kpi-card"><span>${text('\u6709\u6548\u6218\u529b', 'Effective')}</span><strong>${formatCompact(effectivePower)}</strong></div>
+                <div class="gf-kpi-card"><span>${text('\u70ed\u91cf', 'Heat')}</span><strong>${formatCompact(Math.floor(state.save.heat))}/${formatCompact(heatMax)}</strong></div>
+                <div class="gf-kpi-card"><span>${text('\u8d5e\u52a9\u6863\u4f4d', 'Sponsor')}</span><strong>${localize(sponsorTier.title)}</strong></div>
+                <div class="gf-kpi-card"><span>${text('\u6700\u9ad8\u5408\u540c', 'Best')}</span><strong>${config.contracts[state.save.bestContractIndex].id}</strong></div>
+            </div>
+            <div class="gf-chip-row gf-summary-status-row" style="margin-top:12px;">
+                <span class="gf-chip is-strong">${powerGap > 0 ? text('\u8fd8\u5dee ' + formatCompact(powerGap), 'Gap ' + formatCompact(powerGap)) : text('\u5df2\u5920\u7ebf', 'Ready')}</span>
+                <span class="gf-chip">${text('\u4e0b\u4e00\u6b65', 'Next')} 路 ${diagnosis.freeShort}</span>
+                <span class="gf-chip is-success">${text('\u7a33\u5b9a\u8865\u6b63', 'Stability')} 路 +${formatCompact(Math.max(0, effectivePower - power.total))}</span>
+                <span class="gf-chip is-success">${text('\u4ed8\u8d39\u8282\u594f', 'Spend Lane')} 路 ${diagnosis.spendLaneTitle}</span>
+                <span class="gf-chip">${text('\u4e3b\u7f3a\u53e3', 'Main Sink')} 路 ${diagnosis.primaryPressureLabel} ${formatCompact(diagnosis.primaryPressureValue)}</span>
+                <span class="gf-chip">${text('\u63a8\u8350\u793c\u5305', 'Pack')} 路 ${diagnosis.recommendedOfferName}</span>
+            </div>
         `;
     };
 
