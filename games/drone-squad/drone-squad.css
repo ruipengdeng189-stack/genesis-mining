@@ -715,7 +715,8 @@ canvas {
     z-index: 18;
     width: min(calc(100% - 18px), 760px);
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     gap: 8px;
 }
 
@@ -774,6 +775,36 @@ canvas {
 .ds-tab-btn span {
     width: 100%;
     text-align: center;
+}
+
+.ds-sortie-quickbar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    margin-bottom: 8px;
+    scroll-snap-type: x proximity;
+}
+
+.ds-sortie-chip {
+    flex: 0 0 min(140px, 34vw);
+    min-height: 46px;
+    justify-content: center;
+    align-content: center;
+    scroll-snap-align: start;
+}
+
+.ds-stage-card--sortie .ds-stage-wrap {
+    margin-top: 2px;
+}
+
+.ds-stage-card--sortie .ds-card-head {
+    margin-bottom: 4px;
+}
+
+.ds-sortie-action-row {
+    margin-top: 8px;
 }
 
 .ds-modal {
@@ -1168,9 +1199,17 @@ canvas {
         gap: 8px;
     }
 
+    body[data-drone-tab='sortie'] .ds-hero-card {
+        display: none;
+    }
+
     body[data-drone-tab='sortie'] .ds-summary-card,
     body[data-drone-tab='sortie'] .ds-panel-card {
         padding: 8px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-summary-card {
+        display: none;
     }
 
     body[data-drone-tab='sortie'] .ds-resource-strip,
@@ -1304,8 +1343,12 @@ canvas {
     }
 
     body[data-drone-tab='sortie'] .ds-panel-content > .ds-stage-card {
-        order: -2;
         padding: 10px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-stage-card--sortie .ds-card-head {
+        gap: 8px;
+        margin-bottom: 2px;
     }
 
     body[data-drone-tab='sortie'] .ds-stage-wrap {
@@ -1319,6 +1362,25 @@ canvas {
     body[data-drone-tab='sortie'] .ds-stage-guide-grid {
         gap: 6px;
         margin-top: 8px;
+    }
+
+    .ds-sortie-quickbar {
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+
+    .ds-sortie-action-row {
+        margin-top: 6px;
+    }
+
+    .ds-sortie-chip {
+        flex-basis: min(118px, 32vw);
+        min-height: 42px;
+        padding: 7px 8px;
+    }
+
+    .ds-intel-grid {
+        grid-template-columns: 1fr !important;
     }
 
     .ds-card-copy,
@@ -1614,6 +1676,12 @@ canvas {
 
     body[data-drone-tab='sortie'] .ds-stage-canvas {
         height: clamp(280px, 46dvh, 340px);
+    }
+
+    .ds-sortie-chip {
+        flex-basis: min(112px, 35vw);
+        min-height: 40px;
+        padding: 6px 7px;
     }
 
     .ds-chip-btn,

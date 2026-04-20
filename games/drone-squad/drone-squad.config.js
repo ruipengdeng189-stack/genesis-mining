@@ -7,6 +7,7 @@
         },
         tabs: [
             { id: 'sortie', label: { zh: '出击', en: 'Sortie' } },
+            { id: 'intel', label: { zh: '情报', en: 'Intel' } },
             { id: 'hangar', label: { zh: '机库', en: 'Hangar' } },
             { id: 'blueprints', label: { zh: '蓝图', en: 'Blueprints' } },
             { id: 'missions', label: { zh: '任务', en: 'Missions' } },

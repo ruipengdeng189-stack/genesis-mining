@@ -904,7 +904,7 @@
         const offer = getSelectedPaymentOffer();
         const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
 
-        if (ui.paymentTitle) ui.paymentTitle.textContent = text('Gem Forge 充值中心', 'Gem Forge Top-Up Center');
+        if (ui.paymentTitle) ui.paymentTitle.textContent = text('宝石熔炉充值中心', 'Gem Forge Top-Up Center');
         if (ui.paymentDesc) ui.paymentDesc.textContent = text('创建链上订单后，使用 OKX Wallet 按精确金额支付，再粘贴 txid 校验并发放奖励。', 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
         if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = text('订单号', 'Order ID');
         if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = text('精确金额', 'Exact Amount');
@@ -1341,6 +1341,12 @@
     function applyLangState() {
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN';
         document.title = state.lang === 'en' ? 'Gem Forge' : '宝石熔炉';
+        const backToHubLink = document.getElementById('backToHubLink');
+        if (backToHubLink) backToHubLink.textContent = state.lang === 'en' ? '← Back To Hub' : '← 返回大厅';
+        const langToggle = document.querySelector('.lang-toggle');
+        if (langToggle) langToggle.setAttribute('aria-label', text('语言切换', 'Language'));
+        if (ui.tabBar) ui.tabBar.setAttribute('aria-label', text('宝石熔炉页签', 'Gem Forge tabs'));
+        if (ui.paymentCloseBtn) ui.paymentCloseBtn.setAttribute('aria-label', text('关闭支付', 'Close payment'));
         ui.heroEyebrow.textContent = state.lang === 'en' ? 'GENESIS GEM FORGE' : '创世宝石熔炉';
         ui.heroTitle.textContent = localize(config.meta.title);
         ui.heroSubtitle.textContent = localize(config.meta.subtitle);
@@ -1916,7 +1922,7 @@
                     </div>
                 </div>
                 <div class="gf-compact-side">
-                    <strong>${diagnosis.powerGap > 0 ? `-${formatCompact(diagnosis.powerGap)}` : text('Ready', 'Ready')}</strong>
+                    <strong>${diagnosis.powerGap > 0 ? `-${formatCompact(diagnosis.powerGap)}` : text('已够线', 'Ready')}</strong>
                     <div class="gf-action-row">
                         <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">${text('打开礼包', 'Open Pack')}</button>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="${diagnosis.freeTab}">${diagnosis.freeLabel}</button>
@@ -2545,7 +2551,7 @@
                     </div>
                 </div>
                 <div class="gf-compact-side">
-                    <strong>${powerGap > 0 ? `-${formatCompact(powerGap)}` : text('Ready', 'Ready')}</strong>
+                    <strong>${powerGap > 0 ? `-${formatCompact(powerGap)}` : text('已够线', 'Ready')}</strong>
                     <button class="${action.cls}" type="button" data-action="${action.action}" data-value="${action.value}">${action.label}</button>
                 </div>
             </article>
@@ -7536,7 +7542,7 @@
                     <div class="gf-compact-sub" style="margin-top:8px;">${diagnosis.spendLaneSummary}</div>
                 </div>
                 <div class="gf-compact-side">
-                    <strong>${diagnosis.powerGap > 0 ? `-${formatCompact(diagnosis.powerGap)}` : text('Ready', 'Ready')}</strong>
+                    <strong>${diagnosis.powerGap > 0 ? `-${formatCompact(diagnosis.powerGap)}` : text('已够线', 'Ready')}</strong>
                     <div class="gf-action-row">
                         <button class="primary-btn" type="button" data-action="openPayment" data-value="${offer.id}">${text('\u6253\u5f00\u793c\u5305', 'Open Pack')}</button>
                         <button class="ghost-btn" type="button" data-action="openTab" data-value="${diagnosis.freeTab}">${diagnosis.freeLabel}</button>
