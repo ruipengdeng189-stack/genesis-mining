@@ -239,6 +239,8 @@
     }
 
     function renderAll() {
+        document.body.setAttribute('data-drone-tab', state.tab);
+        document.body.setAttribute('data-drone-lang', state.lang);
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN';
         document.title = state.lang === 'en' ? 'Drone Squad' : '无人机编队';
         ui.langButtons.forEach((button) => {

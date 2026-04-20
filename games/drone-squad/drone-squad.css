@@ -727,9 +727,12 @@ canvas {
     color: inherit;
     font: inherit;
     border: 1px solid var(--ds-border);
-    display: grid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 3px;
-    justify-items: center;
+    align-content: center;
     text-align: center;
     transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
@@ -765,6 +768,12 @@ canvas {
     color: var(--ds-text-soft);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.ds-tab-btn strong,
+.ds-tab-btn span {
+    width: 100%;
+    text-align: center;
 }
 
 .ds-modal {
@@ -1080,6 +1089,14 @@ canvas {
         gap: 8px;
     }
 
+    body[data-drone-tab='sortie'] .ds-shell {
+        padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
+    }
+
+    body[data-drone-tab='sortie'] .ds-topbar {
+        gap: 6px;
+    }
+
     .ds-topline {
         position: sticky;
         top: max(0px, env(safe-area-inset-top, 0px));
@@ -1092,6 +1109,11 @@ canvas {
         background: rgba(8, 12, 22, 0.84);
         backdrop-filter: blur(18px);
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    body[data-drone-tab='sortie'] .ds-topline {
+        padding: 6px 8px;
+        border-radius: 16px;
     }
 
     .ds-hero-card,
@@ -1110,9 +1132,18 @@ canvas {
         gap: 10px;
     }
 
+    body[data-drone-tab='sortie'] .ds-hero-card {
+        padding: 9px 10px;
+        gap: 6px;
+    }
+
     .ds-hero-copy h1 {
         font-size: clamp(22px, 6.6vw, 30px);
         line-height: 1;
+    }
+
+    body[data-drone-tab='sortie'] .ds-hero-copy h1 {
+        font-size: clamp(20px, 5.4vw, 24px);
     }
 
     .ds-hero-copy p {
@@ -1122,10 +1153,65 @@ canvas {
         -webkit-line-clamp: 1;
     }
 
+    body[data-drone-tab='sortie'] .ds-hero-copy p {
+        display: none;
+    }
+
     .ds-resource-strip,
     .ds-summary-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-main {
+        margin-top: 8px;
+        gap: 8px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-summary-card,
+    body[data-drone-tab='sortie'] .ds-panel-card {
+        padding: 8px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-resource-strip,
+    body[data-drone-tab='sortie'] .ds-summary-grid {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scroll-snap-type: x proximity;
+    }
+
+    body[data-drone-tab='sortie'] .ds-resource-pill,
+    body[data-drone-tab='sortie'] .ds-summary-item {
+        flex: 0 0 min(118px, 31vw);
+        min-height: 60px;
+        padding: 7px 8px;
+        gap: 4px;
+        border-radius: 14px;
+        scroll-snap-align: start;
+    }
+
+    body[data-drone-tab='sortie'] .ds-resource-pill strong,
+    body[data-drone-tab='sortie'] .ds-summary-item strong {
+        font-size: 15px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-resource-pill small {
+        display: none;
+    }
+
+    body[data-drone-tab='sortie'] .ds-resource-pill span,
+    body[data-drone-tab='sortie'] .ds-summary-item span {
+        font-size: 10px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-resource-icon,
+    body[data-drone-tab='sortie'] .ds-summary-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
     }
 
     .ds-panel-head h3,
@@ -1211,6 +1297,28 @@ canvas {
 
     .ds-stage-canvas {
         height: clamp(280px, 44dvh, 360px);
+    }
+
+    body[data-drone-tab='sortie'] .ds-panel-content {
+        gap: 8px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-panel-content > .ds-stage-card {
+        order: -2;
+        padding: 10px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-stage-wrap {
+        border-radius: 18px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-stage-canvas {
+        height: clamp(296px, 48dvh, 390px);
+    }
+
+    body[data-drone-tab='sortie'] .ds-stage-guide-grid {
+        gap: 6px;
+        margin-top: 8px;
     }
 
     .ds-card-copy,
@@ -1400,6 +1508,10 @@ canvas {
         border-radius: 16px;
     }
 
+    body[data-drone-tab='sortie'] .ds-topline {
+        padding: 6px 7px;
+    }
+
     .ds-panel-head h3,
     .ds-card-head h3,
     .ds-card-title {
@@ -1411,8 +1523,17 @@ canvas {
         gap: 8px;
     }
 
+    body[data-drone-tab='sortie'] .ds-hero-card {
+        padding: 8px 9px;
+        gap: 5px;
+    }
+
     .ds-hero-copy h1 {
         font-size: 24px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-hero-copy h1 {
+        font-size: 22px;
     }
 
     .ds-hero-copy p,
@@ -1458,6 +1579,13 @@ canvas {
         gap: 4px;
     }
 
+    body[data-drone-tab='sortie'] .ds-resource-pill,
+    body[data-drone-tab='sortie'] .ds-summary-item {
+        flex-basis: min(110px, 34vw);
+        min-height: 56px;
+        padding: 6px 7px;
+    }
+
     .ds-resource-pill strong,
     .ds-summary-item strong {
         font-size: 15px;
@@ -1482,6 +1610,10 @@ canvas {
 
     .ds-stage-hud-card {
         padding: 5px 6px;
+    }
+
+    body[data-drone-tab='sortie'] .ds-stage-canvas {
+        height: clamp(280px, 46dvh, 340px);
     }
 
     .ds-chip-btn,
