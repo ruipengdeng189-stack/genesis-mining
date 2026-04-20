@@ -1704,7 +1704,21 @@ body.relic-open {
 }
 
 .gf-payment-head > div {
+    flex: 1 1 auto;
     min-width: 0;
+}
+
+#gfPaymentCloseBtn {
+    flex: 0 0 auto;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 14px;
+    margin-left: auto;
+    font-size: 26px;
+    line-height: 1;
+    align-self: flex-start;
 }
 
 .gf-payment-head h2 {
@@ -2264,11 +2278,19 @@ body.relic-open {
     }
 
     .gf-payment-head {
-        align-items: stretch;
+        align-items: flex-start;
     }
 
     .gf-payment-head h2 {
         font-size: 24px;
+    }
+
+    #gfPaymentCloseBtn {
+        width: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        font-size: 24px;
+        border-radius: 12px;
     }
 
     .gf-payment-offer-grid,

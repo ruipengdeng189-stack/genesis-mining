@@ -11,6 +11,7 @@
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const PAYMENT_ADDRESS_FIELDS = ['payAddress', 'pay_address', 'walletAddress', 'wallet_address', 'recipientAddress', 'recipient_address', 'receiveAddress', 'receive_address', 'receivingAddress', 'receiving_address', 'toAddress', 'to_address', 'address'];
     const FORGE_TIMING_TARGET = 0.5;
     const FORGE_TIMING_PERFECT_WINDOW = 0.045;
     const FORGE_TIMING_GREAT_WINDOW = 0.11;
@@ -548,6 +549,21 @@
         return state.save.payment.minerId;
     }
 
+    function resolvePaymentAddress(order = null, { allowLastKnown = true } = {}) {
+        const source = order && typeof order === 'object' ? order : null;
+        if (source) {
+            for (const field of PAYMENT_ADDRESS_FIELDS) {
+                const value = String(source[field] ?? '').trim();
+                if (value && value !== '--') return value;
+            }
+        }
+        if (allowLastKnown) {
+            const lastKnown = String(state.save?.payment?.lastPayAddress || '').trim();
+            if (lastKnown && lastKnown !== '--') return lastKnown;
+        }
+        return '';
+    }
+
     function mapPaymentApiError(errorMessage) {
         const raw = String(errorMessage || '').trim();
         const lower = raw.toLowerCase();
@@ -595,7 +611,7 @@
             createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
             expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
             exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
-            payAddress: String(order?.payAddress || ''),
+            payAddress: resolvePaymentAddress(order),
             network: String(order?.network || 'TRON (TRC20)'),
             status: String(order?.status || 'pending'),
             txid: String(order?.txid || ''),
@@ -642,6 +658,11 @@
         currentPaymentOrder = order ? buildClientPaymentOrder(order) : null;
         if (currentPaymentOrder?.offerId && config.paymentOffers.some((offer) => offer.id === currentPaymentOrder.offerId)) {
             selectedPaymentOfferId = currentPaymentOrder.offerId;
+        }
+        const resolvedAddress = currentPaymentOrder ? resolvePaymentAddress(currentPaymentOrder, { allowLastKnown: false }) : '';
+        if (resolvedAddress && state.save.payment.lastPayAddress !== resolvedAddress) {
+            state.save.payment.lastPayAddress = resolvedAddress;
+            saveProgress();
         }
         if (persist) persistCurrentPaymentOrder();
         return currentPaymentOrder;
@@ -900,7 +921,10 @@
         if (ui.paymentOrderId) ui.paymentOrderId.textContent = order ? order.id : '--';
         if (ui.paymentExactAmount) ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
         if (ui.paymentExpiry) ui.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
-        if (ui.paymentWallet) ui.paymentWallet.textContent = order?.payAddress || '--';
+        if (ui.paymentWallet) {
+            const paymentAddress = order ? resolvePaymentAddress(order) : '';
+            ui.paymentWallet.textContent = paymentAddress || '--';
+        }
     }
 
     function getNormalizedPaymentTxid() {
@@ -1148,7 +1172,14 @@
     }
 
     async function copyPaymentAddress() {
-        const wallet = String(ui.paymentWallet?.textContent || '').trim();
+        const wallet = resolvePaymentAddress(currentPaymentOrder) || String(ui.paymentWallet?.textContent || '').trim();
+        if (!wallet || wallet === '--') {
+            paymentVerificationError = '';
+            paymentVerificationNotice = text('当前订单还没有可用收款地址，请稍后重试。', 'The current order does not have a receiving address yet. Please try again shortly.');
+            paymentVerificationState = 'idle';
+            refreshPaymentVerificationState();
+            return;
+        }
         const copied = await copyTextToClipboard(wallet);
         paymentVerificationError = '';
         paymentVerificationNotice = copied
@@ -3021,6 +3052,7 @@
         next.missionClaimed = Array.isArray(next.missionClaimed) ? Array.from(new Set(next.missionClaimed)) : [];
         next.seasonClaimed = Array.isArray(next.seasonClaimed) ? Array.from(new Set(next.seasonClaimed)) : [];
         next.payment.minerId = typeof next.payment?.minerId === 'string' ? next.payment.minerId : '';
+        next.payment.lastPayAddress = typeof next.payment?.lastPayAddress === 'string' ? next.payment.lastPayAddress : '';
         next.payment.milestoneClaims = next.payment?.milestoneClaims && typeof next.payment.milestoneClaims === 'object' ? { ...next.payment.milestoneClaims } : {};
         next.payment.claimedOrders = next.payment?.claimedOrders && typeof next.payment.claimedOrders === 'object' ? { ...next.payment.claimedOrders } : {};
         next.payment.pendingClaims = next.payment?.pendingClaims && typeof next.payment.pendingClaims === 'object' ? { ...next.payment.pendingClaims } : {};
