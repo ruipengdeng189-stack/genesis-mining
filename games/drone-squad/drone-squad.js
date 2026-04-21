@@ -1437,7 +1437,7 @@
                     <div>
                         <h3>${renderIconLabel('&#9638;', localize(item.title))}</h3>
                     </div>
-                    <strong class="ds-offer-price">${escapeHtml(String(item.price))}</strong>
+                    <strong class="ds-offer-price">${escapeHtml(state.lang === 'en' ? `${item.price} Cr` : `${item.price} 币`)}</strong>
                 </div>
                 ${renderRewardPills(item.reward, 5)}
                 <div class="ds-row-actions">
@@ -3814,7 +3814,10 @@
 
     function getCraftCostLabel() {
         const cost = getCraftCost();
-        return cost.free ? text('免费', 'Free') : `${cost.credits} / ${cost.alloy}`;
+        if (cost.free) return text('免费', 'Free');
+        return state.lang === 'en'
+            ? `${cost.credits} Cr / ${cost.alloy} Al`
+            : `${cost.credits} 币 / ${cost.alloy} 合`;
     }
 
     function canCraftModule() {

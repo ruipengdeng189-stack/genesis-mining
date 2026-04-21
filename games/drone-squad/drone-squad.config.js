@@ -193,11 +193,11 @@
         ],
         moduleCrafting: {
             dailyFree: 1,
-            baseCreditCost: 300,
-            baseAlloyCost: 8,
-            surgeAfterCrafts: 5,
-            surgeCreditCost: 450,
-            surgeAlloyCost: 12,
+            baseCreditCost: 420,
+            baseAlloyCost: 10,
+            surgeAfterCrafts: 4,
+            surgeCreditCost: 760,
+            surgeAlloyCost: 16,
             rarePity: 10,
             epicPity: 30
         },
@@ -249,20 +249,20 @@
             },
             {
                 id: 'creditCrate',
-                title: { zh: '金币补给箱', en: 'Credit Crate' },
-                price: 460,
-                reward: { credits: 580, alloy: 0 }
+                title: { zh: '战备补给箱', en: 'Field Supply Crate' },
+                price: 820,
+                reward: { credits: 520, alloy: 8 }
             },
             {
                 id: 'alloyCrate',
                 title: { zh: '合金补给箱', en: 'Alloy Crate' },
-                price: 880,
-                reward: { credits: 0, alloy: 22 }
+                price: 980,
+                reward: { credits: 0, alloy: 24 }
             },
             {
                 id: 'chipRelay',
                 title: { zh: '核芯中继箱', en: 'Chip Relay' },
-                price: 1680,
+                price: 1920,
                 reward: { coreChips: 6, alloy: 18 }
             },
             {
