@@ -366,16 +366,56 @@
         const gap = Math.max(0, chapter.recommended - currentPower);
         const chapterProgress = `${Math.max(0, getHighestClearedChapterIndex() + 1)}/${config.chapters.length}`;
         const readyMissions = getClaimableMissionCount();
-        const items = [
-            { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
-            { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
-            { icon: '&#9661;', label: text('Gap', 'Gap'), value: gap > 0 ? `-${gap}` : text('Ready', 'Ready'), tone: gap > 0 ? 'is-warning' : 'is-good' },
-            { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' },
-            { icon: '&#9636;', label: text('Missions', 'Missions'), value: readyMissions, tone: readyMissions > 0 ? 'is-good' : '' },
-            { icon: '&#9638;', label: text('Modules', 'Modules'), value: state.save.moduleInventory.length, tone: '' },
-            { icon: '&#9674;', label: text('Progress', 'Progress'), value: chapterProgress, tone: '' },
-            { icon: '&#9655;', label: text('Supply', 'Supply'), value: canClaimDailySupply() ? text('Ready', 'Ready') : text('Cooldown', 'Cooldown'), tone: canClaimDailySupply() ? 'is-good' : '' }
-        ];
+        const equippedModules = Object.values(state.save.selectedModules || {}).filter(Boolean).length;
+        const unlockedWingSlots = WING_SLOT_UNLOCK_STAGES.filter((_, slotIndex) => isWingSlotUnlocked(slotIndex)).length;
+        const selectedChassis = chassisMap[state.save.selectedChassisId] || config.chassis[0];
+        const sponsorTier = getSponsorTier();
+        const seasonClaims = getClaimableSeasonCount();
+        const itemsByTab = {
+            sortie: [
+                { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
+                { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
+                { icon: '&#9655;', label: text('Free', 'Free'), value: `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`, tone: getRemainingFreeSorties() > 0 ? 'is-good' : '' },
+                { icon: '&#9679;', label: text('Credits', 'Credits'), value: formatCompact(state.save.credits), tone: '' }
+            ],
+            intel: [
+                { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
+                { icon: '&#9661;', label: text('Gap', 'Gap'), value: gap > 0 ? `-${gap}` : text('Ready', 'Ready'), tone: gap > 0 ? 'is-warning' : 'is-good' },
+                { icon: '&#9674;', label: text('Progress', 'Progress'), value: chapterProgress, tone: '' },
+                { icon: '&#9655;', label: text('Free', 'Free'), value: `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`, tone: getRemainingFreeSorties() > 0 ? 'is-good' : '' }
+            ],
+            hangar: [
+                { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
+                { icon: '&#9992;', label: text('Chassis', 'Chassis'), value: `${text('Lv', 'Lv')}.${getUnitLevel(state.save.chassisLevels, selectedChassis.id)}`, tone: '' },
+                { icon: '&#9651;', label: text('Wings', 'Wings'), value: `${state.save.selectedWingmen.filter(Boolean).length}/${unlockedWingSlots}`, tone: unlockedWingSlots >= 2 ? 'is-good' : '' },
+                { icon: '&#9638;', label: text('Modules', 'Modules'), value: `${equippedModules}/4`, tone: equippedModules >= 4 ? 'is-good' : '' }
+            ],
+            blueprints: [
+                { icon: '&#9671;', label: text('Core', 'Core'), value: formatCompact(state.save.coreChips), tone: '' },
+                { icon: '&#10010;', label: text('Alloy', 'Alloy'), value: formatCompact(state.save.alloy), tone: '' },
+                { icon: '&#9638;', label: text('Modules', 'Modules'), value: state.save.moduleInventory.length, tone: '' },
+                { icon: '&#9734;', label: text('Epic Pity', 'Epic Pity'), value: `${state.save.crafting.epicPity}/${getEpicPityTarget()}`, tone: (state.save.crafting.epicPity + 3) >= getEpicPityTarget() ? 'is-warning' : '' }
+            ],
+            missions: [
+                { icon: '&#9636;', label: text('Ready', 'Ready'), value: readyMissions, tone: readyMissions > 0 ? 'is-good' : '' },
+                { icon: '&#10003;', label: text('Claimed', 'Claimed'), value: `${state.save.missionClaimed.length}/${config.missions.length}`, tone: '' },
+                { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
+                { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' }
+            ],
+            season: [
+                { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' },
+                { icon: '&#9733;', label: text('Claims', 'Claims'), value: seasonClaims, tone: seasonClaims > 0 ? 'is-good' : '' },
+                { icon: '&#9734;', label: text('Sponsor', 'Sponsor'), value: localize(sponsorTier.title), tone: isSeasonPassUnlocked() ? 'is-good' : 'is-warning' },
+                { icon: '&#9674;', label: text('Progress', 'Progress'), value: chapterProgress, tone: '' }
+            ],
+            shop: [
+                { icon: '&#9679;', label: text('Credits', 'Credits'), value: formatCompact(state.save.credits), tone: '' },
+                { icon: '&#9733;', label: text('Supply', 'Supply'), value: canClaimDailySupply() ? text('Ready', 'Ready') : text('Cooldown', 'Cooldown'), tone: canClaimDailySupply() ? 'is-good' : '' },
+                { icon: '&#9734;', label: text('Sponsor', 'Sponsor'), value: localize(sponsorTier.title), tone: isSeasonPassUnlocked() ? 'is-good' : 'is-warning' },
+                { icon: '&#9670;', label: text('Spent', 'Spent'), value: `${Number(state.save.payment.totalSpent || 0).toFixed(0)}U`, tone: Number(state.save.payment.totalSpent || 0) > 0 ? 'is-good' : '' }
+            ]
+        };
+        const items = itemsByTab[state.tab] || itemsByTab.sortie;
         ui.heroSummary.innerHTML = `
             <div class="ds-summary-grid">
                 ${items.map((item) => renderSummaryItem(item.icon, item.label, item.value, item.tone)).join('')}
@@ -515,7 +555,7 @@
                     </div>
                     <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
                 </div>
-                <div class="ds-chip-grid">
+                <div class="ds-chip-grid ds-chip-grid--route">
                     ${config.chapters.map((item, index) => renderChapterChip(item, index)).join('')}
                 </div>
             </section>
@@ -906,7 +946,7 @@
                         <strong class="ds-stat-value">${escapeHtml(getCraftCostLabel())}</strong>
                     </div>
                 </div>
-                <div class="ds-action-row">
+                <div class="ds-action-row ds-craft-actions">
                     <button class="primary-btn wide-btn" type="button" data-action="craftModule" ${canCraftModule() ? '' : 'disabled'}>${escapeHtml(text('Craft Now', 'Craft Now'))}</button>
                     <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('Back To Hangar', 'Back To Hangar'))}</button>
                 </div>
@@ -1036,6 +1076,18 @@
     function isChapterFirstClearPending(chapter) {
         return !!chapter && !state.save.clearedChapters.includes(chapter.id);
     }
+    function isBossChapterStage(chapter) {
+        const stageNumber = Math.max(1, Number(String(chapter?.id || '').split('-')[1]) || 1);
+        return stageNumber === 3;
+    }
+
+    function applySponsorBossChipBonus(baseChips, chapter) {
+        const chips = Math.max(0, Math.round(Number(baseChips) || 0));
+        if (!chips || !isBossChapterStage(chapter)) return chips;
+        const bonusRate = Number(getSponsorTier().bossChipBonus || 0);
+        if (bonusRate <= 0) return chips;
+        return chips + Math.max(1, Math.round(chips * bonusRate));
+    }
 
     function getFirstClearReward(chapter) {
         if (!chapter) return {};
@@ -1059,6 +1111,10 @@
 
         if (chapterNumber >= 4 && stageNumber === 3) {
             reward.epicModuleCrates = 1;
+        }
+
+        if (reward.coreChips) {
+            reward.coreChips = applySponsorBossChipBonus(reward.coreChips, chapter);
         }
 
         return reward;
@@ -1155,7 +1211,7 @@
                         <strong>${escapeHtml(String(state.save.seasonXp))}</strong>
                     </div>
                 </div>
-                <div class="ds-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                <div class="ds-grid ds-season-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                     <article class="ds-list-card">
                         <div class="ds-card-head">
                             <div>
@@ -1214,7 +1270,7 @@
                         <div class="ds-panel-copy">${escapeHtml(text('Free supply, soft-currency items, and premium packs all live here.', 'Free supply, soft-currency items, and premium packs all live here.'))}</div>
                     </div>
                 </div>
-                <div class="ds-offer-grid">
+                <div class="ds-offer-grid ds-shop-offer-grid ds-shop-offer-grid--soft">
                     ${renderDailySupplyCard()}
                     ${softItems}
                 </div>
@@ -1227,7 +1283,7 @@
                         <div class="ds-card-copy">${escapeHtml(text('Packs use verified on-chain orders and grant resources plus permanent boosts right away.', 'Packs use verified on-chain orders and grant resources plus permanent boosts right away.'))}</div>
                     </div>
                 </div>
-                <div class="ds-offer-grid">${premiumItems}</div>
+                <div class="ds-offer-grid ds-shop-offer-grid ds-shop-offer-grid--premium">${premiumItems}</div>
             </section>
         `;
     }
@@ -1235,12 +1291,14 @@
     function renderSponsorOverviewCard() {
         const sponsorTier = getSponsorTier();
         const recommendedOffer = offerMap[getRecommendedOfferId()] || config.paymentOffers[0];
+        const totalCreditYield = Number(sponsorTier.creditYieldBonus || 0) + getPermanentBonusValue('creditYield');
+        const totalAlloyYield = Number(sponsorTier.alloyYieldBonus || 0) + getPermanentBonusValue('alloyYield');
         return `
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9734;', text('Sponsor Status', 'Sponsor Status'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('This panel shows your lasting top-up impact: tier, season access, and permanent bonuses.', 'This panel shows your lasting top-up impact: tier, season access, and permanent bonuses.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('This panel shows your lasting top-up impact: tier, season access, daily sorties, and permanent bonuses.', 'This panel shows your lasting top-up impact: tier, season access, daily sorties, and permanent bonuses.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag ${isSeasonPassUnlocked() ? 'is-good' : 'is-warning'}">${escapeHtml(localize(sponsorTier.title))}</span>
@@ -1261,11 +1319,16 @@
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('bossDamage')))}</strong>
                     </div>
                     <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('Credit Yield', 'Credit Yield'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(formatPercent(totalCreditYield))}</strong>
+                    </div>
+                    <div class="ds-stat-box">
                         <span class="ds-stat-label">${escapeHtml(text('Alloy Yield', 'Alloy Yield'))}</span>
-                        <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('alloyYield')))}</strong>
+                        <strong class="ds-stat-value">${escapeHtml(formatPercent(totalAlloyYield))}</strong>
                     </div>
                 </div>
-                <div class="ds-row-actions">
+                <div class="ds-inline-note">${escapeHtml(text(`当前赞助档额外提供 ${Number(sponsorTier.dailyFreeSorties || 0)} 次免费出击、${formatPercent(sponsorTier.bossChipBonus || 0)} Boss 核芯加成、${formatPercent(sponsorTier.epicPityBonus || 0)} 史诗保底缩短。`, `Current tier adds ${Number(sponsorTier.dailyFreeSorties || 0)} free sorties, ${formatPercent(sponsorTier.bossChipBonus || 0)} boss core bonus, and ${formatPercent(sponsorTier.epicPityBonus || 0)} shorter epic pity.`))}</div>
+                <div class="ds-row-actions ds-sponsor-actions">
                     <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(recommendedOffer.id)}">${escapeHtml(text('Open Recommended Pack', 'Open Recommended Pack'))}</button>
                     <button class="ghost-btn" type="button" data-action="openTab" data-value="season">${escapeHtml(text('Open Season', 'Open Season'))}</button>
                 </div>
@@ -1362,16 +1425,16 @@
         ui.paymentTitle.textContent = text('无人机编队充值中心', 'Drone Squad Top-Up Center');
         ui.paymentDesc.textContent = isSeasonPassUnlocked()
             ? text('当前账号已开启赞助轨。继续充值可提升赞助档位、增加每日免费出击并强化永久增幅。', 'Sponsor access is already unlocked. Continue topping up to raise sponsor tier, add free sorties, and strengthen permanent boosts.')
-            : text('首充可开启赞助赛季轨道。创建链上订单后，在 OKX Wallet 支付精确金额，再粘贴 txid 校验发奖。', 'Your first top-up unlocks the sponsor season track. Create the on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
-        if (ui.paymentMeta) ui.paymentMeta.textContent = 'TRON (TRC20) · OKX Wallet';
+            : text('首充可开启赞助赛季轨道。创建链上订单后，在 OKX 钱包支付精确金额，再粘贴交易哈希（TXID）校验发奖。', 'Your first top-up unlocks the sponsor season track. Create the on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
+        if (ui.paymentMeta) ui.paymentMeta.textContent = text('TRON (TRC20) · OKX 钱包', 'TRON (TRC20) · OKX Wallet');
         if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = text('订单', 'Order');
         if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = text('精确金额', 'Exact Amount');
         if (ui.paymentExpiryLabel) ui.paymentExpiryLabel.textContent = text('剩余时间', 'Time Left');
         if (ui.paymentAddressLabel) ui.paymentAddressLabel.textContent = text('收款地址', 'Recipient Address');
         if (ui.paymentCopyAddressBtn) ui.paymentCopyAddressBtn.textContent = text('复制地址', 'Copy Address');
         if (ui.paymentCopyAmountBtn) ui.paymentCopyAmountBtn.textContent = text('复制金额', 'Copy Exact Amount');
-        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = text('粘贴 OKX Wallet 交易哈希', 'Paste OKX Wallet txid');
-        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = text('粘贴 64 位链上 txid', 'Paste the 64-character on-chain txid');
+        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = text('粘贴 OKX 钱包交易哈希（TXID）', 'Paste OKX Wallet txid');
+        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = text('粘贴 64 位链上交易哈希（TXID）', 'Paste the 64-character on-chain txid');
         if (ui.paymentTxidHint) ui.paymentTxidHint.textContent = text('只有收款地址、精确金额、订单有效期都匹配的支付，才会通过校验并发奖。', 'Only payments that match the recipient address, exact amount, and valid order window can pass verification.');
         if (ui.paymentVerifyBtn) ui.paymentVerifyBtn.textContent = text(`校验 ${localize(offer.name)}`, `Verify ${localize(offer.name)}`);
     }
@@ -1406,7 +1469,7 @@
         const raw = String(errorMessage || '').trim();
         const lower = raw.toLowerCase();
         if (!raw) return text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
-        if (lower.includes('txid not found')) return text('这笔 txid 暂时还没在 TRON 主网上查到，请稍后再试。', 'This txid was not found on TRON mainnet yet.');
+        if (lower.includes('txid not found')) return text('这笔交易哈希（TXID）暂时还没在 TRON 主网上查到，请稍后再试。', 'This txid was not found on TRON mainnet yet.');
         if (lower.includes('not confirmed yet')) return text('这笔交易还未确认，请稍后再试。', 'This transfer is not confirmed yet. Try again shortly.');
         if (lower.includes('execution failed')) return text('链上交易执行失败，无法发放奖励。', 'The on-chain transaction failed, so rewards cannot be granted.');
         if (lower.includes('not a trc20 contract transfer')) return text('这不是 TRC20 合约转账。', 'This transaction is not a TRC20 transfer.');
@@ -1415,7 +1478,7 @@
         if (lower.includes('amount mismatch')) return text('支付金额与当前订单的精确金额不一致。', 'The payment amount does not match the current exact order amount.');
         if (lower.includes('before this order was created')) return text('这笔转账早于订单创建时间，不能用于当前订单。', 'This transfer happened before the order was created and cannot be used.');
         if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单后再支付。', 'This order has expired. Please create a new order before paying again.');
-        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('这笔 txid 已被其他订单使用。', 'This txid has already been used by another order.');
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('这笔交易哈希（TXID）已被其他订单使用。', 'This txid has already been used by another order.');
         if (lower.includes('minerid does not match order')) return text('当前订单与本地账号不匹配，请重新创建订单。', 'This order does not belong to the current player. Please create a new order.');
         if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
         if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后再试。', 'The payment service is temporarily unavailable. Please try again later.');
@@ -1613,8 +1676,8 @@
 
         if (orderExpired) {
             ui.paymentStatus.textContent = txidValid
-                ? text('当前订单倒计时已结束；如果你已在有效期内完成支付，仍可继续用该 txid 校验。', 'The order window has ended, but you can still verify this txid if the payment was completed before expiry.')
-                : text('当前订单已过期；未支付请重新创建订单，已支付可继续粘贴 txid 校验。', 'The order window has ended. Create a new order if you did not pay, or paste the txid if you already paid in time.');
+                ? text('当前订单倒计时已结束；如果你已在有效期内完成支付，仍可继续用该交易哈希（TXID）校验。', 'The order window has ended, but you can still verify this txid if the payment was completed before expiry.')
+                : text('当前订单已过期；未支付请重新创建订单，已支付可继续粘贴交易哈希（TXID）校验。', 'The order window has ended. Create a new order if you did not pay, or paste the txid if you already paid in time.');
             ui.paymentStatus.classList.add('is-error');
             ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
             return;
@@ -1628,13 +1691,13 @@
         }
 
         if (txid && !txidValid) {
-            ui.paymentStatus.textContent = text('TXID 格式不正确，请粘贴 64 位链上 txid。', 'TXID format looks invalid. Please paste the 64-character on-chain txid.');
+            ui.paymentStatus.textContent = text('交易哈希（TXID）格式不正确，请粘贴 64 位链上交易哈希。', 'TXID format looks invalid. Please paste the 64-character on-chain txid.');
             ui.paymentStatus.classList.add('is-error');
             ui.paymentVerifyBtn.disabled = true;
             return;
         }
 
-        ui.paymentStatus.textContent = paymentVerificationNotice || text('先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。', 'Create an order, complete the payment in OKX Wallet, then paste the txid here.');
+        ui.paymentStatus.textContent = paymentVerificationNotice || text('先创建订单，再去 OKX 钱包完成支付，最后把交易哈希（TXID）粘贴到这里校验。', 'Create an order, complete the payment in OKX Wallet, then paste the txid here.');
         ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
     }
 
@@ -2422,6 +2485,93 @@
         showToast(text('\u5f3a\u5316\u5df2\u751f\u6548\u3002', 'Upgrade applied.'), 'success');
     }
 
+    function endBattle(win) {
+        if (state.battle.result) return;
+        stopBattleLoop();
+        const reward = settleBattleRewards(win);
+        state.battle.active = false;
+        state.battle.result = {
+            win,
+            reward
+        };
+        state.save.lastResult = {
+            win,
+            chapterId: state.battle.chapter.id,
+            credits: reward.credits,
+            alloy: reward.alloy,
+            coreChips: reward.coreChips,
+            seasonXp: reward.seasonXp,
+            firstClear: reward.firstClear || null
+        };
+        saveProgress();
+        drawBattleCanvas();
+        updateBattleHud();
+        renderStageCenter();
+    }
+
+    function settleBattleRewards(win) {
+        const chapter = state.battle.chapter;
+        const creditMultiplier = getCreditRewardMultiplier();
+        const alloyMultiplier = getAlloyRewardMultiplier();
+        const firstClear = win && isChapterFirstClearPending(chapter) ? getFirstClearReward(chapter) : null;
+
+        let credits = Math.floor(((chapter.reward.credits * (win ? 1 : 0.58)) + state.battle.collectedCredits) * creditMultiplier);
+        let alloy = Math.floor(((chapter.reward.alloy * (win ? 1 : 0.62)) + state.battle.collectedAlloy) * alloyMultiplier);
+        let coreChips = win ? applySponsorBossChipBonus(chapter.reward.coreChips, chapter) : 0;
+        let seasonXp = Math.floor(chapter.reward.seasonXp * (win ? 1 : 0.55));
+        let reviveChips = 0;
+        let epicModuleCrates = 0;
+        let legendModuleCrates = 0;
+        const shardReward = {};
+        shardReward[state.save.selectedChassisId] = win ? 6 : 2;
+        state.save.selectedWingmen.filter(Boolean).forEach((wingId) => {
+            shardReward[wingId] = (shardReward[wingId] || 0) + (win ? 4 : 1);
+        });
+
+        if (firstClear) {
+            credits += Number(firstClear.credits || 0);
+            alloy += Number(firstClear.alloy || 0);
+            coreChips += Number(firstClear.coreChips || 0);
+            seasonXp += Number(firstClear.seasonXp || 0);
+            reviveChips += Number(firstClear.reviveChips || 0);
+            epicModuleCrates += Number(firstClear.epicModuleCrates || 0);
+            legendModuleCrates += Number(firstClear.legendModuleCrates || 0);
+        }
+
+        state.save.credits += credits;
+        state.save.alloy += alloy;
+        state.save.coreChips += coreChips;
+        state.save.seasonXp += seasonXp;
+        state.save.reviveChips += reviveChips;
+        Object.entries(shardReward).forEach(([unitId, amount]) => addShards(unitId, amount));
+        if (epicModuleCrates || legendModuleCrates) {
+            grantRewardModuleCrates({ epicModuleCrates, legendModuleCrates });
+        }
+
+        state.save.stats.eliteKills += state.battle.eliteKills;
+        if (win) {
+            state.save.stats.wins += 1;
+            if (!state.save.clearedChapters.includes(chapter.id)) {
+                state.save.clearedChapters.push(chapter.id);
+            }
+            const nextChapterIndex = Math.min(config.chapters.length - 1, getChapterIndex(chapter.id) + 1);
+            state.save.unlockedChapterIndex = Math.max(state.save.unlockedChapterIndex, nextChapterIndex);
+            state.save.selectedChapterId = config.chapters[nextChapterIndex].id;
+        }
+
+        return {
+            credits,
+            alloy,
+            coreChips,
+            seasonXp,
+            reviveChips,
+            epicModuleCrates,
+            legendModuleCrates,
+            firstClear,
+            shards: shardReward
+        };
+    }
+
     function closeBattleResult(nextChapterId = '') {
         if (nextChapterId && chapterMap[nextChapterId]) {
             state.save.selectedChapterId = nextChapterId;
@@ -3097,7 +3247,7 @@
         }
 
         if ((state.save.payment.verifiedTxids || []).includes(txid)) {
-            paymentVerificationError = text('这笔 txid 已经用过，不能重复发奖。', 'This TXID has already been used and cannot grant rewards again.');
+            paymentVerificationError = text('这笔交易哈希（TXID）已经用过，不能重复发奖。', 'This TXID has already been used and cannot grant rewards again.');
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
@@ -3248,7 +3398,10 @@
     }
 
     function getCreditRewardMultiplier() {
-        return 1 + (getResearchLevel('bountyProtocol') * 0.04);
+        return 1
+            + (getResearchLevel('bountyProtocol') * 0.04)
+            + Number(getSponsorTier().creditYieldBonus || 0)
+            + getPermanentBonusValue('creditYield');
     }
 
     function getAlloyRewardMultiplier() {
@@ -3275,7 +3428,8 @@
             attackBoost: roundBonus(current.attackBoost) + roundBonus(permanent.attackBoost),
             shieldBoost: roundBonus(current.shieldBoost) + roundBonus(permanent.shieldBoost),
             bossDamage: roundBonus(current.bossDamage) + roundBonus(permanent.bossDamage),
-            alloyYield: roundBonus(current.alloyYield) + roundBonus(permanent.alloyYield)
+            alloyYield: roundBonus(current.alloyYield) + roundBonus(permanent.alloyYield),
+            creditYield: roundBonus(current.creditYield) + roundBonus(permanent.creditYield)
         };
     }
 
@@ -3671,7 +3825,13 @@
 
     function getSponsorTier() {
         const claimed = Object.keys(state.save.payment.claimedOrders || {}).length;
-        return [...config.sponsorTiers].reverse().find((item) => claimed >= item.threshold) || config.sponsorTiers[0];
+        const purchaseCount = Math.max(Number(state.save.payment.purchaseCount || 0), claimed);
+        const totalSpent = Math.max(0, Number(state.save.payment.totalSpent || 0));
+        return [...config.sponsorTiers].reverse().find((item) => {
+            const byCount = purchaseCount >= Number(item.threshold || 0);
+            const bySpend = totalSpent >= Number(item.spendThreshold ?? Number.MAX_SAFE_INTEGER);
+            return byCount || bySpend;
+        }) || config.sponsorTiers[0];
     }
 
     function getRewardText(reward) {
@@ -3844,7 +4004,8 @@
             attackBoost: roundBonus(next.payment.permanent?.attackBoost),
             shieldBoost: roundBonus(next.payment.permanent?.shieldBoost),
             bossDamage: roundBonus(next.payment.permanent?.bossDamage),
-            alloyYield: roundBonus(next.payment.permanent?.alloyYield)
+            alloyYield: roundBonus(next.payment.permanent?.alloyYield),
+            creditYield: roundBonus(next.payment.permanent?.creditYield)
         };
         next.payment.passUnlocked = !!next.payment.passUnlocked;
         if (!next.moduleInventory.length) {
@@ -3908,7 +4069,8 @@
                     attackBoost: 0,
                     shieldBoost: 0,
                     bossDamage: 0,
-                    alloyYield: 0
+                    alloyYield: 0,
+                    creditYield: 0
                 },
                 passUnlocked: false
             }

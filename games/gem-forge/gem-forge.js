@@ -569,7 +569,7 @@
         const lower = raw.toLowerCase();
 
         if (!raw) return text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
-        if (lower.includes('txid not found')) return text('暂未在 TRON 主网上找到该 txid，请稍后再试。', 'This txid was not found on TRON mainnet yet.');
+        if (lower.includes('txid not found')) return text('暂未在 TRON 主网上找到该交易哈希（TXID），请稍后再试。', 'This txid was not found on TRON mainnet yet.');
         if (lower.includes('not confirmed yet')) return text('这笔转账还未确认，请稍后再试。', 'This transfer is not confirmed yet. Try again shortly.');
         if (lower.includes('execution failed')) return text('链上交易执行失败，无法发放奖励。', 'The on-chain transaction failed, so rewards cannot be granted.');
         if (lower.includes('not a trc20 contract transfer')) return text('这不是 TRC20 合约转账。', 'This transaction is not a TRC20 transfer.');
@@ -578,7 +578,7 @@
         if (lower.includes('amount mismatch')) return text('支付金额与当前订单的精确金额不一致。', 'The payment amount does not match the current exact order amount.');
         if (lower.includes('before this order was created')) return text('这笔转账早于订单创建时间，不能用于当前订单。', 'This transfer happened before the order was created and cannot be used.');
         if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单。', 'This order has expired. Please create a new order.');
-        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('该 txid 已被其他订单使用。', 'This txid has already been used by another order.');
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('该交易哈希（TXID）已被其他订单使用。', 'This txid has already been used by another order.');
         if (lower.includes('minerid does not match order')) return text('当前订单与本地账号不匹配，请重新创建订单。', 'This order does not belong to the current player. Please create a new order.');
         if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
         if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后重试。', 'The payment service is temporarily unavailable. Please try again later.');
@@ -905,13 +905,13 @@
         const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
 
         if (ui.paymentTitle) ui.paymentTitle.textContent = text('宝石熔炉充值中心', 'Gem Forge Top-Up Center');
-        if (ui.paymentDesc) ui.paymentDesc.textContent = text('创建链上订单后，使用 OKX Wallet 按精确金额支付，再粘贴 txid 校验并发放奖励。', 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
+        if (ui.paymentDesc) ui.paymentDesc.textContent = text('创建链上订单后，使用 OKX 钱包按精确金额支付，再粘贴交易哈希（TXID）校验并发放奖励。', 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
         if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = text('订单号', 'Order ID');
         if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = text('精确金额', 'Exact Amount');
         if (ui.paymentExpiryLabel) ui.paymentExpiryLabel.textContent = text('剩余时间', 'Expires In');
         if (ui.paymentAddressLabel) ui.paymentAddressLabel.textContent = text('收款地址', 'Receiving Address');
-        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = text('粘贴 OKX Wallet 的 txid', 'Paste OKX Wallet txid');
-        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = text('请输入或粘贴链上 txid', 'Paste the on-chain txid from OKX Wallet');
+        if (ui.paymentTxidLabel) ui.paymentTxidLabel.textContent = text('粘贴 OKX 钱包交易哈希（TXID）', 'Paste OKX Wallet txid');
+        if (ui.paymentTxidInput) ui.paymentTxidInput.placeholder = text('请输入或粘贴链上交易哈希（TXID）', 'Paste the on-chain txid from OKX Wallet');
         if (ui.paymentTxidHint) ui.paymentTxidHint.textContent = text('只有金额、地址和有效时间都匹配的订单，才能通过校验。', 'Only payments that match the exact amount, recipient address, and valid time window can pass verification.');
         if (ui.paymentCopyAddressBtn) ui.paymentCopyAddressBtn.textContent = text('复制地址', 'Copy Address');
         if (ui.paymentCopyAmountBtn) ui.paymentCopyAmountBtn.textContent = text('复制精确金额', 'Copy Exact Amount');
@@ -968,8 +968,8 @@
 
         if (orderExpired) {
             ui.paymentStatus.textContent = txidValid
-                ? text('当前订单倒计时已结束；如果你已在有效期内完成支付，仍可继续校验该 txid。', 'The order window has ended, but you can still verify this txid if the payment was completed before expiry.')
-                : text('当前订单已过期；未支付请重新创建订单，已支付可继续粘贴 txid 校验。', 'The order window has ended. Create a new order if you did not pay, or paste the txid if you already paid in time.');
+                ? text('当前订单倒计时已结束；如果你已在有效期内完成支付，仍可继续校验该交易哈希（TXID）。', 'The order window has ended, but you can still verify this txid if the payment was completed before expiry.')
+                : text('当前订单已过期；未支付请重新创建订单，已支付可继续粘贴交易哈希（TXID）校验。', 'The order window has ended. Create a new order if you did not pay, or paste the txid if you already paid in time.');
             ui.paymentStatus.classList.add('is-error');
             ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
             return;
@@ -983,13 +983,13 @@
         }
 
         if (txid && !txidValid) {
-            ui.paymentStatus.textContent = text('TXID 格式不正确，请粘贴 64 位链上 txid。', 'TXID format looks invalid. Please paste the 64-character on-chain txid.');
+            ui.paymentStatus.textContent = text('交易哈希（TXID）格式不正确，请粘贴 64 位链上交易哈希。', 'TXID format looks invalid. Please paste the 64-character on-chain txid.');
             ui.paymentStatus.classList.add('is-error');
             ui.paymentVerifyBtn.disabled = true;
             return;
         }
 
-        ui.paymentStatus.textContent = paymentVerificationNotice || text('先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。', 'Create an order, complete the payment in OKX Wallet, then paste the txid here.');
+        ui.paymentStatus.textContent = paymentVerificationNotice || text('先创建订单，再去 OKX 钱包完成支付，最后把交易哈希（TXID）粘贴到这里校验。', 'Create an order, complete the payment in OKX Wallet, then paste the txid here.');
         ui.paymentVerifyBtn.disabled = !txidValid || !hasOrder;
     }
 
@@ -1261,7 +1261,7 @@
         }
 
         if ((state.save.payment.verifiedTxids || []).includes(txid)) {
-            paymentVerificationError = text('该 txid 已经使用过，不能重复发奖。', 'This TXID has already been used and cannot grant rewards again.');
+            paymentVerificationError = text('该交易哈希（TXID）已经使用过，不能重复发奖。', 'This TXID has already been used and cannot grant rewards again.');
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;

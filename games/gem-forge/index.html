@@ -48,7 +48,7 @@
                     <div>
                         <div class="eyebrow">链上支付</div>
                         <h2 id="gfPaymentTitle">宝石熔炉充值中心</h2>
-                        <p id="gfPaymentDesc">创建链上订单后，使用 OKX Wallet 按精确金额支付，再粘贴 txid 校验并发放奖励。</p>
+                        <p id="gfPaymentDesc">创建链上订单后，使用 OKX 钱包按精确金额支付，再粘贴交易哈希（TXID）校验并发放奖励。</p>
                     </div>
                     <button class="ghost-btn icon-btn" id="gfPaymentCloseBtn" type="button" aria-label="关闭支付">&times;</button>
                 </div>
@@ -59,7 +59,7 @@
                     <div class="gf-payment-order-top">
                         <div>
                             <div class="gf-payment-amount" id="gfPaymentAmount">--</div>
-                            <div class="gf-payment-meta" id="gfPaymentMeta">TRON (TRC20) · OKX Wallet</div>
+                            <div class="gf-payment-meta" id="gfPaymentMeta">TRON (TRC20) · OKX 钱包</div>
                         </div>
                         <div class="gf-payment-order-line">
                             <span id="gfPaymentOrderLabel">订单号</span>
@@ -89,12 +89,12 @@
                     </div>
 
                     <div class="gf-payment-field">
-                        <label class="gf-mini-label" for="gfPaymentTxidInput" id="gfPaymentTxidLabel">粘贴 OKX Wallet txid</label>
-                        <input class="gf-payment-input" id="gfPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="请输入或粘贴链上 txid">
+                        <label class="gf-mini-label" for="gfPaymentTxidInput" id="gfPaymentTxidLabel">粘贴 OKX 钱包交易哈希（TXID）</label>
+                        <input class="gf-payment-input" id="gfPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="请输入或粘贴链上交易哈希（TXID）">
                         <p class="gf-payment-hint" id="gfPaymentTxidHint">只有金额、地址和有效时间都匹配的订单，才能通过校验。</p>
                     </div>
 
-                    <div class="gf-payment-status" id="gfPaymentStatus">先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。</div>
+                    <div class="gf-payment-status" id="gfPaymentStatus">先创建订单，再去 OKX 钱包完成支付，最后把交易哈希（TXID）粘贴到这里校验。</div>
 
                     <div class="gf-payment-actions">
                         <button class="primary-btn wide-btn" id="gfPaymentVerifyBtn" type="button">校验 TXID</button>

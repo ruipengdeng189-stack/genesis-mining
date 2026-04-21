@@ -63,7 +63,7 @@
                     <div>
                         <div class="eyebrow" id="dsPaymentEyebrow">链上支付</div>
                         <h2 id="dsPaymentTitle">无人机编队充值中心</h2>
-                        <p id="dsPaymentDesc">创建链上订单后，在 OKX Wallet 完成支付，再粘贴 txid 校验并发放奖励。</p>
+                        <p id="dsPaymentDesc">创建链上订单后，在 OKX 钱包完成支付，再粘贴交易哈希（TXID）校验并发放奖励。</p>
                     </div>
                     <button class="ghost-btn icon-btn" id="dsPaymentCloseBtn" type="button" aria-label="关闭支付">&times;</button>
                 </div>
@@ -74,7 +74,7 @@
                     <div class="ds-payment-order-top">
                         <div>
                             <div class="ds-payment-amount" id="dsPaymentAmount">--</div>
-                            <div class="ds-payment-meta" id="dsPaymentMeta">TRON (TRC20) · OKX Wallet</div>
+                            <div class="ds-payment-meta" id="dsPaymentMeta">TRON (TRC20) · OKX 钱包</div>
                         </div>
                         <div class="ds-payment-order-line">
                             <span id="dsPaymentOrderLabel">订单</span>
@@ -104,12 +104,12 @@
                     </div>
 
                     <div class="ds-payment-field">
-                        <label class="ds-mini-label" for="dsPaymentTxidInput" id="dsPaymentTxidLabel">粘贴 OKX Wallet txid</label>
-                        <input class="ds-payment-input" id="dsPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴链上 txid">
+                        <label class="ds-mini-label" for="dsPaymentTxidInput" id="dsPaymentTxidLabel">粘贴 OKX 钱包交易哈希（TXID）</label>
+                        <input class="ds-payment-input" id="dsPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴链上交易哈希（TXID）">
                         <p class="ds-payment-hint" id="dsPaymentTxidHint">只有金额、地址和有效时间都匹配的订单，才能通过校验。</p>
                     </div>
 
-                    <div class="ds-payment-status" id="dsPaymentStatus">先创建订单，再去 OKX Wallet 完成支付，最后把 txid 粘贴到这里校验。</div>
+                    <div class="ds-payment-status" id="dsPaymentStatus">先创建订单，再去 OKX 钱包完成支付，最后把交易哈希（TXID）粘贴到这里校验。</div>
 
                     <div class="ds-payment-actions">
                         <button class="primary-btn wide-btn" id="dsPaymentVerifyBtn" type="button">校验 TXID</button>

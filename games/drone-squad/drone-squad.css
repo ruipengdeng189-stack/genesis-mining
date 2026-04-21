@@ -1184,6 +1184,99 @@ canvas {
         -webkit-line-clamp: 1;
     }
 
+    .ds-hero-card {
+        display: none;
+    }
+
+    .ds-main {
+        margin-top: 8px;
+        gap: 8px;
+    }
+
+    .ds-summary-card,
+    .ds-panel-card {
+        padding: 8px;
+    }
+
+    .ds-summary-grid {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scroll-snap-type: x proximity;
+    }
+
+    .ds-summary-item {
+        flex: 0 0 min(114px, 32vw);
+        min-height: 56px;
+        padding: 7px 8px;
+        gap: 4px;
+        border-radius: 14px;
+        scroll-snap-align: start;
+    }
+
+    .ds-summary-item strong {
+        font-size: 15px;
+    }
+
+    .ds-summary-item span {
+        font-size: 10px;
+    }
+
+    .ds-panel-head,
+    .ds-card-head {
+        gap: 8px;
+    }
+
+    .ds-panel-copy,
+    .ds-card-copy {
+        -webkit-line-clamp: 1;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .ds-head-kpi {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+    }
+
+    .ds-inline-note {
+        padding: 8px 10px;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+
+    .ds-reward-row,
+    .ds-summary-grid,
+    .ds-sortie-quickbar,
+    .ds-chip-grid--route,
+    .ds-shop-offer-grid,
+    .ds-tabbar {
+        scrollbar-width: none;
+    }
+
+    .ds-reward-row::-webkit-scrollbar,
+    .ds-summary-grid::-webkit-scrollbar,
+    .ds-sortie-quickbar::-webkit-scrollbar,
+    .ds-chip-grid--route::-webkit-scrollbar,
+    .ds-shop-offer-grid::-webkit-scrollbar,
+    .ds-tabbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .ds-reward-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+    }
+
+    .ds-reward-pill {
+        flex: 0 0 auto;
+    }
+
     body[data-drone-tab='sortie'] .ds-hero-copy p {
         display: none;
     }
@@ -1383,6 +1476,68 @@ canvas {
         grid-template-columns: 1fr !important;
     }
 
+    .ds-chip-grid--route {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        grid-template-columns: none;
+        padding-bottom: 2px;
+    }
+
+    .ds-chip-grid--route > .ds-chip-btn {
+        flex: 0 0 min(124px, 34vw);
+    }
+
+    body[data-drone-tab='season'] .ds-season-grid {
+        grid-template-columns: 1fr !important;
+        gap: 8px;
+    }
+
+    body[data-drone-tab='season'] .ds-track-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body[data-drone-tab='season'] .ds-list-scroll {
+        max-height: min(28dvh, 280px);
+    }
+
+    body[data-drone-tab='shop'] .ds-shop-offer-grid {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 4px;
+        scroll-snap-type: x proximity;
+    }
+
+    body[data-drone-tab='shop'] .ds-shop-offer-grid > .ds-offer-card {
+        flex: 0 0 min(78vw, 240px);
+        scroll-snap-align: start;
+    }
+
+    body[data-drone-tab='missions'] .ds-mission-card .ds-card-copy,
+    body[data-drone-tab='hangar'] .ds-unit-card .ds-card-copy,
+    body[data-drone-tab='hangar'] .ds-module-card .ds-card-copy,
+    body[data-drone-tab='blueprints'] .ds-unit-card .ds-card-copy,
+    body[data-drone-tab='blueprints'] .ds-module-card .ds-card-copy,
+    body[data-drone-tab='blueprints'] .ds-unit-card .ds-inline-note,
+    body[data-drone-tab='blueprints'] .ds-module-card .ds-inline-note {
+        display: none;
+    }
+
+    body[data-drone-tab='intel'] .ds-card-head > .ghost-btn,
+    body[data-drone-tab='hangar'] .ds-card-head > .ghost-btn,
+    body[data-drone-tab='blueprints'] .ds-craft-actions > .ghost-btn,
+    body[data-drone-tab='shop'] .ds-sponsor-actions > .ghost-btn {
+        display: none;
+    }
+
+    body[data-drone-tab='blueprints'] .ds-craft-actions,
+    body[data-drone-tab='shop'] .ds-sponsor-actions {
+        grid-template-columns: 1fr;
+    }
+
     .ds-card-copy,
     .ds-panel-copy,
     .ds-inline-note,
@@ -1427,10 +1582,18 @@ canvas {
     }
 
     .ds-tabbar {
+        display: flex;
         gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        justify-content: flex-start;
+        padding-inline: 2px;
     }
 
     .ds-tab-btn {
+        flex: 0 0 70px;
+        min-width: 70px;
+        max-width: 78px;
         min-height: 54px;
         padding: 6px 4px;
         gap: 4px;

@@ -278,43 +278,43 @@
                 price: 6,
                 name: { zh: '新手启航包', en: 'Starter Flight Pack' },
                 reward: { credits: 2800, alloy: 120, coreChips: 6, reviveChips: 1, chassisShards: 24, wingmanShards: 20 },
-                permanent: { attackBoost: 0.04, shieldBoost: 0.03 }
+                permanent: { attackBoost: 0.04, shieldBoost: 0.03, creditYield: 0.03 }
             },
             {
                 id: 'accelerator',
                 price: 15,
                 name: { zh: '加速跃迁包', en: 'Accelerator Pack' },
                 reward: { credits: 7600, alloy: 360, coreChips: 18, reviveChips: 2, wingmanShards: 56 },
-                permanent: { attackBoost: 0.08, alloyYield: 0.08 }
+                permanent: { attackBoost: 0.08, alloyYield: 0.08, creditYield: 0.06 }
             },
             {
                 id: 'rush',
                 price: 30,
                 name: { zh: '突进突破包', en: 'Rush Break Pack' },
                 reward: { credits: 16200, alloy: 760, coreChips: 42, reviveChips: 4, epicModuleCrates: 1 },
-                permanent: { bossDamage: 0.12, attackBoost: 0.12 }
+                permanent: { bossDamage: 0.12, attackBoost: 0.12, creditYield: 0.1 }
             },
             {
                 id: 'sovereign',
                 price: 68,
                 name: { zh: '统御军械包', en: 'Sovereign Arsenal Pack' },
                 reward: { credits: 36800, alloy: 1620, coreChips: 96, reviveChips: 8, epicModuleCrates: 2, wingmanShards: 160 },
-                permanent: { bossDamage: 0.2, shieldBoost: 0.16, alloyYield: 0.12 }
+                permanent: { bossDamage: 0.2, shieldBoost: 0.16, alloyYield: 0.12, creditYield: 0.15 }
             },
             {
                 id: 'nexus',
                 price: 128,
                 name: { zh: '枢纽舰队包', en: 'Nexus Fleet Pack' },
                 reward: { credits: 78000, alloy: 3600, coreChips: 220, reviveChips: 16, legendModuleCrates: 1, chassisShards: 260, wingmanShards: 260 },
-                permanent: { attackBoost: 0.28, bossDamage: 0.3, shieldBoost: 0.22, alloyYield: 0.18 }
+                permanent: { attackBoost: 0.28, bossDamage: 0.3, shieldBoost: 0.22, alloyYield: 0.18, creditYield: 0.22 }
             }
         ],
         sponsorTiers: [
-            { id: 'locked', threshold: 0, title: { zh: '未激活', en: 'Locked' }, dailyFreeSorties: 0, bossChipBonus: 0, alloyYieldBonus: 0, epicPityBonus: 0 },
-            { id: 'spark', threshold: 1, title: { zh: '火花赞助', en: 'Spark Sponsor' }, dailyFreeSorties: 1, bossChipBonus: 0, alloyYieldBonus: 0.05, epicPityBonus: 0 },
-            { id: 'relay', threshold: 4, title: { zh: '中继赞助', en: 'Relay Sponsor' }, dailyFreeSorties: 1, bossChipBonus: 0.1, alloyYieldBonus: 0.08, epicPityBonus: 0.08 },
-            { id: 'dominion', threshold: 10, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, dailyFreeSorties: 2, bossChipBonus: 0.16, alloyYieldBonus: 0.15, epicPityBonus: 0.12 },
-            { id: 'genesis', threshold: 20, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, dailyFreeSorties: 2, bossChipBonus: 0.24, alloyYieldBonus: 0.22, epicPityBonus: 0.2 }
+            { id: 'locked', threshold: 0, spendThreshold: 0, title: { zh: '未激活', en: 'Locked' }, dailyFreeSorties: 0, bossChipBonus: 0, creditYieldBonus: 0, alloyYieldBonus: 0, epicPityBonus: 0 },
+            { id: 'spark', threshold: 1, spendThreshold: 6, title: { zh: '火花赞助', en: 'Spark Sponsor' }, dailyFreeSorties: 1, bossChipBonus: 0, creditYieldBonus: 0.02, alloyYieldBonus: 0.05, epicPityBonus: 0 },
+            { id: 'relay', threshold: 4, spendThreshold: 30, title: { zh: '中继赞助', en: 'Relay Sponsor' }, dailyFreeSorties: 1, bossChipBonus: 0.1, creditYieldBonus: 0.05, alloyYieldBonus: 0.08, epicPityBonus: 0.08 },
+            { id: 'dominion', threshold: 10, spendThreshold: 68, title: { zh: '统御赞助', en: 'Dominion Sponsor' }, dailyFreeSorties: 2, bossChipBonus: 0.16, creditYieldBonus: 0.09, alloyYieldBonus: 0.15, epicPityBonus: 0.12 },
+            { id: 'genesis', threshold: 20, spendThreshold: 128, title: { zh: '创世赞助', en: 'Genesis Sponsor' }, dailyFreeSorties: 2, bossChipBonus: 0.24, creditYieldBonus: 0.14, alloyYieldBonus: 0.22, epicPityBonus: 0.2 }
         ],
         baseSave: {
             tab: 'sortie',
@@ -355,7 +355,7 @@
                 purchaseCount: 0,
                 totalSpent: 0,
                 lastPayAddress: '',
-                permanent: { attackBoost: 0, shieldBoost: 0, bossDamage: 0, alloyYield: 0 },
+                permanent: { attackBoost: 0, shieldBoost: 0, bossDamage: 0, alloyYield: 0, creditYield: 0 },
                 passUnlocked: false
             }
         }
