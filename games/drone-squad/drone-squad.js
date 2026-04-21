@@ -332,6 +332,62 @@
         `;
     }
 
+    function renderTabFlowStrip(tabId, context = {}) {
+        const chapter = context.chapter || getSelectedChapter();
+        const freeLeft = getRemainingFreeSorties();
+        const freeLimit = getDailyFreeSortiesLimit();
+        const sortieCost = chapter ? getSortieCost(chapter) : 0;
+        const powerGap = Math.max(0, Number(context.powerGap) || 0);
+        const focus = chapter ? localize(chapter.rewardFocus || chapter.name) : text('当前章节', 'Current stage');
+        const itemsMap = {
+            sortie: [
+                { icon: '&#9679;', title: text('本关产出', 'Run Yield'), body: text(`本关更偏向 ${focus}。`, `This stage leans toward ${focus}.`) },
+                { icon: '&#9655;', title: text('出击成本', 'Entry Cost'), body: text(`今日免费 ${freeLeft}/${freeLimit}，超出 ${sortieCost} 币/次。`, `${freeLeft}/${freeLimit} free today, then ${sortieCost} Cr per run.`) },
+                { icon: '&#10039;', title: text('同步推进', 'Also Pushes'), body: text('一局同时推进任务、赛季和 Boss 首通。', 'Each run also advances missions, season, and boss first clears.') }
+            ],
+            intel: [
+                { icon: '&#9888;', title: text('当前卡点', 'Current Wall'), body: powerGap > 0 ? text(`当前还差 ${formatCompact(powerGap)} 战力。`, `${formatCompact(powerGap)} more power needed right now.`) : text('当前战力已达线，可直接开打。', 'Power check passed; you can launch now.') },
+                { icon: '&#9671;', title: text('资源判断', 'Where To Go'), body: text('缺战力去机库，缺芯片/合金去蓝图，缺补给再去商店。', 'Need power: Hangar. Need chips/alloy: Blueprints. Need a gap fill: Shop.') },
+                { icon: '&#9733;', title: text('首通价值', 'First Clear Value'), body: text('Boss 关首通最值，芯片效率最高。', 'Boss first clears are the best chip-value runs.') }
+            ],
+            hangar: [
+                { icon: '&#9679;', title: text('主要花费', 'Main Spend'), body: text('升级主吃金币，升星再吃碎片和合金。', 'Levels mostly spend credits; stars add shard and alloy pressure.') },
+                { icon: '&#9992;', title: text('推荐顺序', 'Best Order'), body: text('先主机，再双僚机，最后补关键模组。', 'Raise chassis first, then both wings, then key modules.') },
+                { icon: '&#10022;', title: text('直接作用', 'Direct Result'), body: text('这里的投入会直接抬高出击战力。', 'Spending here directly lifts sortie power.') }
+            ],
+            missions: [
+                { icon: '&#9776;', title: text('完成方式', 'How It Clears'), body: text('出击、击杀、研究、养成都会自然推进。', 'Sorties, kills, research, and upgrades progress these naturally.') },
+                { icon: '&#9679;', title: text('奖励定位', 'Reward Role'), body: text('中前期最稳的金币、合金、芯片回收。', 'Your most stable early-mid recovery for credits, alloy, and chips.') },
+                { icon: '&#9733;', title: text('处理方式', 'Claim Rule'), body: text('能领先领，已完成的任务会自动沉底。', 'Claim ready ones first; completed missions sink to the bottom.') }
+            ],
+            season: [
+                { icon: '&#10039;', title: text('XP 来源', 'XP Sources'), body: text('出击、精英、Boss 都会推进赛季经验。', 'Sorties, elites, and bosses all feed season XP.') },
+                { icon: '&#9638;', title: text('长线产出', 'Long-Term Yield'), body: text('更偏资源包、碎片、模组箱。', 'This route leans toward bundles, shards, and module crates.') },
+                { icon: '&#9734;', title: text('付费差异', 'Paid Difference'), body: text('首充开赞助线后，长期回报高于单次补给。', 'After first top-up, the sponsor track out-values one-off supplies.') }
+            ],
+            shop: [
+                { icon: '&#9733;', title: text('每日动作', 'Daily Move'), body: text('先领免费补给，再补当前短缺资源。', 'Claim free supply first, then patch your current shortage.') },
+                { icon: '&#9679;', title: text('金币商店', 'Credit Shop'), body: text('现在只适合补缺口，不再能反向赚金币。', 'This now fills shortages only; it no longer generates net credits.') },
+                { icon: '&#9670;', title: text('充值价值', 'Pack Value'), body: text('礼包同时给资源、永久增益、出击/赛季加速。', 'Packs grant resources, permanent boosts, and sortie/season acceleration.') }
+            ]
+        };
+        const items = itemsMap[tabId] || [];
+        if (!items.length) return '';
+        return `
+            <div class="ds-flow-grid">
+                ${items.map((item) => `
+                    <div class="ds-flow-card">
+                        <div class="ds-flow-card-head">
+                            <span class="ds-flow-icon" aria-hidden="true">${item.icon}</span>
+                            <strong>${escapeHtml(item.title)}</strong>
+                        </div>
+                        <div class="ds-note-mini">${escapeHtml(item.body)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
     function renderResourceStrip() {
         if (!ui.resourceStrip) return;
         const freeLeft = getRemainingFreeSorties();
@@ -513,6 +569,8 @@
                     ${config.chapters.map((item, index) => renderSortieQuickChip(item, index)).join('')}
                 </div>
 
+                ${renderTabFlowStrip('sortie', { chapter, powerGap })}
+
                 <div class="ds-stage-hud">
                     <div class="ds-stage-hud-card">
                         <span>${escapeHtml(text('Shield', 'Shield'))}</span>
@@ -557,6 +615,7 @@
                     </div>
                     <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
                 </div>
+                ${renderTabFlowStrip('intel', { chapter, powerGap })}
                 <div class="ds-chip-grid ds-chip-grid--route">
                     ${config.chapters.map((item, index) => renderChapterChip(item, index)).join('')}
                 </div>
@@ -710,6 +769,7 @@
                     ${renderWingSlotCard(1)}
                 </div>
                 ${renderHangarWalletStrip()}
+                ${renderTabFlowStrip('hangar')}
             </section>
 
             <section class="ds-card">
@@ -1267,6 +1327,7 @@
                         <strong>${escapeHtml(String(getClaimableMissionCount()))}</strong>
                     </div>
                 </div>
+                ${renderTabFlowStrip('missions')}
                 <div class="ds-mission-grid">${missions.join('')}</div>
             </section>
         `;
@@ -1287,6 +1348,7 @@
                         <strong>${escapeHtml(String(state.save.seasonXp))}</strong>
                     </div>
                 </div>
+                ${renderTabFlowStrip('season')}
                 <div class="ds-grid ds-season-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
                     <article class="ds-list-card">
                         <div class="ds-card-head">
@@ -1346,6 +1408,7 @@
                         <div class="ds-panel-copy">${escapeHtml(text('Free supply, soft-currency items, and premium packs all live here.', 'Free supply, soft-currency items, and premium packs all live here.'))}</div>
                     </div>
                 </div>
+                ${renderTabFlowStrip('shop')}
                 <div class="ds-offer-grid ds-shop-offer-grid ds-shop-offer-grid--soft">
                     ${renderDailySupplyCard()}
                     ${softItems}

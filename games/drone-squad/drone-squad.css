@@ -705,6 +705,55 @@ canvas {
     line-height: 1.25;
 }
 
+.ds-flow-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 10px 0 12px;
+}
+
+.ds-flow-card {
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.025);
+    display: grid;
+    gap: 4px;
+}
+
+.ds-flow-card-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ds-flow-card-head strong {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.ds-flow-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(104, 183, 255, 0.16);
+    color: var(--ds-accent);
+    flex: 0 0 auto;
+    font-size: 10px;
+}
+
+.ds-flow-card .ds-note-mini {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
 .ds-blueprint-tip-icon {
     width: 22px;
     height: 22px;
@@ -1461,6 +1510,18 @@ canvas {
     .ds-chip-note,
     .ds-note-mini {
         font-size: 10px;
+    }
+
+    .ds-flow-grid {
+        gap: 6px;
+    }
+
+    .ds-flow-card {
+        padding: 7px 8px;
+    }
+
+    .ds-flow-card-head strong {
+        font-size: 11px;
     }
 
     .ds-perk-grid {
