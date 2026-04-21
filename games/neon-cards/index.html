@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>霓虹卡牌</title>
+    <meta name="description" content="霓虹卡牌 - 三路实时卡战、拖放出牌、卡组养成与赛季成长。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/hub.css">
+    <link rel="stylesheet" href="./neon-cards.css">
+</head>
+<body data-neon-tab="clash">
+    <div class="nc-bg" aria-hidden="true"></div>
+    <div class="nc-shell">
+        <header class="nc-topbar">
+            <div class="nc-topline">
+                <a class="back-link" href="/" id="backToHubLink">&larr; 返回大厅</a>
+                <div class="lang-toggle" role="group" aria-label="语言切换">
+                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">中</button>
+                    <button class="lang-btn" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+                </div>
+            </div>
+
+            <section class="nc-hero-card">
+                <div class="nc-hero-copy">
+                    <div class="eyebrow" id="heroEyebrow">创世霓虹卡牌</div>
+                    <h1 id="heroTitle">霓虹卡牌</h1>
+                    <p id="heroSubtitle">三路实时卡战、拖放出牌、卡组养成与赛季成长。</p>
+                </div>
+                <div class="nc-resource-strip" id="resourceStrip"></div>
+            </section>
+        </header>
+
+        <main class="nc-main">
+            <section class="nc-summary-card" id="heroSummary"></section>
+            <section class="nc-panel-card">
+                <div class="nc-panel-content" id="panelContent"></div>
+            </section>
+        </main>
+
+        <nav class="nc-tabbar" id="tabBar" aria-label="霓虹卡牌页签"></nav>
+
+        <div class="nc-modal is-hidden" id="modalRoot">
+            <div class="nc-modal-card">
+                <div class="nc-modal-head">
+                    <div>
+                        <div class="eyebrow" id="modalEyebrow">信息</div>
+                        <h2 id="modalTitle">霓虹卡牌</h2>
+                        <p id="modalSubtitle"></p>
+                    </div>
+                    <button class="ghost-btn icon-btn" id="modalCloseBtn" type="button" aria-label="关闭弹窗">&times;</button>
+                </div>
+                <div class="nc-modal-body" id="modalBody"></div>
+                <div class="nc-modal-actions" id="modalActions"></div>
+            </div>
+        </div>
+
+        <div class="nc-toast" id="toast"></div>
+    </div>
+
+    <script src="./neon-cards.config.js"></script>
+    <script src="./neon-cards.js"></script>
+</body>
+</html>

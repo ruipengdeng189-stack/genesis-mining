@@ -355,16 +355,16 @@
                          "en":  "Light Strategy Battle"
                      },
         "description":  {
-                            "zh":  "\u975e\u5e38\u9002\u5408\u505a\u8d5b\u5b63\u3001\u901a\u884c\u8bc1\u3001\u6218\u4ee4\u3001\u5361\u5305\u548c\u9650\u5b9a\u5956\u52b1\u7ebf\u3002",
-                            "en":  "Perfect for seasons, passes, battle orders, packs, and limited reward tracks."
+                            "zh":  "\u4e09\u8def\u5361\u7ec4\u5bf9\u6297\u539f\u578b\u5df2\u53ef\u4f53\u9a8c\uff0c\u5305\u542b\u5361\u7ec4\u3001\u7814\u7a76\u3001\u8d5b\u5b63\u4e0e\u5546\u5e97\u57fa\u7840\u95ed\u73af\u3002",
+                            "en":  "A live tri-lane card battle prototype with the first pass of deck, lab, season, and shop loops."
                         },
         "icon":  "NC",
-        "href":  "/games/coming-soon/?id=neon-cards",
+        "href":  "/games/neon-cards/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u5df2\u4e0a\u7ebf",
+                      "en":  "Live"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
                       "zh":  "\u9713\u8679\u5361\u724c",
                       "en":  "Neon Cards"
