@@ -134,6 +134,22 @@ button:disabled {
     gap: 14px;
 }
 
+.nc-card--compact {
+    gap: 10px;
+}
+
+.nc-card-item--dense {
+    gap: 10px;
+}
+
+.nc-slot-card--compact {
+    gap: 6px;
+}
+
+.nc-flow-card--compact {
+    min-height: 80px;
+}
+
 .nc-hero-copy h1 {
     margin: 4px 0 0;
     font-size: clamp(28px, 5vw, 38px);
@@ -458,6 +474,32 @@ button:disabled {
     gap: 10px;
 }
 
+.nc-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.nc-quick-actions .ghost-btn,
+.nc-quick-actions .primary-btn {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.nc-card-item--dense .nc-action-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.nc-card-item--dense .nc-action-row > * {
+    width: 100%;
+}
+
+.nc-card-item--dense .nc-action-row > :only-child,
+.nc-card-item--dense .nc-action-row > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+}
+
 .wide-btn {
     width: 100%;
 }
@@ -609,6 +651,66 @@ button:disabled {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+}
+
+.nc-payment-panel {
+    display: grid;
+    gap: 10px;
+}
+
+.nc-payment-address-block,
+.nc-payment-field,
+.nc-payment-status {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.nc-payment-address {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px dashed rgba(104, 255, 224, 0.24);
+    background: rgba(6, 12, 24, 0.78);
+    color: var(--nc-text);
+    font-size: 12px;
+    line-height: 1.45;
+    word-break: break-all;
+}
+
+.nc-payment-input {
+    width: 100%;
+    min-height: 46px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(104, 255, 224, 0.18);
+    background: rgba(7, 13, 24, 0.92);
+    color: var(--nc-text);
+    font: inherit;
+    outline: none;
+}
+
+.nc-payment-input:focus {
+    border-color: rgba(104, 255, 224, 0.42);
+    box-shadow: 0 0 0 3px rgba(104, 255, 224, 0.08);
+}
+
+.nc-payment-status {
+    color: var(--nc-text-soft);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.nc-payment-status.is-good {
+    border-color: rgba(104, 255, 224, 0.24);
+    color: var(--nc-text);
+}
+
+.nc-payment-status.is-warning {
+    border-color: rgba(255, 203, 107, 0.22);
+    color: var(--nc-text);
 }
 
 .icon-btn {
@@ -1037,6 +1139,10 @@ button:disabled {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.nc-action-row--setup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .nc-battle-hand {
     min-height: 86px;
     border-width: 1px;
@@ -1304,6 +1410,12 @@ body[data-neon-live="1"] .nc-battle-lane {
         grid-template-columns: minmax(0, 1fr);
     }
 
+    .nc-payment-address,
+    .nc-payment-input,
+    .nc-payment-status {
+        font-size: 11px;
+    }
+
     .nc-battle-core {
         width: 46px;
     }
@@ -1322,6 +1434,260 @@ body[data-neon-live="1"] .nc-battle-lane {
 }
 
 @media (max-width: 560px) {
+    .nc-topbar,
+    .nc-main,
+    .nc-panel-content,
+    .nc-card,
+    .nc-list-card,
+    .nc-card-item,
+    .nc-track-card {
+        gap: 10px;
+    }
+
+    .nc-hero-card {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .nc-hero-copy h1 {
+        font-size: clamp(22px, 6.6vw, 28px);
+    }
+
+    .nc-hero-copy p {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        overflow: hidden;
+    }
+
+    .nc-resource-strip,
+    .nc-summary-grid {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+    .nc-resource-strip::-webkit-scrollbar,
+    .nc-summary-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nc-resource-pill,
+    .nc-summary-item {
+        flex: 0 0 132px;
+        min-height: 60px;
+        padding: 9px 10px;
+        gap: 4px;
+        border-radius: 16px;
+    }
+
+    .nc-resource-pill small {
+        display: none;
+    }
+
+    .nc-resource-pill strong,
+    .nc-summary-item strong {
+        font-size: 15px;
+    }
+
+    .nc-summary-card,
+    .nc-panel-card,
+    .nc-card,
+    .nc-list-card,
+    .nc-card-item,
+    .nc-track-card,
+    .nc-slot-card {
+        padding: 12px;
+        border-radius: 18px;
+    }
+
+    .nc-card-copy,
+    .nc-inline-note {
+        font-size: 12px;
+    }
+
+    .nc-card--compact .nc-card-copy,
+    .nc-card-item--dense .nc-card-copy,
+    .nc-card-item--dense .nc-inline-note {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .nc-chip {
+        flex: 0 0 118px;
+        min-height: 72px;
+        padding: 10px;
+        border-radius: 16px;
+    }
+
+    .nc-chip strong {
+        font-size: 13px;
+    }
+
+    .nc-flow-grid--strip {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+    .nc-flow-grid--strip::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nc-flow-card--compact {
+        flex: 0 0 148px;
+        min-height: 74px;
+        padding: 10px 12px;
+        border-radius: 16px;
+    }
+
+    .nc-wallet-pill {
+        flex: 0 0 128px;
+        min-height: 70px;
+        padding: 10px;
+        border-radius: 16px;
+    }
+
+    .nc-slot-card--compact {
+        min-height: 74px;
+        padding: 10px;
+    }
+
+    .nc-lineup-grid {
+        gap: 8px;
+    }
+
+    .nc-board-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .nc-lane-card {
+        min-height: 90px;
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .nc-lane-unit {
+        font-size: 13px;
+        line-height: 1.25;
+    }
+
+    .nc-lane-card .nc-note-mini {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    .nc-hand-card {
+        min-height: 70px;
+        gap: 4px;
+        padding: 10px;
+    }
+
+    .nc-hand-row--setup {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+    .nc-hand-row--setup::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nc-hand-row--setup .nc-hand-card {
+        flex: 0 0 120px;
+    }
+
+    .nc-card-item--dense .nc-stat-grid {
+        gap: 8px;
+    }
+
+    .nc-card-item--dense .nc-stat-box {
+        min-height: 64px;
+        padding: 8px 10px;
+    }
+
+    .nc-card-item--dense .nc-stat-value {
+        font-size: 14px;
+    }
+
+    .nc-card-item--dense .nc-tag {
+        min-height: 24px;
+        padding: 0 8px;
+    }
+
+    .nc-quick-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .nc-quick-actions .ghost-btn,
+    .nc-quick-actions .primary-btn {
+        min-height: 34px;
+        padding: 0 8px;
+        font-size: 11px;
+    }
+
+    body[data-neon-tab="clash"] .nc-topbar {
+        gap: 10px;
+    }
+
+    body[data-neon-tab="clash"] .nc-hero-card {
+        padding: 11px;
+        gap: 8px;
+    }
+
+    body[data-neon-tab="clash"] .nc-hero-copy p {
+        display: none;
+    }
+
+    body[data-neon-tab="clash"] .nc-main {
+        margin-top: 10px;
+        gap: 10px;
+    }
+
+    body[data-neon-tab="clash"] .nc-summary-card,
+    body[data-neon-tab="clash"] .nc-panel-card {
+        padding: 8px;
+    }
+
+    body[data-neon-tab="clash"] .nc-resource-pill,
+    body[data-neon-tab="clash"] .nc-summary-item {
+        flex-basis: 124px;
+        min-height: 56px;
+        padding: 8px 9px;
+    }
+
+    body[data-neon-tab="clash"] .nc-battle-card {
+        gap: 10px;
+    }
+
+    body[data-neon-tab="clash"] .nc-board-grid,
+    body[data-neon-tab="clash"] .nc-hand-row,
+    body[data-neon-tab="clash"] .nc-action-row {
+        gap: 8px;
+    }
+
+    body[data-neon-tab="clash"] .nc-quick-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     body[data-neon-live="1"] .nc-shell {
         padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
     }

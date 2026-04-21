@@ -2,6 +2,10 @@
     const HUB_LANG_KEY = 'genesis_arcade_hub_lang_v1';
     const SAVE_KEY = 'genesis_neon_cards_save_v1';
     const DAILY_SUPPLY_COOLDOWN_MS = 20 * 60 * 60 * 1000;
+    const PAYMENT_NETWORK = 'TRON (TRC20)';
+    const PAYMENT_WALLET = 'TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW';
+    const PAYMENT_ORDER_EXPIRY_MS = 15 * 60 * 1000;
+    const PAYMENT_TXID_RE = /^[a-fA-F0-9]{64}$/;
 
     const config = window.GENESIS_NEON_CARDS_CONFIG;
     if (!config) return;
@@ -189,6 +193,21 @@
             case 'previewOffer':
                 previewOffer(value);
                 break;
+            case 'createOfferOrder':
+                createOfferOrder(value);
+                break;
+            case 'verifyOfferTxid':
+                verifyOfferTxid(value);
+                break;
+            case 'cancelOfferOrder':
+                cancelOfferOrder(value);
+                break;
+            case 'copyOfferAddress':
+                copyOfferAddress();
+                break;
+            case 'copyOfferAmount':
+                copyOfferAmount(value);
+                break;
             case 'closeModal':
                 closeModal();
                 break;
@@ -210,11 +229,11 @@
     }
 
     function renderTexts() {
-        if (ui.backLink) ui.backLink.textContent = text('鈫?Back To Hub', '鈫?Back To Hub');
-        if (ui.heroEyebrow) ui.heroEyebrow.textContent = text('Genesis Neon Cards', 'Genesis Neon Cards');
+        if (ui.backLink) ui.backLink.textContent = text('← 返回大厅', '← Back To Hub');
+        if (ui.heroEyebrow) ui.heroEyebrow.textContent = text('创世·霓虹卡牌', 'Genesis Neon Cards');
         if (ui.heroTitle) ui.heroTitle.textContent = localize(config.meta.title);
         if (ui.heroSubtitle) ui.heroSubtitle.textContent = localize(config.meta.subtitle);
-        document.title = state.lang === 'en' ? 'Neon Cards' : '闇撹櫣鍗＄墝';
+        document.title = state.lang === 'en' ? 'Neon Cards' : '霓虹卡牌';
 
         ui.langButtons.forEach((button) => {
             const active = (button.dataset.langSwitch === 'en' ? 'en' : 'zh') === state.lang;
@@ -297,7 +316,7 @@
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10022;', localize(chapter.name), chapter.id)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Drag cards to lanes, cast tactics, and fight short matches. This first pass resolves battles with a value simulation so we can keep building the combat layer.', 'Drag cards to lanes, cast tactics, and fight short matches. This first pass resolves battles with a value simulation so we can keep building the combat layer.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('拖卡上阵、释放战术、打短局三路线对抗。你需要在有限能量内守住核心并压穿敌方路线。', 'Drag cards to lanes, cast tactics, and play short tri-lane clashes. Manage limited energy, hold your cores, and break through enemy lines.'))}</div>
                     </div>
                     <div class="nc-head-kpi">
                         <span class="nc-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Recommended', 'Recommended'))}</span>
@@ -318,7 +337,7 @@
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9776;', text('Tri-Lane Preview', 'Tri-Lane Preview'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('The live battle layer comes next; for now we validate the layout and economy through three-lane pressure, hand cards, and results.', 'The live battle layer comes next; for now we validate the layout and economy through three-lane pressure, hand cards, and results.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('当前对战采用三路线实时推进：手牌部署、战术释放、Boss 压力与中途强化都会直接影响结算。', 'Clashes now run in live tri-lane combat: hand deployment, tactics, boss pressure, and mid-battle boosts all directly affect the result.'))}</div>
                     </div>
                 </div>
 
@@ -346,11 +365,11 @@
     function renderDeckTab() {
         const leader = leaderMap[state.save.selectedLeaderId];
         return `
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9992;', text('Current Lineup', 'Current Lineup'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('1 leader, 3 units, 1 tactic. Finish one core deck before chasing a second setup.', '1 leader, 3 units, 1 tactic. Finish one core deck before chasing a second setup.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('1 队长、3 单位、1 战术。先练成一套主力。', '1 leader, 3 units, 1 tactic. Finish one core deck before building a second setup.'))}</div>
                     </div>
                     <div class="nc-head-kpi">
                         <span class="nc-tag is-good">${escapeHtml(text('Power', 'Power'))}</span>
@@ -370,13 +389,19 @@
                     ${renderWalletPill('&#9671;', text('Chips', 'Chips'), formatCompact(state.save.cipherChips), text('Research / High Stars', 'Research / High Stars'))}
                     ${renderWalletPill('&#9638;', text('Crates', 'Crates'), `${state.save.inventory.standardCrates} / ${state.save.inventory.eliteCrates}`, text('Standard / Elite', 'Standard / Elite'))}
                 </div>
+
+                ${renderQuickActions([
+                    { label: text('Go Lab', 'Go Lab'), action: 'openTab', value: 'lab', tone: 'ghost' },
+                    { label: text('Open Shop', 'Open Shop'), action: 'openTab', value: 'shop', tone: 'ghost' },
+                    { label: text('Open Crate', 'Open Crate'), action: 'openCrate', value: 'standard', disabled: state.save.inventory.standardCrates <= 0 }
+                ])}
             </section>
 
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9733;', text('Leaders', 'Leaders'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Your leader defines the pace of the whole lineup. Only one can be active.', 'Your leader defines the pace of the whole lineup. Only one can be active.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('队长决定全队节奏，只能上阵 1 名。', 'Your leader sets the pace of the whole lineup. Only one can be active.'))}</div>
                     </div>
                 </div>
                 <div class="nc-card-grid">
@@ -384,11 +409,11 @@
                 </div>
             </section>
 
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9776;', text('Units', 'Units'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Deploy up to 3 units. A strong starting shape is 1 tank, 1 damage, 1 support or finisher.', 'Deploy up to 3 units. A strong starting shape is 1 tank, 1 damage, 1 support or finisher.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('推荐 1 前排 + 1 输出 + 1 辅助/收割。', 'A strong base shape is 1 tank, 1 damage, and 1 support or finisher.'))}</div>
                     </div>
                 </div>
                 <div class="nc-card-grid">
@@ -396,11 +421,11 @@
                 </div>
             </section>
 
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9889;', text('Tactics', 'Tactics'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('The first version equips 1 tactic card to highlight burst responses and wall breaks in short matches.', 'The first version equips 1 tactic card to highlight burst responses and wall breaks in short matches.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('当前只装 1 张战术，负责爆发、补盾或解场。', 'You equip 1 tactic card for burst, shielding, or lane-breaking plays.'))}</div>
                     </div>
                 </div>
                 <div class="nc-card-grid">
@@ -408,11 +433,11 @@
                 </div>
             </section>
 
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9638;', text('Crate Station', 'Crate Station'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Start with free and daily crates, then use cores and credits to patch missing fragments.', 'Start with free and daily crates, then use cores and credits to patch missing fragments.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('先开包补碎片，不够再用核心和金币追进度。', 'Open crates for fragments first, then use cores and credits to patch the rest.'))}</div>
                     </div>
                 </div>
                 <div class="nc-stat-grid">
@@ -429,17 +454,21 @@
 
     function renderLabTab() {
         return `
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10070;', text('Permanent Lab', 'Permanent Lab'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Research feeds directly into clash energy, frontline, backline, tactics, and economy while steadily consuming credits and chips.', 'Research feeds directly into clash energy, frontline, backline, tactics, and economy while steadily consuming credits and chips.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('研究永久强化能量、前排、后排、战术与收益。', 'Research permanently boosts energy, frontline, backline, tactics, and income.'))}</div>
                     </div>
                     <div class="nc-head-kpi">
                         <span class="nc-tag">${escapeHtml(text('Total Lv', 'Total Lv'))}</span>
                         <strong>${escapeHtml(String(getTotalResearchLevels()))}</strong>
                     </div>
                 </div>
+                ${renderQuickActions([
+                    { label: text('Go Clash', 'Go Clash'), action: 'openTab', value: 'clash', tone: 'ghost' },
+                    { label: text('Open Deck', 'Open Deck'), action: 'openTab', value: 'deck', tone: 'ghost' }
+                ])}
                 <div class="nc-card-grid">
                     ${config.research.map(renderResearchCard).join('')}
                 </div>
@@ -474,6 +503,10 @@
                         <strong>${escapeHtml(String(getClaimableMissionCount()))}</strong>
                     </div>
                 </div>
+                ${renderQuickActions([
+                    { label: text('Go Clash', 'Go Clash'), action: 'openTab', value: 'clash', tone: 'ghost' },
+                    { label: text('Open Deck', 'Open Deck'), action: 'openTab', value: 'deck', tone: 'ghost' }
+                ])}
                 <div class="nc-card-grid">
                     ${missions.map(({ mission, progress, claimed, ready }) => renderMissionCard(mission, progress, claimed, ready)).join('')}
                 </div>
@@ -487,13 +520,17 @@
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10039;', text('Season Route', 'Season Route'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Matches, crate opens, upgrades, and boss wins all feed the season. This first pass focuses on the dual tracks and claim flow.', 'Matches, crate opens, upgrades, and boss wins all feed the season. This first pass focuses on the dual tracks and claim flow.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('对战、开包、升级与击败 Boss 都会累计赛季进度；免费与赞助双轨奖励会按经验节点逐步解锁。', 'Matches, crate opens, upgrades, and boss wins all feed the season; both free and sponsor tracks unlock step by step as your XP grows.'))}</div>
                     </div>
                     <div class="nc-head-kpi">
                         <span class="nc-tag ${getClaimableSeasonCount() ? 'is-good' : ''}">${escapeHtml(text('Season XP', 'Season XP'))}</span>
                         <strong>${escapeHtml(String(state.save.seasonXp))}</strong>
                     </div>
                 </div>
+                ${renderQuickActions([
+                    { label: text('Go Clash', 'Go Clash'), action: 'openTab', value: 'clash', tone: 'ghost' },
+                    { label: isSeasonPassUnlocked() ? text('Open Shop', 'Open Shop') : text('Unlock Pass', 'Unlock Pass'), action: isSeasonPassUnlocked() ? 'openTab' : 'previewOffer', value: isSeasonPassUnlocked() ? 'shop' : 'starter', tone: 'ghost' }
+                ])}
                 <div class="nc-two-col">
                     <article class="nc-list-card">
                         <div class="nc-card-head">
@@ -511,7 +548,7 @@
                         <div class="nc-card-head">
                             <div>
                                 <h3>${renderIconLabel('&#9734;', text('Sponsor Track', 'Sponsor Track'))}</h3>
-                                <div class="nc-card-copy">${escapeHtml(isSeasonPassUnlocked() ? text('Unlocked and ready for extra long-term rewards.', 'Unlocked and ready for extra long-term rewards.') : text('The next payment integration step will unlock this track through first top-up.', 'The next payment integration step will unlock this track through first top-up.'))}</div>
+                                <div class="nc-card-copy">${escapeHtml(isSeasonPassUnlocked() ? text('Unlocked and ready for extra long-term rewards.', 'Unlocked and ready for extra long-term rewards.') : text('Your first verified top-up unlocks the sponsor track and its extra season rewards.', 'Your first verified top-up unlocks the sponsor track and its extra season rewards.'))}</div>
                             </div>
                             <span class="nc-tag ${isSeasonPassUnlocked() ? 'is-good' : 'is-warning'}">${escapeHtml(isSeasonPassUnlocked() ? text('Unlocked', 'Unlocked') : text('Payment Next', 'Payment Next'))}</span>
                         </div>
@@ -528,13 +565,18 @@
         const softItems = config.shopItems.filter((item) => item.price > 0).map(renderShopItemCard).join('');
         const premiumItems = config.paymentOffers.map(renderOfferCard).join('');
         return `
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9733;', text('Supply Hub', 'Supply Hub'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Free supply, soft-currency catch-up, and premium packs all live on this page.', 'Free supply, soft-currency catch-up, and premium packs all live on this page.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('免费补给、金币追赶与充值包都在这里处理。', 'Free supply, soft-currency catch-up, and premium packs all live here.'))}</div>
                     </div>
                 </div>
+                ${renderQuickActions([
+                    { label: canClaimDailySupply() ? text('Claim Daily', 'Claim Daily') : text('Season', 'Season'), action: canClaimDailySupply() ? 'claimDailySupply' : 'openTab', value: canClaimDailySupply() ? '' : 'season' },
+                    { label: text('Open Deck', 'Open Deck'), action: 'openTab', value: 'deck', tone: 'ghost' },
+                    { label: text('Season', 'Season'), action: 'openTab', value: 'season', tone: 'ghost' }
+                ])}
 
                 <div class="nc-card-grid">
                     ${renderDailySupplyCard()}
@@ -542,13 +584,14 @@
                 </div>
             </section>
 
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-card-head">
                     <div>
-                        <h3>${renderIconLabel('&#9670;', text('Premium Pack Preview', 'Premium Pack Preview'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('This pass builds the pack structure, values, and entry points first; the next step will connect on-chain verification and reward delivery.', 'This pass builds the pack structure, values, and entry points first; the next step will connect on-chain verification and reward delivery.'))}</div>
+                        <h3>${renderIconLabel('&#9670;', text('Premium Top-Up', 'Premium Top-Up'))}</h3>
+                        <div class="nc-card-copy">${escapeHtml(text('创建精确订单、提交 TXID、解锁赞助轨与永久特权。', 'Create exact orders, verify TXIDs, unlock the sponsor track, and activate permanent perks.'))}</div>
                     </div>
                 </div>
+                ${renderPaymentStatusPanel()}
                 <div class="nc-card-grid">
                     ${premiumItems}
                 </div>
@@ -662,11 +705,10 @@
 
     function renderMissionCard(mission, progress, claimed, ready) {
         return `
-            <article class="nc-card-item ${ready ? 'is-ready' : ''} ${claimed ? 'is-claimed' : ''}">
+            <article class="nc-card-item nc-card-item--dense ${ready ? 'is-ready' : ''} ${claimed ? 'is-claimed' : ''}">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel(claimed ? '&#10003;' : ready ? '&#9733;' : '&#9679;', localize(mission.title), `${progress}/${mission.target}`)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(getMissionHint(mission.metric))}</div>
                     </div>
                     <span class="nc-tag ${ready ? 'is-good' : ''}">${escapeHtml(claimed ? text('Claimed', 'Claimed') : ready ? text('Ready', 'Ready') : `${progress}/${mission.target}`)}</span>
                 </div>
@@ -684,8 +726,11 @@
         const ready = state.save.seasonXp >= node.xp;
         const claimed = (track === 'premium' ? state.save.premiumSeasonClaimed : state.save.seasonClaimed).includes(key);
         const locked = track === 'premium' && !isSeasonPassUnlocked();
+        const action = locked ? 'previewOffer' : track === 'premium' ? 'claimPremiumSeason' : 'claimSeason';
+        const actionValue = locked ? 'starter' : node.id;
+        const disabled = !locked && (!ready || claimed);
         return `
-            <article class="nc-track-card ${ready && !claimed && !locked ? 'is-ready' : ''}">
+            <article class="nc-track-card nc-card-item--dense ${ready && !claimed && !locked ? 'is-ready' : ''}">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel(track === 'premium' ? '&#9734;' : '&#9733;', `${track === 'premium' ? text('Sponsor', 'Sponsor') : text('Free', 'Free')} ${node.id.toUpperCase()}`)}</h3>
@@ -694,7 +739,7 @@
                 </div>
                 ${renderRewardPills(node.reward)}
                 <div class="nc-action-row">
-                    <button class="ghost-btn wide-btn" type="button" data-action="${track === 'premium' ? 'claimPremiumSeason' : 'claimSeason'}" data-value="${node.id}" ${ready && !claimed && !locked ? '' : 'disabled'}>${escapeHtml(locked ? text('Payment Next', 'Payment Next') : claimed ? text('Claimed', 'Claimed') : text('Claim', 'Claim'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="${action}" data-value="${actionValue}" ${disabled ? 'disabled' : ''}>${escapeHtml(locked ? text('Unlock Pass', 'Unlock Pass') : claimed ? text('Claimed', 'Claimed') : text('Claim', 'Claim'))}</button>
                 </div>
             </article>
         `;
@@ -703,7 +748,7 @@
     function renderDailySupplyCard() {
         const ready = canClaimDailySupply();
         return `
-            <article class="nc-card-item ${ready ? 'is-ready' : ''}">
+            <article class="nc-card-item nc-card-item--dense ${ready ? 'is-ready' : ''}">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9733;', text('Daily Free Supply', 'Daily Free Supply'))}</h3>
@@ -721,11 +766,10 @@
 
     function renderShopItemCard(item) {
         return `
-            <article class="nc-card-item">
+            <article class="nc-card-item nc-card-item--dense">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9638;', localize(item.title))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(getShopItemHint(item.id))}</div>
                     </div>
                     <span class="nc-tag">${escapeHtml(`${item.price} Cr`)}</span>
                 </div>
@@ -737,19 +781,42 @@
         `;
     }
 
-    function renderOfferCard(offer) {
+    function renderPaymentStatusPanel() {
+        const pending = getPendingPaymentOrder();
+        const hasLivePending = !!(pending && !isPaymentOrderExpired(pending));
+        const pass = isSeasonPassUnlocked();
+        const extraFree = getPaymentFreeClashBonus();
         return `
-            <article class="nc-card-item is-premium">
+            <div class="nc-stat-grid">
+                ${renderStatBox(text('Spent', 'Spent'), `${formatPaymentAmount(state.save.payment.totalSpent)} USDT`, text('Lifetime verified', 'Lifetime verified'))}
+                ${renderStatBox(text('Orders', 'Orders'), String(state.save.payment.purchaseCount || 0), hasLivePending ? text('1 pending', '1 pending') : text('No pending order', 'No pending order'))}
+                ${renderStatBox(text('Sponsor Pass', 'Sponsor Pass'), pass ? text('Unlocked', 'Unlocked') : text('Locked', 'Locked'), pass ? text('Premium season ready', 'Premium season ready') : text('Unlocked on first top-up', 'Unlocked on first top-up'))}
+                ${renderStatBox(text('Daily Free', 'Daily Free'), String(getDailyFreeClashesLimit()), extraFree ? text(`+${extraFree} from Tactical Pack`, `+${extraFree} from Tactical Pack`) : text('Base quota only', 'Base quota only'))}
+            </div>
+        `;
+    }
+
+    function renderOfferCard(offer) {
+        const owned = isOfferOwned(offer.id);
+        const pendingOrder = getPendingPaymentOrder(offer.id);
+        const hasLiveOrder = !!(pendingOrder && !isPaymentOrderExpired(pendingOrder));
+        const badge = owned
+            ? text('Claimed', 'Claimed')
+            : hasLiveOrder
+                ? text('Pending', 'Pending')
+                : `${offer.price} USDT`;
+        return `
+            <article class="nc-card-item nc-card-item--dense is-premium ${owned ? 'is-ready' : ''}">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9670;', localize(offer.name))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(localize(offer.permanent))}</div>
                     </div>
-                    <span class="nc-tag is-good">${escapeHtml(`${offer.price} USDT`)}</span>
+                    <span class="nc-tag ${owned ? 'is-good' : hasLiveOrder ? 'is-warning' : 'is-good'}">${escapeHtml(badge)}</span>
                 </div>
                 ${renderRewardPills(offer.reward)}
+                <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
                 <div class="nc-action-row">
-                    <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(text('Preview Pack', 'Preview Pack'))}</button>
+                    <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(owned ? text('View Rewards', 'View Rewards') : hasLiveOrder ? text('Resume Order', 'Resume Order') : text('Create Order', 'Create Order'))}</button>
                 </div>
             </article>
         `;
@@ -758,7 +825,7 @@
     function renderLastResultCard() {
         const result = state.save.lastResult;
         return `
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel(result.win ? '&#10003;' : '&#10005;', text('Latest Report', 'Latest Report'), result.chapterId)}</h3>
@@ -779,16 +846,16 @@
         const freeLeft = getRemainingFreeClashes();
         const items = {
             clash: [
-                { icon: '&#9655;', title: text('Entry', 'Entry'), body: text(`${freeLeft}/${getDailyFreeClashesLimit()} free today, then ${getEntryCost(chapter)} Cr per run.`, `${freeLeft}/${getDailyFreeClashesLimit()} free today, then ${getEntryCost(chapter)} Cr per run.`) },
-                { icon: '&#9671;', title: text('First Clear', 'First Clear'), body: text('Boss first clears are the most valuable and grant extra chips plus bigger rewards.', 'Boss first clears are the most valuable and grant extra chips plus bigger rewards.') },
-                { icon: '&#9888;', title: text('Current Wall', 'Current Wall'), body: gap > 0 ? text(`${formatCompact(gap)} more power needed right now.`, `${formatCompact(gap)} more power needed right now.`) : text('Your current power is on target. Keep pushing.', 'Your current power is on target. Keep pushing.') }
+                { icon: '&#9655;', title: text('门票', 'Entry'), body: text(`今日免费 ${freeLeft}/${getDailyFreeClashesLimit()}，之后每局 ${getEntryCost(chapter)} 金币。`, `${freeLeft}/${getDailyFreeClashesLimit()} free today, then ${getEntryCost(chapter)} credits per run.`) },
+                { icon: '&#9671;', title: text('首通', 'First Clear'), body: text('Boss 首通额外给芯片和更高结算。', 'Boss first clears grant extra chips and higher rewards.') },
+                { icon: '&#9888;', title: text('卡点', 'Current Wall'), body: gap > 0 ? text(`当前还差 ${formatCompact(gap)} 战力。`, `${formatCompact(gap)} more power needed right now.`) : text('当前战力达标，可继续推进。', 'Your current power is on target. Keep pushing.') }
             ]
         }[tabId] || [];
 
         return `
-            <div class="nc-flow-grid">
+            <div class="nc-flow-grid nc-flow-grid--strip">
                 ${items.map((item) => `
-                    <div class="nc-flow-card">
+                    <div class="nc-flow-card nc-flow-card--compact">
                         <div class="nc-flow-head">
                             <span class="nc-flow-icon" aria-hidden="true">${item.icon}</span>
                             <strong>${escapeHtml(item.title)}</strong>
@@ -843,7 +910,7 @@
 
     function renderCardPanel({ icon, title, subtitle, badge, locked = false, stats = [], note = '', actions = '' }) {
         return `
-            <article class="nc-card-item ${locked ? 'is-locked' : ''}">
+            <article class="nc-card-item nc-card-item--dense ${locked ? 'is-locked' : ''}">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel(icon, title)}</h3>
@@ -862,7 +929,7 @@
 
     function renderSlotCard(label, title, subline) {
         return `
-            <div class="nc-slot-card">
+            <div class="nc-slot-card nc-slot-card--compact">
                 <span class="nc-slot-label">${escapeHtml(label)}</span>
                 <strong>${escapeHtml(title || '--')}</strong>
                 <small>${escapeHtml(subline || '--')}</small>
@@ -958,7 +1025,7 @@
         ui.modalSubtitle.textContent = state.modal.subtitle || '';
         ui.modalBody.innerHTML = state.modal.body || '';
         ui.modalActions.innerHTML = (state.modal.actions || [{ label: text('Got it', 'Got it'), action: 'closeModal' }]).map((item) => `
-            <button class="${item.tone === 'ghost' ? 'ghost-btn' : 'primary-btn'}" type="button" data-action="${item.action}" ${item.value ? `data-value="${item.value}"` : ''}>${escapeHtml(item.label)}</button>
+            <button class="${item.tone === 'ghost' ? 'ghost-btn' : 'primary-btn'}" type="button" data-action="${item.action}" ${item.value ? `data-value="${item.value}"` : ''} ${item.disabled ? 'disabled' : ''}>${escapeHtml(item.label)}</button>
         `).join('');
     }
 
@@ -975,20 +1042,94 @@
     function previewOffer(offerId) {
         const offer = offerMap[offerId];
         if (!offer) return;
+        const owned = isOfferOwned(offerId);
+        const order = getPendingPaymentOrder(offerId);
+        const expired = !!(order && isPaymentOrderExpired(order));
         openModal({
-            eyebrow: text('Pack Preview', 'Pack Preview'),
+            eyebrow: text('Payment Center', 'Payment Center'),
             title: localize(offer.name),
-            subtitle: `${offer.price} USDT`,
-            body: `
-                <div class="nc-inline-note">${escapeHtml(text('The first pass now includes the page shell, tabs, economy loop, and pack values; the next step connects payment verification, order checks, and reward delivery.', 'The first pass now includes the page shell, tabs, economy loop, and pack values; the next step connects payment verification, order checks, and reward delivery.'))}</div>
-                ${renderRewardPills(offer.reward)}
-                <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
-            `,
-            actions: [
-                { label: text('Connect Payment Next', 'Connect Payment Next'), action: 'closeModal' },
-                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
-            ]
+            subtitle: owned ? text('Verified and granted', 'Verified and granted') : `${offer.price} USDT • ${PAYMENT_NETWORK}`,
+            body: renderOfferPaymentBody(offer, { owned, order, expired }),
+            actions: getOfferModalActions(offer, { owned, order, expired })
         });
+    }
+
+    function renderOfferPaymentBody(offer, { owned, order, expired }) {
+        const statusText = owned
+            ? text('This pack has already been verified and the rewards are permanently attached to your account.', 'This pack has already been verified and the rewards are permanently attached to your account.')
+            : order && !expired
+                ? text('Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.', 'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.')
+                : order && expired
+                    ? text('The previous order expired. Create a fresh order to continue payment and reward verification.', 'The previous order expired. Create a fresh order to continue payment and reward verification.')
+                    : text('Create an exact order first. The first successful top-up unlocks the sponsor season track.', 'Create an exact order first. The first successful top-up unlocks the sponsor season track.');
+        const verifiedOrder = getRecentOfferOrder(offer.id);
+        return `
+            <div class="nc-inline-note">${escapeHtml(statusText)}</div>
+            <div class="nc-stat-grid">
+                ${renderStatBox(text('Pack Price', 'Pack Price'), `${offer.price} USDT`, text('Base display price', 'Base display price'))}
+                ${renderStatBox(text('Exact Amount', 'Exact Amount'), order ? `${formatPaymentAmount(order.exactAmount)} USDT` : '--', text('Use exact amount for verify', 'Use exact amount for verify'))}
+                ${renderStatBox(text('Order ID', 'Order ID'), order ? order.id : verifiedOrder?.id || '--', order ? formatPaymentCountdown(order.expiresAt) : owned ? text('Verified', 'Verified') : text('Create order first', 'Create order first'))}
+                ${renderStatBox(text('Perk', 'Perk'), localize(offer.permanent), owned ? text('Active now', 'Active now') : text('Activates after verify', 'Activates after verify'))}
+            </div>
+            ${renderRewardPills(offer.reward)}
+            <div class="nc-payment-panel">
+                <div class="nc-payment-address-block">
+                    <span class="nc-stat-label">${escapeHtml(text('Receiving Address', 'Receiving Address'))}</span>
+                    <div class="nc-payment-address">${escapeHtml(order?.payAddress || PAYMENT_WALLET)}</div>
+                </div>
+                <div class="nc-action-row">
+                    <button class="ghost-btn" type="button" data-action="copyOfferAddress">${escapeHtml(text('Copy Address', 'Copy Address'))}</button>
+                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${order ? '' : 'disabled'}>${escapeHtml(text('Copy Amount', 'Copy Amount'))}</button>
+                </div>
+                ${owned ? `
+                    <div class="nc-payment-status is-good">${escapeHtml(text('Payment verified. Rewards were granted and the sponsor pass is active on this account.', 'Payment verified. Rewards were granted and the sponsor pass is active on this account.'))}</div>
+                ` : `
+                    <label class="nc-payment-field">
+                        <span class="nc-stat-label">${escapeHtml(text('Paste OKX Wallet txid', 'Paste OKX Wallet txid'))}</span>
+                        <input class="nc-payment-input" id="ncPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(text('Paste the 64-character on-chain txid after payment.', 'Paste the 64-character on-chain txid after payment.'))}">
+                    </label>
+                    <div class="nc-payment-status ${expired ? 'is-warning' : order ? '' : 'is-warning'}">${escapeHtml(
+                        expired
+                            ? text('This order expired. Create a new order before verifying the txid.', 'This order expired. Create a new order before verifying the txid.')
+                            : order
+                                ? text('Only txids that match the active order amount, address, and valid time window can pass verification.', 'Only txids that match the active order amount, address, and valid time window can pass verification.')
+                                : text('Create an order first, then complete payment in OKX Wallet and verify the txid.', 'Create an order first, then complete payment in OKX Wallet and verify the txid.')
+                    )}</div>
+                `}
+            </div>
+            <div class="nc-inline-note">${escapeHtml(text('First verified top-up unlocks the sponsor season track. Tactical Pack adds +1 daily free clash. Champion Pack grants +8% squad ATK/HP.', 'First verified top-up unlocks the sponsor season track. Tactical Pack adds +1 daily free clash. Champion Pack grants +8% squad ATK/HP.'))}</div>
+        `;
+    }
+
+    function renderQuickActions(actions = []) {
+        const visible = actions.filter(Boolean);
+        if (!visible.length) return '';
+        return `
+            <div class="nc-quick-actions">
+                ${visible.map((item) => `
+                    <button class="${item.tone === 'ghost' ? 'ghost-btn' : 'primary-btn'}" type="button" data-action="${item.action}" ${item.value ? `data-value="${item.value}"` : ''} ${item.disabled ? 'disabled' : ''}>${escapeHtml(item.label)}</button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function getOfferModalActions(offer, { owned, order, expired }) {
+        if (owned) {
+            return [
+                { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
+                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+            ];
+        }
+        if (order && !expired) {
+            return [
+                { label: text('Verify TXID', 'Verify TXID'), action: 'verifyOfferTxid', value: offer.id },
+                { label: text('Cancel Order', 'Cancel Order'), action: 'cancelOfferOrder', value: offer.id, tone: 'ghost' }
+            ];
+        }
+        return [
+            { label: text('Create Order', 'Create Order'), action: 'createOfferOrder', value: offer.id },
+            { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+        ];
     }
 
     function selectChapter(chapterId) {
@@ -1199,6 +1340,138 @@
         renderAll();
     }
 
+    function createOfferOrder(offerId) {
+        const offer = offerMap[offerId];
+        if (!offer) return;
+        if (isOfferOwned(offerId)) {
+            previewOffer(offerId);
+            showToast(text('This pack has already been claimed.', 'This pack has already been claimed.'), 'warning');
+            return;
+        }
+        const current = getPendingPaymentOrder(offerId);
+        if (current && !isPaymentOrderExpired(current)) {
+            previewOffer(offerId);
+            showToast(text('Resume the active order below.', 'Resume the active order below.'), 'warning');
+            return;
+        }
+
+        state.save.payment.pendingOrder = {
+            id: buildPaymentOrderId(offerId),
+            offerId,
+            exactAmount: getOfferExactAmount(offer),
+            payAddress: PAYMENT_WALLET,
+            network: PAYMENT_NETWORK,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + PAYMENT_ORDER_EXPIRY_MS
+        };
+        saveProgress();
+        previewOffer(offerId);
+        showToast(text('Exact payment order created.', 'Exact payment order created.'), 'success');
+        renderAll();
+    }
+
+    function cancelOfferOrder(offerId) {
+        const current = getPendingPaymentOrder();
+        if (!current || (offerId && current.offerId !== offerId)) {
+            closeModal();
+            return;
+        }
+        state.save.payment.pendingOrder = null;
+        saveProgress();
+        previewOffer(offerId || current.offerId);
+        showToast(text('Pending order canceled.', 'Pending order canceled.'), 'warning');
+        renderAll();
+    }
+
+    function verifyOfferTxid(offerId) {
+        const offer = offerMap[offerId];
+        const order = getPendingPaymentOrder(offerId);
+        const txid = getOfferTxidInput();
+        if (!offer || !order) {
+            showToast(text('Create an order first.', 'Create an order first.'), 'warning');
+            previewOffer(offerId);
+            return;
+        }
+        if (isPaymentOrderExpired(order)) {
+            showToast(text('This order expired. Create a new one.', 'This order expired. Create a new one.'), 'warning');
+            previewOffer(offerId);
+            return;
+        }
+        if (!PAYMENT_TXID_RE.test(txid)) {
+            showToast(text('TXID must be 64 hex characters.', 'TXID must be 64 hex characters.'), 'warning');
+            return;
+        }
+        if (state.save.payment.verifiedTxids.includes(txid)) {
+            showToast(text('This TXID was already used.', 'This TXID was already used.'), 'warning');
+            return;
+        }
+        if (state.save.payment.claimedOrderIds.includes(order.id) || isOfferOwned(offerId)) {
+            previewOffer(offerId);
+            showToast(text('Rewards for this pack were already granted.', 'Rewards for this pack were already granted.'), 'warning');
+            return;
+        }
+
+        const sponsorUnlockedBefore = isSeasonPassUnlocked();
+        state.save.payment.totalSpent = roundMoney(Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0));
+        state.save.payment.sponsorPass = true;
+        state.save.payment.purchaseCount = (state.save.payment.purchaseCount || 0) + 1;
+        pushUniqueValue(state.save.payment.claimedOfferIds, offerId);
+        pushUniqueValue(state.save.payment.claimedOrderIds, order.id);
+        pushUniqueValue(state.save.payment.verifiedTxids, txid, 40);
+        state.save.payment.recentOrders = [
+            {
+                id: order.id,
+                offerId,
+                txid,
+                exactAmount: order.exactAmount,
+                verifiedAt: Date.now()
+            },
+            ...(Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).filter((item) => item?.id !== order.id)
+        ].slice(0, 8);
+        state.save.payment.pendingOrder = null;
+        grantReward(offer.reward);
+        saveProgress();
+        openModal({
+            eyebrow: text('Payment Verified', 'Payment Verified'),
+            title: localize(offer.name),
+            subtitle: `${formatPaymentAmount(order.exactAmount)} USDT • ${PAYMENT_NETWORK}`,
+            body: `
+                <div class="nc-payment-status is-good">${escapeHtml(text('The order was verified successfully and rewards have been granted to this account.', 'The order was verified successfully and rewards have been granted to this account.'))}</div>
+                <div class="nc-stat-grid">
+                    ${renderStatBox(text('Order ID', 'Order ID'), order.id)}
+                    ${renderStatBox(text('TXID', 'TXID'), shortenTxid(txid))}
+                    ${renderStatBox(text('Total Spent', 'Total Spent'), `${formatPaymentAmount(state.save.payment.totalSpent)} USDT`)}
+                    ${renderStatBox(text('Sponsor Pass', 'Sponsor Pass'), isSeasonPassUnlocked() ? text('Unlocked', 'Unlocked') : text('Locked', 'Locked'), sponsorUnlockedBefore ? text('Already active', 'Already active') : text('Unlocked now', 'Unlocked now'))}
+                </div>
+                ${renderRewardPills(offer.reward)}
+                <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
+            `,
+            actions: [
+                { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
+                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+            ]
+        });
+        showToast(text('Payment verified. Rewards granted.', 'Payment verified. Rewards granted.'), 'success');
+        renderAll();
+    }
+
+    async function copyOfferAddress() {
+        const copied = await copyTextToClipboard(PAYMENT_WALLET);
+        showToast(copied ? text('Receiving address copied.', 'Receiving address copied.') : text('Please copy the address manually.', 'Please copy the address manually.'), copied ? 'success' : 'warning');
+    }
+
+    async function copyOfferAmount(offerId) {
+        const offer = offerMap[offerId];
+        if (!offer) return;
+        const order = getPendingPaymentOrder(offerId);
+        if (!order) {
+            showToast(text('Create an order first.', 'Create an order first.'), 'warning');
+            return;
+        }
+        const copied = await copyTextToClipboard(String(formatPaymentAmount(order.exactAmount)));
+        showToast(copied ? text('Exact amount copied.', 'Exact amount copied.') : text('Please copy the amount manually.', 'Please copy the amount manually.'), copied ? 'success' : 'warning');
+    }
+
     function openCrate(type) {
         if (type === 'standard' && state.save.inventory.standardCrates <= 0) return;
         if (type === 'elite' && state.save.inventory.eliteCrates <= 0) return;
@@ -1306,14 +1579,14 @@
             return renderBattleStage();
         }
         return `
-            <section class="nc-card">
+            <section class="nc-card nc-card--compact">
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10022;', localize(chapter.name), chapter.id)}</h3>
                         <div class="nc-card-copy">${escapeHtml(
                             battle
                                 ? text('Tap a hand card, then tap a lane to deploy. Tactics and leader skills benefit from lane focus and lab bonuses.', 'Tap a hand card, then tap a lane to deploy. Tactics and leader skills benefit from lane focus and lab bonuses.')
-                                : text('The first live tri-lane combat pass is now connected: deploy units, cast tactics, pick boosts, then grow through Deck and Lab.', 'The first live tri-lane combat pass is now connected: deploy units, cast tactics, pick boosts, then grow through Deck and Lab.')
+                                : text('选章节后直接开战；卡组与研究负责补强卡点。', 'Pick a stage and start fighting. Deck and Lab are where you patch progression walls.')
                         )}</div>
                     </div>
                     <div class="nc-head-kpi">
@@ -1340,12 +1613,17 @@
     function renderClashSetup(chapter, power) {
         const unitIds = state.save.selectedUnits;
         return `
-            <section class="nc-card nc-battle-card">
+            <section class="nc-card nc-card--compact nc-battle-card">
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9776;', text('Tri-Lane Preview', 'Tri-Lane Preview'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('Confirm your 3 deployed units and tactic before the fight. Starting now enters a live battle instead of instant numeric resolution.', 'Confirm your 3 deployed units and tactic before the fight. Starting now enters a live battle instead of instant numeric resolution.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('确认 3 名上阵单位与 1 张战术，开始后直接进入实时对战。', 'Confirm 3 deployed units and 1 tactic. Starting enters live combat immediately.'))}</div>
                     </div>
+                </div>
+
+                <div class="nc-action-row nc-action-row--setup">
+                    <button class="primary-btn wide-btn" type="button" data-action="startClash">${escapeHtml(getStartClashLabel(chapter))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('Open Deck', 'Open Deck'))}</button>
                 </div>
 
                 <div class="nc-board-grid">
@@ -1354,14 +1632,9 @@
                     ${renderLaneCard(text('Bot Lane', 'Bot Lane'), unitIds[2], chapter, power, 1.08)}
                 </div>
 
-                <div class="nc-hand-row">
+                <div class="nc-hand-row nc-hand-row--setup">
                     ${unitIds.map((unitId) => renderHandCard(unitMap[unitId], 'unit')).join('')}
                     ${renderHandCard(tacticMap[state.save.selectedTacticId], 'tactic')}
-                </div>
-
-                <div class="nc-action-row">
-                    <button class="primary-btn wide-btn" type="button" data-action="startClash">${escapeHtml(getStartClashLabel(chapter))}</button>
-                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('Open Deck', 'Open Deck'))}</button>
                 </div>
             </section>
         `;
@@ -1772,7 +2045,7 @@
             cooldowns: Object.fromEntries(hand.map((id) => [id, 0])),
             energy: 4,
             maxEnergy: 10 + Math.floor(energyLevel / 4),
-            energyRegen: 1 * (1 + (energyLevel * 0.02) + (state.save.payment.totalSpent >= 6 ? 0.03 : 0)),
+            energyRegen: 1 * (1 + (energyLevel * 0.02) + (hasStarterPaymentPerk() ? 0.03 : 0)),
             leaderCharge: 0,
             leaderChargeRate: (Number(leaderMap[state.save.selectedLeaderId]?.stats?.charge) || 1) * (1.45 + (tacticLevel * 0.03)),
             leaderReadyMarked: false,
@@ -2112,7 +2385,7 @@
         let speed = (Number(card.stats.speed) || 1) * (1 + ((level - 1) * 0.012) + ((star - 1) * 0.025));
         if (card.lane === 'front') hp *= 1 + (getResearchLevel('frontlineArmor') * 0.04);
         if (card.lane === 'back') attack *= 1 + (getResearchLevel('fireControl') * 0.035);
-        if (state.save.payment.totalSpent >= 68) {
+        if (hasChampionPaymentPerk()) {
             attack *= 1.08;
             hp *= 1.08;
         }
@@ -2128,11 +2401,11 @@
 
     function getEnemyArchetype(id) {
         const map = {
-            skirmisher: { name: { zh: 'Rift Scout', en: 'Rift Scout' }, attack: 16, hp: 104, speed: 1.02, range: 12 },
-            brute: { name: { zh: '閽㈡爡閲嶅叺', en: 'Steel Brute' }, attack: 12, hp: 164, speed: 0.74, range: 12, splash: 0.25 },
-            gunner: { name: { zh: '鑴夊啿鐐墜', en: 'Pulse Gunner' }, attack: 24, hp: 92, speed: 0.88, range: 22 },
-            captain: { name: { zh: '瑁傜綉鎸囨尌', en: 'Net Captain' }, attack: 28, hp: 148, speed: 0.82, range: 16 },
-            boss: { name: { zh: '娣卞煙涓绘満', en: 'Abyss Mainframe' }, attack: 34, hp: 440, speed: 0.68, range: 16, splash: 0.35 }
+            skirmisher: { name: { zh: '裂隙侦察兵', en: 'Rift Scout' }, attack: 16, hp: 104, speed: 1.02, range: 12 },
+            brute: { name: { zh: '钢栅重兵', en: 'Steel Brute' }, attack: 12, hp: 164, speed: 0.74, range: 12, splash: 0.25 },
+            gunner: { name: { zh: '脉冲枪手', en: 'Pulse Gunner' }, attack: 24, hp: 92, speed: 0.88, range: 22 },
+            captain: { name: { zh: '织网指挥官', en: 'Net Captain' }, attack: 28, hp: 148, speed: 0.82, range: 16 },
+            boss: { name: { zh: '深渊主机', en: 'Abyss Mainframe' }, attack: 34, hp: 440, speed: 0.68, range: 16, splash: 0.35 }
         };
         return map[id] || map.skirmisher;
     }
@@ -2262,37 +2535,37 @@
             pulseOverload: {
                 id: 'pulseOverload',
                 icon: '&#9889;',
-                title: { zh: '鑴夊啿杩囪浇', en: 'Pulse Overload' },
-                short: { zh: '鍏ㄨ矾鏀诲嚮 +18%', en: 'All lanes ATK +18%' },
-                desc: { zh: 'Raises total output for the rest of the clash once your frontline is stable.', en: 'Raises total output for the rest of the clash once your frontline is stable.' }
+                title: { zh: '脉冲过载', en: 'Pulse Overload' },
+                short: { zh: '全路攻击 +18%', en: 'All lanes ATK +18%' },
+                desc: { zh: '前排稳住后，本局剩余时间内提高全队输出。', en: 'Raises total output for the rest of the clash once your frontline is stable.' }
             },
             shieldMesh: {
                 id: 'shieldMesh',
                 icon: '&#10022;',
-                title: { zh: '鐩剧綉琛ュ己', en: 'Shield Mesh' },
-                short: { zh: '鍏ㄨ矾琛ョ浘 + 鏍稿績鍥炵ǔ', en: 'Shield all lanes + core stabilize' },
-                desc: { zh: 'Adds shields to all lanes and cores, ideal when the board is under pressure.', en: 'Adds shields to all lanes and cores, ideal when the board is under pressure.' }
+                title: { zh: '护盾网格', en: 'Shield Mesh' },
+                short: { zh: '全路补盾 + 核心稳固', en: 'Shield all lanes + core stabilize' },
+                desc: { zh: '为三路与核心补充护盾，适合在承压时使用。', en: 'Adds shields to all lanes and cores, ideal when the board is under pressure.' }
             },
             energySurge: {
                 id: 'energySurge',
                 icon: '&#10039;',
-                title: { zh: '鑳介噺娴秾', en: 'Energy Surge' },
-                short: { zh: '鑳介噺鍥炲鍔犲揩', en: 'Faster energy regen' },
-                desc: { zh: 'Refills energy now and speeds up deployment for the second half.', en: 'Refills energy now and speeds up deployment for the second half.' }
+                title: { zh: '能量激涌', en: 'Energy Surge' },
+                short: { zh: '能量回复加速', en: 'Faster energy regen' },
+                desc: { zh: '立即回能，并在后半局加快出牌节奏。', en: 'Refills energy now and speeds up deployment for the second half.' }
             },
             bountyScript: {
                 id: 'bountyScript',
                 icon: '&#9670;',
-                title: { zh: '璧忛噾鑴氭湰', en: 'Bounty Script' },
-                short: { zh: '缁撶畻鏀剁泭鎻愰珮', en: 'Higher rewards' },
-                desc: { zh: 'Raises battle rewards and shortens tactic cooldowns for this run.', en: 'Raises battle rewards and shortens tactic cooldowns for this run.' }
+                title: { zh: '赏金脚本', en: 'Bounty Script' },
+                short: { zh: '结算收益提高', en: 'Higher rewards' },
+                desc: { zh: '本局提高结算奖励，并缩短战术冷却。', en: 'Raises battle rewards and shortens tactic cooldowns for this run.' }
             },
             jamField: {
                 id: 'jamField',
                 icon: '&#9638;',
-                title: { zh: '骞叉壈鍔涘満', en: 'Jam Field' },
-                short: { zh: '鏁屾柟杩涘満鏀剧紦', en: 'Enemy spawn slows down' },
-                desc: { zh: 'Temporarily slows enemy pressure to give your lanes breathing room.', en: 'Temporarily slows enemy pressure to give your lanes breathing room.' }
+                title: { zh: '干扰力场', en: 'Jam Field' },
+                short: { zh: '敌方进场减速', en: 'Enemy spawn slows down' },
+                desc: { zh: '暂时减缓敌方压线速度，为三路争取喘息空间。', en: 'Temporarily slows enemy pressure to give your lanes breathing room.' }
             }
         };
         return map[boostId] || null;
@@ -2499,7 +2772,7 @@
     }
 
     function getDailyFreeClashesLimit() {
-        return Math.max(0, Number(config.battle.freeClashesPerDay) || 0);
+        return Math.max(0, (Number(config.battle.freeClashesPerDay) || 0) + getPaymentFreeClashBonus());
     }
 
     function getRemainingFreeClashes() {
@@ -2718,6 +2991,22 @@
         return !!state.save.payment.sponsorPass;
     }
 
+    function hasStarterPaymentPerk() {
+        return state.save.payment.claimedOfferIds.includes('starter') || (!state.save.payment.claimedOfferIds.length && Number(state.save.payment.totalSpent || 0) >= 6);
+    }
+
+    function hasTacticalPaymentPerk() {
+        return state.save.payment.claimedOfferIds.includes('tactical') || (!state.save.payment.claimedOfferIds.length && Number(state.save.payment.totalSpent || 0) >= 15);
+    }
+
+    function hasChampionPaymentPerk() {
+        return state.save.payment.claimedOfferIds.includes('champion') || (!state.save.payment.claimedOfferIds.length && Number(state.save.payment.totalSpent || 0) >= 68);
+    }
+
+    function getPaymentFreeClashBonus() {
+        return hasTacticalPaymentPerk() ? 1 : 0;
+    }
+
     function resetFreeClashWindow() {
         const key = getDayKey(Date.now());
         if (state.save.freeClashDayKey !== key) {
@@ -2737,6 +3026,92 @@
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
         return `${hours}h ${minutes}m`;
+    }
+
+    function isOfferOwned(offerId) {
+        return state.save.payment.claimedOfferIds.includes(offerId);
+    }
+
+    function getPendingPaymentOrder(offerId = '') {
+        const order = state.save.payment.pendingOrder;
+        if (!order || typeof order !== 'object') return null;
+        if (offerId && order.offerId !== offerId) return null;
+        return order;
+    }
+
+    function getRecentOfferOrder(offerId = '') {
+        return (Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).find((item) => !offerId || item.offerId === offerId) || null;
+    }
+
+    function buildPaymentOrderId(offerId) {
+        return `NC-${String(offerId || 'PACK').slice(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+    }
+
+    function getOfferExactAmount(offer) {
+        const seed = (Date.now() % 9) + 1;
+        return roundMoney(Number(offer?.price || 0) + (seed / 1000));
+    }
+
+    function isPaymentOrderExpired(order) {
+        return !order || Number(order.expiresAt || 0) <= Date.now();
+    }
+
+    function formatPaymentCountdown(expiresAt) {
+        const remain = Math.max(0, Number(expiresAt || 0) - Date.now());
+        if (!remain) return text('Expired', 'Expired');
+        const totalSeconds = Math.ceil(remain / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function getOfferTxidInput() {
+        return String(document.getElementById('ncPaymentTxidInput')?.value || '').trim();
+    }
+
+    function formatPaymentAmount(value) {
+        return roundMoney(value).toFixed(3).replace(/\.?0+$/, (match) => match === '.000' ? '' : match.replace(/0+$/, '').replace(/\.$/, ''));
+    }
+
+    function roundMoney(value) {
+        return Math.round((Number(value) || 0) * 1000) / 1000;
+    }
+
+    function shortenTxid(txid) {
+        const value = String(txid || '').trim();
+        if (value.length <= 14) return value || '--';
+        return `${value.slice(0, 8)}…${value.slice(-6)}`;
+    }
+
+    function pushUniqueValue(list, value, max = 12) {
+        if (!Array.isArray(list) || !value) return;
+        const next = [value, ...list.filter((item) => item !== value)];
+        list.splice(0, list.length, ...next.slice(0, max));
+    }
+
+    async function copyTextToClipboard(text) {
+        const value = String(text || '').trim();
+        if (!value) return false;
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(value);
+                return true;
+            }
+        } catch (error) {}
+        try {
+            const node = document.createElement('textarea');
+            node.value = value;
+            node.setAttribute('readonly', 'readonly');
+            node.style.position = 'fixed';
+            node.style.opacity = '0';
+            document.body.appendChild(node);
+            node.select();
+            const copied = document.execCommand('copy');
+            document.body.removeChild(node);
+            return !!copied;
+        } catch (error) {
+            return false;
+        }
     }
 
     function getShopItemHint(itemId) {
@@ -2914,7 +3289,13 @@
             },
             payment: {
                 totalSpent: 0,
-                sponsorPass: false
+                sponsorPass: false,
+                purchaseCount: 0,
+                claimedOfferIds: [],
+                claimedOrderIds: [],
+                verifiedTxids: [],
+                recentOrders: [],
+                pendingOrder: null
             },
             lastResult: null
         };
@@ -3000,6 +3381,35 @@
 
         next.payment.totalSpent = clampNumber(parsed?.payment?.totalSpent, defaults.payment.totalSpent, 0);
         next.payment.sponsorPass = !!parsed?.payment?.sponsorPass;
+        next.payment.purchaseCount = clampNumber(parsed?.payment?.purchaseCount, defaults.payment.purchaseCount, 0);
+        next.payment.claimedOfferIds = Array.isArray(parsed?.payment?.claimedOfferIds) ? parsed.payment.claimedOfferIds.filter((id) => !!offerMap[id]) : [];
+        next.payment.claimedOrderIds = Array.isArray(parsed?.payment?.claimedOrderIds) ? parsed.payment.claimedOrderIds.filter((id) => typeof id === 'string') : [];
+        next.payment.verifiedTxids = Array.isArray(parsed?.payment?.verifiedTxids) ? parsed.payment.verifiedTxids.filter((id) => typeof id === 'string').slice(0, 40) : [];
+        next.payment.recentOrders = Array.isArray(parsed?.payment?.recentOrders)
+            ? parsed.payment.recentOrders
+                .filter((item) => item && typeof item === 'object' && typeof item.id === 'string')
+                .slice(0, 8)
+                .map((item) => ({
+                    id: item.id,
+                    offerId: offerMap[item.offerId] ? item.offerId : '',
+                    txid: typeof item.txid === 'string' ? item.txid : '',
+                    exactAmount: clampNumber(item.exactAmount, 0, 0),
+                    verifiedAt: clampNumber(item.verifiedAt, 0, 0)
+                }))
+                .filter((item) => !!item.offerId)
+            : [];
+        next.payment.pendingOrder = parsed?.payment?.pendingOrder && typeof parsed.payment.pendingOrder === 'object'
+            ? {
+                id: typeof parsed.payment.pendingOrder.id === 'string' ? parsed.payment.pendingOrder.id : '',
+                offerId: offerMap[parsed.payment.pendingOrder.offerId] ? parsed.payment.pendingOrder.offerId : '',
+                exactAmount: clampNumber(parsed.payment.pendingOrder.exactAmount, 0, 0),
+                payAddress: typeof parsed.payment.pendingOrder.payAddress === 'string' ? parsed.payment.pendingOrder.payAddress : PAYMENT_WALLET,
+                network: typeof parsed.payment.pendingOrder.network === 'string' ? parsed.payment.pendingOrder.network : PAYMENT_NETWORK,
+                createdAt: clampNumber(parsed.payment.pendingOrder.createdAt, 0, 0),
+                expiresAt: clampNumber(parsed.payment.pendingOrder.expiresAt, 0, 0)
+            }
+            : null;
+        if (!next.payment.pendingOrder?.id || !next.payment.pendingOrder?.offerId) next.payment.pendingOrder = null;
         next.lastResult = parsed?.lastResult && typeof parsed.lastResult === 'object' ? parsed.lastResult : null;
         return next;
     }
