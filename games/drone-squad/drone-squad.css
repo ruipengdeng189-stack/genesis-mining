@@ -676,6 +676,48 @@ canvas {
     gap: 10px;
 }
 
+.ds-blueprint-tip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin: 12px 0 14px;
+}
+
+.ds-blueprint-tip {
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.025);
+    display: grid;
+    gap: 6px;
+}
+
+.ds-blueprint-tip-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ds-blueprint-tip-head strong {
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.ds-blueprint-tip-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(104, 183, 255, 0.16);
+    color: var(--ds-accent);
+    flex: 0 0 auto;
+    font-size: 12px;
+}
+
 .ds-reward-row {
     display: flex;
     flex-wrap: wrap;

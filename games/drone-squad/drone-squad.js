@@ -923,6 +923,7 @@
     }
 
     function renderBlueprintsTab() {
+        const blueprintWallet = `${formatCompact(state.save.credits)} / ${formatCompact(state.save.coreChips)} / ${formatCompact(state.save.alloy)}`;
         return `
             ${renderBlueprintPlanCard()}
 
@@ -930,13 +931,14 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10070;', text('Permanent Blueprints', 'Permanent Blueprints'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('研究是常驻成长，消耗核芯与合金。', 'Research is permanent growth and costs chips plus alloy.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('研究是永久成长，会持续消耗金币、芯片、合金；优先补当前卡点。', 'Research is permanent growth and steadily drains credits, chips, and alloy; prioritize the current wall.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag">${escapeHtml(text('Chips / Alloy', 'Chips / Alloy'))}</span>
-                        <strong>${escapeHtml(`${state.save.coreChips} / ${state.save.alloy}`)}</strong>
+                        <span class="ds-tag">${escapeHtml(text('币 / 芯 / 合', 'Cr / Chip / Alloy'))}</span>
+                        <strong>${escapeHtml(blueprintWallet)}</strong>
                     </div>
                 </div>
+                ${renderBlueprintResourceTips()}
                 <div class="ds-unit-grid">
                     ${config.research.map(renderResearchCard).join('')}
                 </div>
@@ -1018,11 +1020,45 @@
                 </div>
                 <div class="ds-inline-note">${escapeHtml(getResearchRoleText(research.id))}</div>
                 <div class="ds-row-actions">
-                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${research.id}" ${affordable ? '' : 'disabled'}>${escapeHtml(maxed ? text('Maxed', 'Maxed') : `${text('Upgrade', 'Upgrade')} 路 ${formatResearchCost(cost, true)}`)}</button>
+                    <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${research.id}" ${affordable ? '' : 'disabled'}>${escapeHtml(maxed ? text('Maxed', 'Maxed') : `${text('Upgrade', 'Upgrade')} · ${formatResearchCost(cost, true)}`)}</button>
                 </div>
             </article>
         `;
     }
+
+    function renderBlueprintResourceTips() {
+        const tips = [
+            {
+                icon: '&#9671;',
+                title: text('芯片来源', 'Chip Sources'),
+                body: text('Boss 关首通、任务、赛季、芯片中继都能拿到。', 'Boss first clears, missions, season rewards, and Chip Relay all grant chips.')
+            },
+            {
+                icon: '&#10010;',
+                title: text('合金来源', 'Alloy Sources'),
+                body: text('关卡结算、首通奖励、任务、赛季、每日补给都会产出。', 'Stage clears, first-clear rewards, missions, season, and daily supply all feed alloy.')
+            },
+            {
+                icon: '&#9679;',
+                title: text('金币去向', 'Credit Sinks'),
+                body: text('研究、升星、模块制造都会长期吃金币，后期卡点先补关键研究。', 'Research, star-ups, and module crafting all consume credits long-term; break walls by funding key research first.')
+            }
+        ];
+        return `
+            <div class="ds-blueprint-tip-grid">
+                ${tips.map((tip) => `
+                    <div class="ds-blueprint-tip">
+                        <div class="ds-blueprint-tip-head">
+                            <span class="ds-blueprint-tip-icon" aria-hidden="true">${tip.icon}</span>
+                            <strong>${escapeHtml(tip.title)}</strong>
+                        </div>
+                        <div class="ds-note-mini">${escapeHtml(tip.body)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
     function getChapterBuildPlan(chapter) {
         const plans = {
             '1-1': { primaryResearch: 'weaponSync', primaryTarget: 1, secondaryResearch: 'shieldVolume', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-1 先练走位，主机升 1-2 级即可过。', '1-1: learn dodge rhythm; 1-2 chassis levels are enough.') },
@@ -3037,9 +3073,10 @@
         const level = getResearchLevel(researchId);
         const cost = getResearchCost(researchId);
         if (level >= research.maxLevel || !canUpgradeResearch(researchId)) {
-            showToast(text('核芯 / 合金不足或已满级。', 'Not enough chips or alloy, or already maxed.'), 'warning');
+            showToast(text('金币、芯片或合金不足，或已满级。', 'Not enough credits, chips, or alloy, or already maxed.'), 'warning');
             return;
         }
+        state.save.credits -= cost.credits;
         state.save.coreChips -= cost.coreChips;
         state.save.alloy -= cost.alloy;
         state.save.researchLevels[researchId] = level + 1;
@@ -3686,10 +3723,29 @@
         return 24;
     }
 
+    function getResearchCreditBase(researchId) {
+        if (researchId === 'weaponSync') return 120;
+        if (researchId === 'shieldVolume') return 120;
+        if (researchId === 'energyLoop') return 150;
+        if (researchId === 'magnetField') return 90;
+        if (researchId === 'bountyProtocol') return 140;
+        return 120;
+    }
+
+    function getResearchCreditGrowth(researchId) {
+        if (researchId === 'weaponSync') return 1.29;
+        if (researchId === 'shieldVolume') return 1.29;
+        if (researchId === 'energyLoop') return 1.3;
+        if (researchId === 'magnetField') return 1.26;
+        if (researchId === 'bountyProtocol') return 1.31;
+        return 1.29;
+    }
+
     function getResearchCost(researchId) {
         const research = researchMap[researchId];
         const level = getResearchLevel(researchId);
         return {
+            credits: Math.round(getResearchCreditBase(researchId) * Math.pow(getResearchCreditGrowth(researchId), level)),
             coreChips: Math.round(research.baseCost * Math.pow(research.growth, level)),
             alloy: Math.round(getResearchAlloyBase(researchId) * Math.pow(1.34, level))
         };
@@ -3699,12 +3755,12 @@
         if (!cost) return '--';
         if (short) {
             return state.lang === 'en'
-                ? `${cost.coreChips}C / ${cost.alloy}A`
-                : `${cost.coreChips}芯 / ${cost.alloy}合`;
+                ? `${formatCompact(cost.credits)}Cr / ${cost.coreChips}Ch / ${cost.alloy}Al`
+                : `${formatCompact(cost.credits)}币 / ${cost.coreChips}芯 / ${cost.alloy}合`;
         }
         return state.lang === 'en'
-            ? `${cost.coreChips} chips / ${cost.alloy} alloy`
-            : `${cost.coreChips} 核芯 / ${cost.alloy} 合金`;
+            ? `${formatCompact(cost.credits)} credits / ${cost.coreChips} chips / ${cost.alloy} alloy`
+            : `${formatCompact(cost.credits)} 金币 / ${cost.coreChips} 芯片 / ${cost.alloy} 合金`;
     }
 
     function canUpgradeResearch(researchId) {
@@ -3713,7 +3769,7 @@
         const level = getResearchLevel(researchId);
         if (level >= research.maxLevel) return false;
         const cost = getResearchCost(researchId);
-        return state.save.coreChips >= cost.coreChips && state.save.alloy >= cost.alloy;
+        return state.save.credits >= cost.credits && state.save.coreChips >= cost.coreChips && state.save.alloy >= cost.alloy;
     }
 
     function getResearchEffectText(researchId, level) {
