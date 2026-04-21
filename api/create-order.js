@@ -1,11 +1,21 @@
-const OFFERS = {
-  starter: { name: 'Recovery Pack', baseAmount: 1.0 },
-  accelerator: { name: 'Hyper Pack', baseAmount: 2.99 },
-  rush: { name: 'Rank Surge Pack', baseAmount: 3.99 },
-  sovereign: { name: 'Dominance Pack', baseAmount: 5.99 },
-  nexus: { name: 'T4 Nexus Pack', baseAmount: 9.99 },
-  throne: { name: 'Throne Protocol', baseAmount: 12.99 },
+const OFFER_CATALOGS = {
+  default: {
+    starter: { name: 'Recovery Pack', baseAmount: 1.0 },
+    accelerator: { name: 'Hyper Pack', baseAmount: 2.99 },
+    rush: { name: 'Rank Surge Pack', baseAmount: 3.99 },
+    sovereign: { name: 'Dominance Pack', baseAmount: 5.99 },
+    nexus: { name: 'T4 Nexus Pack', baseAmount: 9.99 },
+    throne: { name: 'Throne Protocol', baseAmount: 12.99 },
+  },
+  'drone-squad': {
+    starter: { name: 'Starter Flight Pack', baseAmount: 6.0 },
+    accelerator: { name: 'Accelerator Pack', baseAmount: 15.0 },
+    rush: { name: 'Rush Break Pack', baseAmount: 30.0 },
+    sovereign: { name: 'Sovereign Arsenal Pack', baseAmount: 68.0 },
+    nexus: { name: 'Nexus Fleet Pack', baseAmount: 128.0 },
+  },
 };
+
 const ORDER_AMOUNT_DISPLAY_DECIMALS = 4;
 
 function getEnv(name) {
@@ -14,6 +24,14 @@ function getEnv(name) {
     throw new Error(`Missing environment variable: ${name}`);
   }
   return value;
+}
+
+function normalizeGameId(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveOfferCatalog(gameId) {
+  return OFFER_CATALOGS[gameId] || OFFER_CATALOGS.default;
 }
 
 function buildExactAmount(baseAmount) {
@@ -51,6 +69,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const minerId = String(body.minerId || '').trim();
     const offerId = String(body.offerId || 'starter').trim();
+    const gameId = normalizeGameId(body.gameId);
 
     if (!minerId) {
       return Response.json(
@@ -59,7 +78,8 @@ export async function POST(request) {
       );
     }
 
-    const offer = OFFERS[offerId];
+    const offerCatalog = resolveOfferCatalog(gameId);
+    const offer = offerCatalog[offerId];
     if (!offer) {
       return Response.json(
         { ok: false, error: 'invalid offerId' },
@@ -71,6 +91,7 @@ export async function POST(request) {
     const exactAmount = buildExactAmount(offer.baseAmount);
     const expiresMinutes = Number(process.env.ORDER_EXPIRE_MINUTES || '15');
     const expiresAt = new Date(Date.now() + expiresMinutes * 60 * 1000).toISOString();
+    const resolvedGameId = gameId || 'default';
 
     const saved = await insertOrder({
       order_id: orderId,
@@ -84,6 +105,7 @@ export async function POST(request) {
       expires_at: expiresAt,
       meta: {
         source: 'vercel-api',
+        gameId: resolvedGameId,
       },
     });
 
@@ -94,6 +116,7 @@ export async function POST(request) {
         minerId: saved.miner_id,
         offerId: saved.offer_id,
         offerName: saved.offer_name,
+        gameId: resolvedGameId,
         baseAmount: saved.base_amount,
         exactAmount: Number(saved.exact_amount).toFixed(ORDER_AMOUNT_DISPLAY_DECIMALS),
         payAddress: getEnv('TRON_RECEIVE_ADDRESS'),
@@ -117,6 +140,7 @@ export function GET() {
   return Response.json({
     ok: true,
     hint: 'Use POST /api/create-order',
-    offers: OFFERS,
+    offers: OFFER_CATALOGS.default,
+    catalogs: Object.keys(OFFER_CATALOGS),
   });
 }

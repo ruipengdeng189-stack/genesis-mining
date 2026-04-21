@@ -136,6 +136,26 @@ canvas {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.ds-resource-strip--inline {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    margin-top: 10px;
+    scrollbar-width: none;
+}
+
+.ds-resource-strip--inline::-webkit-scrollbar {
+    display: none;
+}
+
+.ds-resource-strip--inline .ds-resource-pill {
+    flex: 0 0 min(148px, 38vw);
+    min-height: 74px;
+    padding: 10px 12px;
+}
+
 .ds-resource-pill {
     min-width: 0;
     min-height: 82px;
@@ -490,6 +510,22 @@ canvas {
     width: 100%;
 }
 
+.ds-claim-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ds-btn-alert-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--ds-danger);
+    box-shadow: 0 0 0 4px rgba(255, 126, 126, 0.16);
+    flex: 0 0 8px;
+}
+
 .ds-perk-grid,
 .ds-unit-grid,
 .ds-module-grid,
@@ -541,6 +577,10 @@ canvas {
 .ds-track-card.is-ready {
     border-color: rgba(100, 255, 178, 0.36);
     background: linear-gradient(180deg, rgba(100, 255, 178, 0.12), rgba(255, 255, 255, 0.03));
+}
+
+.ds-mission-card.is-claimed {
+    opacity: 0.72;
 }
 
 .ds-offer-card.is-premium {

@@ -3,6 +3,7 @@
     const SAVE_KEY = 'genesis_drone_squad_save_v1';
     const DAILY_SUPPLY_COOLDOWN_MS = 20 * 60 * 60 * 1000;
     const PAYMENT_API_BASE = '/api';
+    const PAYMENT_GAME_ID = 'drone-squad';
     const PAYMENT_ORDER_STORAGE_KEY = 'genesis_drone_squad_payment_order_v1';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
@@ -674,6 +675,20 @@
         `;
     }
 
+    function renderHangarWalletStrip() {
+        const items = [
+            { icon: '&#9679;', label: text('\u6301\u6709', 'Wallet'), value: formatCompact(state.save.credits), meta: text('Credits', 'Credits') },
+            { icon: '&#10010;', label: text('\u5408\u91d1', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('Blueprints', 'Blueprints') },
+            { icon: '&#9671;', label: text('\u6838\u82af', 'Core'), value: formatCompact(state.save.coreChips), meta: text('Research', 'Research') },
+            { icon: '&#10057;', label: text('\u590d\u6d3b', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('Safety', 'Safety') }
+        ];
+        return `
+            <div class="ds-resource-strip ds-resource-strip--inline">
+                ${items.map((item) => renderResourcePill(item.icon, item.label, item.value, item.meta)).join('')}
+            </div>
+        `;
+    }
+
     function renderHangarTab() {
         const selectedChassis = chassisMap[state.save.selectedChassisId] || config.chassis[0];
         const selectedModules = getEquippedModules();
@@ -694,6 +709,7 @@
                     ${renderWingSlotCard(0)}
                     ${renderWingSlotCard(1)}
                 </div>
+                ${renderHangarWalletStrip()}
             </section>
 
             <section class="ds-card">
@@ -803,6 +819,10 @@
                         <span class="ds-stat-label">${escapeHtml(text('定位', 'Role'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(text('主机', 'Chassis'))}</strong>
                     </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('\u6301\u6709', 'Wallet'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(formatCompact(state.save.credits))}</strong>
+                    </div>
                 </div>
                 <div class="ds-row-actions">
                     <button class="ghost-btn" type="button" data-action="selectChassis" data-value="${chassis.id}" ${unlocked ? '' : 'disabled'}>${escapeHtml(selected ? text('已装备', 'Equipped') : text('装配', 'Equip'))}</button>
@@ -847,6 +867,10 @@
                     <div class="ds-stat-box">
                         <span class="ds-stat-label">${escapeHtml(text('槽位', 'Slot'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(inLeft ? text('左翼', 'Left') : inRight ? text('右翼', 'Right') : text('未装配', 'Idle'))}</strong>
+                    </div>
+                    <div class="ds-stat-box">
+                        <span class="ds-stat-label">${escapeHtml(text('\u6301\u6709', 'Wallet'))}</span>
+                        <strong class="ds-stat-value">${escapeHtml(formatCompact(state.save.credits))}</strong>
                     </div>
                 </div>
                 <div class="ds-row-actions">
@@ -1155,30 +1179,45 @@
     }
 
     function renderMissionsTab() {
-        const missions = config.missions.map((mission) => {
-            const progress = getMissionProgress(mission.id);
-            const claimed = state.save.missionClaimed.includes(mission.id);
-            const ready = !claimed && progress >= mission.target;
-            const icon = claimed ? '&#10003;' : ready ? '&#9733;' : '&#9679;';
-            return `
-                <article class="ds-mission-card ${ready ? 'is-ready' : ''}">
-                    <div class="ds-card-head">
-                        <div>
-                            <h3>${renderIconLabel(icon, localize(mission.title), `${progress}/${mission.target}`)}</h3>
-                            <div class="ds-card-copy">${escapeHtml(getMissionHint(mission.id))}</div>
+        const missions = config.missions
+            .map((mission, index) => {
+                const progress = getMissionProgress(mission.id);
+                const claimed = state.save.missionClaimed.includes(mission.id);
+                const ready = !claimed && progress >= mission.target;
+                const ratio = mission.target > 0 ? Math.min(1, progress / mission.target) : 0;
+                return { mission, index, progress, claimed, ready, ratio };
+            })
+            .sort((left, right) => {
+                const leftRank = left.ready ? 0 : left.claimed ? 2 : 1;
+                const rightRank = right.ready ? 0 : right.claimed ? 2 : 1;
+                if (leftRank !== rightRank) return leftRank - rightRank;
+                if (leftRank === 1 && left.ratio !== right.ratio) return right.ratio - left.ratio;
+                if (left.progress !== right.progress) return right.progress - left.progress;
+                return left.index - right.index;
+            })
+            .map(({ mission, progress, claimed, ready }) => {
+                const icon = claimed ? '&#10003;' : ready ? '&#9733;' : '&#9679;';
+                const progressText = `${progress}/${mission.target}`;
+                const buttonLabel = claimed ? text('Claimed', 'Claimed') : text('Claim Reward', 'Claim Reward');
+                return `
+                    <article class="ds-mission-card ${ready ? 'is-ready' : ''} ${claimed ? 'is-claimed' : ''}">
+                        <div class="ds-card-head">
+                            <div>
+                                <h3>${renderIconLabel(icon, localize(mission.title), progressText)}</h3>
+                                <div class="ds-card-copy">${escapeHtml(getMissionHint(mission.id))}</div>
+                            </div>
+                            <span class="ds-tag ${ready ? 'is-good' : ''}">${escapeHtml(claimed ? text('Claimed', 'Claimed') : ready ? text('Ready', 'Ready') : progressText)}</span>
                         </div>
-                        <span class="ds-tag ${ready ? 'is-good' : ''}">${escapeHtml(claimed ? text('Claimed', 'Claimed') : `${progress}/${mission.target}`)}</span>
-                    </div>
-                    <div class="ds-progress">
-                        <div class="ds-progress-fill" style="width:${Math.min(100, (progress / mission.target) * 100)}%"></div>
-                    </div>
-                    ${renderRewardPills(mission.reward, 5)}
-                    <div class="ds-row-actions">
-                        <button class="primary-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${ready ? '' : 'disabled'}>${escapeHtml(claimed ? text('Claimed', 'Claimed') : text('Claim Reward', 'Claim Reward'))}</button>
-                    </div>
-                </article>
-            `;
-        });
+                        <div class="ds-progress">
+                            <div class="ds-progress-fill" style="width:${Math.min(100, (progress / mission.target) * 100)}%"></div>
+                        </div>
+                        ${renderRewardPills(mission.reward, 5)}
+                        <div class="ds-row-actions">
+                            <button class="primary-btn ds-claim-btn" type="button" data-action="claimMission" data-value="${mission.id}" ${ready ? '' : 'disabled'}>${ready ? '<span class="ds-btn-alert-dot" aria-hidden="true"></span>' : ''}${escapeHtml(buttonLabel)}</button>
+                        </div>
+                    </article>
+                `;
+            });
 
         return `
             <section class="ds-card">
@@ -1444,6 +1483,28 @@
         return config.paymentOffers.find((offer) => offer.id === selectedPaymentOfferId) || config.paymentOffers[0];
     }
 
+    function hasPaymentOffer(offerId) {
+        return config.paymentOffers.some((offer) => offer.id === offerId);
+    }
+
+    function doesPaymentOrderMatchOffer(order, offer = getSelectedPaymentOffer()) {
+        if (!order || !offer) return false;
+        if (String(order.offerId || '') !== String(offer.id || '')) return false;
+        const expectedBaseAmount = Number(offer.price || 0);
+        if (!(expectedBaseAmount > 0)) return true;
+        const orderBaseAmount = Number(order.baseAmount || 0);
+        if (orderBaseAmount > 0) {
+            return Math.abs(orderBaseAmount - expectedBaseAmount) < 0.0001;
+        }
+        const exactAmount = Number(order.exactAmount || 0);
+        return exactAmount >= expectedBaseAmount && exactAmount < (expectedBaseAmount + 0.01);
+    }
+
+    function getActivePaymentOrderForSelectedOffer() {
+        const offer = getSelectedPaymentOffer();
+        return doesPaymentOrderMatchOffer(currentPaymentOrder, offer) ? currentPaymentOrder : null;
+    }
+
     function getPaymentMinerId() {
         if (state.save.payment.minerId) return state.save.payment.minerId;
         state.save.payment.minerId = `DRONESQD_${Math.random().toString(16).slice(2, 10).toUpperCase()}${Date.now().toString(16).slice(-6).toUpperCase()}`;
@@ -1507,10 +1568,12 @@
             id: String(order?.id || order?.orderId || order?.order_id || '--'),
             offerId: String(order?.offerId || order?.offer_id || selectedPaymentOfferId),
             offerName: String(order?.offerName || order?.offer_name || ''),
+            gameId: String(order?.gameId || order?.game_id || PAYMENT_GAME_ID),
             minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
             createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
             expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
-            exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
+            baseAmount: Number(order?.baseAmount ?? order?.base_amount ?? 0),
+            exactAmount: Number(order?.exactAmount ?? order?.exact_amount ?? order?.baseAmount ?? order?.base_amount ?? 0),
             payAddress: resolvePaymentAddress(order),
             network: String(order?.network || 'TRON (TRC20)'),
             status: String(order?.status || 'pending'),
@@ -1589,7 +1652,7 @@
         const payload = await requestPaymentApi('/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId })
+            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
         });
         return buildClientPaymentOrder(payload?.order);
     }
@@ -1629,7 +1692,7 @@
         if (!ui.paymentAmount || !ui.paymentOrderId || !ui.paymentExactAmount || !ui.paymentExpiry || !ui.paymentWallet) return;
         renderPaymentModalChrome();
         const offer = getSelectedPaymentOffer();
-        const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
+        const order = doesPaymentOrderMatchOffer(currentPaymentOrder, offer) ? currentPaymentOrder : null;
         ui.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `${offer.price} USDT`;
         ui.paymentOrderId.textContent = order?.id || '--';
         ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
@@ -1645,8 +1708,9 @@
         if (!ui.paymentStatus || !ui.paymentVerifyBtn || !ui.paymentCopyAddressBtn || !ui.paymentCopyAmountBtn) return;
         const txid = getNormalizedPaymentTxid();
         const txidValid = PAYMENT_TXID_REGEX.test(txid);
-        const hasOrder = !!currentPaymentOrder;
-        const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        const hasOrder = !!activeOrder;
+        const orderExpired = isPaymentOrderExpired(activeOrder);
         ui.paymentStatus.classList.remove('is-error', 'is-success');
 
         if (paymentVerificationState === 'creating') {
@@ -1762,7 +1826,7 @@
 
     async function syncPaymentOrderForSelectedOffer(force = false, clearInput = false) {
         const offer = getSelectedPaymentOffer();
-        if (!force && currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !isPaymentOrderExpired(currentPaymentOrder)) {
+        if (!force && doesPaymentOrderMatchOffer(currentPaymentOrder, offer) && !isPaymentOrderExpired(currentPaymentOrder)) {
             renderPaymentOrderUI();
             refreshPaymentVerificationState();
             return currentPaymentOrder;
@@ -1810,6 +1874,9 @@
         const offer = config.paymentOffers.find((item) => item.id === offerId);
         if (!offer) return;
         selectedPaymentOfferId = offer.id;
+        if (currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !doesPaymentOrderMatchOffer(currentPaymentOrder, offer)) {
+            setCurrentPaymentOrder(null);
+        }
         renderPaymentOfferGrid();
         renderPaymentOrderUI();
         if (refreshOrder && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
@@ -1821,13 +1888,20 @@
     async function openPaymentModal(offerId = '') {
         if (!ui.paymentModal) return;
         closeModal();
+        const previousSelectedOfferId = selectedPaymentOfferId;
         if (!currentPaymentOrder) restoreStoredPaymentOrder();
-        if (offerId && config.paymentOffers.some((offer) => offer.id === offerId)) {
+        if (offerId && hasPaymentOffer(offerId)) {
             selectedPaymentOfferId = offerId;
-        } else if (currentPaymentOrder?.offerId) {
+        } else if (hasPaymentOffer(previousSelectedOfferId)) {
+            selectedPaymentOfferId = previousSelectedOfferId;
+        } else if (currentPaymentOrder?.offerId && hasPaymentOffer(currentPaymentOrder.offerId)) {
             selectedPaymentOfferId = currentPaymentOrder.offerId;
-        } else if (!config.paymentOffers.some((offer) => offer.id === selectedPaymentOfferId)) {
+        } else if (!hasPaymentOffer(selectedPaymentOfferId)) {
             selectedPaymentOfferId = getRecommendedOfferId();
+        }
+
+        if (currentPaymentOrder && currentPaymentOrder.offerId === getSelectedPaymentOffer().id && !doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer())) {
+            setCurrentPaymentOrder(null);
         }
 
         renderPaymentOfferGrid();
@@ -1841,7 +1915,7 @@
             if (currentPaymentOrder) {
                 await syncCurrentPaymentOrderStatus({ silent: true });
             }
-            if (!currentPaymentOrder || currentPaymentOrder.offerId !== selectedPaymentOfferId || isPaymentOrderExpired(currentPaymentOrder)) {
+            if (!doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer()) || isPaymentOrderExpired(currentPaymentOrder)) {
                 await syncPaymentOrderForSelectedOffer(true, true);
             }
         } catch (error) {}
@@ -1896,7 +1970,10 @@
     }
 
     async function copyPaymentAmount() {
-        let order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder) ? currentPaymentOrder : null;
+        let order = getActivePaymentOrderForSelectedOffer();
+        if (order && isPaymentOrderExpired(order)) {
+            order = null;
+        }
         if (!order) {
             try {
                 order = await syncPaymentOrderForSelectedOffer(true, false);
@@ -3254,21 +3331,23 @@
             return;
         }
 
-        if (!currentPaymentOrder) {
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+
+        if (!activeOrder) {
             paymentVerificationError = text('当前没有可校验的订单，请先创建订单。', 'There is no active order to verify. Please create one first.');
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
-        if (currentPaymentOrder.status === 'expired' || currentPaymentOrder.status === 'cancelled') {
+        if (activeOrder.status === 'expired' || activeOrder.status === 'cancelled') {
             paymentVerificationError = text('当前订单已失效，请重新创建订单。', 'This order is no longer valid. Please create a new one.');
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
-        const orderId = currentPaymentOrder.id;
+        const orderId = activeOrder.id;
         paymentVerificationState = 'verifying';
         paymentVerificationError = '';
         paymentVerificationNotice = '';
@@ -3278,11 +3357,11 @@
             const verificationResult = await verifyBackendPayment(orderId, txid);
             const orderPayload = verificationResult?.order || {};
             const resolvedOrder = buildClientPaymentOrder({
-                ...currentPaymentOrder,
+                ...activeOrder,
                 ...orderPayload,
                 txid: orderPayload?.txid || txid
             });
-            const resolvedOfferId = String(resolvedOrder.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+            const resolvedOfferId = String(resolvedOrder.offerId || activeOrder.offerId || selectedPaymentOfferId);
             const hadLocalReward = !!state.save.payment.claimedOrders[orderId];
             setCurrentPaymentOrder(resolvedOrder);
 
