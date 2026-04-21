@@ -512,22 +512,23 @@
                     ${config.chapters.map((item, index) => renderSortieQuickChip(item, index)).join('')}
                 </div>
 
+                <div class="ds-stage-hud">
+                    <div class="ds-stage-hud-card">
+                        <span>${escapeHtml(text('Shield', 'Shield'))}</span>
+                        <strong id="battleHudShield">${escapeHtml(text('Standby', 'Standby'))}</strong>
+                    </div>
+                    <div class="ds-stage-hud-card">
+                        <span>${escapeHtml(text('Skill', 'Skill'))}</span>
+                        <strong id="battleHudCharge">0%</strong>
+                    </div>
+                    <div class="ds-stage-hud-card">
+                        <span>${escapeHtml(text('Status', 'Status'))}</span>
+                        <strong id="battleHudStatus">${escapeHtml(text('Standby', 'Standby'))}</strong>
+                    </div>
+                </div>
+
                 <div class="ds-stage-wrap">
                     <canvas class="ds-stage-canvas" id="sortieCanvas"></canvas>
-                    <div class="ds-stage-hud">
-                        <div class="ds-stage-hud-card">
-                            <span>${escapeHtml(text('Shield', 'Shield'))}</span>
-                            <strong id="battleHudShield">${escapeHtml(text('Standby', 'Standby'))}</strong>
-                        </div>
-                        <div class="ds-stage-hud-card">
-                            <span>${escapeHtml(text('Skill', 'Skill'))}</span>
-                            <strong id="battleHudCharge">0%</strong>
-                        </div>
-                        <div class="ds-stage-hud-card">
-                            <span>${escapeHtml(text('Status', 'Status'))}</span>
-                            <strong id="battleHudStatus">${escapeHtml(text('Standby', 'Standby'))}</strong>
-                        </div>
-                    </div>
                     <div class="ds-stage-center" id="sortieCenter"></div>
                 </div>
 

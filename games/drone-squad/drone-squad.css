@@ -392,17 +392,15 @@ canvas {
 }
 
 .ds-stage-hud {
-    position: absolute;
-    inset: 0 0 auto 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
-    padding: 10px;
-    pointer-events: none;
+    margin-bottom: 8px;
 }
 
 .ds-stage-hud-card {
     min-width: 0;
+    min-height: 54px;
     padding: 8px 10px;
     border-radius: 14px;
     background: rgba(8, 12, 22, 0.78);
@@ -410,6 +408,14 @@ canvas {
     display: grid;
     gap: 3px;
     backdrop-filter: blur(12px);
+}
+
+.ds-stage-hud-card span {
+    white-space: nowrap;
+}
+
+.ds-stage-hud-card strong {
+    line-height: 1.15;
 }
 
 .ds-stage-center {
@@ -1408,10 +1414,11 @@ canvas {
 
     .ds-stage-hud {
         gap: 5px;
-        padding: 6px;
+        margin-bottom: 6px;
     }
 
     .ds-stage-hud-card {
+        min-height: 48px;
         padding: 6px 7px;
         border-radius: 12px;
         gap: 2px;
@@ -1830,10 +1837,11 @@ canvas {
 
     .ds-stage-hud {
         gap: 4px;
-        padding: 5px;
+        margin-bottom: 5px;
     }
 
     .ds-stage-hud-card {
+        min-height: 44px;
         padding: 5px 6px;
     }
 
