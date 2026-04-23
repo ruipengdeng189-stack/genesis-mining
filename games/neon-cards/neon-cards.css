@@ -961,6 +961,16 @@ button:disabled {
     overflow: hidden;
 }
 
+.nc-battle-arena.is-good {
+    border-color: rgba(104, 255, 224, 0.22);
+    box-shadow: inset 0 0 0 1px rgba(104, 255, 224, 0.08);
+}
+
+.nc-battle-arena.is-warning {
+    border-color: rgba(255, 203, 107, 0.24);
+    box-shadow: inset 0 0 0 1px rgba(255, 203, 107, 0.08);
+}
+
 .nc-battle-notice {
     position: relative;
     z-index: 2;
@@ -1047,6 +1057,49 @@ button:disabled {
     box-shadow: inset 0 0 0 1px rgba(104, 255, 224, 0.08);
 }
 
+.nc-battle-pressure {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.nc-battle-pressure-bar {
+    position: relative;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.nc-battle-pressure-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.nc-battle-pressure-fill.is-ally {
+    left: 0;
+    background: linear-gradient(90deg, rgba(104, 255, 224, 0.72), rgba(91, 141, 255, 0.36));
+}
+
+.nc-battle-pressure-fill.is-enemy {
+    right: 0;
+    background: linear-gradient(90deg, rgba(255, 125, 137, 0.32), rgba(255, 125, 137, 0.7));
+}
+
+.nc-battle-pressure-marker {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    background: #0d152b;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 4px rgba(13, 21, 43, 0.28);
+}
+
 .nc-battle-lane.is-pulse-good {
     animation: nc-battle-lane-good 0.55s ease;
 }
@@ -1063,6 +1116,36 @@ button:disabled {
     background:
         linear-gradient(90deg, rgba(104, 255, 224, 0.08) 0%, rgba(255, 255, 255, 0.02) 35%, rgba(255, 255, 255, 0.02) 65%, rgba(255, 125, 137, 0.08) 100%);
     overflow: hidden;
+}
+
+.nc-battle-track.is-impact-good::after,
+.nc-battle-track.is-impact-warning::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    width: 54px;
+    border-radius: 14px;
+    pointer-events: none;
+    opacity: 0.78;
+}
+
+.nc-battle-track.is-impact-good.is-impact-ally::after,
+.nc-battle-track.is-impact-warning.is-impact-ally::after {
+    left: 8px;
+}
+
+.nc-battle-track.is-impact-good.is-impact-enemy::after,
+.nc-battle-track.is-impact-warning.is-impact-enemy::after {
+    right: 8px;
+}
+
+.nc-battle-track.is-impact-good::after {
+    background: radial-gradient(circle, rgba(104, 255, 224, 0.34), rgba(104, 255, 224, 0));
+}
+
+.nc-battle-track.is-impact-warning::after {
+    background: radial-gradient(circle, rgba(255, 203, 107, 0.34), rgba(255, 125, 137, 0));
 }
 
 .nc-battle-track::before {
@@ -1189,6 +1272,20 @@ button:disabled {
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 6px;
+}
+
+.nc-battle-event-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-top: 6px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+
+.nc-battle-event-strip::-webkit-scrollbar {
+    display: none;
 }
 
 .nc-battle-lane-foot .ghost-btn {
@@ -1424,6 +1521,24 @@ body[data-neon-live="1"] .nc-battle-lane {
     min-height: 92px;
     padding: 9px 10px;
     gap: 6px;
+}
+
+body[data-neon-live="1"] .nc-battle-pressure {
+    gap: 6px;
+}
+
+body[data-neon-live="1"] .nc-battle-pressure-bar {
+    height: 7px;
+}
+
+body[data-neon-live="1"] .nc-battle-pressure-marker {
+    width: 9px;
+    height: 9px;
+}
+
+body[data-neon-live="1"] .nc-battle-event-strip {
+    gap: 5px;
+    margin-top: 5px;
 }
 
 @media (min-width: 560px) {
@@ -1871,5 +1986,23 @@ body[data-neon-live="1"] .nc-battle-lane {
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 1;
         overflow: hidden;
+    }
+
+    body[data-neon-live="1"] .nc-battle-pressure {
+        gap: 5px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-pressure-bar {
+        height: 7px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-pressure-marker {
+        width: 8px;
+        height: 8px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-event-strip {
+        gap: 5px;
+        margin-top: 5px;
     }
 }

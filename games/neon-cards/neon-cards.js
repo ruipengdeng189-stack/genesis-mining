@@ -1671,6 +1671,8 @@
         const chapter = battle.chapter;
         const selectedCard = getBattleSelectedCard();
         const boostList = battle.boosts.map((boostId) => getBattleBoostDef(boostId)).filter(Boolean);
+        const leaderReady = battle.active && !battle.reinforcementPending && !battle.result && battle.leaderCharge >= 100;
+        const arenaTone = battle.arenaGlowUntil > battle.time ? ` is-${battle.arenaTone || 'good'}` : '';
         return `
             <section class="nc-card nc-battle-card nc-battle-card--live">
                 <div class="nc-card-head">
@@ -1713,7 +1715,7 @@
 
                 <div class="nc-battle-stage">
                     ${battle.notice && battle.notice.until > battle.time ? `<div class="nc-battle-notice ${battle.notice.tone ? `is-${battle.notice.tone}` : ''}">${escapeHtml(battle.notice.text)}</div>` : ''}
-                    <div class="nc-battle-arena">
+                    <div class="nc-battle-arena${arenaTone}">
                         ${battle.banner && battle.banner.until > battle.time ? renderBattleBanner(battle.banner) : ''}
                         ${battle.lanes.map(renderBattleLane).join('')}
                         ${battle.reinforcementPending ? renderBattleBoostOverlay() : ''}
@@ -1726,7 +1728,7 @@
                 </div>
 
                 <div class="nc-action-row nc-action-row--battle">
-                    <button class="ghost-btn wide-btn" type="button" data-action="useLeaderSkill" ${battle.active && !battle.reinforcementPending && !battle.result && battle.leaderCharge >= 100 ? '' : 'disabled'}>${escapeHtml(text(`Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`, `Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
+                    <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`, `Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
                     <button class="ghost-btn wide-btn" type="button" data-action="retreatBattle" ${battle.active && !battle.result ? '' : 'disabled'}>${escapeHtml(text('Tactical Retreat', 'Tactical Retreat'))}</button>
                 </div>
             </section>
@@ -1784,7 +1786,9 @@
         const battle = state.battle;
         const isFocus = battle.focusLaneId === lane.id;
         const pulseClass = lane.pulseUntil > battle.time ? ` is-pulse-${lane.pulseTone || 'good'}` : '';
+        const impactClass = lane.impactUntil > battle.time ? ` is-impact-${lane.impactTone || 'good'} is-impact-${lane.impactSide || 'ally'}` : '';
         const selectedCard = getBattleSelectedCard();
+        const pressure = getBattleLanePressure(lane);
         const actionLabel = battle.result
             ? text('Settled', 'Settled')
             : selectedCard
@@ -1796,7 +1800,15 @@
                     <strong>${escapeHtml(getBattleLaneLabel(lane.id))}</strong>
                     <span>${escapeHtml(`${Math.round((lane.playerCoreHp / lane.playerCoreMax) * 100)}% / ${Math.round((lane.enemyCoreHp / lane.enemyCoreMax) * 100)}%`)}</span>
                 </div>
-                <div class="nc-battle-track">
+                <div class="nc-battle-pressure">
+                    <div class="nc-battle-pressure-bar">
+                        <div class="nc-battle-pressure-fill is-ally" style="width:${pressure.allyWidth.toFixed(1)}%"></div>
+                        <div class="nc-battle-pressure-fill is-enemy" style="width:${pressure.enemyWidth.toFixed(1)}%"></div>
+                        <div class="nc-battle-pressure-marker" style="left:${pressure.marker.toFixed(1)}%"></div>
+                    </div>
+                    <span class="nc-tag nc-tag--mini ${pressure.tone ? `is-${pressure.tone}` : ''}">${escapeHtml(pressure.label)}</span>
+                </div>
+                <div class="nc-battle-track${impactClass}">
                     <div class="nc-battle-core is-ally">
                         <span>${escapeHtml(text('Ally Core', 'Ally Core'))}</span>
                         <strong>${escapeHtml(String(Math.max(0, Math.round(lane.playerCoreHp))))}</strong>
@@ -1813,6 +1825,7 @@
                 <div class="nc-battle-lane-foot">
                     <div>
                         <div class="nc-note-mini">${escapeHtml(renderBattleLaneHint(lane))}</div>
+                        ${renderBattleLaneEventStrip(lane)}
                         ${renderBattleLaneEffects(lane)}
                     </div>
                     <button class="ghost-btn" type="button" data-action="playBattleCard" data-value="${lane.id}" ${battle.active && !battle.reinforcementPending && !battle.result ? '' : 'disabled'}>${escapeHtml(actionLabel)}</button>
@@ -1834,6 +1847,19 @@
                     <div class="nc-battle-health"><div style="width:${(hpRatio * 100).toFixed(1)}%"></div></div>
                     ${unit.shield > 0 ? `<div class="nc-battle-shield"><div style="width:${Math.min(100, shieldRatio * 100).toFixed(1)}%"></div></div>` : ''}
                 </div>
+            </div>
+        `;
+    }
+
+    function renderBattleLaneEventStrip(lane) {
+        if (!lane.events?.length) return '';
+        return `
+            <div class="nc-battle-event-strip">
+                ${lane.events.slice(0, 3).map((event) => `
+                    <span class="nc-tag nc-tag--mini ${event.tone ? `is-${event.tone}` : ''}">
+                        ${event.icon} ${escapeHtml(event.label)}
+                    </span>
+                `).join('')}
             </div>
         `;
     }
@@ -2007,14 +2033,21 @@
             battle.energy -= card.cost;
             lane.friendly.push(createFriendlyBattleUnit(card.id));
             markLanePulse(laneId, 'good');
+            markLaneImpact(laneId, 'good', 'ally');
+            pushLaneEvent(laneId, '&#9654;', localize(card.name), 'good');
+            markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
             markBattleBanner(localize(card.name), `${getBattleLaneLabel(laneId)} deployment confirmed`, 'good');
             markBattleNotice(text(`${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`, `${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`), 'good');
         } else {
             battle.energy -= card.cost;
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
-            markLanePulse(laneId, 'warning');
-            markBattleBanner(localize(card.name), `${getBattleLaneLabel(laneId)} tactic released`, 'warning');
+            const tacticTone = (card.id === 'shieldNet' || card.id === 'overclockBurst') ? 'good' : 'warning';
+            markLanePulse(laneId, tacticTone);
+            markLaneImpact(laneId, tacticTone, tacticTone === 'good' ? 'ally' : 'enemy');
+            pushLaneEvent(laneId, '&#10038;', localize(card.name), tacticTone);
+            markBattleArena(tacticTone, 1.1);
+            markBattleBanner(localize(card.name), `${getBattleLaneLabel(laneId)} tactic released`, tacticTone);
             applyBattleTactic(card.id, lane);
         }
 
@@ -2031,6 +2064,8 @@
         applyLeaderSkill(battle.focusLaneId);
         battle.leaderCharge = 0;
         battle.leaderReadyMarked = false;
+        pushLaneEvent('all', '&#9889;', text('Leader Burst', 'Leader Burst'), 'good');
+        markBattleArena('good', 1.25);
         markBattleBanner('Leader Skill Cast', `${leaderMap[state.save.selectedLeaderId] ? localize(leaderMap[state.save.selectedLeaderId].name) : 'Leader'} engaged`, 'good');
         renderClashRuntime();
     }
@@ -2044,6 +2079,8 @@
         battle.reinforcementPending = false;
         battle.reinforcementChoices = [];
         battle.boosts.push(boostId);
+        pushLaneEvent('all', boost.icon, localize(boost.title), 'good');
+        markBattleArena('good', 1.2);
         markBattleBanner(localize(boost.title), localize(boost.short), 'good');
         markBattleNotice(text(`Boost picked: ${localize(boost.title)}.`, `Boost picked: ${localize(boost.title)}.`), 'good');
         renderClashRuntime();
@@ -2103,7 +2140,14 @@
             speedBoost: 0,
             spawnSlowRemaining: 0,
             bossDefeated: false,
-            banner: null,
+            arenaTone: '',
+            arenaGlowUntil: 0,
+            banner: {
+                title: text('Clash Start', 'Clash Start'),
+                detail: text('Secure one lane first, then roll pressure outward.', 'Secure one lane first, then roll pressure outward.'),
+                tone: 'good',
+                until: 2.4
+            },
             notice: {
                 text: text('Pick a card below, then tap a lane to deploy.', 'Pick a card below, then tap a lane to deploy.'),
                 tone: 'good',
@@ -2118,11 +2162,17 @@
                 friendly: [],
                 enemy: [],
                 effects: [],
+                events: [],
                 spawnTimer: 1.4 + (index * 0.45),
                 spawnCount: 0,
                 bossSpawned: false,
                 pulseTone: '',
                 pulseUntil: 0,
+                impactTone: '',
+                impactUntil: 0,
+                impactSide: '',
+                allyCoreAlertStage: 0,
+                enemyCoreAlertStage: 0,
                 chapterIndex
             }))
         };
@@ -2160,6 +2210,7 @@
         if (battle.leaderCharge >= 100 && !battle.leaderReadyMarked) {
             battle.leaderReadyMarked = true;
             markBattleNotice('Leader skill is ready.', 'good');
+            markBattleArena('good', 0.9);
             markBattleBanner('Leader Skill Ready', `Tap the button below to burst ${getBattleLaneLabel(battle.focusLaneId)}.`, 'good');
         }
 
@@ -2170,6 +2221,8 @@
         if (battle.time >= battle.nextWaveAt && battle.wave < 4) {
             battle.wave += 1;
             battle.nextWaveAt += 16;
+            pushLaneEvent('all', '&#10039;', `${text('Wave', 'Wave')} ${battle.wave}`, 'warning');
+            markBattleArena('warning', 1.3);
             markBattleBanner(`Wave ${battle.wave}`, 'Enemy pressure is rising. Stabilize your focus lane first.', 'warning');
             markBattleNotice(text(`Wave ${battle.wave} incoming.`, `Wave ${battle.wave} incoming.`), 'warning');
         }
@@ -2177,6 +2230,7 @@
         if (!battle.reinforcementPending && !battle.boosts.length && battle.time >= 28) {
             battle.reinforcementPending = true;
             battle.reinforcementChoices = pickBattleBoostChoices();
+            markBattleArena('good', 1.1);
             markBattleBanner('Mid-Battle Boost', 'Pick one patch upgrade, then keep the pressure on.', 'good');
             markBattleNotice(text('Mid-battle boost is ready.', 'Mid-battle boost is ready.'), 'warning');
             renderClashRuntime();
@@ -2206,6 +2260,7 @@
         lane.effects = lane.effects
             .map((effect) => ({ ...effect, remaining: Math.max(0, effect.remaining - delta) }))
             .filter((effect) => effect.remaining > 0);
+        lane.events = (lane.events || []).filter((event) => event.until > battle.time);
 
         const spawnDelta = battle.spawnSlowRemaining > 0 ? delta * 0.5 : delta;
         lane.spawnTimer -= spawnDelta;
@@ -2214,6 +2269,9 @@
             lane.bossSpawned = true;
             lane.enemy.push(createEnemyBattleUnit(lane, 'boss'));
             markLanePulse(lane.id, 'warning');
+            markLaneImpact(lane.id, 'warning', 'enemy', 1.2);
+            pushLaneEvent(lane.id, '&#9888;', text('Boss', 'Boss'), 'warning', 2.6);
+            markBattleArena('warning', 1.5);
             markBattleBanner('Boss Arrived', 'Mid lane pressure spikes instantly. Hold the frontline first.', 'warning');
             markBattleNotice(text('Boss has entered the mid lane.', 'Boss has entered the mid lane.'), 'warning');
         }
@@ -2230,9 +2288,16 @@
         lane.friendly = lane.friendly.filter((unit) => unit.hp > 0);
         lane.enemy = lane.enemy.filter((unit) => {
             if (unit.hp > 0) return true;
-            if (unit.isBoss) state.battle.bossDefeated = true;
+            if (unit.isBoss) {
+                state.battle.bossDefeated = true;
+                pushLaneEvent(lane.id, '&#10003;', text('Boss Down', 'Boss Down'), 'good', 2.4);
+                markLaneImpact(lane.id, 'good', 'ally', 1.1);
+                markBattleArena('good', 1.3);
+            }
             return false;
         });
+
+        checkBattleCoreBreakpoints(lane);
     }
 
     function tickBattleUnits(allies, enemies, lane, delta, side) {
@@ -2661,7 +2726,7 @@
         if (battle.result) {
             return battle.result.win
                 ? text('This run is complete. Push the next chapter or return to Deck to strengthen your key cards.', 'This run is complete. Push the next chapter or return to Deck to strengthen your key cards.')
-                : text('This run retreated. Strengthen the focused lane鈥檚 frontline or burst first.', 'This run retreated. Strengthen the focused lane鈥檚 frontline or burst first.');
+                : text('This run retreated. Strengthen the focused lane\'s frontline or burst first.', 'This run retreated. Strengthen the focused lane\'s frontline or burst first.');
         }
         if (selectedCard) {
             return text(`Selected ${localize(selectedCard.name)}. Tap a lane to deploy.`, `Selected ${localize(selectedCard.name)}. Tap a lane to deploy.`);
@@ -2725,6 +2790,30 @@
         return text(`Boss pending ${secondsLeft}s`, `Boss pending ${secondsLeft}s`);
     }
 
+    function getBattleLanePressure(lane) {
+        const allyFront = lane.friendly.length ? Math.max(...lane.friendly.map((unit) => unit.x)) : 8;
+        const enemyFront = lane.enemy.length ? Math.min(...lane.enemy.map((unit) => unit.x)) : 92;
+        const coreSwing = (((lane.playerCoreHp / lane.playerCoreMax) - (lane.enemyCoreHp / lane.enemyCoreMax)) * 18);
+        const rawMarker = 50 + (((allyFront - (100 - enemyFront)) * 1.2) + coreSwing);
+        const marker = clampNumber(rawMarker, 50, 8, 92);
+        const allyWidth = marker;
+        const enemyWidth = 100 - marker;
+        let label = text('Contested', 'Contested');
+        let tone = '';
+        if (marker >= 62) {
+            label = text('Pushing', 'Pushing');
+            tone = 'good';
+        } else if (marker <= 38) {
+            label = text('Brace', 'Brace');
+            tone = 'warning';
+        }
+        if (lane.enemy.some((unit) => unit.isBoss)) {
+            label = text('Boss Pressure', 'Boss Pressure');
+            tone = 'warning';
+        }
+        return { marker, allyWidth, enemyWidth, label, tone };
+    }
+
     function getBattleUnitShortName(unit) {
         const raw = localize(unit.name);
         return state.lang === 'en' ? raw.split(' ').slice(0, 2).join(' ') : raw.slice(0, 3);
@@ -2768,6 +2857,30 @@
         };
     }
 
+    function markBattleArena(tone = 'good', duration = 1) {
+        if (!state.battle) return;
+        state.battle.arenaTone = tone;
+        state.battle.arenaGlowUntil = state.battle.time + duration;
+    }
+
+    function pushLaneEvent(laneId, icon, label, tone = '', duration = 1.9) {
+        if (!state.battle?.lanes?.length) return;
+        const lanes = laneId === 'all'
+            ? state.battle.lanes
+            : state.battle.lanes.filter((lane) => lane.id === laneId);
+        lanes.forEach((lane) => {
+            lane.events = Array.isArray(lane.events) ? lane.events : [];
+            lane.events.unshift({
+                id: `${lane.id}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+                icon,
+                label,
+                tone,
+                until: state.battle.time + duration
+            });
+            lane.events = lane.events.slice(0, 3);
+        });
+    }
+
     function markLanePulse(laneId, tone = 'good') {
         if (!state.battle?.lanes?.length) return;
         const targets = laneId === 'all'
@@ -2777,6 +2890,38 @@
             lane.pulseTone = tone;
             lane.pulseUntil = state.battle.time + 0.8;
         });
+    }
+
+    function markLaneImpact(laneId, tone = 'good', side = 'ally', duration = 0.85) {
+        if (!state.battle?.lanes?.length) return;
+        const targets = laneId === 'all'
+            ? state.battle.lanes
+            : state.battle.lanes.filter((lane) => lane.id === laneId);
+        targets.forEach((lane) => {
+            lane.impactTone = tone;
+            lane.impactSide = side;
+            lane.impactUntil = state.battle.time + duration;
+        });
+    }
+
+    function checkBattleCoreBreakpoints(lane) {
+        const coreMarks = [0.75, 0.5, 0.25];
+        const allyRatio = lane.playerCoreMax > 0 ? lane.playerCoreHp / lane.playerCoreMax : 0;
+        const enemyRatio = lane.enemyCoreMax > 0 ? lane.enemyCoreHp / lane.enemyCoreMax : 0;
+
+        while (lane.enemyCoreAlertStage < coreMarks.length && enemyRatio <= coreMarks[lane.enemyCoreAlertStage]) {
+            pushLaneEvent(lane.id, '&#10022;', text('Enemy Core Cracked', 'Enemy Core Cracked'), 'good', 2.1);
+            markLanePulse(lane.id, 'good');
+            markLaneImpact(lane.id, 'good', 'ally', 0.95);
+            lane.enemyCoreAlertStage += 1;
+        }
+
+        while (lane.allyCoreAlertStage < coreMarks.length && allyRatio <= coreMarks[lane.allyCoreAlertStage]) {
+            pushLaneEvent(lane.id, '&#9888;', text('Core Under Fire', 'Core Under Fire'), 'warning', 2.1);
+            markLanePulse(lane.id, 'warning');
+            markLaneImpact(lane.id, 'warning', 'enemy', 0.95);
+            lane.allyCoreAlertStage += 1;
+        }
     }
 
     function queueBattleStageScroll() {
