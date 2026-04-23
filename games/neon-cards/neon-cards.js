@@ -1727,22 +1727,22 @@
                 </div>
 
                 <div class="nc-battle-hud">
-                    ${renderBattleHudBox(text('剩余时间', 'Time Left'), formatBattleTime(Math.max(0, battle.maxTime - battle.time)), battle.maxTime - battle.time <= 15 ? 'warning' : '')}
-                    ${renderBattleHudBox(text('能量', 'Energy'), `${battle.energy.toFixed(1)} / ${battle.maxEnergy}`)}
-                    ${renderBattleHudBox(text('领袖技', 'Leader Skill'), `${Math.round(battle.leaderCharge)}%`, battle.leaderCharge >= 100 ? 'good' : '')}
-                    ${renderBattleHudBox(text('核心血量', 'Core HP'), `${getBattleCorePercent('ally')}% / ${getBattleCorePercent('enemy')}%`, getBattleCorePercent('enemy') < getBattleCorePercent('ally') ? 'good' : '')}
+                    ${renderBattleHudBox(text('⏱ 时间', '⏱ Time'), formatBattleTime(Math.max(0, battle.maxTime - battle.time)), battle.maxTime - battle.time <= 15 ? 'warning' : '')}
+                    ${renderBattleHudBox(text('⚡ 能量', '⚡ Energy'), `${battle.energy.toFixed(1)} / ${battle.maxEnergy}`)}
+                    ${renderBattleHudBox(text('❤ 核心', '❤ Core'), `${getBattleCorePercent('ally')} / ${getBattleCorePercent('enemy')}`, getBattleCorePercent('enemy') < getBattleCorePercent('ally') ? 'good' : '')}
+                    ${renderBattleHudBox(text('✦ 技能', '✦ Skill'), `${Math.round(battle.leaderCharge)}%`, battle.leaderCharge >= 100 ? 'good' : '')}
                 </div>
 
                 <div class="nc-battle-state-strip">
-                    ${renderBattleStateChip('&#10039;', `${text('波次', 'Wave')} ${battle.wave}`)}
-                    ${renderBattleStateChip('&#9673;', `${text('焦点', 'Focus')} • ${getBattleLaneLabel(battle.focusLaneId)}`)}
+                    ${renderBattleStateChip('&#10039;', `${text('波', 'Wave')} ${battle.wave}`)}
+                    ${renderBattleStateChip('&#9673;', `${text('主攻', 'Focus')} ${getBattleLaneLabel(battle.focusLaneId)}`)}
                     ${renderBattleStateChip('&#9888;', getBattleBossStateText(), battle.bossDefeated ? 'good' : battle.time >= Math.max(42, battle.maxTime - 16) ? 'warning' : '')}
                     ${boostList.length ? renderBattleStateChip('&#10022;', text(`强化 ${boostList.length}`, `Boosts ${boostList.length}`), 'good') : ''}
                 </div>
 
                 <div class="nc-battle-stage">
-                    ${battle.notice && battle.notice.until > battle.time ? `<div class="nc-battle-notice ${battle.notice.tone ? `is-${battle.notice.tone}` : ''}">${escapeHtml(battle.notice.text)}</div>` : ''}
                     <div class="nc-battle-arena${arenaTone}">
+                        ${battle.notice && battle.notice.until > battle.time ? `<div class="nc-battle-notice ${battle.notice.tone ? `is-${battle.notice.tone}` : ''}">${escapeHtml(battle.notice.text)}</div>` : ''}
                         ${battle.banner && battle.banner.until > battle.time ? renderBattleBanner(battle.banner) : ''}
                         ${battle.lanes.map(renderBattleLane).join('')}
                         ${battle.reinforcementPending ? renderBattleBoostOverlay() : ''}
@@ -1765,15 +1765,17 @@
                     <div class="nc-battle-command-copy">
                         <div class="eyebrow">${escapeHtml(text('战斗操作', 'Battle Controls'))}</div>
                         <strong>${escapeHtml(commandState.title)}</strong>
-                        <small>${escapeHtml(commandState.hint)}</small>
+                        ${commandState.showHint ? `<small>${escapeHtml(commandState.hint)}</small>` : ''}
                     </div>
                     <span class="nc-tag ${commandState.tone ? `is-${commandState.tone}` : playableCount ? 'is-good' : 'is-warning'}">${escapeHtml(commandState.badge)}</span>
                 </div>
 
-                <div class="nc-battle-command-steps">
-                    <span class="nc-tag nc-tag--mini ${selectedCard ? 'is-good' : ''}">${escapeHtml(text('① 选卡', '1 Card'))}</span>
-                    <span class="nc-tag nc-tag--mini ${commandState.ready ? 'is-good' : 'is-warning'}">${escapeHtml(commandState.ready ? text('② 点路线', '2 Tap Lane') : text('② 蓄能中', '2 Charging'))}</span>
-                </div>
+                ${commandState.showSteps ? `
+                    <div class="nc-battle-command-steps">
+                        <span class="nc-tag nc-tag--mini ${selectedCard ? 'is-good' : ''}">${escapeHtml(text('① 选卡', '1 Card'))}</span>
+                        <span class="nc-tag nc-tag--mini ${commandState.ready ? 'is-good' : 'is-warning'}">${escapeHtml(commandState.ready ? text('② 点路线', '2 Tap Lane') : text('② 蓄能中', '2 Charging'))}</span>
+                    </div>
+                ` : ''}
 
                 <div class="nc-hand-row nc-hand-row--battle nc-hand-row--battle-dock">
                     ${battle.hand.map((cardId) => renderBattleHandCard(cardId)).join('')}
@@ -1782,14 +1784,14 @@
                 <div class="nc-battle-lane-quick">
                     ${battle.lanes.map((lane) => `
                         <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(lane.id)}" ${battle.active && !battle.reinforcementPending && !battle.result && commandState.ready ? '' : 'disabled'}>
-                            ${escapeHtml(commandState.ready ? text(`派到${getBattleLaneLabel(lane.id)}`, `Send ${getBattleLaneLabel(lane.id)}`) : text(`${getBattleLaneLabel(lane.id)} 蓄能`, `${getBattleLaneLabel(lane.id)} Charging`))}
+                            ${renderBattleLaneQuickLabel(lane.id, commandState.ready, selectedCard)}
                         </button>
                     `).join('')}
                 </div>
 
                 <div class="nc-action-row nc-action-row--battle">
-                    <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`领袖技 • ${getBattleLaneLabel(battle.focusLaneId)}`, `Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
-                    <button class="ghost-btn wide-btn" type="button" data-action="retreatBattle" ${battle.active && !battle.result ? '' : 'disabled'}>${escapeHtml(text('战术撤退', 'Tactical Retreat'))}</button>
+                    <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`✦ 技能 ${getBattleLaneLabel(battle.focusLaneId)}`, `✦ Skill ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="retreatBattle" ${battle.active && !battle.result ? '' : 'disabled'}>${escapeHtml(text('↩ 撤退', '↩ Retreat'))}</button>
                 </div>
             </section>
         `;
@@ -1810,6 +1812,18 @@
                 ${icon} ${escapeHtml(label)}
             </span>
         `;
+    }
+
+    function renderBattleLaneQuickLabel(laneId, ready, selectedCard = null) {
+        const icon = laneId === 'top' ? '▲' : laneId === 'bot' ? '▼' : '●';
+        if (ready) {
+            return escapeHtml(
+                selectedCard?.type === 'tactic'
+                    ? `${icon} ${getBattleLaneLabel(laneId)} ${text('放术', 'Cast')}`
+                    : `${icon} ${getBattleLaneLabel(laneId)} ${text('出兵', 'Deploy')}`
+            );
+        }
+        return escapeHtml(`${icon} ${getBattleLaneLabel(laneId)} ${text('待命', 'Standby')}`);
     }
 
     function renderClashGuideStrip() {
@@ -1850,11 +1864,15 @@
         const selectedCard = getBattleCommandCard();
         const commandState = getBattleCommandState(selectedCard, battle);
         const pressure = getBattleLanePressure(lane);
+        const canAct = battle.active && !battle.reinforcementPending && !battle.result && getBattlePlayableCardIds(battle).length > 0;
         const actionLabel = battle.result
             ? text('已结算', 'Settled')
-            : commandState.ready
-                ? (selectedCard.type === 'tactic' ? text('可释放', 'Ready') : text('可出兵', 'Ready'))
-                : commandState.badge;
+            : battle.reinforcementPending
+                ? text('选强化', 'Pick Boost')
+                : canAct
+                    ? (selectedCard?.type === 'tactic' ? text('点路放术', 'Tap To Cast') : text('点路出兵', 'Tap To Deploy'))
+                    : text('蓄能中', 'Charging')
+        const actionTone = battle.result ? '' : canAct ? 'is-good' : (commandState.tone ? `is-${commandState.tone}` : '');
         return `
             <article class="nc-battle-lane ${isFocus ? 'is-focus' : ''}${pulseClass}" data-action="${battle.active && !battle.reinforcementPending && !battle.result ? 'playBattleCard' : ''}" data-value="${escapeHtml(lane.id)}">
                 <div class="nc-lane-head">
@@ -1862,8 +1880,8 @@
                     <span>${escapeHtml(`${Math.round((lane.playerCoreHp / lane.playerCoreMax) * 100)}% / ${Math.round((lane.enemyCoreHp / lane.enemyCoreMax) * 100)}%`)}</span>
                 </div>
                 <div class="nc-battle-lane-counts">
-                    <span class="nc-tag nc-tag--mini is-good">${escapeHtml(text(`我方 ${lane.friendly.length}`, `Ally ${lane.friendly.length}`))}</span>
-                    <span class="nc-tag nc-tag--mini ${lane.enemy.length ? 'is-warning' : ''}">${escapeHtml(text(`敌方 ${lane.enemy.length}`, `Enemy ${lane.enemy.length}`))}</span>
+                    <span class="nc-tag nc-tag--mini is-good">${escapeHtml(text(`友 ${lane.friendly.length}`, `Ally ${lane.friendly.length}`))}</span>
+                    <span class="nc-tag nc-tag--mini ${lane.enemy.length ? 'is-warning' : ''}">${escapeHtml(text(`敌 ${lane.enemy.length}`, `Enemy ${lane.enemy.length}`))}</span>
                 </div>
                 <div class="nc-battle-pressure">
                     <div class="nc-battle-pressure-bar">
@@ -1882,6 +1900,7 @@
                         <span>${escapeHtml(text('敌方核心', 'Enemy Core'))}</span>
                         <strong>${escapeHtml(String(Math.max(0, Math.round(lane.enemyCoreHp))))}</strong>
                     </div>
+                    ${renderBattleFloaters(lane)}
                     <div class="nc-battle-unit-layer">
                         ${lane.friendly.map((unit, index) => renderBattleUnit(unit, index, lane.friendly.length)).join('')}
                         ${lane.enemy.map((unit, index) => renderBattleUnit(unit, index, lane.enemy.length)).join('')}
@@ -1894,7 +1913,7 @@
                         ${renderBattleLaneEventStrip(lane)}
                         ${renderBattleLaneEffects(lane)}
                     </div>
-                    <span class="nc-tag nc-battle-lane-status ${commandState.tone ? `is-${commandState.tone}` : ''}">${escapeHtml(actionLabel)}</span>
+                    <span class="nc-tag nc-battle-lane-status ${actionTone}">${escapeHtml(actionLabel)}</span>
                 </div>
             </article>
         `;
@@ -1903,6 +1922,11 @@
     function renderBattleLaneTouchHint(lane, selectedCard, commandState) {
         const battle = state.battle;
         if (!battle || battle.result) return '';
+        if (lane.id !== battle.focusLaneId) return '';
+        const shouldShow = commandState.ready
+            || battle.reinforcementPending
+            || (battle.time < 8 && ((lane.friendly?.length || 0) + (lane.enemy?.length || 0)) < 2);
+        if (!shouldShow) return '';
 
         const title = commandState.ready
             ? (selectedCard?.type === 'tactic' ? text('点此释放', 'Tap To Cast') : text('点此出兵', 'Tap To Deploy'))
@@ -1911,32 +1935,53 @@
                 : text('等待可出卡', 'Waiting For Card');
 
         const detail = commandState.ready
-            ? text(`${getBattleLaneLabel(lane.id)} · ${localize(selectedCard.name)}`, `${getBattleLaneLabel(lane.id)} · ${localize(selectedCard.name)}`)
+            ? ''
             : battle.reinforcementPending
-                ? text('选择强化后继续推进', 'Choose a boost to continue')
-                : text('下方亮起卡牌后，点这一路', 'Tap this lane when a card lights up');
+                ? text('选 1 项后继续', 'Pick 1 boost')
+                : text('等下方卡亮起', 'Wait card ready');
 
         return `
             <div class="nc-battle-lane-touch ${commandState.ready ? 'is-ready' : 'is-wait'}">
                 <strong>${escapeHtml(title)}</strong>
-                <small>${escapeHtml(detail)}</small>
+                ${detail ? `<small>${escapeHtml(detail)}</small>` : ''}
             </div>
         `;
     }
 
     function renderBattleUnit(unit, index, count) {
+        const battle = state.battle;
         const baseTop = unit.side === 'ally' ? 48 : 12;
         const step = count > 1 ? Math.min(16, 28 / (count - 1)) : 0;
         const offset = unit.side === 'ally' ? (index * step) : ((count - 1 - index) * step);
         const hpRatio = Math.max(0, unit.hp / Math.max(1, unit.maxHp));
         const shieldRatio = Math.max(0, unit.shield / Math.max(1, unit.maxHp));
+        const visual = getBattleUnitVisual(unit);
+        const spawnClass = unit.spawnUntil > battle.time ? ' is-spawn' : '';
+        const actionClass = unit.actionUntil > battle.time ? ' is-action' : '';
+        const hitClass = unit.hitUntil > battle.time ? ' is-hit' : '';
         return `
-            <div class="nc-battle-unit ${unit.side === 'ally' ? 'is-ally' : 'is-enemy'} ${unit.isBoss ? 'is-boss' : ''}" style="left:${unit.x.toFixed(1)}%; top:${(baseTop + offset).toFixed(1)}px;">
-                <strong>${escapeHtml(getBattleUnitShortName(unit))}</strong>
+            <div class="nc-battle-unit ${unit.side === 'ally' ? 'is-ally' : 'is-enemy'} ${unit.isBoss ? 'is-boss' : ''} is-${visual.tone}${spawnClass}${actionClass}${hitClass}" style="left:${unit.x.toFixed(1)}%; top:${(baseTop + offset).toFixed(1)}px;">
+                <div class="nc-battle-unit-head">
+                    <span class="nc-battle-unit-icon" aria-hidden="true">${visual.icon}</span>
+                    <strong>${escapeHtml(getBattleUnitShortName(unit))}</strong>
+                </div>
                 <div class="nc-battle-unit-bars">
                     <div class="nc-battle-health"><div style="width:${(hpRatio * 100).toFixed(1)}%"></div></div>
                     ${unit.shield > 0 ? `<div class="nc-battle-shield"><div style="width:${Math.min(100, shieldRatio * 100).toFixed(1)}%"></div></div>` : ''}
                 </div>
+            </div>
+        `;
+    }
+
+    function renderBattleFloaters(lane) {
+        if (!lane.floaters?.length) return '';
+        return `
+            <div class="nc-battle-floater-layer">
+                ${lane.floaters.map((item) => `
+                    <div class="nc-battle-floater ${item.tone ? `is-${item.tone}` : ''} ${item.size === 'major' ? 'is-major' : ''}" style="left:${item.x.toFixed(1)}%; top:${item.y.toFixed(1)}px;">
+                        ${escapeHtml(item.text)}
+                    </div>
+                `).join('')}
             </div>
         `;
     }
@@ -1962,11 +2007,20 @@
         const ready = cooldown <= 0.05;
         const affordable = battle.energy >= card.cost;
         const selected = battle.selectedCardId === cardId;
+        const visual = getBattleCardVisual(card);
+        const meta = getBattleCardCompactMeta(card);
+        const stateLabel = ready
+            ? (affordable ? text('可出', 'Ready') : text('缺能', 'Low'))
+            : `${cooldown.toFixed(1)}s`;
         return `
             <button class="nc-hand-card nc-battle-hand ${selected ? 'is-selected' : ''} ${ready ? 'is-ready' : 'is-cooling'} ${affordable && ready ? 'is-affordable' : ''}" type="button" data-action="selectBattleCard" data-value="${cardId}" ${battle.active && !battle.reinforcementPending && !battle.result ? '' : 'disabled'}>
+                <div class="nc-battle-hand-top">
+                    <span class="nc-battle-hand-icon is-${visual.tone}" aria-hidden="true">${visual.icon}</span>
+                    <span class="nc-battle-hand-cost">${escapeHtml(String(card.cost))}</span>
+                </div>
                 <strong>${escapeHtml(localize(card.name))}</strong>
-                <span>${escapeHtml(`${card.type === 'tactic' ? text('Tactic', 'Tactic') : localize(card.role)} • ${text('Cost', 'Cost')} ${card.cost}`)}</span>
-                <small>${escapeHtml(ready ? (affordable ? text('Ready', 'Ready') : text('Need Energy', 'Need Energy')) : `${text('Cooldown', 'Cooldown')} ${cooldown.toFixed(1)}s`)}</small>
+                <span class="nc-battle-hand-meta">${escapeHtml(meta)}</span>
+                <small class="nc-battle-hand-state ${ready ? (affordable ? 'is-ready' : 'is-warning') : 'is-cooling'}">${escapeHtml(stateLabel)}</small>
             </button>
         `;
     }
@@ -2112,18 +2166,6 @@
         const battle = state.battle;
         if (!battle || !battle.active || battle.reinforcementPending || battle.result) return;
         battle.selectedCardId = battle.selectedCardId === cardId ? '' : cardId;
-        const selectedCard = battle.selectedCardId ? getBattleCardById(battle.selectedCardId) : null;
-        const commandState = getBattleCommandState(selectedCard, battle);
-        markBattleNotice(
-            selectedCard
-                ? (
-                    commandState.ready
-                        ? text(`已切换到 ${localize(selectedCard.name)}，点任意一路立即出手。`, `Switched to ${localize(selectedCard.name)}. Tap any lane to act.`)
-                        : commandState.hint
-                )
-                : text('已取消手动选卡，系统会自动切到下一张可用卡。', 'Manual selection cleared. The next ready card will auto-select.'),
-            selectedCard && commandState.ready ? 'good' : selectedCard ? 'warning' : ''
-        );
         renderClashRuntime();
     }
 
@@ -2174,13 +2216,22 @@
             }
             battle.energy -= card.cost;
             lane.friendly.push(createFriendlyBattleUnit(card.id));
+            pushBattleFloater(lane.id, {
+                text: text('出兵', 'Deploy'),
+                tone: 'good',
+                x: 14,
+                y: 56,
+                size: 'major'
+            });
             markLanePulse(laneId, 'good');
             markLaneImpact(laneId, 'good', 'ally');
             pushLaneEvent(laneId, '&#9654;', localize(card.name), 'good');
             markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
-            markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 已部署`, `${getBattleLaneLabel(laneId)} deployment confirmed`), 'good');
-            markBattleNotice(text(`${localize(card.name)} 已派往 ${getBattleLaneLabel(laneId)}。`, `${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`), 'good');
+            const totalFriendlyUnits = battle.lanes.reduce((sum, item) => sum + item.friendly.length, 0);
+            if (totalFriendlyUnits === 1 && battle.time < 10) {
+                markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 已部署`, `${getBattleLaneLabel(laneId)} deployment confirmed`), 'good');
+            }
         } else {
             battle.energy -= card.cost;
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
@@ -2269,32 +2320,212 @@
         queueBattleStageScroll();
     }
 
+    function getPreferredOpeningBattleCardId(hand, startEnergy) {
+        const cards = (hand || [])
+            .map((cardId) => ({ cardId, card: getBattleCardById(cardId) }))
+            .filter((item) => !!item.card);
+        const preferredAffordable = cards
+            .filter((item) => item.card.type === 'unit' && item.card.cost <= startEnergy)
+            .sort((left, right) => {
+                if (left.card.cost !== right.card.cost) return left.card.cost - right.card.cost;
+                if ((left.card.stats?.hp || 0) !== (right.card.stats?.hp || 0)) return (right.card.stats?.hp || 0) - (left.card.stats?.hp || 0);
+                return 0;
+            })[0];
+        if (preferredAffordable) return preferredAffordable.cardId;
+        const fallbackAffordable = cards
+            .filter((item) => item.card.cost <= startEnergy)
+            .sort((left, right) => left.card.cost - right.card.cost)[0];
+        if (fallbackAffordable) return fallbackAffordable.cardId;
+        return cards.sort((left, right) => left.card.cost - right.card.cost)[0]?.cardId || '';
+    }
+
+    function getBattleChapterTuning(chapter) {
+        const defaults = {
+            playerCoreScale: 1,
+            enemyCoreScale: 1,
+            enemyStatScale: 1,
+            startEnergy: 4,
+            energyRegenScale: 1,
+            nextWaveAt: 16,
+            waveInterval: 16,
+            reinforcementAt: 28,
+            startSpawnDelay: 1.4,
+            sideLaneSpawnDelay: 0.45,
+            sideLaneIntervalLag: 0.18,
+            spawnIntervalBonus: 0,
+            minSpawnInterval: 1.4,
+            bruteUnlockTime: 30,
+            gunnerUnlockTime: 20,
+            captainUnlockTime: 44,
+            bossDelay: 0,
+            timeBonus: 0,
+            openingNotice: text('先点下方卡牌，再点一路出手。', 'Pick a card below, then tap a lane to deploy.'),
+            openingBannerDetail: text('先稳住一条路，再向两侧滚动扩大优势。', 'Secure one lane first, then roll pressure outward.')
+        };
+        if (!chapter) return defaults;
+        switch (String(chapter.id || '')) {
+            case '1-1':
+                return {
+                    ...defaults,
+                    playerCoreScale: 1.12,
+                    enemyCoreScale: 0.82,
+                    enemyStatScale: 0.8,
+                    startEnergy: 6,
+                    energyRegenScale: 1.16,
+                    nextWaveAt: 24,
+                    waveInterval: 18,
+                    reinforcementAt: 34,
+                    startSpawnDelay: 2.7,
+                    sideLaneSpawnDelay: 0.8,
+                    sideLaneIntervalLag: 0.24,
+                    spawnIntervalBonus: 1.05,
+                    minSpawnInterval: 2.25,
+                    bruteUnlockTime: 26,
+                    gunnerUnlockTime: 999,
+                    captainUnlockTime: 999,
+                    bossDelay: 6,
+                    timeBonus: 8,
+                    openingNotice: text('先点亮起的卡，再点中路试一次出兵。', 'Tap a glowing card, then try deploying in mid lane.'),
+                    openingBannerDetail: text('第一关刷怪更慢，先熟悉“选卡 → 点路线”的节奏。', 'The first stage is slower, so you can learn card → lane timing.')
+                };
+            case '1-2':
+                return {
+                    ...defaults,
+                    playerCoreScale: 1.08,
+                    enemyCoreScale: 0.9,
+                    enemyStatScale: 0.89,
+                    startEnergy: 5,
+                    energyRegenScale: 1.1,
+                    nextWaveAt: 20,
+                    waveInterval: 17,
+                    reinforcementAt: 31,
+                    startSpawnDelay: 2.3,
+                    sideLaneSpawnDelay: 0.62,
+                    sideLaneIntervalLag: 0.2,
+                    spawnIntervalBonus: 0.65,
+                    minSpawnInterval: 2,
+                    bruteUnlockTime: 16,
+                    gunnerUnlockTime: 38,
+                    captainUnlockTime: 999,
+                    bossDelay: 3,
+                    timeBonus: 5,
+                    openingNotice: text('这一关开始练能量节奏，先稳住中路。', 'This stage teaches energy pacing. Hold mid first.'),
+                    openingBannerDetail: text('敌人会更快靠近，开始让前排和后排配合。', 'Enemies approach faster, so pair frontline with backline.')
+                };
+            case '1-3':
+                return {
+                    ...defaults,
+                    playerCoreScale: 1.04,
+                    enemyCoreScale: 0.96,
+                    enemyStatScale: 0.94,
+                    startEnergy: 5,
+                    energyRegenScale: 1.05,
+                    nextWaveAt: 19,
+                    waveInterval: 16,
+                    reinforcementAt: 29,
+                    startSpawnDelay: 2.05,
+                    sideLaneSpawnDelay: 0.52,
+                    sideLaneIntervalLag: 0.18,
+                    spawnIntervalBonus: 0.35,
+                    minSpawnInterval: 1.9,
+                    bruteUnlockTime: 14,
+                    gunnerUnlockTime: 24,
+                    captainUnlockTime: 999,
+                    bossDelay: 5,
+                    timeBonus: 4,
+                    openingNotice: text('首个 Boss 关，先顶住中路再交技能。', 'First boss stage. Hold mid before using skills.'),
+                    openingBannerDetail: text('Boss 会更晚登场，先用前两波建立场面优势。', 'The boss arrives later, so use the first waves to build momentum.')
+                };
+            case '2-1':
+                return {
+                    ...defaults,
+                    playerCoreScale: 1.02,
+                    enemyCoreScale: 1,
+                    enemyStatScale: 0.98,
+                    startEnergy: 4.5,
+                    energyRegenScale: 1.02,
+                    nextWaveAt: 18,
+                    waveInterval: 15.5,
+                    reinforcementAt: 28,
+                    startSpawnDelay: 1.8,
+                    sideLaneSpawnDelay: 0.5,
+                    sideLaneIntervalLag: 0.18,
+                    spawnIntervalBonus: 0.15,
+                    minSpawnInterval: 1.75,
+                    bruteUnlockTime: 12,
+                    gunnerUnlockTime: 18,
+                    captainUnlockTime: 999,
+                    bossDelay: 2,
+                    timeBonus: 2,
+                    openingNotice: text('双路线开始发力，别只盯一条路。', 'Two lanes start to matter. Do not tunnel one lane.')
+                };
+            case '2-2':
+                return {
+                    ...defaults,
+                    enemyCoreScale: 1.02,
+                    enemyStatScale: 1.02,
+                    startEnergy: 4.2,
+                    nextWaveAt: 17,
+                    waveInterval: 15.2,
+                    reinforcementAt: 27,
+                    startSpawnDelay: 1.7,
+                    sideLaneSpawnDelay: 0.45,
+                    sideLaneIntervalLag: 0.16,
+                    spawnIntervalBonus: 0.05,
+                    minSpawnInterval: 1.65,
+                    bruteUnlockTime: 10,
+                    gunnerUnlockTime: 16,
+                    captainUnlockTime: 34,
+                    bossDelay: 1,
+                    openingNotice: text('控制型敌人开始出现，战术牌要更及时。', 'Control enemies appear here. Use tactics on time.')
+                };
+            default:
+                break;
+        }
+        const chapterDepth = Math.max(0, (Number(chapter.chapter) || 1) - 2);
+        return {
+            ...defaults,
+            enemyStatScale: 1 + (chapterDepth * 0.05),
+            nextWaveAt: Math.max(14, defaults.nextWaveAt - chapterDepth),
+            waveInterval: Math.max(13.5, defaults.waveInterval - (chapterDepth * 0.6)),
+            reinforcementAt: Math.max(24, defaults.reinforcementAt - chapterDepth),
+            startSpawnDelay: Math.max(1.35, defaults.startSpawnDelay - (chapterDepth * 0.08)),
+            minSpawnInterval: Math.max(1.35, defaults.minSpawnInterval - (chapterDepth * 0.04)),
+            bruteUnlockTime: Math.max(8, defaults.bruteUnlockTime - (chapterDepth * 4)),
+            gunnerUnlockTime: Math.max(12, defaults.gunnerUnlockTime - (chapterDepth * 3)),
+            captainUnlockTime: Math.max(24, defaults.captainUnlockTime - (chapterDepth * 4)),
+            openingNotice: text('先守住焦点路线，再用战术去摆动侧路。', 'Stabilize the focus lane first, then swing side lanes with tactics.')
+        };
+    }
+
     function createBattleState(chapter) {
+        const tuning = getBattleChapterTuning(chapter);
         const energyLevel = getResearchLevel('energyMatrix');
         const tacticLevel = getResearchLevel('tacticCompiler');
         const hand = [...state.save.selectedUnits, state.save.selectedTacticId];
         const chapterIndex = Math.max(0, getChapterIndex(chapter.id));
         const deckPower = getDeckPower();
-        const playerCoreBase = 220 + Math.round(deckPower * 0.08);
-        const enemyCoreBase = 180 + Math.round(chapter.recommended * 0.24);
+        const playerCoreBase = Math.round((220 + Math.round(deckPower * 0.08)) * tuning.playerCoreScale);
+        const enemyCoreBase = Math.round((180 + Math.round(chapter.recommended * 0.24)) * tuning.enemyCoreScale);
         const laneScales = [0.94, 1, 1.08];
         return {
             active: true,
             result: null,
             chapter,
             time: 0,
-            maxTime: Number(config.battle.sessionSeconds) || 72,
+            maxTime: Math.round((Number(config.battle.sessionSeconds) || 72) + tuning.timeBonus),
             wave: 1,
-            nextWaveAt: 16,
+            nextWaveAt: tuning.nextWaveAt,
+            waveInterval: tuning.waveInterval,
             pausedByVisibility: false,
             reinforcementPending: false,
             reinforcementChoices: [],
-            selectedCardId: hand[0] || '',
+            selectedCardId: getPreferredOpeningBattleCardId(hand, tuning.startEnergy),
             hand,
             cooldowns: Object.fromEntries(hand.map((id) => [id, 0])),
-            energy: 4,
+            energy: tuning.startEnergy,
             maxEnergy: 10 + Math.floor(energyLevel / 4),
-            energyRegen: 1 * (1 + (energyLevel * 0.02) + (hasStarterPaymentPerk() ? 0.03 : 0)),
+            energyRegen: 1 * (1 + (energyLevel * 0.02) + (hasStarterPaymentPerk() ? 0.03 : 0)) * tuning.energyRegenScale,
             leaderCharge: 0,
             leaderChargeRate: (Number(leaderMap[state.save.selectedLeaderId]?.stats?.charge) || 1) * (1.45 + (tacticLevel * 0.03)),
             leaderReadyMarked: false,
@@ -2308,16 +2539,17 @@
             bossDefeated: false,
             arenaTone: '',
             arenaGlowUntil: 0,
+            tuning,
             banner: {
                 title: text('对战开始', 'Clash Start'),
-                detail: text('先稳住一条路，再向两侧滚动扩大优势。', 'Secure one lane first, then roll pressure outward.'),
+                detail: tuning.openingBannerDetail,
                 tone: 'good',
                 until: 2.4
             },
             notice: {
-                text: text('先点下方卡牌，再点一路出手。', 'Pick a card below, then tap a lane to deploy.'),
+                text: tuning.openingNotice,
                 tone: 'good',
-                until: 3.2
+                until: 2.6
             },
             lanes: ['top', 'mid', 'bot'].map((id, index) => ({
                 id,
@@ -2329,7 +2561,8 @@
                 enemy: [],
                 effects: [],
                 events: [],
-                spawnTimer: 1.4 + (index * 0.45),
+                floaters: [],
+                spawnTimer: tuning.startSpawnDelay + (index * tuning.sideLaneSpawnDelay),
                 spawnCount: 0,
                 bossSpawned: false,
                 pulseTone: '',
@@ -2390,14 +2623,14 @@
 
         if (battle.time >= battle.nextWaveAt && battle.wave < 4) {
             battle.wave += 1;
-            battle.nextWaveAt += 16;
+            battle.nextWaveAt += battle.waveInterval || 16;
             pushLaneEvent('all', '&#10039;', `${text('Wave', 'Wave')} ${battle.wave}`, 'warning');
             markBattleArena('warning', 1.3);
             markBattleBanner(`Wave ${battle.wave}`, 'Enemy pressure is rising. Stabilize your focus lane first.', 'warning');
             markBattleNotice(text(`Wave ${battle.wave} incoming.`, `Wave ${battle.wave} incoming.`), 'warning');
         }
 
-        if (!battle.reinforcementPending && !battle.boosts.length && battle.time >= 28) {
+        if (!battle.reinforcementPending && !battle.boosts.length && battle.time >= (battle.tuning?.reinforcementAt || 28)) {
             battle.reinforcementPending = true;
             battle.reinforcementChoices = pickBattleBoostChoices();
             markBattleArena('good', 1.1);
@@ -2431,10 +2664,14 @@
             .map((effect) => ({ ...effect, remaining: Math.max(0, effect.remaining - delta) }))
             .filter((effect) => effect.remaining > 0);
         lane.events = (lane.events || []).filter((event) => event.until > battle.time);
+        lane.floaters = (lane.floaters || []).filter((item) => item.until > battle.time);
 
         const spawnDelta = battle.spawnSlowRemaining > 0 ? delta * 0.5 : delta;
         lane.spawnTimer -= spawnDelta;
-        const bossMoment = Math.max(42, battle.maxTime - 16);
+        const bossMoment = Math.min(
+            battle.maxTime - 6,
+            Math.max(42, battle.maxTime - 16) + (battle.tuning?.bossDelay || 0)
+        );
         if (!lane.bossSpawned && isBossStage(battle.chapter) && lane.id === 'mid' && battle.time >= bossMoment) {
             lane.bossSpawned = true;
             lane.enemy.push(createEnemyBattleUnit(lane, 'boss'));
@@ -2483,7 +2720,18 @@
                     .filter((item) => item.hp > 0 && item.hp < item.maxHp)
                     .sort((left, right) => (left.hp / left.maxHp) - (right.hp / right.maxHp))[0];
                 if (injured && unit.attackCooldown <= 0) {
+                    const healed = Math.min(unit.heal, injured.maxHp - injured.hp);
                     injured.hp = Math.min(injured.maxHp, injured.hp + unit.heal);
+                    if (healed > 0 && (!injured.floatUntil || injured.floatUntil <= battle.time)) {
+                        pushBattleFloater(lane.id, {
+                            text: `+${Math.round(healed)}`,
+                            tone: 'good',
+                            x: injured.x,
+                            y: 58,
+                            size: 'tiny'
+                        });
+                        injured.floatUntil = battle.time + 0.45;
+                    }
                     unit.attackCooldown = Math.max(0.7, 1.25 / Math.max(0.4, unit.speed * (1 + speedBonus)));
                     return;
                 }
@@ -2495,10 +2743,35 @@
                 if (distance <= unit.range) {
                     if (unit.attackCooldown <= 0 && !jammed) {
                         const damage = unit.attack * (1 + attackBonus);
-                        applyBattleDamage(target, damage);
+                        unit.actionUntil = battle.time + 0.18;
+                        target.hitUntil = battle.time + 0.24;
+                        const totalLoss = applyBattleDamage(target, damage);
+                        if (totalLoss > 0 && ((!target.floatUntil || target.floatUntil <= battle.time) || totalLoss >= 24 || target.hp <= 0)) {
+                            pushBattleFloater(lane.id, {
+                                text: `-${Math.round(totalLoss)}`,
+                                tone: side === 'ally' ? 'good' : 'warning',
+                                x: target.x,
+                                y: side === 'ally' ? 22 : 58,
+                                size: totalLoss >= 28 || target.hp <= 0 ? 'major' : 'tiny'
+                            });
+                            target.floatUntil = battle.time + 0.42;
+                        }
                         if (unit.splash > 0) {
                             const secondary = enemies.find((enemy) => enemy !== target && enemy.hp > 0);
-                            if (secondary) applyBattleDamage(secondary, damage * unit.splash);
+                            if (secondary) {
+                                secondary.hitUntil = battle.time + 0.24;
+                                const splashLoss = applyBattleDamage(secondary, damage * unit.splash);
+                                if (splashLoss > 0 && (!secondary.floatUntil || secondary.floatUntil <= battle.time)) {
+                                    pushBattleFloater(lane.id, {
+                                        text: `-${Math.round(splashLoss)}`,
+                                        tone: side === 'ally' ? 'good' : 'warning',
+                                        x: secondary.x,
+                                        y: side === 'ally' ? 18 : 62,
+                                        size: 'tiny'
+                                    });
+                                    secondary.floatUntil = battle.time + 0.5;
+                                }
+                            }
                         }
                         unit.attackCooldown = Math.max(0.55, 1.1 / Math.max(0.4, unit.speed * (1 + speedBonus)));
                     }
@@ -2511,11 +2784,34 @@
                 const coreDistance = Math.abs(unit.x - coreX);
                 if (coreDistance <= unit.range + 2) {
                     if (unit.attackCooldown <= 0 && !jammed) {
+                        unit.actionUntil = battle.time + 0.18;
                         const damage = unit.attack * (side === 'ally' ? (1 + attackBonus) : 1) * (unit.isBoss ? 1.14 : 0.82);
                         if (side === 'ally') {
                             lane.enemyCoreHp = Math.max(0, lane.enemyCoreHp - damage);
+                            markLaneImpact(lane.id, 'good', 'ally', 0.35);
+                            if (!lane.enemyCoreFloatUntil || lane.enemyCoreFloatUntil <= battle.time) {
+                                pushBattleFloater(lane.id, {
+                                    text: `核 -${Math.round(damage)}`,
+                                    tone: 'good',
+                                    x: 91,
+                                    y: 24,
+                                    size: 'major'
+                                });
+                                lane.enemyCoreFloatUntil = battle.time + 0.48;
+                            }
                         } else {
                             lane.playerCoreHp = Math.max(0, lane.playerCoreHp - damage);
+                            markLaneImpact(lane.id, 'warning', 'enemy', 0.35);
+                            if (!lane.playerCoreFloatUntil || lane.playerCoreFloatUntil <= battle.time) {
+                                pushBattleFloater(lane.id, {
+                                    text: `核 -${Math.round(damage)}`,
+                                    tone: 'warning',
+                                    x: 9,
+                                    y: 56,
+                                    size: 'major'
+                                });
+                                lane.playerCoreFloatUntil = battle.time + 0.48;
+                            }
                         }
                         unit.attackCooldown = Math.max(0.6, 1.2 / Math.max(0.4, unit.speed * (1 + speedBonus)));
                     }
@@ -2630,6 +2926,8 @@
             side: 'ally',
             cardId,
             name: card.name,
+            lane: card.lane,
+            role: card.role,
             hp: stats.hp,
             maxHp: stats.hp,
             shield: 0,
@@ -2639,18 +2937,23 @@
             heal: stats.heal,
             splash: stats.splash,
             x: 8,
-            attackCooldown: 0.4
+            attackCooldown: 0.4,
+            spawnUntil: (state.battle?.time || 0) + 0.42,
+            actionUntil: 0,
+            hitUntil: 0
         };
     }
 
     function createEnemyBattleUnit(lane, archetype) {
-        const chapter = state.battle.chapter;
+        const battle = state.battle;
+        const chapter = battle.chapter;
         const chapterIndex = Math.max(0, getChapterIndex(chapter.id));
-        const scale = 1 + (chapter.chapter * 0.14) + (chapterIndex * 0.07) + (state.battle.time * 0.004);
+        const scale = (1 + (chapter.chapter * 0.14) + (chapterIndex * 0.07) + (battle.time * 0.004)) * (battle.tuning?.enemyStatScale || 1);
         const template = getEnemyArchetype(archetype);
         return {
             id: `enemy-${archetype}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
             side: 'enemy',
+            archetype,
             name: template.name,
             hp: Math.round(template.hp * scale),
             maxHp: Math.round(template.hp * scale),
@@ -2662,7 +2965,10 @@
             splash: template.splash || 0,
             x: 92,
             isBoss: archetype === 'boss',
-            attackCooldown: 0.8
+            attackCooldown: 0.8,
+            spawnUntil: (state.battle?.time || 0) + 0.42,
+            actionUntil: 0,
+            hitUntil: 0
         };
     }
 
@@ -2704,17 +3010,24 @@
     }
 
     function pickEnemyArchetype(lane) {
-        const time = state.battle.time;
-        if (time > 44 && Math.random() > 0.82) return 'captain';
-        if (time > 20 && Math.random() > 0.68) return 'gunner';
-        if (time > 30 && Math.random() > 0.76) return 'brute';
-        return lane.spawnCount % 3 === 2 ? 'brute' : 'skirmisher';
+        const battle = state.battle;
+        const time = battle.time;
+        const tuning = battle.tuning || getBattleChapterTuning(battle.chapter);
+        const canCaptain = time >= tuning.captainUnlockTime && lane.spawnCount >= 6;
+        const canGunner = time >= tuning.gunnerUnlockTime && lane.spawnCount >= 3;
+        const canBrute = time >= tuning.bruteUnlockTime;
+        if (canCaptain && Math.random() > 0.84) return 'captain';
+        if (canGunner && Math.random() > 0.72) return 'gunner';
+        if (canBrute && (lane.spawnCount % 3 === 2 || Math.random() > 0.8)) return 'brute';
+        return 'skirmisher';
     }
 
     function getEnemySpawnInterval(lane) {
-        const chapter = state.battle.chapter.chapter;
-        const base = 3.6 - (chapter * 0.22) - (state.battle.time * 0.012);
-        return Math.max(1.4, base + (lane.id === 'mid' ? 0 : 0.18));
+        const battle = state.battle;
+        const tuning = battle.tuning || getBattleChapterTuning(battle.chapter);
+        const chapter = battle.chapter.chapter;
+        const base = 3.6 - (chapter * 0.22) - (battle.time * 0.012) + tuning.spawnIntervalBonus;
+        return Math.max(tuning.minSpawnInterval, base + (lane.id === 'mid' ? 0 : tuning.sideLaneIntervalLag));
     }
 
     function findBattleTarget(unit, enemies) {
@@ -2725,6 +3038,8 @@
     }
 
     function applyBattleDamage(target, damage) {
+        const beforeShield = Math.max(0, Number(target.shield) || 0);
+        const beforeHp = Math.max(0, Number(target.hp) || 0);
         let amount = Math.max(1, Number(damage) || 0);
         if (target.shield > 0) {
             const shieldLoss = Math.min(target.shield, amount);
@@ -2732,6 +3047,7 @@
             amount -= shieldLoss;
         }
         if (amount > 0) target.hp = Math.max(0, target.hp - amount);
+        return Math.max(0, (beforeShield - Math.max(0, Number(target.shield) || 0)) + (beforeHp - Math.max(0, Number(target.hp) || 0)));
     }
 
     function getLaneEffectBonus(lane, side, key) {
@@ -2746,6 +3062,7 @@
         const impact = getBattleTacticImpact(tacticId);
         if (tacticId === 'overclockBurst') {
             lane.effects.push({ side: 'ally', attack: 0.22 * impact, speed: 0.18 * impact, remaining: 6.2 });
+            pushBattleFloater(lane.id, { text: text('超频', 'Overclock'), tone: 'good', x: 22, y: 54, size: 'major' });
             markBattleNotice(text(`${getBattleLaneLabel(lane.id)} is overclocked.`, `${getBattleLaneLabel(lane.id)} is overclocked.`), 'good');
             return;
         }
@@ -2754,11 +3071,13 @@
             lane.friendly.forEach((unit) => {
                 unit.shield += 48 * impact;
             });
+            pushBattleFloater(lane.id, { text: text('护盾网', 'Shield Up'), tone: 'good', x: 16, y: 56, size: 'major' });
             markBattleNotice(text(`${getBattleLaneLabel(lane.id)} received shields.`, `${getBattleLaneLabel(lane.id)} received shields.`), 'good');
             return;
         }
         if (tacticId === 'empLock') {
             lane.effects.push({ side: 'enemy', jam: 1, remaining: 3.6 + (impact * 0.4) });
+            pushBattleFloater(lane.id, { text: 'EMP', tone: 'warning', x: 78, y: 24, size: 'major' });
             markBattleNotice(text(`${getBattleLaneLabel(lane.id)} is hit by EMP lock.`, `${getBattleLaneLabel(lane.id)} is hit by EMP lock.`), 'warning');
             return;
         }
@@ -2768,6 +3087,7 @@
             } else {
                 lane.enemyCoreHp = Math.max(0, lane.enemyCoreHp - (64 * impact));
             }
+            pushBattleFloater(lane.id, { text: text('轨道打击', 'Orbital'), tone: 'warning', x: 76, y: 18, size: 'major' });
             markBattleNotice(text(`Orbital strike hit ${getBattleLaneLabel(lane.id)}.`, `Orbital strike hit ${getBattleLaneLabel(lane.id)}.`), 'warning');
         }
     }
@@ -2780,6 +3100,7 @@
         if (leaderId === 'marshalZero') {
             battle.lanes.forEach((item) => {
                 item.effects.push({ side: 'ally', attack: 0.18 + (leaderPower / 1800), speed: 0.12, remaining: 6.5 });
+                pushBattleFloater(item.id, { text: text('全线超频', 'All Burst'), tone: 'good', x: 50, y: 36, size: 'major' });
             });
             markLanePulse('all', 'good');
             markBattleNotice(text('Marshal Zero overclocked every lane.', 'Marshal Zero overclocked every lane.'), 'good');
@@ -2789,6 +3110,7 @@
             battle.lanes.forEach((item) => {
                 item.playerCoreHp = Math.min(item.playerCoreMax, item.playerCoreHp + (36 + (leaderPower * 0.12)));
                 item.friendly.forEach((unit) => { unit.shield += 64 + (leaderPower * 0.08); });
+                pushBattleFloater(item.id, { text: text('全线护盾', 'Field Shield'), tone: 'good', x: 24, y: 54, size: 'major' });
             });
             markLanePulse('all', 'good');
             markBattleNotice(text('Aegis Nova reinforced shields across the field.', 'Aegis Nova reinforced shields across the field.'), 'good');
@@ -2797,6 +3119,7 @@
         lane.enemy.forEach((unit) => applyBattleDamage(unit, 88 + (leaderPower * 0.42)));
         lane.effects.push({ side: 'ally', attack: 0.12, speed: 0.22, remaining: 5.5 });
         markLanePulse(lane.id, 'warning');
+        pushBattleFloater(lane.id, { text: text('爆发节奏', 'Burst Tempo'), tone: 'warning', x: 64, y: 28, size: 'major' });
         markBattleNotice(text(`${getBattleLaneLabel(lane.id)} gained burst tempo.`, `${getBattleLaneLabel(lane.id)} gained burst tempo.`), 'warning');
     }
 
@@ -2952,7 +3275,20 @@
                 tone: '',
                 title: text('等待开战', 'Waiting For Battle'),
                 hint: text('点击开始对战后进入三路线实时推进。', 'Tap start clash to begin the three-lane battle.'),
-                badge: text('未开战', 'Idle')
+                badge: text('未开战', 'Idle'),
+                showHint: true,
+                showSteps: false
+            };
+        }
+        if (battle.reinforcementPending) {
+            return {
+                ready: false,
+                tone: 'good',
+                title: text('选择强化', 'Pick Boost'),
+                hint: text('先选 1 项强化，再继续推线。', 'Pick 1 boost, then keep pushing.'),
+                badge: text('强化中', 'Boost'),
+                showHint: true,
+                showSteps: false
             };
         }
         if (!card) {
@@ -2961,7 +3297,9 @@
                 tone: 'warning',
                 title: text('等待出牌', 'Waiting For Card'),
                 hint: text('下方卡牌亮起后，点上 / 中 / 下任意一路出手。', 'Wait for a ready card, then tap top / mid / bot lane.'),
-                badge: text('蓄能中', 'Charging')
+                badge: text('蓄能中', 'Charging'),
+                showHint: true,
+                showSteps: true
             };
         }
 
@@ -2971,8 +3309,10 @@
                 ready: false,
                 tone: 'warning',
                 title: localize(card.name),
-                hint: text(`${localize(card.name)} 冷却 ${cooldown.toFixed(1)}s，冷却完直接点一路出手。`, `${localize(card.name)} cooldown ${cooldown.toFixed(1)}s. Tap a lane when ready.`),
-                badge: text('冷却中', 'Cooldown')
+                hint: text(`${cooldown.toFixed(1)}s 后可出手`, `Ready in ${cooldown.toFixed(1)}s`),
+                badge: text('冷却中', 'Cooldown'),
+                showHint: true,
+                showSteps: true
             };
         }
         if (battle.energy < card.cost) {
@@ -2980,8 +3320,10 @@
                 ready: false,
                 tone: 'warning',
                 title: localize(card.name),
-                hint: text(`能量 ${battle.energy.toFixed(1)} / ${card.cost}，攒够后点一路出手。`, `Energy ${battle.energy.toFixed(1)} / ${card.cost}. Tap a lane when filled.`),
-                badge: text('缺能量', 'Low Energy')
+                hint: text(`能量 ${battle.energy.toFixed(1)} / ${card.cost}`, `Energy ${battle.energy.toFixed(1)} / ${card.cost}`),
+                badge: text('缺能量', 'Low Energy'),
+                showHint: true,
+                showSteps: true
             };
         }
         return {
@@ -2989,9 +3331,11 @@
             tone: 'good',
             title: localize(card.name),
             hint: card.type === 'tactic'
-                ? text('已自动选中战术，点上 / 中 / 下路立即释放。', 'Tactic auto-selected. Tap top / mid / bot lane to cast.')
-                : text('已自动选中单位，点上 / 中 / 下路立即出兵。', 'Unit auto-selected. Tap top / mid / bot lane to deploy.'),
-            badge: text('立即出手', 'Ready')
+                ? text('点路线放术', 'Tap lane to cast')
+                : text('点路线出兵', 'Tap lane to deploy'),
+            badge: text('点路线', 'Tap Lane'),
+            showHint: false,
+            showSteps: false
         };
     }
 
@@ -3021,10 +3365,10 @@
 
     function renderBattleLaneHint(lane) {
         if (lane.enemy.some((unit) => unit.isBoss)) {
-            return text('Boss 已在这一路，优先补前排并集中火力。', 'Boss is present. Reinforce your frontline and burst the mid lane.');
+            return text('Boss压路 · 先补前排', 'Boss present · hold frontline');
         }
-        const focusText = state.battle.focusLaneId === lane.id ? text('主攻路', 'Focus') : text('侧路', 'Side');
-        return text(`我方 ${lane.friendly.length} / 敌方 ${lane.enemy.length} • ${focusText}`, `${lane.friendly.length} ally / ${lane.enemy.length} enemy • ${focusText}`);
+        const focusText = state.battle.focusLaneId === lane.id ? text('主攻', 'Focus') : text('侧路', 'Side');
+        return text(`${focusText} · ${lane.friendly.length}v${lane.enemy.length}`, `${focusText} · ${lane.friendly.length}v${lane.enemy.length}`);
     }
 
     function getBattleLaneLabel(laneId) {
@@ -3040,13 +3384,13 @@
         const shieldUp = lane.friendly.some((unit) => unit.shield > 0);
         const bossPresent = lane.enemy.some((unit) => unit.isBoss);
 
-        if (bossPresent) tags.push({ label: text('Boss 在场', 'Boss in lane'), tone: 'warning' });
-        if (allyBuffActive) tags.push({ label: text('我方增益', 'Ally buff'), tone: 'good' });
-        if (shieldUp) tags.push({ label: text('护盾中', 'Shield up'), tone: 'good' });
-        if (enemyJammed) tags.push({ label: text('敌方受控', 'Enemy jammed'), tone: 'warning' });
+        if (bossPresent) tags.push({ label: text('Boss', 'Boss'), tone: 'warning' });
+        if (allyBuffActive) tags.push({ label: text('增益', 'Buff'), tone: 'good' });
+        if (shieldUp) tags.push({ label: text('护盾', 'Shield'), tone: 'good' });
+        if (enemyJammed) tags.push({ label: text('干扰', 'Jammed'), tone: 'warning' });
         if (!tags.length) {
             tags.push({
-                label: state.battle.focusLaneId === lane.id ? text('焦点路线', 'Focus lane') : text('待命', 'Stand by'),
+                label: state.battle.focusLaneId === lane.id ? text('焦点', 'Focus') : text('待命', 'Stand by'),
                 tone: ''
             });
         }
@@ -3060,19 +3404,16 @@
 
     function getBattleBossStateText() {
         const battle = state.battle;
-        if (!battle) return text('Boss 待机', 'Boss idle');
-        if (!isBossStage(battle.chapter)) return text('无 Boss', 'No Boss');
-        if (battle.bossDefeated) return text('Boss 已击破', 'Boss down');
+        if (!battle) return text('Boss待机', 'Boss idle');
+        if (!isBossStage(battle.chapter)) return text('无Boss', 'No Boss');
+        if (battle.bossDefeated) return text('Boss已破', 'Boss down');
         if (battle.lanes.some((lane) => lane.enemy.some((unit) => unit.isBoss))) {
-            return text('Boss 交战中', 'Boss engaged');
+            return text('Boss交战', 'Boss engaged');
         }
 
         const bossMoment = Math.max(42, battle.maxTime - 16);
         const secondsLeft = Math.max(0, Math.ceil(bossMoment - battle.time));
-        if (secondsLeft <= 6) {
-            return text(`Boss 即将到场 ${secondsLeft}s`, `Boss incoming ${secondsLeft}s`);
-        }
-        return text(`Boss 倒计时 ${secondsLeft}s`, `Boss pending ${secondsLeft}s`);
+        return text(`Boss ${secondsLeft}s`, `Boss ${secondsLeft}s`);
     }
 
     function getBattleLanePressure(lane) {
@@ -3104,6 +3445,42 @@
         return state.lang === 'en' ? raw.split(' ').slice(0, 2).join(' ') : raw.slice(0, 3);
     }
 
+    function getBattleUnitVisual(unit) {
+        if (unit.isBoss) return { icon: '&#9888;', tone: 'boss' };
+        if (unit.side === 'enemy') {
+            if (unit.archetype === 'brute') return { icon: '&#11035;', tone: 'brute' };
+            if (unit.archetype === 'gunner') return { icon: '&#9678;', tone: 'gunner' };
+            if (unit.archetype === 'captain') return { icon: '&#10038;', tone: 'captain' };
+            return { icon: '&#10016;', tone: 'skirmisher' };
+        }
+        if (unit.heal > 0) return { icon: '&#10010;', tone: 'support' };
+        if (unit.range >= 20) return { icon: '&#9678;', tone: 'ranged' };
+        if (unit.maxHp >= 150) return { icon: '&#11035;', tone: 'frontline' };
+        return { icon: '&#10016;', tone: 'assault' };
+    }
+
+    function getBattleCardVisual(card) {
+        if (!card) return { icon: '&#9673;', tone: 'neutral' };
+        if (card.type === 'tactic') {
+            if (card.id === 'shieldNet') return { icon: '&#11036;', tone: 'shield' };
+            if (card.id === 'overclockBurst') return { icon: '&#10022;', tone: 'boost' };
+            return { icon: '&#9889;', tone: 'jam' };
+        }
+        if (card.id === 'repairPixie') return { icon: '&#10010;', tone: 'support' };
+        if (card.lane === 'back') return { icon: '&#9678;', tone: 'ranged' };
+        if ((card.stats?.hp || 0) >= 140) return { icon: '&#11035;', tone: 'frontline' };
+        return { icon: '&#10016;', tone: 'assault' };
+    }
+
+    function getBattleCardCompactMeta(card) {
+        if (!card) return '';
+        if (card.type === 'tactic') return text('战术牌', 'Tactic');
+        if (card.id === 'repairPixie') return text('治疗支援', 'Heal Support');
+        if (card.lane === 'back') return text('后排火力', 'Backline DPS');
+        if ((card.stats?.hp || 0) >= 140) return text('前排承伤', 'Frontline Tank');
+        return text('突击单位', 'Assault Unit');
+    }
+
     function getBattleCoreRatio(side) {
         const battle = state.battle;
         if (!battle?.lanes?.length) return 1;
@@ -3128,12 +3505,21 @@
         return `${minutes}:${seconds}`;
     }
 
-    function markBattleNotice(message, tone = '') {
+    function markBattleNotice(message, tone = '', duration = 1.7) {
         if (!state.battle) return;
+        const currentNotice = state.battle.notice;
+        if (
+            currentNotice
+            && currentNotice.text === message
+            && currentNotice.tone === tone
+            && currentNotice.until > state.battle.time + 0.35
+        ) {
+            return;
+        }
         state.battle.notice = {
             text: message,
             tone,
-            until: state.battle.time + 2.6
+            until: state.battle.time + duration
         };
     }
 
@@ -3169,6 +3555,30 @@
             });
             lane.events = lane.events.slice(0, 3);
         });
+    }
+
+    function pushBattleFloater(laneId, {
+        text = '',
+        tone = '',
+        x = 50,
+        y = 38,
+        size = 'tiny',
+        duration = 0.9
+    } = {}) {
+        if (!state.battle?.lanes?.length || !text) return;
+        const lane = state.battle.lanes.find((item) => item.id === laneId);
+        if (!lane) return;
+        lane.floaters = Array.isArray(lane.floaters) ? lane.floaters : [];
+        lane.floaters.unshift({
+            id: `${lane.id}-flt-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+            text,
+            tone,
+            x: clampNumber(x, 50, 8, 92),
+            y: clampNumber(y, 38, 14, 64),
+            size,
+            until: state.battle.time + duration
+        });
+        lane.floaters = lane.floaters.slice(0, 8);
     }
 
     function markLanePulse(laneId, tone = 'good') {
