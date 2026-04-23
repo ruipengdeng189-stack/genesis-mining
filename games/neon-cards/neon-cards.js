@@ -104,7 +104,7 @@
             if (!state.battle?.active) return;
             state.battle.pausedByVisibility = document.hidden;
             if (!document.hidden) {
-                markBattleNotice(text('Back in battle.', 'Back in battle.'), 'good');
+                markBattleNotice(text('已返回战斗。', 'Back in battle.'), 'good');
                 renderClashRuntime();
             }
         });
@@ -2049,8 +2049,8 @@
         battle.selectedCardId = battle.selectedCardId === cardId ? '' : cardId;
         markBattleNotice(
             battle.selectedCardId
-                ? text(`Selected ${localize(getBattleCardById(battle.selectedCardId).name)}. Tap a lane to deploy.`, `Selected ${localize(getBattleCardById(battle.selectedCardId).name)}. Tap a lane to deploy.`)
-                : text('Card selection cleared.', 'Card selection cleared.'),
+                ? text(`已选择 ${localize(getBattleCardById(battle.selectedCardId).name)}，点击路线部署。`, `Selected ${localize(getBattleCardById(battle.selectedCardId).name)}. Tap a lane to deploy.`)
+                : text('已取消选卡。', 'Card selection cleared.'),
             battle.selectedCardId ? 'good' : ''
         );
         renderClashRuntime();
@@ -2094,7 +2094,7 @@
             pushLaneEvent(laneId, '&#9654;', localize(card.name), 'good');
             markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
-            markBattleBanner(localize(card.name), `${getBattleLaneLabel(laneId)} deployment confirmed`, 'good');
+            markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 已部署`, `${getBattleLaneLabel(laneId)} deployment confirmed`), 'good');
             markBattleNotice(text(`${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`, `${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`), 'good');
         } else {
             battle.energy -= card.cost;
@@ -2223,8 +2223,8 @@
             arenaTone: '',
             arenaGlowUntil: 0,
             banner: {
-                title: text('Clash Start', 'Clash Start'),
-                detail: text('Secure one lane first, then roll pressure outward.', 'Secure one lane first, then roll pressure outward.'),
+                title: text('对战开始', 'Clash Start'),
+                detail: text('先稳住一条路，再向两侧滚动扩大优势。', 'Secure one lane first, then roll pressure outward.'),
                 tone: 'good',
                 until: 2.4
             },
@@ -2291,7 +2291,11 @@
             battle.leaderReadyMarked = true;
             markBattleNotice(text('领袖技已就绪。', 'Leader skill is ready.'), 'good');
             markBattleArena('good', 0.9);
-            markBattleBanner('Leader Skill Ready', `Tap the button below to burst ${getBattleLaneLabel(battle.focusLaneId)}.`, 'good');
+            markBattleBanner(
+                text('领袖技就绪', 'Leader Skill Ready'),
+                text(`点击下方按钮，强攻 ${getBattleLaneLabel(battle.focusLaneId)}。`, `Tap the button below to burst ${getBattleLaneLabel(battle.focusLaneId)}.`),
+                'good'
+            );
         }
 
         Object.keys(battle.cooldowns).forEach((cardId) => {
@@ -2352,8 +2356,8 @@
             markLaneImpact(lane.id, 'warning', 'enemy', 1.2);
             pushLaneEvent(lane.id, '&#9888;', text('Boss', 'Boss'), 'warning', 2.6);
             markBattleArena('warning', 1.5);
-            markBattleBanner('Boss Arrived', 'Mid lane pressure spikes instantly. Hold the frontline first.', 'warning');
-            markBattleNotice(text('Boss has entered the mid lane.', 'Boss has entered the mid lane.'), 'warning');
+            markBattleBanner(text('Boss 到场', 'Boss Arrived'), text('中路压力瞬间拉高，优先稳住前排。', 'Mid lane pressure spikes instantly. Hold the frontline first.'), 'warning');
+            markBattleNotice(text('Boss 已进入中路。', 'Boss has entered the mid lane.'), 'warning');
         }
 
         if (lane.spawnTimer <= 0 && lane.enemy.length < 5) {
@@ -2370,7 +2374,7 @@
             if (unit.hp > 0) return true;
             if (unit.isBoss) {
                 state.battle.bossDefeated = true;
-                pushLaneEvent(lane.id, '&#10003;', text('Boss Down', 'Boss Down'), 'good', 2.4);
+                pushLaneEvent(lane.id, '&#10003;', text('Boss 击破', 'Boss Down'), 'good', 2.4);
                 markLaneImpact(lane.id, 'good', 'ally', 1.1);
                 markBattleArena('good', 1.3);
             }
@@ -2817,13 +2821,13 @@
         const battle = state.battle;
         if (battle.result) {
             return battle.result.win
-                ? text('This run is complete. Push the next chapter or return to Deck to strengthen your key cards.', 'This run is complete. Push the next chapter or return to Deck to strengthen your key cards.')
-                : text('This run retreated. Strengthen the focused lane\'s frontline or burst first.', 'This run retreated. Strengthen the focused lane\'s frontline or burst first.');
+                ? text('本次推进完成，可继续下一章，或回卡组补强核心卡。', 'This run is complete. Push the next chapter or return to Deck to strengthen your key cards.')
+                : text('本次已撤退，优先补强焦点路线的前排或爆发。', 'This run retreated. Strengthen the focused lane\'s frontline or burst first.');
         }
         if (selectedCard) {
-            return text(`Selected ${localize(selectedCard.name)}. Tap a lane to deploy.`, `Selected ${localize(selectedCard.name)}. Tap a lane to deploy.`);
+            return text(`已选择 ${localize(selectedCard.name)}，点击路线部署。`, `Selected ${localize(selectedCard.name)}. Tap a lane to deploy.`);
         }
-        return text(`Focus is on ${getBattleLaneLabel(battle.focusLaneId)}. Pick a card, then deploy it.`, `Focus is on ${getBattleLaneLabel(battle.focusLaneId)}. Pick a card, then deploy it.`);
+        return text(`当前焦点是 ${getBattleLaneLabel(battle.focusLaneId)}，先选卡再部署。`, `Focus is on ${getBattleLaneLabel(battle.focusLaneId)}. Pick a card, then deploy it.`);
     }
 
     function renderBattleLaneHint(lane) {
@@ -3534,12 +3538,18 @@
     function localize(value) {
         if (!value) return '';
         if (typeof value === 'string') return value;
-        if (typeof value === 'object') return value.en || value.zh || '';
+        if (typeof value === 'object') {
+            return state.lang === 'en'
+                ? (value.en || value.zh || '')
+                : (value.zh || value.en || '');
+        }
         return String(value);
     }
 
     function text(zh, en) {
-        return en || zh || '';
+        return state.lang === 'en'
+            ? (en || zh || '')
+            : (zh || en || '');
     }
 
     function escapeHtml(value) {
