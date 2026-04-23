@@ -154,6 +154,12 @@
             case 'closeBattleResult':
                 closeBattleResult(value);
                 break;
+            case 'closeBattleResultOpenTab':
+                closeBattleResultWithTab('', value);
+                break;
+            case 'openResultChapter':
+                openResultChapter(value);
+                break;
             case 'setLeader':
                 setLeader(value);
                 break;
@@ -872,18 +878,46 @@
 
     function renderLastResultCard() {
         const result = state.save.lastResult;
+        const targetChapterId = result.win && result.nextChapterId ? result.nextChapterId : result.chapterId;
         return `
             <section class="nc-card nc-card--compact">
-                <div class="nc-card-head">
+                <div class="nc-result-hero">
                     <div>
-                        <h3>${renderIconLabel(result.win ? '&#10003;' : '&#10005;', text('Latest Report', 'Latest Report'), result.chapterId)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(result.win ? text('This run is complete. Next, patch your current wall in Deck or Lab.', 'This run is complete. Next, patch your current wall in Deck or Lab.') : text('This run did not clear, but you still earned partial resources. Patch your key slots first.', 'This run did not clear, but you still earned partial resources. Patch your key slots first.'))}</div>
+                        <div class="eyebrow">${escapeHtml(text('最近战报', 'Latest Report'))}</div>
+                        <h3>${escapeHtml(`${result.chapterId} • ${localize(chapterMap[result.chapterId]?.name || result.chapterId)}`)}</h3>
+                        <div class="nc-card-copy">${escapeHtml(result.win ? text('本次推进已完成，下一步建议去卡组或研究补当前卡点。', 'This run is complete. Next, patch your current wall in Deck or Lab.') : text('本次未通关，但仍拿到了部分资源，优先补强关键卡位。', 'This run did not clear, but you still earned partial resources. Patch your key slots first.'))}</div>
                     </div>
-                    <span class="nc-tag ${result.win ? 'is-good' : 'is-warning'}">${escapeHtml(result.win ? text('Win', 'Win') : text('Retreat', 'Retreat'))}</span>
+                    <div class="nc-head-kpi">
+                        <span class="nc-tag ${result.win ? 'is-good' : 'is-warning'}">${escapeHtml(result.win ? text('胜利', 'Win') : text('撤退', 'Retreat'))}</span>
+                        <strong>${escapeHtml(`${result.laneWins || 0}/3`)}</strong>
+                    </div>
                 </div>
-                ${renderRewardPills(result.reward)}
-                ${result.firstClear ? `<div class="nc-inline-note">${escapeHtml(text('First clear reward secured.', 'First clear reward secured.'))}</div>` : ''}
-                ${result.fragments?.length ? `<div class="nc-inline-note">${escapeHtml(formatFragmentSummary(result.fragments))}</div>` : ''}
+                <div class="nc-stat-grid">
+                    ${renderStatBox(text('路线优势', 'Lane Edge'), `${result.laneWins || 0}/3`, text('获胜路线', 'Won lanes'))}
+                    ${renderStatBox(text('用时', 'Time'), formatBattleTime(result.timeUsed || 0))}
+                    ${renderStatBox(text('我方核心', 'Ally Core'), `${Math.max(0, Number(result.allyCorePercent) || 0)}%`)}
+                    ${renderStatBox(text('敌方核心', 'Enemy Core'), `${Math.max(0, Number(result.enemyCorePercent) || 0)}%`)}
+                </div>
+                <article class="nc-result-card nc-result-card--compact">
+                    <div class="nc-card-head">
+                        <div>
+                            <h3>${renderIconLabel('&#9733;', text('本局奖励', 'Run Rewards'))}</h3>
+                        </div>
+                    </div>
+                    ${renderRewardPills(result.reward)}
+                    ${result.firstClearReward ? `
+                        <div class="nc-inline-note">
+                            <strong>${escapeHtml(text('首通加成', 'First Clear Bonus'))}</strong>
+                            ${renderRewardPills(result.firstClearReward)}
+                        </div>
+                    ` : result.firstClear ? `<div class="nc-inline-note">${escapeHtml(text('首通奖励已领取。', 'First clear reward secured.'))}</div>` : ''}
+                    ${result.fragments?.length ? `<div class="nc-inline-note">${escapeHtml(formatFragmentSummary(result.fragments))}</div>` : ''}
+                </article>
+                ${renderBattleFollowupCard(result, { compact: true })}
+                <div class="nc-result-actions">
+                    <button class="primary-btn wide-btn" type="button" data-action="openResultChapter" data-value="${escapeHtml(targetChapterId)}">${escapeHtml(result.win && result.nextChapterId ? text(`进入 ${result.nextChapterId}`, `Open ${result.nextChapterId}`) : text('返回对战', 'Open Clash'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('调整卡组', 'Tune Deck'))}</button>
+                </div>
             </section>
         `;
     }
@@ -1913,25 +1947,57 @@
     function renderBattleResultOverlay() {
         const battle = state.battle;
         const result = battle.result;
-        const nextChapter = result?.win ? getNextUnlockedChapterId(battle.chapter.id) : '';
+        const nextChapter = result?.nextChapterId || '';
+        const stageLabel = `${battle.chapter.id} • ${localize(battle.chapter.name)}`;
+        const clearedCount = state.save.clearedChapters.length;
+        const progressText = `${clearedCount}/${config.chapters.length}`;
+        const primaryAction = result.win
+            ? { action: 'closeBattleResult', value: nextChapter || battle.chapter.id, label: nextChapter ? text(`前往 ${nextChapter}`, `Preview ${nextChapter}`) : text('返回对战', 'Back to Clash') }
+            : { action: 'closeBattleResult', value: battle.chapter.id, label: text('重试当前章节', 'Retry Same Chapter') };
         return `
             <div class="nc-battle-overlay">
                 <div class="nc-battle-overlay-card">
-                    <div class="eyebrow">${escapeHtml(result.win ? text('Clash Cleared', 'Clash Cleared') : text('Tactical Retreat', 'Tactical Retreat'))}</div>
-                    <h3>${escapeHtml(localize(battle.chapter.name))}</h3>
-                    <div class="nc-card-copy">${escapeHtml(result.summary)}</div>
-                    <div class="nc-stat-grid">
-                        ${renderStatBox(text('Ally Core', 'Ally Core'), `${getBattleCorePercent('ally')}%`)}
-                        ${renderStatBox(text('Enemy Core', 'Enemy Core'), `${getBattleCorePercent('enemy')}%`)}
-                        ${renderStatBox(text('Time Used', 'Time Used'), formatBattleTime(battle.time))}
-                        ${renderStatBox(text('Boosts', 'Boosts'), String(battle.boosts.length))}
+                    <div class="nc-result-hero">
+                        <div>
+                            <div class="eyebrow">${escapeHtml(result.win ? text('对战通关', 'Clash Cleared') : text('战术撤退', 'Tactical Retreat'))}</div>
+                            <h3>${escapeHtml(stageLabel)}</h3>
+                            <div class="nc-card-copy">${escapeHtml(result.summary)}</div>
+                        </div>
+                        <div class="nc-head-kpi">
+                            <span class="nc-tag ${result.win ? 'is-good' : 'is-warning'}">${escapeHtml(result.win ? text('胜利', 'Victory') : text('撤退', 'Retreat'))}</span>
+                            <strong>${escapeHtml(`${result.laneWins || 0}/3`)}</strong>
+                        </div>
                     </div>
-                    ${renderRewardPills(result.reward)}
-                    ${result.firstClear ? `<div class="nc-inline-note">${escapeHtml(text('First clear reward secured.', 'First clear reward secured.'))}</div>` : ''}
-                    ${result.fragments?.length ? `<div class="nc-inline-note">${escapeHtml(formatFragmentSummary(result.fragments))}</div>` : ''}
-                    <div class="nc-action-row">
-                        <button class="primary-btn wide-btn" type="button" data-action="closeBattleResult" ${nextChapter ? `data-value="${nextChapter}"` : ''}>${escapeHtml(nextChapter ? text('Next Chapter', 'Next Chapter') : text('Continue', 'Continue'))}</button>
-                        <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('Open Deck', 'Open Deck'))}</button>
+                    <div class="nc-stat-grid">
+                        ${renderStatBox(text('我方核心', 'Ally Core'), `${Math.max(0, Number(result.allyCorePercent) || 0)}%`)}
+                        ${renderStatBox(text('敌方核心', 'Enemy Core'), `${Math.max(0, Number(result.enemyCorePercent) || 0)}%`)}
+                        ${renderStatBox(text('战斗用时', 'Time Used'), formatBattleTime(result.timeUsed || battle.time))}
+                        ${renderStatBox(text('章节进度', 'Route'), progressText, text('已通关章节', 'Stages cleared'))}
+                        ${renderStatBox(text('强化数', 'Boosts'), String(battle.boosts.length))}
+                        ${renderStatBox(text('Boss', 'Boss'), battle.bossDefeated ? text('已击破', 'Down') : isBossStage(battle.chapter) ? text('存活', 'Alive') : text('无', 'None'))}
+                    </div>
+                    <div class="nc-card-grid nc-card-grid--two">
+                        <article class="nc-result-card">
+                            <div class="nc-card-head">
+                                <div>
+                                    <h3>${renderIconLabel('&#9733;', text('本局奖励', 'Run Rewards'))}</h3>
+                                    <div class="nc-card-copy">${escapeHtml(text('这里显示本局已即时到账的实际收益。', 'This section shows what the run actually paid out right now.'))}</div>
+                                </div>
+                            </div>
+                            ${renderRewardPills(result.reward)}
+                            ${result.firstClearReward ? `
+                                <div class="nc-inline-note">
+                                    <strong>${escapeHtml(text('首通加成', 'First Clear Bonus'))}</strong>
+                                    ${renderRewardPills(result.firstClearReward)}
+                                </div>
+                            ` : result.firstClear ? `<div class="nc-inline-note">${escapeHtml(text('首通奖励已领取。', 'First clear reward secured.'))}</div>` : ''}
+                            ${result.fragments?.length ? `<div class="nc-inline-note">${escapeHtml(formatFragmentSummary(result.fragments))}</div>` : ''}
+                        </article>
+                        ${renderBattleFollowupCard(result)}
+                    </div>
+                    <div class="nc-result-actions">
+                        <button class="primary-btn wide-btn" type="button" data-action="${primaryAction.action}" data-value="${escapeHtml(primaryAction.value)}">${escapeHtml(primaryAction.label)}</button>
+                        <button class="ghost-btn wide-btn" type="button" data-action="closeBattleResultOpenTab" data-value="deck">${escapeHtml(text('调整卡组', 'Tune Deck'))}</button>
                     </div>
                 </div>
             </div>
@@ -2091,16 +2157,39 @@
         finishBattle(false, true);
     }
 
-    function closeBattleResult(nextChapterId = '') {
+    function closeBattleResultWithTab(nextChapterId = '', nextTab = 'clash') {
         stopBattleLoop();
         state.battle = null;
+        let jumpedChapter = '';
         if (nextChapterId && chapterMap[nextChapterId]) {
             state.save.selectedChapterId = nextChapterId;
-            state.tab = 'clash';
-            state.save.tab = 'clash';
+            jumpedChapter = nextChapterId;
         }
+        state.tab = tabMap[nextTab] ? nextTab : 'clash';
+        state.save.tab = state.tab;
         saveProgress();
         renderAll();
+        if (state.tab === 'clash') {
+            queueBattleStageScroll();
+        }
+        if (jumpedChapter) {
+            showToast(text(`${jumpedChapter} 已就绪。`, `${jumpedChapter} ready.`), 'success');
+        }
+    }
+
+    function closeBattleResult(nextChapterId = '') {
+        closeBattleResultWithTab(nextChapterId, 'clash');
+    }
+
+    function openResultChapter(chapterId = '') {
+        if (chapterId && chapterMap[chapterId]) {
+            state.save.selectedChapterId = chapterId;
+        }
+        state.tab = 'clash';
+        state.save.tab = 'clash';
+        saveProgress();
+        renderAll();
+        queueBattleStageScroll();
     }
 
     function createBattleState(chapter) {
@@ -2209,7 +2298,7 @@
 
         if (battle.leaderCharge >= 100 && !battle.leaderReadyMarked) {
             battle.leaderReadyMarked = true;
-            markBattleNotice('Leader skill is ready.', 'good');
+            markBattleNotice(text('领袖技已就绪。', 'Leader skill is ready.'), 'good');
             markBattleArena('good', 0.9);
             markBattleBanner('Leader Skill Ready', `Tap the button below to burst ${getBattleLaneLabel(battle.focusLaneId)}.`, 'good');
         }
@@ -2384,7 +2473,13 @@
             win,
             reward,
             firstClear: !!firstClear,
-            fragments
+            firstClearReward: firstClear,
+            fragments,
+            timeUsed: battle.time,
+            laneWins: getBattleLaneWinCount(battle),
+            allyCorePercent: getBattleCorePercent('ally'),
+            enemyCorePercent: getBattleCorePercent('enemy'),
+            nextChapterId: win ? getNextUnlockedChapterId(battle.chapter.id) : ''
         };
 
         battle.active = false;
@@ -2392,7 +2487,13 @@
             win,
             reward,
             firstClear: !!firstClear,
+            firstClearReward: firstClear,
             fragments,
+            timeUsed: battle.time,
+            laneWins: getBattleLaneWinCount(battle),
+            allyCorePercent: getBattleCorePercent('ally'),
+            enemyCorePercent: getBattleCorePercent('enemy'),
+            nextChapterId: win ? getNextUnlockedChapterId(battle.chapter.id) : '',
             summary: retreated
                 ? text('The clash has been retreated. Partial rewards were granted based on progress. Strengthen your focused lane first.', 'The clash has been retreated. Partial rewards were granted based on progress. Strengthen your focused lane first.')
                 : win
@@ -2831,6 +2932,11 @@
         return Math.round(getBattleCoreRatio(side) * 100);
     }
 
+    function getBattleLaneWinCount(battle = state.battle) {
+        if (!battle?.lanes?.length) return 0;
+        return battle.lanes.filter((lane) => lane.enemyCoreHp < lane.playerCoreHp).length;
+    }
+
     function formatBattleTime(value) {
         const totalSeconds = Math.max(0, Math.round(Number(value) || 0));
         const minutes = Math.floor(totalSeconds / 60);
@@ -2927,7 +3033,7 @@
     function queueBattleStageScroll() {
         if (state.tab !== 'clash') return;
         const scrollTarget = () => {
-            const node = document.querySelector('.nc-battle-stage') || document.querySelector('.nc-battle-card--live');
+            const node = document.querySelector('.nc-battle-stage') || document.querySelector('.nc-battle-card--live') || document.querySelector('.nc-battle-card--setup');
             if (!node) return;
             node.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
@@ -2948,6 +3054,45 @@
         const index = getChapterIndex(currentChapterId);
         const next = config.chapters[index + 1];
         return next ? next.id : '';
+    }
+
+    function renderBattleFollowupCard(result, { compact = false } = {}) {
+        const targetChapterId = result.win && result.nextChapterId ? result.nextChapterId : result.chapterId;
+        const targetChapter = chapterMap[targetChapterId];
+        if (!targetChapter) return '';
+        const power = getDeckPower();
+        const gap = Math.max(0, targetChapter.recommended - power);
+        const unlockedNext = result.win && !!result.nextChapterId;
+        const ready = gap <= 0;
+        const badgeText = unlockedNext
+            ? (ready ? text('可继续推进', 'Ready To Push') : text('战力墙', 'Power Wall'))
+            : (ready ? text('可立即重试', 'Retry Ready') : text('先补养成', 'Needs Build'));
+        const note = unlockedNext
+            ? (ready
+                ? text(`${targetChapter.id} 已就绪，可以直接推进。`, `${targetChapter.id} is ready. You can push it immediately.`)
+                : text(`${targetChapter.id} 已开放，但你当前还差 ${formatCompact(gap)} 战力，建议先补卡组或研究。`, `${targetChapter.id} has opened, but you are still ${formatCompact(gap)} power short. Patch Deck or Lab first.`))
+            : (ready
+                ? text('你可以立即重试这一关，或继续刷它来稳定补资源。', 'You can retry this stage immediately or keep farming it for stable resources.')
+                : text(`当前卡点还差 ${formatCompact(gap)} 战力，建议下次重试前先补强卡组。`, `You are ${formatCompact(gap)} power short for this wall. Tune your deck before the next retry.`));
+
+        return `
+            <article class="nc-result-card ${compact ? 'nc-result-card--compact' : ''}">
+                <div class="nc-card-head">
+                    <div>
+                        <h3>${renderIconLabel(unlockedNext ? '&#10022;' : '&#9888;', unlockedNext ? text('下一章节', 'Next Chapter') : text('当前卡点', 'Current Wall'), targetChapter.id)}</h3>
+                        <div class="nc-card-copy">${escapeHtml(localize(targetChapter.name))}</div>
+                    </div>
+                    <span class="nc-tag ${ready ? 'is-good' : 'is-warning'}">${escapeHtml(badgeText)}</span>
+                </div>
+                <div class="nc-stat-grid">
+                    ${renderStatBox(text('战力', 'Power'), `${power}/${targetChapter.recommended}`)}
+                    ${renderStatBox(text('差距', 'Gap'), gap > 0 ? `-${formatCompact(gap)}` : text('已就绪', 'Ready'))}
+                    ${renderStatBox(text('入场', 'Entry'), `${getEntryCost(targetChapter)} Cr`)}
+                    ${renderStatBox(text('奖励侧重', 'Reward Focus'), localize(targetChapter.rewardFocus))}
+                </div>
+                <div class="nc-inline-note">${escapeHtml(`${localize(targetChapter.pressure)} • ${note}`)}</div>
+            </article>
+        `;
     }
 
     function getSelectedChapter() {
