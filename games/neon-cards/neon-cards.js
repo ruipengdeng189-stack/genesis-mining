@@ -1660,41 +1660,44 @@
         const tactic = tacticMap[state.save.selectedTacticId];
         return `
             <section class="nc-card nc-card--compact nc-battle-card nc-battle-card--setup">
-                <div class="nc-card-head">
+                <div class="nc-card-head nc-card-head--battle-compact">
                     <div>
                         <h3>${renderIconLabel('&#10022;', localize(chapter.name), chapter.id)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('选卡 → 点路线 → 100% 放领袖技。开始后直接进入实时三路线战斗。', 'Pick a card → tap a lane → cast leader skill at 100%. Starting jumps straight into the live tri-lane fight.'))}</div>
+                        <div class="nc-note-mini">${escapeHtml(text('三路线即时对冲，开局直接进入实战。', 'Tri-lane live clash. Starting jumps straight into battle.'))}</div>
                     </div>
-                    <span class="nc-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(gap > 0 ? text('Need Power', 'Need Power') : text('Ready', 'Ready'))}</span>
+                    <span class="nc-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(gap > 0 ? text('需补战力', 'Need Power') : text('可开战', 'Ready'))}</span>
                 </div>
 
                 <div class="nc-chip-row">
                     ${config.chapters.map((item, index) => renderChapterChip(item, index)).join('')}
                 </div>
 
-                <div class="nc-battle-state-strip">
-                    ${renderBattleStateChip('&#9889;', `${text('Power', 'Power')} ${power}/${chapter.recommended}`, gap > 0 ? 'warning' : 'good')}
-                    ${renderBattleStateChip('&#9655;', freeLeft > 0 ? text(`Free ${freeLeft}/${getDailyFreeClashesLimit()}`, `Free ${freeLeft}/${getDailyFreeClashesLimit()}`) : text(`Entry ${getEntryCost(chapter)} Cr`, `Entry ${getEntryCost(chapter)} Cr`), freeLeft > 0 ? 'good' : '')}
-                    ${renderBattleStateChip('&#10038;', `${text('Tactic', 'Tactic')} • ${tactic ? localize(tactic.name) : text('None', 'None')}`)}
-                </div>
-
-                ${renderClashGuideStrip()}
-
-                <div class="nc-action-row nc-action-row--setup">
-                    <button class="primary-btn wide-btn" type="button" data-action="startClash">${escapeHtml(getStartClashLabel(chapter))}</button>
-                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('Tune Deck', 'Tune Deck'))}</button>
-                </div>
-
                 <div class="nc-board-grid">
-                    ${renderLaneCard(text('Top Lane', 'Top Lane'), unitIds[0], chapter, power, 0.94)}
-                    ${renderLaneCard(text('Mid Lane', 'Mid Lane'), unitIds[1], chapter, power, 1)}
-                    ${renderLaneCard(text('Bot Lane', 'Bot Lane'), unitIds[2], chapter, power, 1.08)}
+                    ${renderLaneCard(text('上路', 'Top Lane'), unitIds[0], chapter, power, 0.94)}
+                    ${renderLaneCard(text('中路', 'Mid Lane'), unitIds[1], chapter, power, 1)}
+                    ${renderLaneCard(text('下路', 'Bot Lane'), unitIds[2], chapter, power, 1.08)}
                 </div>
 
                 <div class="nc-hand-row nc-hand-row--setup">
                     ${unitIds.map((unitId) => renderHandCard(unitMap[unitId], 'unit')).join('')}
                     ${renderHandCard(tacticMap[state.save.selectedTacticId], 'tactic')}
                 </div>
+
+                <div class="nc-battle-launch-strip">
+                    <div class="nc-battle-state-strip">
+                        ${renderBattleStateChip('&#9889;', `${text('战力', 'Power')} ${power}/${chapter.recommended}`, gap > 0 ? 'warning' : 'good')}
+                        ${renderBattleStateChip('&#9655;', freeLeft > 0 ? text(`免费 ${freeLeft}/${getDailyFreeClashesLimit()}`, `Free ${freeLeft}/${getDailyFreeClashesLimit()}`) : text(`入场 ${getEntryCost(chapter)} Cr`, `Entry ${getEntryCost(chapter)} Cr`), freeLeft > 0 ? 'good' : '')}
+                        ${renderBattleStateChip('&#10038;', `${text('战术', 'Tactic')} • ${tactic ? localize(tactic.name) : text('未装配', 'None')}`)}
+                    </div>
+
+                    <div class="nc-action-row nc-action-row--setup">
+                        <button class="primary-btn wide-btn" type="button" data-action="startClash">${escapeHtml(getStartClashLabel(chapter))}</button>
+                        <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('卡组', 'Deck'))}</button>
+                    </div>
+
+                    <div class="nc-inline-note nc-inline-note--battle">${escapeHtml(text('流程：选卡 → 点路线 → 100% 放领袖技。', 'Flow: pick a card → tap a lane → cast leader skill at 100%.'))}</div>
+                </div>
+
             </section>
         `;
     }
@@ -1703,49 +1706,37 @@
         const battle = state.battle;
         if (!battle) return '';
         const chapter = battle.chapter;
-        const selectedCard = getBattleSelectedCard();
         const boostList = battle.boosts.map((boostId) => getBattleBoostDef(boostId)).filter(Boolean);
         const leaderReady = battle.active && !battle.reinforcementPending && !battle.result && battle.leaderCharge >= 100;
         const arenaTone = battle.arenaGlowUntil > battle.time ? ` is-${battle.arenaTone || 'good'}` : '';
         return `
             <section class="nc-card nc-battle-card nc-battle-card--live">
-                <div class="nc-card-head">
+                <div class="nc-card-head nc-card-head--battle-compact">
                     <div>
-                        <h3>${renderIconLabel('&#9876;', text('Live Clash', 'Live Clash'), chapter.id)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(getBattleHeadline(selectedCard))}</div>
+                        <h3>${renderIconLabel('&#9876;', text('实时对战', 'Live Clash'), chapter.id)}</h3>
                     </div>
                     <span class="nc-tag ${battle.result ? (battle.result.win ? 'is-good' : 'is-warning') : battle.pausedByVisibility ? 'is-warning' : 'is-good'}">${escapeHtml(
                         battle.result
-                            ? (battle.result.win ? text('Victory', 'Victory') : text('Retreat', 'Retreat'))
+                            ? (battle.result.win ? text('胜利', 'Victory') : text('撤退', 'Retreat'))
                             : battle.pausedByVisibility
-                                ? text('Paused', 'Paused')
-                                : text('Active', 'Active')
+                                ? text('已暂停', 'Paused')
+                                : text('进行中', 'Active')
                     )}</span>
                 </div>
 
                 <div class="nc-battle-hud">
-                    ${renderBattleHudBox(text('Time Left', 'Time Left'), formatBattleTime(Math.max(0, battle.maxTime - battle.time)), battle.maxTime - battle.time <= 15 ? 'warning' : '')}
-                    ${renderBattleHudBox(text('Energy', 'Energy'), `${battle.energy.toFixed(1)} / ${battle.maxEnergy}`)}
-                    ${renderBattleHudBox(text('Leader Skill', 'Leader Skill'), `${Math.round(battle.leaderCharge)}%`, battle.leaderCharge >= 100 ? 'good' : '')}
-                    ${renderBattleHudBox(text('Core HP', 'Core HP'), `${getBattleCorePercent('ally')}% / ${getBattleCorePercent('enemy')}%`, getBattleCorePercent('enemy') < getBattleCorePercent('ally') ? 'good' : '')}
+                    ${renderBattleHudBox(text('剩余时间', 'Time Left'), formatBattleTime(Math.max(0, battle.maxTime - battle.time)), battle.maxTime - battle.time <= 15 ? 'warning' : '')}
+                    ${renderBattleHudBox(text('能量', 'Energy'), `${battle.energy.toFixed(1)} / ${battle.maxEnergy}`)}
+                    ${renderBattleHudBox(text('领袖技', 'Leader Skill'), `${Math.round(battle.leaderCharge)}%`, battle.leaderCharge >= 100 ? 'good' : '')}
+                    ${renderBattleHudBox(text('核心血量', 'Core HP'), `${getBattleCorePercent('ally')}% / ${getBattleCorePercent('enemy')}%`, getBattleCorePercent('enemy') < getBattleCorePercent('ally') ? 'good' : '')}
                 </div>
 
                 <div class="nc-battle-state-strip">
-                    ${renderBattleStateChip('&#10039;', `${text('Wave', 'Wave')} ${battle.wave}`)}
-                    ${renderBattleStateChip('&#9673;', `${text('Focus', 'Focus')} • ${getBattleLaneLabel(battle.focusLaneId)}`)}
+                    ${renderBattleStateChip('&#10039;', `${text('波次', 'Wave')} ${battle.wave}`)}
+                    ${renderBattleStateChip('&#9673;', `${text('焦点', 'Focus')} • ${getBattleLaneLabel(battle.focusLaneId)}`)}
                     ${renderBattleStateChip('&#9888;', getBattleBossStateText(), battle.bossDefeated ? 'good' : battle.time >= Math.max(42, battle.maxTime - 16) ? 'warning' : '')}
+                    ${boostList.length ? renderBattleStateChip('&#10022;', text(`强化 ${boostList.length}`, `Boosts ${boostList.length}`), 'good') : ''}
                 </div>
-
-                ${boostList.length ? `
-                    <div class="nc-battle-boosts">
-                        ${boostList.map((boost) => `
-                            <span class="nc-chip is-active nc-chip--mini">
-                                <strong>${escapeHtml(localize(boost.title))}</strong>
-                                <small>${escapeHtml(localize(boost.short))}</small>
-                            </span>
-                        `).join('')}
-                    </div>
-                ` : ''}
 
                 <div class="nc-battle-stage">
                     ${battle.notice && battle.notice.until > battle.time ? `<div class="nc-battle-notice ${battle.notice.tone ? `is-${battle.notice.tone}` : ''}">${escapeHtml(battle.notice.text)}</div>` : ''}
@@ -1762,8 +1753,8 @@
                 </div>
 
                 <div class="nc-action-row nc-action-row--battle">
-                    <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`, `Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
-                    <button class="ghost-btn wide-btn" type="button" data-action="retreatBattle" ${battle.active && !battle.result ? '' : 'disabled'}>${escapeHtml(text('Tactical Retreat', 'Tactical Retreat'))}</button>
+                    <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`领袖技 • ${getBattleLaneLabel(battle.focusLaneId)}`, `Leader Skill • ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="retreatBattle" ${battle.active && !battle.result ? '' : 'disabled'}>${escapeHtml(text('战术撤退', 'Tactical Retreat'))}</button>
                 </div>
             </section>
         `;
@@ -2844,9 +2835,9 @@
     }
 
     function getBattleLaneLabel(laneId) {
-        if (laneId === 'top') return text('Top', 'Top');
-        if (laneId === 'bot') return text('Bot', 'Bot');
-        return text('Mid', 'Mid');
+        if (laneId === 'top') return text('上路', 'Top');
+        if (laneId === 'bot') return text('下路', 'Bot');
+        return text('中路', 'Mid');
     }
 
     function renderBattleLaneEffects(lane) {
@@ -2876,19 +2867,19 @@
 
     function getBattleBossStateText() {
         const battle = state.battle;
-        if (!battle) return text('Boss idle', 'Boss idle');
-        if (!isBossStage(battle.chapter)) return text('No Boss', 'No Boss');
-        if (battle.bossDefeated) return text('Boss down', 'Boss down');
+        if (!battle) return text('Boss 待机', 'Boss idle');
+        if (!isBossStage(battle.chapter)) return text('无 Boss', 'No Boss');
+        if (battle.bossDefeated) return text('Boss 已击破', 'Boss down');
         if (battle.lanes.some((lane) => lane.enemy.some((unit) => unit.isBoss))) {
-            return text('Boss engaged', 'Boss engaged');
+            return text('Boss 交战中', 'Boss engaged');
         }
 
         const bossMoment = Math.max(42, battle.maxTime - 16);
         const secondsLeft = Math.max(0, Math.ceil(bossMoment - battle.time));
         if (secondsLeft <= 6) {
-            return text(`Boss incoming ${secondsLeft}s`, `Boss incoming ${secondsLeft}s`);
+            return text(`Boss 即将到场 ${secondsLeft}s`, `Boss incoming ${secondsLeft}s`);
         }
-        return text(`Boss pending ${secondsLeft}s`, `Boss pending ${secondsLeft}s`);
+        return text(`Boss 倒计时 ${secondsLeft}s`, `Boss pending ${secondsLeft}s`);
     }
 
     function getBattleLanePressure(lane) {
@@ -3102,9 +3093,9 @@
     function getStartClashLabel(chapter) {
         resetFreeClashWindow();
         const freeLeft = getRemainingFreeClashes();
-        if (freeLeft > 0) return text('Start Clash • Free', 'Start Clash • Free');
+        if (freeLeft > 0) return text('开始对战 • 免费', 'Start Clash • Free');
         const cost = getEntryCost(chapter);
-        return `Start Clash • ${cost} Cr`;
+        return state.lang === 'en' ? `Start Clash • ${cost} Cr` : `开始对战 • ${cost} Cr`;
     }
 
     function getDailyFreeClashesLimit() {

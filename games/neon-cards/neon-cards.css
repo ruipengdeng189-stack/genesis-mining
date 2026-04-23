@@ -891,9 +891,22 @@ button:disabled {
     gap: 14px;
 }
 
+.nc-card-head--battle-compact {
+    align-items: center;
+}
+
+.nc-card-head--battle-compact .nc-note-mini {
+    margin-top: 4px;
+}
+
 .nc-battle-card--setup .nc-card-copy,
 .nc-battle-card--live .nc-card-copy {
     margin-top: 4px;
+}
+
+.nc-battle-launch-strip {
+    display: grid;
+    gap: 8px;
 }
 
 .nc-battle-hud {
@@ -912,6 +925,10 @@ button:disabled {
 
 .nc-battle-state-strip::-webkit-scrollbar {
     display: none;
+}
+
+.nc-battle-state-strip .nc-tag {
+    white-space: nowrap;
 }
 
 .nc-battle-hud-box {
@@ -983,6 +1000,12 @@ button:disabled {
 
 .nc-battle-stage {
     position: relative;
+}
+
+.nc-inline-note--battle {
+    padding: 8px 10px;
+    font-size: 11px;
+    text-align: center;
 }
 
 .nc-battle-arena {
@@ -1419,7 +1442,7 @@ body[data-neon-tab="clash"] .nc-chip-row .nc-chip {
 }
 
 body[data-neon-tab="clash"] .nc-battle-card {
-    gap: 12px;
+    gap: 10px;
 }
 
 body[data-neon-tab="clash"] .nc-battle-card--setup .nc-card-head,
@@ -1533,12 +1556,7 @@ body[data-neon-live="1"] .nc-battle-card--live {
 }
 
 body[data-neon-live="1"] .nc-battle-card--live .nc-card-copy {
-    font-size: 12px;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    overflow: hidden;
+    display: none;
 }
 
 body[data-neon-live="1"] .nc-battle-hud-box {
@@ -2035,17 +2053,38 @@ body[data-neon-live="1"] .nc-battle-event-strip {
         gap: 8px;
     }
 
+    body[data-neon-live="1"] .nc-battle-card--live .nc-card-head {
+        gap: 8px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-card--live .nc-card-head h3,
+    body[data-neon-tab="clash"] .nc-battle-card--setup .nc-card-head h3 {
+        font-size: 16px;
+    }
+
     body[data-neon-live="1"] .nc-battle-card--live .nc-card-copy {
-        font-size: 11px;
-        line-height: 1.3;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 1;
-        overflow: hidden;
+        display: none;
     }
 
     body[data-neon-live="1"] .nc-battle-pressure {
         gap: 5px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-state-strip .nc-tag,
+    body[data-neon-tab="clash"] .nc-battle-card--setup .nc-battle-state-strip .nc-tag {
+        min-height: 28px;
+        padding: 0 8px;
+        font-size: 10px;
+        letter-spacing: 0.03em;
+    }
+
+    body[data-neon-tab="clash"] .nc-battle-launch-strip {
+        gap: 7px;
+    }
+
+    body[data-neon-tab="clash"] .nc-inline-note--battle {
+        padding: 7px 9px;
+        font-size: 10px;
     }
 
     body[data-neon-live="1"] .nc-battle-pressure-bar {
