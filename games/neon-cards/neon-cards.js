@@ -1705,7 +1705,9 @@
     function renderBattleStage() {
         const battle = state.battle;
         if (!battle) return '';
+        syncBattleSelectedCard();
         const chapter = battle.chapter;
+        const commandCard = getBattleCommandCard();
         const boostList = battle.boosts.map((boostId) => getBattleBoostDef(boostId)).filter(Boolean);
         const leaderReady = battle.active && !battle.reinforcementPending && !battle.result && battle.leaderCharge >= 100;
         const arenaTone = battle.arenaGlowUntil > battle.time ? ` is-${battle.arenaTone || 'good'}` : '';
@@ -1748,8 +1750,41 @@
                     </div>
                 </div>
 
-                <div class="nc-hand-row nc-hand-row--battle">
+                ${renderBattleCommandDock(commandCard, leaderReady)}
+            </section>
+        `;
+    }
+
+    function renderBattleCommandDock(selectedCard, leaderReady) {
+        const battle = state.battle;
+        const playableCount = getBattlePlayableCardIds().length;
+        const commandState = getBattleCommandState(selectedCard, battle);
+        return `
+            <section class="nc-battle-command">
+                <div class="nc-battle-command-head">
+                    <div class="nc-battle-command-copy">
+                        <div class="eyebrow">${escapeHtml(text('战斗操作', 'Battle Controls'))}</div>
+                        <strong>${escapeHtml(commandState.title)}</strong>
+                        <small>${escapeHtml(commandState.hint)}</small>
+                    </div>
+                    <span class="nc-tag ${commandState.tone ? `is-${commandState.tone}` : playableCount ? 'is-good' : 'is-warning'}">${escapeHtml(commandState.badge)}</span>
+                </div>
+
+                <div class="nc-battle-command-steps">
+                    <span class="nc-tag nc-tag--mini ${selectedCard ? 'is-good' : ''}">${escapeHtml(text('① 选卡', '1 Card'))}</span>
+                    <span class="nc-tag nc-tag--mini ${commandState.ready ? 'is-good' : 'is-warning'}">${escapeHtml(commandState.ready ? text('② 点路线', '2 Tap Lane') : text('② 蓄能中', '2 Charging'))}</span>
+                </div>
+
+                <div class="nc-hand-row nc-hand-row--battle nc-hand-row--battle-dock">
                     ${battle.hand.map((cardId) => renderBattleHandCard(cardId)).join('')}
+                </div>
+
+                <div class="nc-battle-lane-quick">
+                    ${battle.lanes.map((lane) => `
+                        <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(lane.id)}" ${battle.active && !battle.reinforcementPending && !battle.result && commandState.ready ? '' : 'disabled'}>
+                            ${escapeHtml(commandState.ready ? text(`派到${getBattleLaneLabel(lane.id)}`, `Send ${getBattleLaneLabel(lane.id)}`) : text(`${getBattleLaneLabel(lane.id)} 蓄能`, `${getBattleLaneLabel(lane.id)} Charging`))}
+                        </button>
+                    `).join('')}
                 </div>
 
                 <div class="nc-action-row nc-action-row--battle">
@@ -1779,9 +1814,9 @@
 
     function renderClashGuideStrip() {
         const items = [
-            { icon: '&#9312;', title: text('Pick Card', 'Pick Card'), detail: text('点单位或战术卡', 'Tap a unit or tactic card') },
-            { icon: '&#9313;', title: text('Tap Lane', 'Tap Lane'), detail: text('点上 / 中 / 下路线', 'Tap top / mid / bot lane') },
-            { icon: '&#9889;', title: text('Cast Skill', 'Cast Skill'), detail: text('100% 充能放领袖技', 'Use leader skill at 100%') }
+            { icon: '&#9312;', title: text('选卡', 'Pick Card'), detail: text('点单位或战术卡', 'Tap a unit or tactic card') },
+            { icon: '&#9313;', title: text('点路线', 'Tap Lane'), detail: text('点上 / 中 / 下路线', 'Tap top / mid / bot lane') },
+            { icon: '&#9889;', title: text('放技能', 'Cast Skill'), detail: text('100% 充能放领袖技', 'Use leader skill at 100%') }
         ];
         return `
             <div class="nc-guide-strip">
@@ -1812,18 +1847,23 @@
         const isFocus = battle.focusLaneId === lane.id;
         const pulseClass = lane.pulseUntil > battle.time ? ` is-pulse-${lane.pulseTone || 'good'}` : '';
         const impactClass = lane.impactUntil > battle.time ? ` is-impact-${lane.impactTone || 'good'} is-impact-${lane.impactSide || 'ally'}` : '';
-        const selectedCard = getBattleSelectedCard();
+        const selectedCard = getBattleCommandCard();
+        const commandState = getBattleCommandState(selectedCard, battle);
         const pressure = getBattleLanePressure(lane);
         const actionLabel = battle.result
-            ? text('Settled', 'Settled')
-            : selectedCard
-                ? `${selectedCard.type === 'tactic' ? text('Cast', 'Cast') : text('Deploy', 'Deploy')} ${localize(selectedCard.name)}`
-                : text('Set Focus', 'Set Focus');
+            ? text('已结算', 'Settled')
+            : commandState.ready
+                ? (selectedCard.type === 'tactic' ? text('可释放', 'Ready') : text('可出兵', 'Ready'))
+                : commandState.badge;
         return `
-            <article class="nc-battle-lane ${isFocus ? 'is-focus' : ''}${pulseClass}">
+            <article class="nc-battle-lane ${isFocus ? 'is-focus' : ''}${pulseClass}" data-action="${battle.active && !battle.reinforcementPending && !battle.result ? 'playBattleCard' : ''}" data-value="${escapeHtml(lane.id)}">
                 <div class="nc-lane-head">
                     <strong>${escapeHtml(getBattleLaneLabel(lane.id))}</strong>
                     <span>${escapeHtml(`${Math.round((lane.playerCoreHp / lane.playerCoreMax) * 100)}% / ${Math.round((lane.enemyCoreHp / lane.enemyCoreMax) * 100)}%`)}</span>
+                </div>
+                <div class="nc-battle-lane-counts">
+                    <span class="nc-tag nc-tag--mini is-good">${escapeHtml(text(`我方 ${lane.friendly.length}`, `Ally ${lane.friendly.length}`))}</span>
+                    <span class="nc-tag nc-tag--mini ${lane.enemy.length ? 'is-warning' : ''}">${escapeHtml(text(`敌方 ${lane.enemy.length}`, `Enemy ${lane.enemy.length}`))}</span>
                 </div>
                 <div class="nc-battle-pressure">
                     <div class="nc-battle-pressure-bar">
@@ -1835,17 +1875,18 @@
                 </div>
                 <div class="nc-battle-track${impactClass}">
                     <div class="nc-battle-core is-ally">
-                        <span>${escapeHtml(text('Ally Core', 'Ally Core'))}</span>
+                        <span>${escapeHtml(text('我方核心', 'Ally Core'))}</span>
                         <strong>${escapeHtml(String(Math.max(0, Math.round(lane.playerCoreHp))))}</strong>
                     </div>
                     <div class="nc-battle-core is-enemy">
-                        <span>${escapeHtml(text('Enemy Core', 'Enemy Core'))}</span>
+                        <span>${escapeHtml(text('敌方核心', 'Enemy Core'))}</span>
                         <strong>${escapeHtml(String(Math.max(0, Math.round(lane.enemyCoreHp))))}</strong>
                     </div>
                     <div class="nc-battle-unit-layer">
                         ${lane.friendly.map((unit, index) => renderBattleUnit(unit, index, lane.friendly.length)).join('')}
                         ${lane.enemy.map((unit, index) => renderBattleUnit(unit, index, lane.enemy.length)).join('')}
                     </div>
+                    ${renderBattleLaneTouchHint(lane, selectedCard, commandState)}
                 </div>
                 <div class="nc-battle-lane-foot">
                     <div>
@@ -1853,9 +1894,33 @@
                         ${renderBattleLaneEventStrip(lane)}
                         ${renderBattleLaneEffects(lane)}
                     </div>
-                    <button class="ghost-btn" type="button" data-action="playBattleCard" data-value="${lane.id}" ${battle.active && !battle.reinforcementPending && !battle.result ? '' : 'disabled'}>${escapeHtml(actionLabel)}</button>
+                    <span class="nc-tag nc-battle-lane-status ${commandState.tone ? `is-${commandState.tone}` : ''}">${escapeHtml(actionLabel)}</span>
                 </div>
             </article>
+        `;
+    }
+
+    function renderBattleLaneTouchHint(lane, selectedCard, commandState) {
+        const battle = state.battle;
+        if (!battle || battle.result) return '';
+
+        const title = commandState.ready
+            ? (selectedCard?.type === 'tactic' ? text('点此释放', 'Tap To Cast') : text('点此出兵', 'Tap To Deploy'))
+            : battle.reinforcementPending
+                ? text('先选强化', 'Pick Boost First')
+                : text('等待可出卡', 'Waiting For Card');
+
+        const detail = commandState.ready
+            ? text(`${getBattleLaneLabel(lane.id)} · ${localize(selectedCard.name)}`, `${getBattleLaneLabel(lane.id)} · ${localize(selectedCard.name)}`)
+            : battle.reinforcementPending
+                ? text('选择强化后继续推进', 'Choose a boost to continue')
+                : text('下方亮起卡牌后，点这一路', 'Tap this lane when a card lights up');
+
+        return `
+            <div class="nc-battle-lane-touch ${commandState.ready ? 'is-ready' : 'is-wait'}">
+                <strong>${escapeHtml(title)}</strong>
+                <small>${escapeHtml(detail)}</small>
+            </div>
         `;
     }
 
@@ -2047,11 +2112,17 @@
         const battle = state.battle;
         if (!battle || !battle.active || battle.reinforcementPending || battle.result) return;
         battle.selectedCardId = battle.selectedCardId === cardId ? '' : cardId;
+        const selectedCard = battle.selectedCardId ? getBattleCardById(battle.selectedCardId) : null;
+        const commandState = getBattleCommandState(selectedCard, battle);
         markBattleNotice(
-            battle.selectedCardId
-                ? text(`已选择 ${localize(getBattleCardById(battle.selectedCardId).name)}，点击路线部署。`, `Selected ${localize(getBattleCardById(battle.selectedCardId).name)}. Tap a lane to deploy.`)
-                : text('已取消选卡。', 'Card selection cleared.'),
-            battle.selectedCardId ? 'good' : ''
+            selectedCard
+                ? (
+                    commandState.ready
+                        ? text(`已切换到 ${localize(selectedCard.name)}，点任意一路立即出手。`, `Switched to ${localize(selectedCard.name)}. Tap any lane to act.`)
+                        : commandState.hint
+                )
+                : text('已取消手动选卡，系统会自动切到下一张可用卡。', 'Manual selection cleared. The next ready card will auto-select.'),
+            selectedCard && commandState.ready ? 'good' : selectedCard ? 'warning' : ''
         );
         renderClashRuntime();
     }
@@ -2065,26 +2136,40 @@
         markLanePulse(laneId, 'good');
 
         if (!battle.selectedCardId) {
-            markBattleNotice(text(`${getBattleLaneLabel(laneId)} is now the focus lane.`, `${getBattleLaneLabel(laneId)} is now the focus lane.`), 'good');
+            syncBattleSelectedCard();
+        }
+
+        if (!battle.selectedCardId) {
+            markBattleNotice(text(`${getBattleLaneLabel(laneId)} 已设为焦点，当前没有可立即出手的卡。`, `${getBattleLaneLabel(laneId)} is now the focus lane, but no card is ready right now.`), 'warning');
             renderClashRuntime();
             return;
         }
 
-        const card = getBattleCardById(battle.selectedCardId);
+        let card = getBattleCardById(battle.selectedCardId);
         if (!card) return;
-        const cooldown = Math.max(0, battle.cooldowns[card.id] || 0);
+        let cooldown = Math.max(0, battle.cooldowns[card.id] || 0);
+        if (cooldown > 0.05 || battle.energy < card.cost) {
+            const fallbackCardId = getBattleCommandCardId(card.id);
+            if (fallbackCardId && fallbackCardId !== card.id) {
+                battle.selectedCardId = fallbackCardId;
+                card = getBattleCardById(fallbackCardId);
+                cooldown = Math.max(0, battle.cooldowns[card.id] || 0);
+            }
+        }
         if (cooldown > 0.05) {
-            showToast(text('That card is still cooling down.', 'That card is still cooling down.'), 'warning');
+            markBattleNotice(text(`${localize(card.name)} 还在冷却，先等一下。`, `${localize(card.name)} is still cooling down.`), 'warning');
+            renderClashRuntime();
             return;
         }
         if (battle.energy < card.cost) {
-            showToast(text('Not enough energy.', 'Not enough energy.'), 'warning');
+            markBattleNotice(text(`能量不足，${localize(card.name)} 需要 ${card.cost} 点能量。`, `Not enough energy for ${localize(card.name)}.`), 'warning');
+            renderClashRuntime();
             return;
         }
 
         if (card.type === 'unit') {
             if (lane.friendly.length >= 5) {
-                showToast(text('This lane is full. Wait for your frontline to advance.', 'This lane is full. Wait for your frontline to advance.'), 'warning');
+                markBattleNotice(text(`${getBattleLaneLabel(laneId)} 已满员，等前排推进后再补兵。`, 'This lane is full. Wait for your frontline to advance.'), 'warning');
                 return;
             }
             battle.energy -= card.cost;
@@ -2095,7 +2180,7 @@
             markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
             markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 已部署`, `${getBattleLaneLabel(laneId)} deployment confirmed`), 'good');
-            markBattleNotice(text(`${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`, `${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`), 'good');
+            markBattleNotice(text(`${localize(card.name)} 已派往 ${getBattleLaneLabel(laneId)}。`, `${localize(card.name)} deployed to ${getBattleLaneLabel(laneId)}.`), 'good');
         } else {
             battle.energy -= card.cost;
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
@@ -2104,10 +2189,11 @@
             markLaneImpact(laneId, tacticTone, tacticTone === 'good' ? 'ally' : 'enemy');
             pushLaneEvent(laneId, '&#10038;', localize(card.name), tacticTone);
             markBattleArena(tacticTone, 1.1);
-            markBattleBanner(localize(card.name), `${getBattleLaneLabel(laneId)} tactic released`, tacticTone);
+            markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 战术生效`, `${getBattleLaneLabel(laneId)} tactic released`), tacticTone);
             applyBattleTactic(card.id, lane);
         }
 
+        syncBattleSelectedCard(card.id);
         renderClashRuntime();
     }
 
@@ -2229,7 +2315,7 @@
                 until: 2.4
             },
             notice: {
-                text: text('Pick a card below, then tap a lane to deploy.', 'Pick a card below, then tap a lane to deploy.'),
+                text: text('先点下方卡牌，再点一路出手。', 'Pick a card below, then tap a lane to deploy.'),
                 tone: 'good',
                 until: 3.2
             },
@@ -2817,6 +2903,109 @@
         return state.battle?.selectedCardId ? getBattleCardById(state.battle.selectedCardId) : null;
     }
 
+    function isBattleCardReady(cardId, battle = state.battle) {
+        if (!battle || !cardId) return false;
+        return Math.max(0, battle.cooldowns[cardId] || 0) <= 0.05;
+    }
+
+    function canBattleCardPlay(cardId, battle = state.battle) {
+        const card = getBattleCardById(cardId);
+        if (!battle || !card) return false;
+        return isBattleCardReady(cardId, battle) && battle.energy >= card.cost;
+    }
+
+    function getBattlePlayableCardIds(battle = state.battle, excludeCardId = '') {
+        if (!battle?.hand?.length) return [];
+        return battle.hand
+            .filter((cardId) => cardId !== excludeCardId)
+            .map((cardId) => ({ cardId, card: getBattleCardById(cardId) }))
+            .filter((item) => !!item.card && canBattleCardPlay(item.cardId, battle))
+            .sort((left, right) => {
+                if (left.card.type !== right.card.type) return left.card.type === 'unit' ? -1 : 1;
+                if (left.card.cost !== right.card.cost) return left.card.cost - right.card.cost;
+                return battle.hand.indexOf(left.cardId) - battle.hand.indexOf(right.cardId);
+            })
+            .map((item) => item.cardId);
+    }
+
+    function getBattleCommandCardId(excludeCardId = '') {
+        const battle = state.battle;
+        if (!battle) return '';
+        if (battle.selectedCardId && battle.selectedCardId !== excludeCardId && canBattleCardPlay(battle.selectedCardId, battle)) {
+            return battle.selectedCardId;
+        }
+        const nextPlayable = getBattlePlayableCardIds(battle, excludeCardId)[0] || '';
+        if (nextPlayable) return nextPlayable;
+        if (battle.selectedCardId && battle.selectedCardId !== excludeCardId) return battle.selectedCardId;
+        return '';
+    }
+
+    function getBattleCommandCard() {
+        const cardId = getBattleCommandCardId();
+        return cardId ? getBattleCardById(cardId) : null;
+    }
+
+    function getBattleCommandState(card, battle = state.battle) {
+        if (!battle) {
+            return {
+                ready: false,
+                tone: '',
+                title: text('等待开战', 'Waiting For Battle'),
+                hint: text('点击开始对战后进入三路线实时推进。', 'Tap start clash to begin the three-lane battle.'),
+                badge: text('未开战', 'Idle')
+            };
+        }
+        if (!card) {
+            return {
+                ready: false,
+                tone: 'warning',
+                title: text('等待出牌', 'Waiting For Card'),
+                hint: text('下方卡牌亮起后，点上 / 中 / 下任意一路出手。', 'Wait for a ready card, then tap top / mid / bot lane.'),
+                badge: text('蓄能中', 'Charging')
+            };
+        }
+
+        const cooldown = Math.max(0, battle.cooldowns[card.id] || 0);
+        if (cooldown > 0.05) {
+            return {
+                ready: false,
+                tone: 'warning',
+                title: localize(card.name),
+                hint: text(`${localize(card.name)} 冷却 ${cooldown.toFixed(1)}s，冷却完直接点一路出手。`, `${localize(card.name)} cooldown ${cooldown.toFixed(1)}s. Tap a lane when ready.`),
+                badge: text('冷却中', 'Cooldown')
+            };
+        }
+        if (battle.energy < card.cost) {
+            return {
+                ready: false,
+                tone: 'warning',
+                title: localize(card.name),
+                hint: text(`能量 ${battle.energy.toFixed(1)} / ${card.cost}，攒够后点一路出手。`, `Energy ${battle.energy.toFixed(1)} / ${card.cost}. Tap a lane when filled.`),
+                badge: text('缺能量', 'Low Energy')
+            };
+        }
+        return {
+            ready: true,
+            tone: 'good',
+            title: localize(card.name),
+            hint: card.type === 'tactic'
+                ? text('已自动选中战术，点上 / 中 / 下路立即释放。', 'Tactic auto-selected. Tap top / mid / bot lane to cast.')
+                : text('已自动选中单位，点上 / 中 / 下路立即出兵。', 'Unit auto-selected. Tap top / mid / bot lane to deploy.'),
+            badge: text('立即出手', 'Ready')
+        };
+    }
+
+    function syncBattleSelectedCard(excludeCardId = '') {
+        const battle = state.battle;
+        if (!battle) return;
+        const nextCardId = getBattleCommandCardId(excludeCardId);
+        if (nextCardId) battle.selectedCardId = nextCardId;
+    }
+
+    function getBattleCardCommandHint(card) {
+        return getBattleCommandState(card, state.battle).hint;
+    }
+
     function getBattleHeadline(selectedCard) {
         const battle = state.battle;
         if (battle.result) {
@@ -2832,10 +3021,10 @@
 
     function renderBattleLaneHint(lane) {
         if (lane.enemy.some((unit) => unit.isBoss)) {
-            return text('Boss is present. Reinforce your frontline and burst the mid lane.', 'Boss is present. Reinforce your frontline and burst the mid lane.');
+            return text('Boss 已在这一路，优先补前排并集中火力。', 'Boss is present. Reinforce your frontline and burst the mid lane.');
         }
-        const focusText = state.battle.focusLaneId === lane.id ? text('Focus', 'Focus') : text('Side', 'Side');
-        return text(`${lane.friendly.length} ally / ${lane.enemy.length} enemy • ${focusText}`, `${lane.friendly.length} ally / ${lane.enemy.length} enemy • ${focusText}`);
+        const focusText = state.battle.focusLaneId === lane.id ? text('主攻路', 'Focus') : text('侧路', 'Side');
+        return text(`我方 ${lane.friendly.length} / 敌方 ${lane.enemy.length} • ${focusText}`, `${lane.friendly.length} ally / ${lane.enemy.length} enemy • ${focusText}`);
     }
 
     function getBattleLaneLabel(laneId) {
@@ -2851,13 +3040,13 @@
         const shieldUp = lane.friendly.some((unit) => unit.shield > 0);
         const bossPresent = lane.enemy.some((unit) => unit.isBoss);
 
-        if (bossPresent) tags.push({ label: text('Boss in lane', 'Boss in lane'), tone: 'warning' });
-        if (allyBuffActive) tags.push({ label: text('Ally buff', 'Ally buff'), tone: 'good' });
-        if (shieldUp) tags.push({ label: text('Shield up', 'Shield up'), tone: 'good' });
-        if (enemyJammed) tags.push({ label: text('Enemy jammed', 'Enemy jammed'), tone: 'warning' });
+        if (bossPresent) tags.push({ label: text('Boss 在场', 'Boss in lane'), tone: 'warning' });
+        if (allyBuffActive) tags.push({ label: text('我方增益', 'Ally buff'), tone: 'good' });
+        if (shieldUp) tags.push({ label: text('护盾中', 'Shield up'), tone: 'good' });
+        if (enemyJammed) tags.push({ label: text('敌方受控', 'Enemy jammed'), tone: 'warning' });
         if (!tags.length) {
             tags.push({
-                label: state.battle.focusLaneId === lane.id ? text('Focus lane', 'Focus lane') : text('Stand by', 'Stand by'),
+                label: state.battle.focusLaneId === lane.id ? text('焦点路线', 'Focus lane') : text('待命', 'Stand by'),
                 tone: ''
             });
         }
@@ -2894,13 +3083,13 @@
         const marker = clampNumber(rawMarker, 50, 8, 92);
         const allyWidth = marker;
         const enemyWidth = 100 - marker;
-        let label = text('Contested', 'Contested');
+        let label = text('拉锯中', 'Contested');
         let tone = '';
         if (marker >= 62) {
-            label = text('Pushing', 'Pushing');
+            label = text('我方推进', 'Pushing');
             tone = 'good';
         } else if (marker <= 38) {
-            label = text('Brace', 'Brace');
+            label = text('敌压过来', 'Brace');
             tone = 'warning';
         }
         if (lane.enemy.some((unit) => unit.isBoss)) {
