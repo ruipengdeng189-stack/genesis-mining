@@ -240,6 +240,12 @@
         if (ui.heroTitle) ui.heroTitle.textContent = localize(config.meta.title);
         if (ui.heroSubtitle) ui.heroSubtitle.textContent = localize(config.meta.subtitle);
         document.title = state.lang === 'en' ? 'Neon Cards' : '霓虹卡牌';
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) metaDescription.setAttribute('content', text('霓虹卡牌 - 三路实时卡战、拖放出牌、卡组养成与赛季成长。', 'Neon Cards - Tri-lane live card battle, drag-to-play cards, deck growth, and season progression.'));
+        const langToggle = document.querySelector('.lang-toggle');
+        if (langToggle) langToggle.setAttribute('aria-label', text('语言切换', 'Language'));
+        if (ui.tabBar) ui.tabBar.setAttribute('aria-label', text('霓虹卡牌页签', 'Neon Cards tabs'));
+        if (ui.modalCloseBtn) ui.modalCloseBtn.setAttribute('aria-label', text('关闭弹窗', 'Close modal'));
 
         ui.langButtons.forEach((button) => {
             const active = (button.dataset.langSwitch === 'en' ? 'en' : 'zh') === state.lang;
@@ -343,7 +349,7 @@
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9776;', text('Tri-Lane Preview', 'Tri-Lane Preview'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('当前对战采用三路线实时推进：手牌部署、战术释放、Boss 压力与中途强化都会直接影响结算。', 'Clashes now run in live tri-lane combat: hand deployment, tactics, boss pressure, and mid-battle boosts all directly affect the result.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('当前对战采用三路线实时推进：手牌部署、战术释放、首领压力与中途强化都会直接影响结算。', 'Clashes now run in live tri-lane combat: hand deployment, tactics, boss pressure, and mid-battle boosts all directly affect the result.'))}</div>
                     </div>
                 </div>
 
@@ -410,7 +416,7 @@
                         <div class="nc-card-copy">${escapeHtml(text('队长决定全队节奏，只能上阵 1 名。', 'Your leader sets the pace of the whole lineup. Only one can be active.'))}</div>
                     </div>
                 </div>
-                <div class="nc-card-grid">
+                <div class="nc-card-grid nc-card-grid--mobile-scroll">
                     ${config.leaders.map(renderLeaderCard).join('')}
                 </div>
             </section>
@@ -422,7 +428,7 @@
                         <div class="nc-card-copy">${escapeHtml(text('推荐 1 前排 + 1 输出 + 1 辅助/收割。', 'A strong base shape is 1 tank, 1 damage, and 1 support or finisher.'))}</div>
                     </div>
                 </div>
-                <div class="nc-card-grid">
+                <div class="nc-card-grid nc-card-grid--mobile-scroll">
                     ${config.units.map(renderUnitCard).join('')}
                 </div>
             </section>
@@ -434,7 +440,7 @@
                         <div class="nc-card-copy">${escapeHtml(text('当前只装 1 张战术，负责爆发、补盾或解场。', 'You equip 1 tactic card for burst, shielding, or lane-breaking plays.'))}</div>
                     </div>
                 </div>
-                <div class="nc-card-grid">
+                <div class="nc-card-grid nc-card-grid--mobile-scroll">
                     ${config.tactics.map(renderTacticCard).join('')}
                 </div>
             </section>
@@ -475,7 +481,7 @@
                     { label: text('Go Clash', 'Go Clash'), action: 'openTab', value: 'clash', tone: 'ghost' },
                     { label: text('Open Deck', 'Open Deck'), action: 'openTab', value: 'deck', tone: 'ghost' }
                 ])}
-                <div class="nc-card-grid">
+                <div class="nc-card-grid nc-card-grid--mobile-scroll">
                     ${config.research.map(renderResearchCard).join('')}
                 </div>
             </section>
@@ -561,7 +567,7 @@
                 <div class="nc-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10039;', text('Season Route', 'Season Route'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('对战、开包、升级与击败 Boss 都会累计赛季进度；免费与赞助双轨奖励会按经验节点逐步解锁。', 'Matches, crate opens, upgrades, and boss wins all feed the season; both free and sponsor tracks unlock step by step as your XP grows.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(text('对战、开包、升级与击败首领都会累计赛季进度；免费与赞助双轨奖励会按经验节点逐步解锁。', 'Matches, crate opens, upgrades, and boss wins all feed the season; both free and sponsor tracks unlock step by step as your XP grows.'))}</div>
                     </div>
                     <div class="nc-head-kpi">
                         <span class="nc-tag ${getClaimableSeasonCount() ? 'is-good' : ''}">${escapeHtml(text('Season XP', 'Season XP'))}</span>
@@ -633,7 +639,7 @@
                     ${renderWalletPill('&#9733;', text('Daily', 'Daily'), canClaimDailySupply() ? text('Ready', 'Ready') : getDailySupplyCooldownText(), canClaimDailySupply() ? text('Tap to claim', 'Tap to claim') : text('Cooldown', 'Cooldown'))}
                 </div>
 
-                <div class="nc-card-grid nc-card-grid--two">
+                <div class="nc-card-grid nc-card-grid--two nc-card-grid--mobile-scroll">
                     ${renderDailySupplyCard()}
                     ${softItems}
                 </div>
@@ -647,7 +653,7 @@
                     </div>
                 </div>
                 ${renderPaymentStatusPanel()}
-                <div class="nc-card-grid nc-card-grid--two">
+                <div class="nc-card-grid nc-card-grid--two nc-card-grid--mobile-scroll">
                     ${premiumItems}
                 </div>
             </section>
@@ -701,7 +707,7 @@
                 { label: text('Power', 'Power'), value: String(getCardPower('unit', unit.id)) },
                 { label: text('Fragments', 'Fragments'), value: String(getFragments(unit.id)) }
             ],
-            note: `${text('Lane', 'Lane')}: ${unit.lane === 'front' ? 'Front' : unit.lane === 'back' ? 'Back' : 'Flex'}${starCost ? ` • ${text('Next Star', 'Next Star')}: ${formatStarCost(starCost)}` : ''}`,
+            note: `${text('Lane', 'Lane')}: ${getUnitLaneText(unit.lane)}${starCost ? ` • ${text('Next Star', 'Next Star')}: ${formatStarCost(starCost)}` : ''}`,
             actions: `
                 <button class="ghost-btn" type="button" data-action="toggleUnit" data-value="${unit.id}" ${unlocked ? '' : 'disabled'}>${escapeHtml(selected ? text('Remove', 'Remove') : text('Deploy', 'Deploy'))}</button>
                 <button class="ghost-btn" type="button" data-action="upgradeCard" data-type="unit" data-value="${unit.id}" ${state.save.credits >= upgradeCost ? '' : 'disabled'}>${escapeHtml(`${text('Upgrade', 'Upgrade')} • ${upgradeCost}`)}</button>
@@ -929,7 +935,7 @@
         const items = {
             clash: [
                 { icon: '&#9655;', title: text('门票', 'Entry'), body: text(`今日免费 ${freeLeft}/${getDailyFreeClashesLimit()}，之后每局 ${getEntryCost(chapter)} 金币。`, `${freeLeft}/${getDailyFreeClashesLimit()} free today, then ${getEntryCost(chapter)} credits per run.`) },
-                { icon: '&#9671;', title: text('首通', 'First Clear'), body: text('Boss 首通额外给芯片和更高结算。', 'Boss first clears grant extra chips and higher rewards.') },
+                { icon: '&#9671;', title: text('首通', 'First Clear'), body: text('首领首通额外给芯片和更高结算。', 'Boss first clears grant extra chips and higher rewards.') },
                 { icon: '&#9888;', title: text('卡点', 'Current Wall'), body: gap > 0 ? text(`当前还差 ${formatCompact(gap)} 战力。`, `${formatCompact(gap)} more power needed right now.`) : text('当前战力达标，可继续推进。', 'Your current power is on target. Keep pushing.') }
             ]
         }[tabId] || [];
@@ -1102,7 +1108,7 @@
 
         ui.modalRoot.classList.remove('is-hidden');
         document.body.classList.add('modal-open');
-        ui.modalEyebrow.textContent = state.modal.eyebrow || text('INFO', 'INFO');
+        ui.modalEyebrow.textContent = state.modal.eyebrow || text('信息', 'INFO');
         ui.modalTitle.textContent = state.modal.title || '';
         ui.modalSubtitle.textContent = state.modal.subtitle || '';
         ui.modalBody.innerHTML = state.modal.body || '';
@@ -2084,7 +2090,7 @@
                         ${renderStatBox(text('战斗用时', 'Time Used'), formatBattleTime(result.timeUsed || battle.time))}
                         ${renderStatBox(text('章节进度', 'Route'), progressText, text('已通关章节', 'Stages cleared'))}
                         ${renderStatBox(text('强化数', 'Boosts'), String(battle.boosts.length))}
-                        ${renderStatBox(text('Boss', 'Boss'), battle.bossDefeated ? text('已击破', 'Down') : isBossStage(battle.chapter) ? text('存活', 'Alive') : text('无', 'None'))}
+                        ${renderStatBox(text('首领', 'Boss'), battle.bossDefeated ? text('已击破', 'Down') : isBossStage(battle.chapter) ? text('存活', 'Alive') : text('无', 'None'))}
                     </div>
                     <div class="nc-card-grid nc-card-grid--two">
                         <article class="nc-result-card">
@@ -2260,7 +2266,10 @@
         battle.leaderReadyMarked = false;
         pushLaneEvent('all', '&#9889;', text('Leader Burst', 'Leader Burst'), 'good');
         markBattleArena('good', 1.25);
-        markBattleBanner('Leader Skill Cast', `${leaderMap[state.save.selectedLeaderId] ? localize(leaderMap[state.save.selectedLeaderId].name) : 'Leader'} engaged`, 'good');
+        const leaderName = leaderMap[state.save.selectedLeaderId]
+            ? localize(leaderMap[state.save.selectedLeaderId].name)
+            : text('队长', 'Leader');
+        markBattleBanner(text('领袖技能释放', 'Leader Skill Cast'), text(`${leaderName} 已进场支援`, `${leaderName} engaged`), 'good');
         renderClashRuntime();
     }
 
@@ -2276,7 +2285,7 @@
         pushLaneEvent('all', boost.icon, localize(boost.title), 'good');
         markBattleArena('good', 1.2);
         markBattleBanner(localize(boost.title), localize(boost.short), 'good');
-        markBattleNotice(text(`Boost picked: ${localize(boost.title)}.`, `Boost picked: ${localize(boost.title)}.`), 'good');
+        markBattleNotice(text(`已选择强化：${localize(boost.title)}。`, `Boost picked: ${localize(boost.title)}.`), 'good');
         renderClashRuntime();
     }
 
@@ -2433,8 +2442,8 @@
                     captainUnlockTime: 999,
                     bossDelay: 5,
                     timeBonus: 4,
-                    openingNotice: text('首个 Boss 关，先顶住中路再交技能。', 'First boss stage. Hold mid before using skills.'),
-                    openingBannerDetail: text('Boss 会更晚登场，先用前两波建立场面优势。', 'The boss arrives later, so use the first waves to build momentum.')
+                    openingNotice: text('首个首领关，先顶住中路再交技能。', 'First boss stage. Hold mid before using skills.'),
+                    openingBannerDetail: text('首领会稍晚登场，先用前两波建立场面优势。', 'The boss arrives later, so use the first waves to build momentum.')
                 };
             case '2-1':
                 return {
@@ -2677,10 +2686,10 @@
             lane.enemy.push(createEnemyBattleUnit(lane, 'boss'));
             markLanePulse(lane.id, 'warning');
             markLaneImpact(lane.id, 'warning', 'enemy', 1.2);
-            pushLaneEvent(lane.id, '&#9888;', text('Boss', 'Boss'), 'warning', 2.6);
+            pushLaneEvent(lane.id, '&#9888;', text('首领', 'Boss'), 'warning', 2.6);
             markBattleArena('warning', 1.5);
-            markBattleBanner(text('Boss 到场', 'Boss Arrived'), text('中路压力瞬间拉高，优先稳住前排。', 'Mid lane pressure spikes instantly. Hold the frontline first.'), 'warning');
-            markBattleNotice(text('Boss 已进入中路。', 'Boss has entered the mid lane.'), 'warning');
+            markBattleBanner(text('首领到场', 'Boss Arrived'), text('中路压力瞬间拉高，优先稳住前排。', 'Mid lane pressure spikes instantly. Hold the frontline first.'), 'warning');
+            markBattleNotice(text('首领已进入中路。', 'Boss has entered the mid lane.'), 'warning');
         }
 
         if (lane.spawnTimer <= 0 && lane.enemy.length < 5) {
@@ -2697,7 +2706,7 @@
             if (unit.hp > 0) return true;
             if (unit.isBoss) {
                 state.battle.bossDefeated = true;
-                pushLaneEvent(lane.id, '&#10003;', text('Boss 击破', 'Boss Down'), 'good', 2.4);
+                pushLaneEvent(lane.id, '&#10003;', text('首领击破', 'Boss Down'), 'good', 2.4);
                 markLaneImpact(lane.id, 'good', 'ally', 1.1);
                 markBattleArena('good', 1.3);
             }
@@ -3365,7 +3374,7 @@
 
     function renderBattleLaneHint(lane) {
         if (lane.enemy.some((unit) => unit.isBoss)) {
-            return text('Boss压路 · 先补前排', 'Boss present · hold frontline');
+            return text('首领压路 · 先补前排', 'Boss present · hold frontline');
         }
         const focusText = state.battle.focusLaneId === lane.id ? text('主攻', 'Focus') : text('侧路', 'Side');
         return text(`${focusText} · ${lane.friendly.length}v${lane.enemy.length}`, `${focusText} · ${lane.friendly.length}v${lane.enemy.length}`);
@@ -3384,7 +3393,7 @@
         const shieldUp = lane.friendly.some((unit) => unit.shield > 0);
         const bossPresent = lane.enemy.some((unit) => unit.isBoss);
 
-        if (bossPresent) tags.push({ label: text('Boss', 'Boss'), tone: 'warning' });
+        if (bossPresent) tags.push({ label: text('首领', 'Boss'), tone: 'warning' });
         if (allyBuffActive) tags.push({ label: text('增益', 'Buff'), tone: 'good' });
         if (shieldUp) tags.push({ label: text('护盾', 'Shield'), tone: 'good' });
         if (enemyJammed) tags.push({ label: text('干扰', 'Jammed'), tone: 'warning' });
@@ -3404,16 +3413,16 @@
 
     function getBattleBossStateText() {
         const battle = state.battle;
-        if (!battle) return text('Boss待机', 'Boss idle');
-        if (!isBossStage(battle.chapter)) return text('无Boss', 'No Boss');
-        if (battle.bossDefeated) return text('Boss已破', 'Boss down');
+        if (!battle) return text('首领待机', 'Boss idle');
+        if (!isBossStage(battle.chapter)) return text('无首领', 'No Boss');
+        if (battle.bossDefeated) return text('首领已破', 'Boss down');
         if (battle.lanes.some((lane) => lane.enemy.some((unit) => unit.isBoss))) {
-            return text('Boss交战', 'Boss engaged');
+            return text('首领交战', 'Boss engaged');
         }
 
         const bossMoment = Math.max(42, battle.maxTime - 16);
         const secondsLeft = Math.max(0, Math.ceil(bossMoment - battle.time));
-        return text(`Boss ${secondsLeft}s`, `Boss ${secondsLeft}s`);
+        return text(`首领 ${secondsLeft}秒`, `Boss ${secondsLeft}s`);
     }
 
     function getBattleLanePressure(lane) {
@@ -3796,7 +3805,7 @@
         if (!level) return '--';
         if (researchId === 'energyMatrix') {
             const maxEnergyBonus = Math.floor(level / 4);
-            return state.lang === 'en' ? `+${level * 2}% regen / +${maxEnergyBonus} max` : `鎭㈠ +${level * 2}% / 涓婇檺 +${maxEnergyBonus}`;
+            return state.lang === 'en' ? `+${level * 2}% regen / +${maxEnergyBonus} max` : `回复 +${level * 2}% / 上限 +${maxEnergyBonus}`;
         }
         if (researchId === 'frontlineArmor') return `+${level * 4}%`;
         if (researchId === 'fireControl') return `+${(level * 3.5).toFixed(1)}%`;
@@ -3810,11 +3819,11 @@
         if (short) {
             return state.lang === 'en'
                 ? `${formatCompact(cost.credits)}Cr / ${cost.cipherChips}Ch`
-                : `${formatCompact(cost.credits)}Cr / ${cost.cipherChips}Ch`;
+                : `${formatCompact(cost.credits)}币 / ${cost.cipherChips}芯`;
         }
         return state.lang === 'en'
             ? `${formatCompact(cost.credits)} credits / ${cost.cipherChips} chips`
-            : `${formatCompact(cost.credits)} credits / ${cost.cipherChips} chips`;
+            : `${formatCompact(cost.credits)} 金币 / ${cost.cipherChips} 芯片`;
     }
 
     function getMissionProgress(metric) {
@@ -4117,7 +4126,13 @@
         if (!cost) return '--';
         return state.lang === 'en'
             ? `${cost.fragments} Fr / ${cost.tactCores} Co / ${cost.credits} Cr${cost.cipherChips ? ` / ${cost.cipherChips} Ch` : ''}`
-            : `${cost.fragments} Fr / ${cost.tactCores} Co / ${cost.credits} Cr${cost.cipherChips ? ` / ${cost.cipherChips} Ch` : ''}`;
+            : `${cost.fragments}碎 / ${cost.tactCores}核 / ${cost.credits}币${cost.cipherChips ? ` / ${cost.cipherChips}芯` : ''}`;
+    }
+
+    function getUnitLaneText(lane) {
+        if (lane === 'front') return text('前排', 'Front');
+        if (lane === 'back') return text('后排', 'Back');
+        return text('灵活', 'Flex');
     }
 
     function getTabIcon(tabId) {
@@ -4145,10 +4160,284 @@
         return String(value);
     }
 
+    function translateZhFallback(value) {
+        if (!value || typeof value !== 'string') return value || '';
+        const exactMap = {
+            'A clash is active. Finish or retreat first.': '对战进行中，请先打完或撤退。',
+            'Credits': '金币',
+            'Upgrades / Entry': '升级 / 门票',
+            'Cores': '战术核心',
+            'Stars / Crates': '升星 / 卡包',
+            'Chips': '芯片',
+            'Research / Awaken': '研究 / 高星',
+            'Season XP': '赛季经验',
+            'Season Track': '赛季进度',
+            'Current Stage': '当前章节',
+            'Power': '战力',
+            'Gap': '差距',
+            'Ready': '就绪',
+            'Free Clashes': '免费对战',
+            'Recommended': '推荐',
+            'Tri-Lane Preview': '三路线预览',
+            'Top Lane': '上路',
+            'Mid Lane': '中路',
+            'Bot Lane': '下路',
+            'Open Deck': '前往卡组',
+            'Current Lineup': '当前阵容',
+            'Leader': '队长',
+            'Unit': '单位',
+            'Tactic': '战术',
+            'Lv': '等级',
+            'Upgrades / Shop': '升级 / 商店',
+            'Research / High Stars': '研究 / 高星',
+            'Crates': '卡包',
+            'Standard / Elite': '标准 / 精英',
+            'Go Lab': '前往研究',
+            'Open Shop': '前往商店',
+            'Open Crate': '开启卡包',
+            'Leaders': '队长',
+            'Units': '单位',
+            'Tactics': '战术',
+            'Crate Station': '开包站',
+            'Standard': '标准',
+            'Elite': '精英',
+            'Regular fragments': '常规碎片',
+            'Higher rarity / big fragments': '高稀有 / 大额碎片',
+            'Open Standard Crate': '开启标准卡包',
+            'Open Elite Crate': '开启精英卡包',
+            'Permanent Lab': '永久研究',
+            'Total Lv': '总等级',
+            'Go Clash': '前往对战',
+            'Protocol Missions': '协议任务',
+            'This page only keeps claimable, near-finished, and milestone missions to avoid long mobile scrolling.': '本页只保留可领取、接近完成和关键里程碑任务，减少手机端滚动。',
+            'In Progress': '进行中',
+            'Claimed': '已领取',
+            'Claim now': '立即领取',
+            'Closest tasks': '最近目标',
+            'Total done': '累计完成',
+            'Ready Now': '可领奖励',
+            'Up Next': '下一批',
+            'Top 4': '前四项',
+            'Season Route': '赛季路线',
+            'Current total': '当前总量',
+            'Free Done': '免费已领',
+            'XP left': '经验差',
+            'Track done': '轨道完成',
+            'Sponsor': '赞助',
+            'Unlock to claim': '解锁后可领',
+            'Free Track': '免费轨',
+            'Queue': '待推进',
+            'Sponsor Track': '赞助轨',
+            'Unlocked': '已解锁',
+            'Payment Next': '充值解锁',
+            'Supply Hub': '补给中心',
+            'Claim Daily': '领取每日',
+            'Season': '赛季',
+            'Spend here': '这里消耗',
+            'Std / Elite': '标 / 精',
+            'Daily': '每日',
+            'Tap to claim': '点击领取',
+            'Cooldown': '冷却中',
+            'Premium Top-Up': '充值补给',
+            'Active': '生效中',
+            'Locked': '未解锁',
+            'Level': '等级',
+            'Stars': '星级',
+            'Fragments': '碎片',
+            'Next Star': '下一星',
+            'Current Leader': '当前队长',
+            'Set Leader': '设为队长',
+            'Upgrade': '升级',
+            'Promote': '升星',
+            'Cost': '费用',
+            'Deployed': '已上阵',
+            'Lane': '定位',
+            'Remove': '移除',
+            'Deploy': '上阵',
+            'Impact': '效果倍率',
+            'Current Tactic': '当前战术',
+            'Equip': '装配',
+            'Max': '已满',
+            'Current': '当前效果',
+            'Next Cost': '下级消耗',
+            'Maxed': '已满级',
+            'Upgrade Research': '升级研究',
+            'Claim Reward': '领取奖励',
+            'Free': '免费',
+            'Unlock Pass': '解锁通行证',
+            'Claim': '领取',
+            'Daily Free Supply': '每日免费补给',
+            'Claim Supply': '领取补给',
+            'Buy Now': '立即购买',
+            'Spent': '累计充值',
+            'Lifetime verified': '累计已验证',
+            'Orders': '订单数',
+            '1 pending': '1 个待处理',
+            'No pending order': '暂无待处理',
+            'Sponsor Pass': '赞助通行证',
+            'Premium season ready': '赞助赛季已启用',
+            'Unlocked on first top-up': '首充后解锁',
+            'Daily Free': '每日免费',
+            'Base quota only': '仅基础次数',
+            'Pending': '待处理',
+            'View Rewards': '查看奖励',
+            'Resume Order': '继续订单',
+            'Create Order': '创建订单',
+            'Current Wall': '当前卡点',
+            'Empty': '空位',
+            'Choose a unit in Deck next.': '去卡组选择一个单位。',
+            'INFO': '提示',
+            'Got it': '知道了',
+            'Payment Center': '支付中心',
+            'Verified and granted': '已验证并发奖',
+            'Pack Price': '礼包价格',
+            'Exact Amount': '精确金额',
+            'Order ID': '订单号',
+            'Perk': '永久特权',
+            'Base display price': '展示基准价',
+            'Use exact amount for verify': '按精确金额验证',
+            'Verified': '已验证',
+            'Create order first': '请先创建订单',
+            'Active now': '当前生效',
+            'Activates after verify': '验证后生效',
+            'Receiving Address': '收款地址',
+            'Copy Address': '复制地址',
+            'Copy Amount': '复制金额',
+            'Paste OKX Wallet txid': '粘贴 OKX 钱包 TXID',
+            'Open Season': '前往赛季',
+            'Close': '关闭',
+            'Verify TXID': '验证 TXID',
+            'Cancel Order': '取消订单',
+            'That chapter is still locked.': '该章节尚未解锁。',
+            'Leader switched.': '队长已切换。',
+            'Keep at least one unit deployed.': '至少保留 1 个单位上阵。',
+            'You can only deploy 3 units right now.': '当前最多只能上阵 3 个单位。',
+            'Tactic card switched.': '战术卡已切换。',
+            'Not enough credits to keep battling.': '金币不足，无法继续对战。',
+            'Clash won.': '对战胜利。',
+            'Clash retreated with partial rewards.': '已撤退，并获得部分奖励。',
+            'Not enough credits.': '金币不足。',
+            'Card upgraded.': '卡牌已升级。',
+            'Not enough promotion materials.': '升星材料不足。',
+            'Promotion complete.': '升星完成。',
+            'Not enough credits or chips.': '金币或芯片不足。',
+            'Research upgraded.': '研究已升级。',
+            'Mission reward claimed.': '任务奖励已领取。',
+            'Season reward claimed.': '赛季奖励已领取。',
+            'Daily supply claimed.': '每日补给已领取。',
+            'Supply purchased.': '补给购买成功。',
+            'This pack has already been claimed.': '该礼包已领取。',
+            'Resume the active order below.': '请继续下方未完成订单。',
+            'Exact payment order created.': '精确支付订单已创建。',
+            'Pending order canceled.': '待处理订单已取消。',
+            'Create an order first.': '请先创建订单。',
+            'This order expired. Create a new one.': '该订单已过期，请重新创建。',
+            'TXID must be 64 hex characters.': 'TXID 必须是 64 位十六进制字符串。',
+            'This TXID was already used.': '该 TXID 已被使用。',
+            'Rewards for this pack were already granted.': '该礼包奖励已发放。',
+            'Payment Verified': '支付验证成功',
+            'TXID': '交易哈希',
+            'Total Spent': '累计充值',
+            'Already active': '已生效',
+            'Unlocked now': '现已解锁',
+            'Payment verified. Rewards granted.': '支付验证成功，奖励已发放。',
+            'Payment verified. Rewards were granted and the sponsor pass is active on this account.': '支付验证成功，奖励已发放，赞助通行证已在当前账号生效。',
+            'This pack has already been verified and the rewards are permanently attached to your account.': '该礼包已验证，奖励已永久绑定到当前账号。',
+            'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.': '请在 OKX 钱包按下方精确金额支付，然后粘贴 TXID 完成验证与发奖。',
+            'The previous order expired. Create a fresh order to continue payment and reward verification.': '上一笔订单已过期，请重新创建新订单后继续支付与验证。',
+            'Create an exact order first. The first successful top-up unlocks the sponsor season track.': '请先创建精确订单，首次成功充值会解锁赞助赛季轨道。',
+            'Paste the 64-character on-chain txid after payment.': '支付完成后粘贴 64 位链上 TXID。',
+            'This order expired. Create a new order before verifying the txid.': '该订单已过期，请先创建新订单再验证 TXID。',
+            'Only txids that match the active order amount, address, and valid time window can pass verification.': '只有金额、地址和有效时间窗口都匹配当前订单的 TXID 才能通过验证。',
+            'Create an order first, then complete payment in OKX Wallet and verify the txid.': '请先创建订单，再到 OKX 钱包完成支付并验证 TXID。',
+            'First verified top-up unlocks the sponsor season track. Tactical Pack adds +1 daily free clash. Champion Pack grants +8% squad ATK/HP.': '首笔验证成功的充值会解锁赞助赛季轨道；战术包额外提供每日 +1 免费对战；冠军包提供全队攻击与生命 +8%。',
+            'The order was verified successfully and rewards have been granted to this account.': '订单验证成功，奖励已发放到当前账号。',
+            'Receiving address copied.': '收款地址已复制。',
+            'Please copy the address manually.': '请手动复制地址。',
+            'Exact amount copied.': '精确金额已复制。',
+            'Please copy the amount manually.': '请手动复制金额。',
+            'Crate Result': '卡包结果',
+            'Elite Crate': '精英卡包',
+            'Standard Crate': '标准卡包',
+            'Rewards have been added to your inventory.': '奖励已加入库存。',
+            'Keep Building': '继续养成',
+            'Mid-Battle Boost': '战中强化',
+            'Choose 1 Boost': '选择 1 项强化',
+            'This only lasts for this clash. Patch the weakest part of the run first.': '该强化仅本局生效，优先补强最弱的一环。',
+            'Pick Boost': '选择强化',
+            'Live Chapter': '当前战斗章节',
+            'Locked During Clash': '对战中不可切换',
+            'Leader skill is not charged yet.': '领袖技尚未充能完成。',
+            'Leader Burst': '领袖爆发',
+            'Leader Skill Cast': '领袖技能释放',
+            'Wave': '波次',
+            'Boss': '首领',
+            'Boss Pressure': '首领压力',
+            'Boss Arrived': '首领到场',
+            'Boss idle': '首领待机',
+            'No Boss': '无首领',
+            'Boss down': '首领已破',
+            'Boss engaged': '首领交战',
+            'Enemy Core Cracked': '敌方核心破裂',
+            'Core Under Fire': '核心受击',
+            'Ready in ': 'Ready in ',
+            'Use your 3 free clashes first for the fastest daily progress.': '优先用完每日免费对战，可最快推进日常。',
+            'If power is low, return to Deck and fix your core three cards first.': '如果战力不足，先回卡组补强核心三张卡。',
+            'The third stage of each chapter is the boss stage and your best chip-value run.': '每章第 3 关是首领关，也是芯片收益更高的关卡。',
+            'Credits are permanently drained by upgrades, research, and entry costs, so avoid wasting them.': '金币会长期消耗在升级、研究和门票上，尽量避免乱花。',
+            'Research is your most stable permanent late-game growth.': '研究是后期最稳定的永久成长线。',
+            'Season XP mainly comes from clashes, bosses, and crate opens.': '赛季经验主要来自对战、首领与开包。',
+            'Crates mainly solve fragment growth speed.': '卡包主要解决碎片成长速度。',
+            'Complete it and claim the reward.': '完成后即可领取奖励。',
+            'Expired': '已过期',
+            'Latest Report': '最近战报',
+            'Lane Edge': '路线优势',
+            'Won lanes': '获胜路线',
+            'Run Rewards': '本局奖励',
+            'First Clear Bonus': '首通加成',
+            'Victory': '胜利',
+            'Down': '已击破',
+            'Alive': '存活',
+            'None': '无',
+            'A clash is already in progress.': '已有一场对战正在进行。',
+            'Battle retreated with partial rewards.': '战斗已撤退，并获得了部分奖励。',
+            'The clash has been retreated. Partial rewards were granted based on progress. Strengthen your focused lane first.': '本次对战已撤退，已按进度发放部分奖励，建议先补强当前主攻路线。',
+            'The clash did not fully clear but partial rewards were granted.': '本次未完全通关，但已发放部分奖励。',
+            'Time ran out before the enemy core fully broke. Raise power and improve mid-fight boosts first.': '时间结束前未能彻底击破敌方核心，建议先补战力并加强战中强化。',
+            'You broke through the enemy core. Your current deck and lab are strong enough to keep pushing.': '你已突破敌方核心，当前卡组与研究强度足以继续推进。',
+            'Mid-battle boost is ready.': '战中强化已就绪。',
+            'Marshal Zero overclocked every lane.': '零式统帅已为全路线完成超频。',
+            'Aegis Nova reinforced shields across the field.': '神盾星核已为全场补强护盾。',
+            'Standard crates are best for filling basic fragment gaps.': '标准卡包最适合补基础碎片缺口。',
+            'Tact cores become noticeably tight after 2-2.': '战术核心在 2-2 之后会明显吃紧。',
+            'Chips mostly gate research and high-star upgrades.': '芯片主要卡研究和高星升级。',
+            'Used to patch your current shortage.': '用于补当前短缺资源。'
+        };
+        if (exactMap[value]) return exactMap[value];
+
+        let match = value.match(/^(\d+) Ready$/);
+        if (match) return `${match[1]} 可领`;
+        match = value.match(/^([0-9.]+) XP left$/);
+        if (match) return `还差 ${match[1]} 经验`;
+        match = value.match(/^\+(\d+) from Tactical Pack$/);
+        if (match) return `战术包 +${match[1]}`;
+        match = value.match(/^Boss (\d+)s$/);
+        if (match) return `首领 ${match[1]}秒`;
+        match = value.match(/^Ready in ([0-9.]+)s$/);
+        if (match) return `${match[1]}秒后可出手`;
+        match = value.match(/^Open ([0-9-]+)$/);
+        if (match) return `进入 ${match[1]}`;
+        if (value === 'Front') return '前排';
+        if (value === 'Back') return '后排';
+        if (value === 'Flex') return '灵活';
+        return value;
+    }
+
     function text(zh, en) {
+        const zhValue = translateZhFallback(zh || '');
         return state.lang === 'en'
-            ? (en || zh || '')
-            : (zh || en || '');
+            ? (en || zhValue || zh || '')
+            : (zhValue || zh || en || '');
     }
 
     function escapeHtml(value) {

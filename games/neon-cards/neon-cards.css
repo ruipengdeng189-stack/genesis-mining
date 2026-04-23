@@ -581,6 +581,10 @@ button:disabled {
     flex: 0 0 min(228px, 78vw);
 }
 
+.nc-card-grid--mobile-scroll {
+    min-width: 0;
+}
+
 .nc-card-item,
 .nc-track-card {
     border-radius: 18px;
@@ -700,6 +704,9 @@ button:disabled {
     justify-content: center;
     padding: 18px 14px calc(env(safe-area-inset-bottom, 0px) + 18px);
     background: rgba(5, 8, 19, 0.72);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .nc-modal.is-hidden {
@@ -708,10 +715,12 @@ button:disabled {
 
 .nc-modal-card {
     width: min(100%, 640px);
-    max-height: min(78vh, 760px);
+    max-height: min(82dvh, 760px);
     padding: 18px;
     display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 14px;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -736,10 +745,13 @@ button:disabled {
 }
 
 .nc-modal-body {
-    overflow: auto;
+    min-height: 0;
+    overflow-y: auto;
     display: grid;
     gap: 12px;
     padding-right: 2px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .nc-modal-actions {
@@ -2177,17 +2189,20 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     .nc-card-copy,
-    .nc-inline-note {
+    .nc-inline-note,
+    .nc-note-mini {
         font-size: 12px;
-    }
-
-    .nc-card--compact .nc-card-copy,
-    .nc-card-item--dense .nc-card-copy,
-    .nc-card-item--dense .nc-inline-note {
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
         overflow: hidden;
+    }
+
+    .nc-card--compact .nc-card-copy,
+    .nc-card-item--dense .nc-card-copy,
+    .nc-card-item--dense .nc-inline-note,
+    .nc-card-item--dense .nc-note-mini {
+        -webkit-line-clamp: 2;
     }
 
     .nc-chip {
@@ -2212,6 +2227,47 @@ body[data-neon-live="1"] .nc-battle-event-strip {
 
     .nc-flow-grid--strip::-webkit-scrollbar {
         display: none;
+    }
+
+    .nc-card-grid--mobile-scroll {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+        scroll-snap-type: x proximity;
+    }
+
+    .nc-card-grid--mobile-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nc-card-grid--mobile-scroll > * {
+        flex: 0 0 min(248px, 82vw);
+        scroll-snap-align: start;
+    }
+
+    .nc-panel-head,
+    .nc-card-head {
+        gap: 10px;
+    }
+
+    .nc-head-kpi strong {
+        font-size: 16px;
+    }
+
+    .nc-modal {
+        padding: 10px 10px calc(env(safe-area-inset-bottom, 0px) + 10px);
+        align-items: stretch;
+    }
+
+    .nc-modal-card {
+        width: 100%;
+        max-height: calc(100dvh - env(safe-area-inset-bottom, 0px) - 20px);
+        padding: 14px;
+        gap: 12px;
+        border-radius: 20px;
     }
 
     .nc-flow-card--compact {
