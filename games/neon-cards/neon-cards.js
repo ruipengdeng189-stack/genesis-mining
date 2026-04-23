@@ -490,6 +490,9 @@
             if (left.ratio !== right.ratio) return right.ratio - left.ratio;
             return left.index - right.index;
         });
+        const readyMissions = missions.filter((item) => item.ready);
+        const activeMissions = missions.filter((item) => !item.ready && !item.claimed).slice(0, 4);
+        const claimedCount = missions.filter((item) => item.claimed).length;
 
         return `
             <section class="nc-card">
@@ -507,14 +510,46 @@
                     { label: text('Go Clash', 'Go Clash'), action: 'openTab', value: 'clash', tone: 'ghost' },
                     { label: text('Open Deck', 'Open Deck'), action: 'openTab', value: 'deck', tone: 'ghost' }
                 ])}
-                <div class="nc-card-grid">
-                    ${missions.map(({ mission, progress, claimed, ready }) => renderMissionCard(mission, progress, claimed, ready)).join('')}
+                <div class="nc-wallet-strip">
+                    ${renderWalletPill('&#9733;', text('Ready', 'Ready'), String(readyMissions.length), text('Claim now', 'Claim now'))}
+                    ${renderWalletPill('&#9201;', text('In Progress', 'In Progress'), String(missions.filter((item) => !item.ready && !item.claimed).length), text('Closest tasks', 'Closest tasks'))}
+                    ${renderWalletPill('&#10003;', text('Claimed', 'Claimed'), `${claimedCount}/${missions.length}`, text('Total done', 'Total done'))}
                 </div>
+                ${state.save.lastResult ? renderLastResultCard() : ''}
+                ${readyMissions.length ? `
+                    <article class="nc-list-card">
+                        <div class="nc-card-head">
+                            <div>
+                                <h3>${renderIconLabel('&#9733;', text('Ready Now', 'Ready Now'))}</h3>
+                            </div>
+                            <span class="nc-tag is-good">${escapeHtml(String(readyMissions.length))}</span>
+                        </div>
+                        <div class="nc-card-grid nc-card-grid--scroll">
+                            ${readyMissions.map(({ mission, progress, claimed, ready }) => renderMissionCard(mission, progress, claimed, ready)).join('')}
+                        </div>
+                    </article>
+                ` : ''}
+                ${activeMissions.length ? `
+                    <article class="nc-list-card">
+                        <div class="nc-card-head">
+                            <div>
+                                <h3>${renderIconLabel('&#9201;', text('Up Next', 'Up Next'))}</h3>
+                            </div>
+                            <span class="nc-tag">${escapeHtml(text('Top 4', 'Top 4'))}</span>
+                        </div>
+                        <div class="nc-card-grid nc-card-grid--scroll">
+                            ${activeMissions.map(({ mission, progress, claimed, ready }) => renderMissionCard(mission, progress, claimed, ready)).join('')}
+                        </div>
+                    </article>
+                ` : ''}
+                ${!readyMissions.length && !activeMissions.length ? `<div class="nc-inline-note">${escapeHtml(text('当前任务已全部完成，等待新的进度推进。', 'All current missions are complete. Push more progress to unlock the next rewards.'))}</div>` : ''}
             </section>
         `;
     }
 
     function renderSeasonTab() {
+        const freeTrack = getSeasonTrackState('free');
+        const premiumTrack = getSeasonTrackState('premium');
         return `
             <section class="nc-card">
                 <div class="nc-panel-head">
@@ -531,30 +566,39 @@
                     { label: text('Go Clash', 'Go Clash'), action: 'openTab', value: 'clash', tone: 'ghost' },
                     { label: isSeasonPassUnlocked() ? text('Open Shop', 'Open Shop') : text('Unlock Pass', 'Unlock Pass'), action: isSeasonPassUnlocked() ? 'openTab' : 'previewOffer', value: isSeasonPassUnlocked() ? 'shop' : 'starter', tone: 'ghost' }
                 ])}
+                <div class="nc-wallet-strip">
+                    ${renderWalletPill('&#10039;', text('Season XP', 'Season XP'), String(state.save.seasonXp), text('Current total', 'Current total'))}
+                    ${renderWalletPill('&#9733;', text('Ready', 'Ready'), String(getClaimableSeasonCount()), text('Claim now', 'Claim now'))}
+                    ${renderWalletPill('&#9671;', text('Free Done', 'Free Done'), `${freeTrack.claimedCount}/${freeTrack.totalCount}`, freeTrack.nextNode ? text(`${Math.max(0, freeTrack.nextNode.xp - state.save.seasonXp)} XP left`, `${Math.max(0, freeTrack.nextNode.xp - state.save.seasonXp)} XP left`) : text('Track done', 'Track done'))}
+                    ${renderWalletPill('&#9670;', text('Sponsor', 'Sponsor'), premiumTrack.locked ? text('Locked', 'Locked') : `${premiumTrack.claimedCount}/${premiumTrack.totalCount}`, premiumTrack.locked ? text('Unlock to claim', 'Unlock to claim') : premiumTrack.nextNode ? text(`${Math.max(0, premiumTrack.nextNode.xp - state.save.seasonXp)} XP left`, `${Math.max(0, premiumTrack.nextNode.xp - state.save.seasonXp)} XP left`) : text('Track done', 'Track done'))}
+                </div>
                 <div class="nc-two-col">
                     <article class="nc-list-card">
                         <div class="nc-card-head">
                             <div>
                                 <h3>${renderIconLabel('&#9733;', text('Free Track', 'Free Track'))}</h3>
-                                <div class="nc-card-copy">${escapeHtml(text('Available to every player.', 'Available to every player.'))}</div>
                             </div>
+                            <span class="nc-tag ${freeTrack.readyCount ? 'is-good' : ''}">${escapeHtml(freeTrack.readyCount ? text(`${freeTrack.readyCount} Ready`, `${freeTrack.readyCount} Ready`) : text('Queue', 'Queue'))}</span>
                         </div>
-                        <div class="nc-track-grid">
-                            ${config.seasonFreeTrack.map((node) => renderSeasonNode('free', node)).join('')}
-                        </div>
+                        ${freeTrack.visibleNodes.length ? `
+                            <div class="nc-track-grid nc-track-grid--scroll">
+                                ${freeTrack.visibleNodes.map((node) => renderSeasonNode('free', node)).join('')}
+                            </div>
+                        ` : `<div class="nc-inline-note">${escapeHtml(text('免费轨奖励已经全部领完。', 'All rewards on the free track are already claimed.'))}</div>`}
                     </article>
 
                     <article class="nc-list-card">
                         <div class="nc-card-head">
                             <div>
                                 <h3>${renderIconLabel('&#9734;', text('Sponsor Track', 'Sponsor Track'))}</h3>
-                                <div class="nc-card-copy">${escapeHtml(isSeasonPassUnlocked() ? text('Unlocked and ready for extra long-term rewards.', 'Unlocked and ready for extra long-term rewards.') : text('Your first verified top-up unlocks the sponsor track and its extra season rewards.', 'Your first verified top-up unlocks the sponsor track and its extra season rewards.'))}</div>
                             </div>
                             <span class="nc-tag ${isSeasonPassUnlocked() ? 'is-good' : 'is-warning'}">${escapeHtml(isSeasonPassUnlocked() ? text('Unlocked', 'Unlocked') : text('Payment Next', 'Payment Next'))}</span>
                         </div>
-                        <div class="nc-track-grid">
-                            ${config.seasonPremiumTrack.map((node) => renderSeasonNode('premium', node)).join('')}
-                        </div>
+                        ${premiumTrack.visibleNodes.length ? `
+                            <div class="nc-track-grid nc-track-grid--scroll">
+                                ${premiumTrack.visibleNodes.map((node) => renderSeasonNode('premium', node)).join('')}
+                            </div>
+                        ` : `<div class="nc-inline-note">${escapeHtml(text('赞助轨奖励已经全部领完。', 'All rewards on the sponsor track are already claimed.'))}</div>`}
                     </article>
                 </div>
             </section>
@@ -577,8 +621,13 @@
                     { label: text('Open Deck', 'Open Deck'), action: 'openTab', value: 'deck', tone: 'ghost' },
                     { label: text('Season', 'Season'), action: 'openTab', value: 'season', tone: 'ghost' }
                 ])}
+                <div class="nc-wallet-strip">
+                    ${renderWalletPill('&#9679;', text('Credits', 'Credits'), formatCompact(state.save.credits), text('Spend here', 'Spend here'))}
+                    ${renderWalletPill('&#9638;', text('Crates', 'Crates'), `${state.save.inventory.standardCrates}/${state.save.inventory.eliteCrates}`, text('Std / Elite', 'Std / Elite'))}
+                    ${renderWalletPill('&#9733;', text('Daily', 'Daily'), canClaimDailySupply() ? text('Ready', 'Ready') : getDailySupplyCooldownText(), canClaimDailySupply() ? text('Tap to claim', 'Tap to claim') : text('Cooldown', 'Cooldown'))}
+                </div>
 
-                <div class="nc-card-grid">
+                <div class="nc-card-grid nc-card-grid--two">
                     ${renderDailySupplyCard()}
                     ${softItems}
                 </div>
@@ -592,7 +641,7 @@
                     </div>
                 </div>
                 ${renderPaymentStatusPanel()}
-                <div class="nc-card-grid">
+                <div class="nc-card-grid nc-card-grid--two">
                     ${premiumItems}
                 </div>
             </section>
@@ -752,7 +801,6 @@
                 <div class="nc-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9733;', text('Daily Free Supply', 'Daily Free Supply'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('One claim per day for a small refill of credits, cores, and season XP.', 'One claim per day for a small refill of credits, cores, and season XP.'))}</div>
                     </div>
                     <span class="nc-tag ${ready ? 'is-good' : ''}">${escapeHtml(ready ? text('Ready', 'Ready') : getDailySupplyCooldownText())}</span>
                 </div>
@@ -1543,20 +1591,11 @@
 
     function renderHeroSummary() {
         if (!ui.heroSummary) return;
-        const chapter = getSelectedChapter();
-        const battle = state.tab === 'clash' ? state.battle : null;
-        if (battle) {
-            ui.heroSummary.innerHTML = `
-                <div class="nc-summary-grid">
-                    ${renderSummaryItem('&#10022;', text('Current Stage', 'Current Stage'), `${chapter.id} • ${localize(chapter.name)}`)}
-                    ${renderSummaryItem('&#9201;', text('Timer', 'Timer'), battle.result ? text('Settled', 'Settled') : formatBattleTime(Math.max(0, battle.maxTime - battle.time)))}
-                    ${renderSummaryItem('&#9889;', text('Energy', 'Energy'), `${battle.result ? 0 : battle.energy.toFixed(1)} / ${battle.maxEnergy}`)}
-                    ${renderSummaryItem('&#9673;', text('Core', 'Core'), `${getBattleCorePercent('ally')}% / ${getBattleCorePercent('enemy')}%`)}
-                </div>
-            `;
+        if (state.tab === 'clash') {
+            ui.heroSummary.innerHTML = '';
             return;
         }
-
+        const chapter = getSelectedChapter();
         const power = getDeckPower();
         const gap = Math.max(0, chapter.recommended - power);
         const freeLeft = getRemainingFreeClashes();
@@ -1573,57 +1612,43 @@
     function renderClashTab() {
         const chapter = getSelectedChapter();
         const power = getDeckPower();
-        const gap = chapter.recommended - power;
         const battle = state.battle;
         if (battle) {
             return renderBattleStage();
         }
-        return `
-            <section class="nc-card nc-card--compact">
-                <div class="nc-panel-head">
-                    <div>
-                        <h3>${renderIconLabel('&#10022;', localize(chapter.name), chapter.id)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(
-                            battle
-                                ? text('Tap a hand card, then tap a lane to deploy. Tactics and leader skills benefit from lane focus and lab bonuses.', 'Tap a hand card, then tap a lane to deploy. Tactics and leader skills benefit from lane focus and lab bonuses.')
-                                : text('选章节后直接开战；卡组与研究负责补强卡点。', 'Pick a stage and start fighting. Deck and Lab are where you patch progression walls.')
-                        )}</div>
-                    </div>
-                    <div class="nc-head-kpi">
-                        <span class="nc-tag ${battle?.active ? 'is-good' : gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(battle?.active ? text('Live Clash', 'Live Clash') : text('Recommended', 'Recommended'))}</span>
-                        <strong>${escapeHtml(battle?.active ? formatBattleTime(Math.max(0, battle.maxTime - battle.time)) : `${power} / ${chapter.recommended}`)}</strong>
-                    </div>
-                </div>
-
-                ${battle ? '' : `
-                    <div class="nc-chip-row">
-                        ${config.chapters.map((item, index) => renderChapterChip(item, index)).join('')}
-                    </div>
-
-                    ${renderFlowStrip('clash', { chapter, gap })}
-                `}
-            </section>
-
-            ${battle ? renderBattleStage() : renderClashSetup(chapter, power)}
-
-            ${!battle && state.save.lastResult ? renderLastResultCard() : ''}
-        `;
+        return renderClashSetup(chapter, power);
     }
 
     function renderClashSetup(chapter, power) {
         const unitIds = state.save.selectedUnits;
+        const gap = Math.max(0, chapter.recommended - power);
+        const freeLeft = getRemainingFreeClashes();
+        const tactic = tacticMap[state.save.selectedTacticId];
         return `
-            <section class="nc-card nc-card--compact nc-battle-card">
+            <section class="nc-card nc-card--compact nc-battle-card nc-battle-card--setup">
                 <div class="nc-card-head">
                     <div>
-                        <h3>${renderIconLabel('&#9776;', text('Tri-Lane Preview', 'Tri-Lane Preview'))}</h3>
-                        <div class="nc-card-copy">${escapeHtml(text('确认 3 名上阵单位与 1 张战术，开始后直接进入实时对战。', 'Confirm 3 deployed units and 1 tactic. Starting enters live combat immediately.'))}</div>
+                        <h3>${renderIconLabel('&#10022;', localize(chapter.name), chapter.id)}</h3>
+                        <div class="nc-card-copy">${escapeHtml(text('选卡 → 点路线 → 100% 放领袖技。开始后直接进入实时三路线战斗。', 'Pick a card → tap a lane → cast leader skill at 100%. Starting jumps straight into the live tri-lane fight.'))}</div>
                     </div>
+                    <span class="nc-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(gap > 0 ? text('Need Power', 'Need Power') : text('Ready', 'Ready'))}</span>
                 </div>
+
+                <div class="nc-chip-row">
+                    ${config.chapters.map((item, index) => renderChapterChip(item, index)).join('')}
+                </div>
+
+                <div class="nc-battle-state-strip">
+                    ${renderBattleStateChip('&#9889;', `${text('Power', 'Power')} ${power}/${chapter.recommended}`, gap > 0 ? 'warning' : 'good')}
+                    ${renderBattleStateChip('&#9655;', freeLeft > 0 ? text(`Free ${freeLeft}/${getDailyFreeClashesLimit()}`, `Free ${freeLeft}/${getDailyFreeClashesLimit()}`) : text(`Entry ${getEntryCost(chapter)} Cr`, `Entry ${getEntryCost(chapter)} Cr`), freeLeft > 0 ? 'good' : '')}
+                    ${renderBattleStateChip('&#10038;', `${text('Tactic', 'Tactic')} • ${tactic ? localize(tactic.name) : text('None', 'None')}`)}
+                </div>
+
+                ${renderClashGuideStrip()}
 
                 <div class="nc-action-row nc-action-row--setup">
                     <button class="primary-btn wide-btn" type="button" data-action="startClash">${escapeHtml(getStartClashLabel(chapter))}</button>
-                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('Open Deck', 'Open Deck'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('Tune Deck', 'Tune Deck'))}</button>
                 </div>
 
                 <div class="nc-board-grid">
@@ -1722,6 +1747,27 @@
             <span class="nc-tag ${tone ? `is-${tone}` : ''}">
                 ${icon} ${escapeHtml(label)}
             </span>
+        `;
+    }
+
+    function renderClashGuideStrip() {
+        const items = [
+            { icon: '&#9312;', title: text('Pick Card', 'Pick Card'), detail: text('点单位或战术卡', 'Tap a unit or tactic card') },
+            { icon: '&#9313;', title: text('Tap Lane', 'Tap Lane'), detail: text('点上 / 中 / 下路线', 'Tap top / mid / bot lane') },
+            { icon: '&#9889;', title: text('Cast Skill', 'Cast Skill'), detail: text('100% 充能放领袖技', 'Use leader skill at 100%') }
+        ];
+        return `
+            <div class="nc-guide-strip">
+                ${items.map((item) => `
+                    <div class="nc-guide-chip">
+                        <div class="nc-pill-head">
+                            <span class="nc-resource-icon" aria-hidden="true">${item.icon}</span>
+                            <span>${escapeHtml(item.title)}</span>
+                        </div>
+                        <small>${escapeHtml(item.detail)}</small>
+                    </div>
+                `).join('')}
+            </div>
         `;
     }
 
@@ -2924,6 +2970,31 @@
             ? config.seasonPremiumTrack.filter((node) => state.save.seasonXp >= node.xp && !state.save.premiumSeasonClaimed.includes(`premium:${node.id}`)).length
             : 0;
         return free + premium;
+    }
+
+    function getSeasonTrackState(track) {
+        const list = track === 'premium' ? config.seasonPremiumTrack : config.seasonFreeTrack;
+        const claimedStore = track === 'premium' ? state.save.premiumSeasonClaimed : state.save.seasonClaimed;
+        const locked = track === 'premium' && !isSeasonPassUnlocked();
+        const nodes = list.map((node) => {
+            const key = `${track}:${node.id}`;
+            const claimed = claimedStore.includes(key);
+            const ready = state.save.seasonXp >= node.xp;
+            return { ...node, claimed, ready };
+        });
+        const readyNodes = locked ? [] : nodes.filter((node) => node.ready && !node.claimed);
+        const upcomingNodes = locked
+            ? nodes.slice(0, 3)
+            : nodes.filter((node) => !node.claimed && !node.ready).slice(0, 3);
+        const visibleNodes = [...readyNodes, ...upcomingNodes].slice(0, 4);
+        return {
+            locked,
+            readyCount: readyNodes.length,
+            claimedCount: nodes.filter((node) => node.claimed).length,
+            totalCount: nodes.length,
+            nextNode: locked ? nodes[0] || null : nodes.find((node) => !node.claimed && !node.ready) || null,
+            visibleNodes
+        };
     }
 
     function getTotalResearchLevels() {
