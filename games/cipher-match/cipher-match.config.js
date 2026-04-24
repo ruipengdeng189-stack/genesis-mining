@@ -40,6 +40,11 @@
             module: { baseCredits: 130, creditGrowth: 1.28, baseBits: 16, bitGrowth: 1.18 },
             skill: { baseCredits: 160, creditGrowth: 1.31, baseBits: 18, bitGrowth: 1.2 }
         },
+        cardMaxLevels: {
+            leader: 12,
+            module: 10,
+            skill: 10
+        },
         leaders: [
             {
                 id: 'glintFox',
@@ -148,7 +153,7 @@
                 id: '1-2',
                 chapter: 1,
                 name: { zh: '循环街区', en: 'Loop Block' },
-                recommended: 280,
+                recommended: 270,
                 moves: 20,
                 goals: [
                     { type: 'gamma', amount: 13 },
@@ -162,21 +167,21 @@
                 id: '1-3',
                 chapter: 1,
                 name: { zh: '防火墙门', en: 'Firewall Gate' },
-                recommended: 430,
+                recommended: 400,
                 moves: 22,
                 goals: [
                     { type: 'omega', amount: 12 },
                     { type: 'shield', amount: 8 }
                 ],
-                pressure: { zh: '首领战', en: 'First boss' },
-                rewardFocus: { zh: '密码尘', en: 'Cipher dust' },
+                pressure: { zh: '首个软卡点', en: 'First soft gate' },
+                rewardFocus: { zh: '首领破盾材料', en: 'Boss break dust' },
                 reward: { credits: 390, keyBits: 50, cipherDust: 18, seasonXp: 44 }
             },
             {
                 id: '2-1',
                 chapter: 2,
                 name: { zh: '镜像港', en: 'Mirror Port' },
-                recommended: 650,
+                recommended: 520,
                 moves: 21,
                 goals: [
                     { type: 'alpha', amount: 16 },
@@ -190,35 +195,35 @@
                 id: '2-2',
                 chapter: 2,
                 name: { zh: '裂屏矩阵', en: 'Fracture Matrix' },
-                recommended: 880,
+                recommended: 650,
                 moves: 22,
                 goals: [
                     { type: 'beta', amount: 17 },
                     { type: 'gamma', amount: 16 }
                 ],
-                pressure: { zh: '研究门槛', en: 'Research gate' },
-                rewardFocus: { zh: '研究材料', en: 'Research dust' },
+                pressure: { zh: '研究卡点', en: 'Research gate' },
+                rewardFocus: { zh: '研究材料补强', en: 'Research dust' },
                 reward: { credits: 730, keyBits: 90, cipherDust: 28, seasonXp: 72 }
             },
             {
                 id: '2-3',
                 chapter: 2,
                 name: { zh: '主密钥冠', en: 'Crown Key' },
-                recommended: 1160,
+                recommended: 780,
                 moves: 24,
                 goals: [
                     { type: 'omega', amount: 14 },
                     { type: 'shield', amount: 12 }
                 ],
-                pressure: { zh: '第二章首领战', en: 'Chapter boss' },
-                rewardFocus: { zh: '中期成长', en: 'Mid growth' },
+                pressure: { zh: '中期首领卡点', en: 'Mid boss gate' },
+                rewardFocus: { zh: '中期成长跳板', en: 'Mid-growth springboard' },
                 reward: { credits: 920, keyBits: 116, cipherDust: 38, seasonXp: 88 }
             },
             {
                 id: '3-1',
                 chapter: 3,
                 name: { zh: '回声桥', en: 'Echo Bridge' },
-                recommended: 1500,
+                recommended: 900,
                 moves: 22,
                 goals: [
                     { type: 'alpha', amount: 18 },
@@ -232,14 +237,14 @@
                 id: '3-2',
                 chapter: 3,
                 name: { zh: '裂隙缓存', en: 'Rift Cache' },
-                recommended: 1880,
+                recommended: 1030,
                 moves: 23,
                 goals: [
                     { type: 'beta', amount: 19 },
                     { type: 'gamma', amount: 18 },
                     { type: 'omega', amount: 10 }
                 ],
-                pressure: { zh: '三目标卡点', en: 'Triple-goal gate' },
+                pressure: { zh: '三目标成长墙', en: 'Triple-goal wall' },
                 rewardFocus: { zh: '密钥位冲刺', en: 'Bit spike' },
                 reward: { credits: 1460, keyBits: 182, cipherDust: 56, seasonXp: 116 }
             },
@@ -247,13 +252,13 @@
                 id: '3-3',
                 chapter: 3,
                 name: { zh: '终焉防火墙', en: 'Terminal Firewall' },
-                recommended: 2360,
+                recommended: 1160,
                 moves: 25,
                 goals: [
                     { type: 'omega', amount: 18 },
                     { type: 'shield', amount: 16 }
                 ],
-                pressure: { zh: '第三章首领战', en: 'Chapter 3 boss' },
+                pressure: { zh: '后段首领卡点', en: 'Late boss gate' },
                 rewardFocus: { zh: '后段资源爆发', en: 'Late burst rewards' },
                 reward: { credits: 1880, keyBits: 236, cipherDust: 78, seasonXp: 142 }
             },
@@ -261,7 +266,7 @@
                 id: '4-1',
                 chapter: 4,
                 name: { zh: '镜核回廊', en: 'Mirror Core' },
-                recommended: 2840,
+                recommended: 1260,
                 moves: 24,
                 goals: [
                     { type: 'beta', amount: 22 },
@@ -275,14 +280,14 @@
                 id: '4-2',
                 chapter: 4,
                 name: { zh: '崩解索引', en: 'Break Index' },
-                recommended: 3440,
+                recommended: 1360,
                 moves: 25,
                 goals: [
                     { type: 'alpha', amount: 22 },
                     { type: 'gamma', amount: 20 },
                     { type: 'omega', amount: 14 }
                 ],
-                pressure: { zh: '三目标压缩', en: 'Triple-goal squeeze' },
+                pressure: { zh: '终盘成长墙', en: 'Endgame wall' },
                 rewardFocus: { zh: '密钥位高峰', en: 'Bit peak' },
                 reward: { credits: 2940, keyBits: 368, cipherDust: 118, seasonXp: 194 }
             },
@@ -290,7 +295,7 @@
                 id: '4-3',
                 chapter: 4,
                 name: { zh: '零域主防火墙', en: 'Null Firewall' },
-                recommended: 4180,
+                recommended: 1440,
                 moves: 27,
                 goals: [
                     { type: 'omega', amount: 20 },
@@ -347,7 +352,7 @@
                 id: 'stabilityMesh',
                 icon: '⬢',
                 name: { zh: '稳定网格', en: 'Stability Mesh' },
-                desc: { zh: '构筑战力每级 +3%。', en: 'Deck power +3% per level.' },
+                desc: { zh: '构筑战力每级 +4%。', en: 'Deck power +4% per level.' },
                 effect: { zh: '推荐战力追赶', en: 'Power growth' },
                 maxLevel: 10,
                 baseCredits: 220,
@@ -386,26 +391,26 @@
                 id: 'dailyFree',
                 title: { zh: '每日免费补给', en: 'Daily Free Supply' },
                 price: 0,
-                reward: { credits: 180, keyBits: 16, cipherDust: 6, seasonXp: 16 },
+                reward: { credits: 220, keyBits: 18, cipherDust: 8, seasonXp: 18 },
                 daily: true
             },
             {
                 id: 'bitBundle',
                 title: { zh: '密钥位补给', en: 'Key Bit Bundle' },
                 price: 480,
-                reward: { keyBits: 48 }
+                reward: { keyBits: 60 }
             },
             {
                 id: 'dustPack',
                 title: { zh: '密码尘补给', en: 'Dust Pack' },
                 price: 620,
-                reward: { cipherDust: 24 }
+                reward: { cipherDust: 30 }
             },
             {
                 id: 'boosterTray',
                 title: { zh: '闯关加速盘', en: 'Run Booster Tray' },
                 price: 960,
-                reward: { credits: 400, keyBits: 36, cipherDust: 14, seasonXp: 28 }
+                reward: { credits: 520, keyBits: 44, cipherDust: 18, seasonXp: 36 }
             }
         ],
         paymentOffers: [
@@ -413,25 +418,25 @@
                 id: 'starterPack',
                 price: 6,
                 name: { zh: '新手破译包', en: 'Starter Decode Pack' },
-                permanent: { zh: '永久 +1 每日免费局，并提高开局能量。', en: 'Permanent +1 daily free run and a stronger opening energy start.' },
+                permanent: { zh: '适合 1-3 / 2-1 首次卡点：永久 +1 每日免费局，每局开局更稳。', en: 'Built for the 1-3 / 2-1 soft gate: +1 daily free run and stronger starts every run.' },
                 oneTime: true,
-                reward: { starterBoost: true, credits: 3600, keyBits: 260, cipherDust: 100 }
+                reward: { starterBoost: true, credits: 2600, keyBits: 220, cipherDust: 72 }
             },
             {
                 id: 'seasonPass',
                 price: 18,
                 name: { zh: '赛季通行证', en: 'Season Pass' },
-                permanent: { zh: '解锁当前赛季高级轨道，并立即补一波资源。', en: 'Unlocks this season’s premium track and grants an instant resource burst.' },
+                permanent: { zh: '适合 2-2 / 2-3 研究卡点：解锁高级轨道，研究更便宜，技能循环更顺。', en: 'Built for the 2-2 / 2-3 research gate: unlocks the premium track, cheaper research, and smoother skill cycles.' },
                 oneTime: true,
-                reward: { premiumSeason: true, credits: 3200, keyBits: 220, cipherDust: 84, seasonXp: 120 }
+                reward: { premiumSeason: true, credits: 4200, keyBits: 320, cipherDust: 160, seasonXp: 180 }
             },
             {
                 id: 'breakerVault',
                 price: 68,
                 name: { zh: '破关金库', en: 'Breaker Vault' },
-                permanent: { zh: '永久减轻首领反制，并提升章节结算收益。', en: 'Permanently softens boss counters and boosts chapter payouts.' },
+                permanent: { zh: '适合 3-3 / 4-x 首领卡点：永久减轻首领反制，并提高后段结算收益。', en: 'Built for the 3-3 / 4-x boss gate: permanently softens boss counters and boosts late-stage payouts.' },
                 oneTime: true,
-                reward: { vaultRelay: true, credits: 30000, keyBits: 2100, cipherDust: 820 }
+                reward: { vaultRelay: true, credits: 18000, keyBits: 1350, cipherDust: 560 }
             }
         ]
     };

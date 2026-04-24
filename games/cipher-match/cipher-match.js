@@ -23,6 +23,11 @@
         ...config.modules.map((item) => item.id),
         ...config.skills.map((item) => item.id)
     ];
+    const cardTypeMap = Object.fromEntries([
+        ...config.leaders.map((item) => [item.id, 'leader']),
+        ...config.modules.map((item) => [item.id, 'module']),
+        ...config.skills.map((item) => [item.id, 'skill'])
+    ]);
 
     const state = {
         lang: readLang(),
@@ -619,7 +624,7 @@
         const energyBonus = getResearchLevel('pulseBattery') * 6;
         const skillBonus = getResearchLevel('signalAmp') * 4;
         const lootBonus = getResearchLevel('lootRelay') * 5;
-        const powerBonus = getResearchLevel('stabilityMesh') * 3;
+        const powerBonus = getResearchLevel('stabilityMesh') * 4;
         return `
             <div class="cm-stack">
                 ${renderRunLockNotice()}
@@ -639,7 +644,7 @@
                     <div class="cm-mini-card">
                         <strong>${escapeHtml(text('构筑加成', 'Deck Bonus'))}</strong>
                         <div class="cm-value">${powerBonus}%</div>
-                        <small>${escapeHtml(text('每级 +3%，直接抬高推荐线追赶速度。', 'Each level adds 3% deck power.'))}</small>
+                        <small>${escapeHtml(text('每级 +4%，直接抬高推荐线追赶速度。', 'Each level adds 4% deck power.'))}</small>
                     </div>
                 </div>
 
@@ -755,6 +760,8 @@
                     <div class="cm-shop-list">${config.shopItems.map((item) => renderShopItem(item)).join('')}</div>
                 </div>
 
+                ${renderPaymentStatusCard()}
+
                 <div class="cm-card">
                     <div class="cm-card-head">
                         <div>
@@ -837,6 +844,9 @@
             { icon: '②', label: text('凑 3 连', 'Match 3') },
             { icon: '③', label: text('满能量放技', 'Cast at 100') }
         ];
+        if (assist.rookie.active) {
+            steps.push({ icon: '④', label: text('首补免费', '1st continue free') });
+        }
         return `
             <div class="cm-mini-card cm-run-brief">
                 <div class="cm-card-head">
@@ -879,11 +889,13 @@
 
     function renderCardItem(type, item, selected) {
         const level = getCardLevel(item.id);
+        const maxLevel = getCardMaxLevel(type);
+        const maxed = level >= maxLevel;
         const cost = getCardCost(type, item.id);
-        const canAfford = state.save.credits >= cost.credits && state.save.keyBits >= cost.keyBits;
+        const canAfford = !maxed && state.save.credits >= cost.credits && state.save.keyBits >= cost.keyBits;
         const metaLocked = isMetaActionLocked();
         const power = getCardPower(type, item.id);
-        const nextPower = power + getCardPowerStep(type);
+        const nextPower = maxed ? power : power + getCardPowerStep(type);
         const action = type === 'leader' ? 'setLeader' : type === 'module' ? 'toggleModule' : 'setSkill';
         const selectLabel = type === 'module'
             ? selected ? text('卸下', 'Unequip') : text('装配', 'Equip')
@@ -899,17 +911,17 @@
                         <strong>${escapeHtml(localize(item.name))}</strong>
                         <div class="cm-copy">${escapeHtml(localize(item.role))}</div>
                     </div>
-                    <span class="cm-tag ${selected ? 'is-good' : ''}">${escapeHtml(stateLabel)} · ${escapeHtml(text('等级', 'Lv'))} ${level}</span>
+                    <span class="cm-tag ${selected ? 'is-good' : ''}">${escapeHtml(stateLabel)} · ${escapeHtml(text('等级', 'Lv'))} ${level}/${maxLevel}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(localize(item.effect || item.skill))}</div>
                 <div class="cm-chip-row">
                     <span class="cm-chip">${escapeHtml(text('战力', 'Power'))} +${power}</span>
-                    <span class="cm-chip">${escapeHtml(text('下级', 'Next'))} +${nextPower}</span>
-                    <span class="cm-chip">${escapeHtml(text('升级', 'Upgrade'))} ${formatCompact(cost.credits)} / ${formatCompact(cost.keyBits)}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('已满级', 'Maxed') : `${text('下级', 'Next')} +${nextPower}`)}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('升满完成', 'Upgrade complete') : `${text('升级', 'Upgrade')} ${formatCompact(cost.credits)} / ${formatCompact(cost.keyBits)}`)}</span>
                 </div>
                 <div class="cm-control-row">
                     <button class="cm-btn-soft" type="button" data-action="${action}" data-value="${item.id}" ${metaLocked ? 'disabled' : ''}>${escapeHtml(selectLabel)}</button>
-                    <button class="cm-btn" type="button" data-action="upgradeCard" data-type="${type}" data-value="${item.id}" ${(canAfford && !metaLocked) ? '' : 'disabled'}>${escapeHtml(text('升级', 'Upgrade'))}</button>
+                    <button class="cm-btn" type="button" data-action="upgradeCard" data-type="${type}" data-value="${item.id}" ${(canAfford && !metaLocked) ? '' : 'disabled'}>${escapeHtml(maxed ? text('已满级', 'Maxed') : text('升级', 'Upgrade'))}</button>
                 </div>
             </div>
         `;
@@ -1015,6 +1027,7 @@
     function renderOfferItem(item) {
         const owned = isOfferOwned(item.id);
         const order = getPendingOrder(item.id);
+        const lastVerified = getLastVerifiedPayment(item.id);
         const metaLocked = isMetaActionLocked();
         const badge = owned
             ? text('已拥有', 'Owned')
@@ -1022,7 +1035,9 @@
                 ? text('待验证', 'Pending')
                 : `USDT ${item.price}`;
         const copy = owned && item.permanent
-            ? localize(item.permanent)
+            ? (lastVerified
+                ? text(`最近到账：${formatTimeLabel(lastVerified.verifiedAt)}`, `Last verified: ${formatTimeLabel(lastVerified.verifiedAt)}`)
+                : localize(item.permanent))
             : order
                 ? text('订单已创建，继续粘贴交易哈希即可完成验证。', 'Order created. Resume by pasting the TxID.')
                 : item.permanent
@@ -1045,6 +1060,85 @@
                             ? text('继续支付', 'Resume Payment')
                             : text('打开支付', 'Open Payment')
                 )}</button>
+            </div>
+        `;
+    }
+
+    function renderPaymentStatusCard() {
+        const pendingOrders = getPendingOrders().slice(0, 2);
+        const paymentHistory = getRecentPaymentHistory(3);
+        const ownedOffers = config.paymentOffers.filter((item) => isOfferOwned(item.id));
+        return `
+            <div class="cm-card">
+                <div class="cm-card-head">
+                    <div>
+                        <div class="eyebrow">${escapeHtml(text('支付状态', 'Payment Status'))}</div>
+                        <strong>${escapeHtml(text('订单、特权与到账记录', 'Orders, perks, and delivery log'))}</strong>
+                        <div class="cm-copy">${escapeHtml(text('本地闭环版：创建订单 → 转账 → 粘贴交易哈希 → 验证后立即到账。', 'Local loop: create order → transfer → paste tx hash → verify → rewards arrive instantly.'))}</div>
+                    </div>
+                </div>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">${escapeHtml(text('待验证订单', 'Pending Orders'))} · ${pendingOrders.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('已激活特权', 'Active Perks'))} · ${ownedOffers.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('最近到账', 'Recent Verifications'))} · ${paymentHistory.length}</span>
+                </div>
+                ${pendingOrders.length ? `
+                    <div class="cm-stack">
+                        ${pendingOrders.map((order) => renderPendingOrderStatus(order)).join('')}
+                    </div>
+                ` : `<div class="cm-copy">${escapeHtml(text('当前没有待验证订单；可直接打开礼包创建新的支付单。', 'No pending orders right now. Open any offer to create a new payment order.'))}</div>`}
+                ${ownedOffers.length ? `
+                    <div class="cm-chip-row">
+                        ${ownedOffers.map((item) => `<span class="cm-chip">${escapeHtml(localize(item.name))}</span>`).join('')}
+                    </div>
+                ` : ''}
+                ${paymentHistory.length ? `
+                    <div class="cm-stack">
+                        ${paymentHistory.map((entry) => renderPaymentHistoryItem(entry)).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    function renderPendingOrderStatus(order) {
+        const offer = offerMap[order.offerId];
+        if (!offer) return '';
+        return `
+            <div class="cm-mini-card">
+                <div class="cm-card-head">
+                    <div>
+                        <strong>${escapeHtml(localize(offer.name))}</strong>
+                        <div class="cm-copy">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(order.id || createOrderId(order.offerId, order.createdAt))}</div>
+                    </div>
+                    <span class="cm-tag is-warning">${escapeHtml(text('待验证', 'Pending'))}</span>
+                </div>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">USDT ${offer.price}</span>
+                    <span class="cm-chip">${escapeHtml(text('剩余', 'Time Left'))} · ${escapeHtml(getPendingOrderEta(order))}</span>
+                    <span class="cm-chip">${escapeHtml(text('创建于', 'Created'))} · ${escapeHtml(formatTimeLabel(order.createdAt))}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPaymentHistoryItem(entry) {
+        const offer = offerMap[entry.offerId];
+        if (!offer) return '';
+        return `
+            <div class="cm-mini-card">
+                <div class="cm-card-head">
+                    <div>
+                        <strong>${escapeHtml(localize(offer.name))}</strong>
+                        <div class="cm-copy">${escapeHtml(text('交易哈希', 'Transaction Hash'))} · ${escapeHtml(shortenTxid(entry.txid))}</div>
+                    </div>
+                    <span class="cm-tag is-good">${escapeHtml(text('已到账', 'Delivered'))}</span>
+                </div>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">USDT ${entry.amount}</span>
+                    <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(entry.orderId || '--')}</span>
+                    <span class="cm-chip">${escapeHtml(text('验证时间', 'Verified'))} · ${escapeHtml(formatTimeLabel(entry.verifiedAt))}</span>
+                </div>
             </div>
         `;
     }
@@ -1496,6 +1590,10 @@
     function upgradeCard(type, cardId) {
         const itemMap = type === 'leader' ? leaderMap : type === 'module' ? moduleMap : skillMap;
         if (!itemMap[cardId]) return;
+        if (getCardLevel(cardId) >= getCardMaxLevel(type)) {
+            showToast(text('该卡已满级。', 'This card is already maxed.'), 'warn');
+            return;
+        }
         const cost = getCardCost(type, cardId);
         if (state.save.credits < cost.credits || state.save.keyBits < cost.keyBits) {
             showToast(text('资源不足。', 'Not enough resources.'), 'warn');
@@ -1584,6 +1682,7 @@
         if (!offer) return;
         const order = getPendingOrder(offerId);
         const owned = isOfferOwned(offerId);
+        const lastVerified = getLastVerifiedPayment(offerId);
         const lockedByOwnership = !!(owned && offer.oneTime);
         const orderEta = order ? getPendingOrderEta(order) : '';
         const primaryAction = lockedByOwnership ? 'closeModal' : order ? 'verifyOfferTxid' : 'createOfferOrder';
@@ -1627,8 +1726,25 @@
                             </div>
                         </div>
                         <div class="cm-chip-row">
+                            <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(order.id || createOrderId(order.offerId, order.createdAt))}</span>
                             <span class="cm-chip">${escapeHtml(text('状态', 'Status'))} · ${escapeHtml(text('待验证', 'Pending'))}</span>
                             <span class="cm-chip">${escapeHtml(text('剩余', 'Time Left'))} · ${escapeHtml(orderEta)}</span>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${lastVerified ? `
+                    <div class="cm-card">
+                        <div class="cm-card-head">
+                            <div>
+                                <strong>${escapeHtml(text('最近到账记录', 'Latest Delivery'))}</strong>
+                                <div class="cm-copy">${escapeHtml(text('用于确认这份礼包最近一次已完成的到账闭环。', 'Confirms the most recent completed delivery for this pack.'))}</div>
+                            </div>
+                        </div>
+                        <div class="cm-chip-row">
+                            <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(lastVerified.orderId || '--')}</span>
+                            <span class="cm-chip">${escapeHtml(text('验证时间', 'Verified'))} · ${escapeHtml(formatTimeLabel(lastVerified.verifiedAt))}</span>
+                            <span class="cm-chip">${escapeHtml(shortenTxid(lastVerified.txid))}</span>
                         </div>
                     </div>
                 ` : ''}
@@ -1649,7 +1765,7 @@
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('交易哈希', 'Transaction Hash'))}</strong>
                         <input id="offerTxidInput" placeholder="${escapeHtml(text('请输入 64 位交易哈希', 'Enter the 64-character TxID'))}" value="${order ? escapeHtml(order.txid || '') : ''}">
-                        <small>${escapeHtml(text('这里做前端闭环演示：填入合法交易哈希即视为验证通过。', 'Frontend loop demo: a valid TxID format is treated as verified.'))}</small>
+                        <small>${escapeHtml(text('当前为本地校验版：填入合法且未使用过的交易哈希即可完成到账验证。', 'Local validation build: any valid unused transaction hash completes delivery verification.'))}</small>
                     </div>
                 `}
             `,
@@ -1673,9 +1789,11 @@
         state.save.pendingOrders = state.save.pendingOrders.filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS);
         const existing = getPendingOrder(offerId);
         if (!existing) {
+            const createdAt = Date.now();
             state.save.pendingOrders.push({
+                id: createOrderId(offerId, createdAt),
                 offerId,
-                createdAt: Date.now(),
+                createdAt,
                 txid: ''
             });
             saveProgress();
@@ -1702,6 +1820,16 @@
         order.txid = normalizedTxid;
         applyReward(offer.reward);
         state.save.verifiedTxids.push(normalizedTxid);
+        state.save.paymentHistory = [
+            {
+                orderId: order.id || createOrderId(offerId, order.createdAt),
+                offerId,
+                txid: normalizedTxid,
+                amount: offer.price,
+                verifiedAt: Date.now()
+            },
+            ...state.save.paymentHistory.filter((item) => item.txid !== normalizedTxid)
+        ].slice(0, 12);
         state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.offerId !== offerId);
         saveProgress();
         openModal({
@@ -1773,6 +1901,24 @@
         return state.save.pendingOrders.filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS).length;
     }
 
+    function getPendingOrders() {
+        return [...state.save.pendingOrders]
+            .filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS)
+            .sort((left, right) => right.createdAt - left.createdAt);
+    }
+
+    function getRecentPaymentHistory(limit = 3) {
+        return [...state.save.paymentHistory]
+            .sort((left, right) => right.verifiedAt - left.verifiedAt)
+            .slice(0, limit);
+    }
+
+    function getLastVerifiedPayment(offerId) {
+        return state.save.paymentHistory
+            .filter((item) => item.offerId === offerId)
+            .sort((left, right) => right.verifiedAt - left.verifiedAt)[0] || null;
+    }
+
     function getResearchImpactLabel(researchId, level = getResearchLevel(researchId)) {
         switch (researchId) {
             case 'decodeCache':
@@ -1784,7 +1930,7 @@
             case 'lootRelay':
                 return text(`当前：章节收益 +${level * 5}%`, `Current: Chapter Loot +${level * 5}%`);
             case 'stabilityMesh':
-                return text(`当前：构筑战力 +${level * 3}%`, `Current: Deck Power +${level * 3}%`);
+                return text(`当前：构筑战力 +${level * 4}%`, `Current: Deck Power +${level * 4}%`);
             default:
                 return text('当前：已生效', 'Current: Active');
         }
@@ -1802,7 +1948,7 @@
             case 'lootRelay':
                 return text(`下级：章节收益 +${nextLevel * 5}%`, `Next: Chapter Loot +${nextLevel * 5}%`);
             case 'stabilityMesh':
-                return text(`下级：构筑战力 +${nextLevel * 3}%`, `Next: Deck Power +${nextLevel * 3}%`);
+                return text(`下级：构筑战力 +${nextLevel * 4}%`, `Next: Deck Power +${nextLevel * 4}%`);
             default:
                 return text('下级：继续提升', 'Next: More power');
         }
@@ -1968,9 +2114,9 @@
             case 'keyBits': return `${text('密钥位', 'Key Bits')} +${formatCompact(value)}`;
             case 'cipherDust': return `${text('密码尘', 'Cipher Dust')} +${formatCompact(value)}`;
             case 'seasonXp': return `${text('赛季经验', 'Season XP')} +${formatCompact(value)}`;
-            case 'premiumSeason': return text('高级赛季已解锁', 'Premium track unlocked');
-            case 'starterBoost': return text('每日免费局 +1', '+1 daily free run');
-            case 'vaultRelay': return text('首领反制减弱', 'Boss counters softened');
+            case 'premiumSeason': return text('高级赛季与中期增益已解锁', 'Premium track and midgame boost unlocked');
+            case 'starterBoost': return text('每日免费局 +1 / 开局更稳', '+1 daily free run / steadier starts');
+            case 'vaultRelay': return text('首领反制减弱 / 收益提高', 'Boss counters softened / rewards boosted');
             default: return `${key} +${value}`;
         }
     }
@@ -1983,7 +2129,7 @@
         const leaderPower = getCardPower('leader', state.save.selectedLeader);
         const skillPower = getCardPower('skill', state.save.selectedSkill);
         const modulePower = state.save.selectedModules.reduce((sum, id) => sum + getCardPower('module', id), 0);
-        const multiplier = 1 + getResearchLevel('stabilityMesh') * 0.03;
+        const multiplier = 1 + getResearchLevel('stabilityMesh') * 0.04;
         return Math.round((leaderPower + skillPower + modulePower) * multiplier);
     }
 
@@ -1996,7 +2142,11 @@
     }
 
     function getCardPowerStep(type) {
-        return type === 'leader' ? 22 : type === 'module' ? 12 : 16;
+        return type === 'leader' ? 28 : type === 'module' ? 14 : 20;
+    }
+
+    function getCardMaxLevel(type) {
+        return config.cardMaxLevels?.[type] || (type === 'leader' ? 12 : 10);
     }
 
     function getCardCost(type, cardId) {
@@ -2011,14 +2161,15 @@
     function getResearchCost(researchId) {
         const item = researchMap[researchId];
         const level = getResearchLevel(researchId);
+        const discount = state.save.premiumSeason ? 0.12 : 0;
         return {
-            credits: Math.round(item.baseCredits * Math.pow(1.32, level)),
-            cipherDust: Math.round(item.baseDust * Math.pow(1.24, level))
+            credits: Math.max(1, Math.round(item.baseCredits * Math.pow(1.32, level) * (1 - discount))),
+            cipherDust: Math.max(1, Math.round(item.baseDust * Math.pow(1.24, level) * (1 - discount)))
         };
     }
 
     function getScaledChapterReward(chapter) {
-        const rewardRate = 1 + getResearchLevel('lootRelay') * 0.05 + (hasModule('relayCache') ? 0.08 : 0) + (state.save.vaultRelay ? 0.12 : 0);
+        const rewardRate = 1 + getResearchLevel('lootRelay') * 0.05 + (hasModule('relayCache') ? 0.08 : 0) + (state.save.vaultRelay ? 0.15 : 0);
         return {
             credits: Math.round(chapter.reward.credits * rewardRate),
             keyBits: Math.round(chapter.reward.keyBits * rewardRate),
@@ -2067,7 +2218,7 @@
     }
 
     function getRunMaxEnergy() {
-        return 100 + getResearchLevel('pulseBattery') * 6;
+        return 100 + getResearchLevel('pulseBattery') * 6 + (state.save.premiumSeason ? 10 : 0);
     }
 
     function getDailyFreeRunsLimit() {
@@ -2084,6 +2235,9 @@
 
     function getRookieAssistState(chapter) {
         const wins = state.save.stats.wins || 0;
+        const power = getDeckPower();
+        const gap = Math.max(0, chapter.recommended - power);
+        const isBoss = isBossChapter(chapter);
         if (chapter.id === '1-1' && wins === 0) {
             return {
                 active: true,
@@ -2117,15 +2271,37 @@
                 note: text('首个首领已放慢反制，先拆盾。', 'The first boss counter is slowed. Break the shield first.')
             };
         }
-        if (chapter.id === '2-1' && wins < 5) {
+        if (chapter.chapter === 2 && wins < 5) {
+            return {
+                active: true,
+                bonusMoves: gap >= 140 ? 2 : 1,
+                bonusEnergy: gap >= 140 ? 12 : 8,
+                progressBonus: gap >= 180 ? 1 : 0,
+                bossGrace: isBoss ? 1 : 0,
+                drainReduction: isBoss ? 4 : 0,
+                note: text('第二章缓冲：继续给你更顺的开局与一次免费首补。', 'Chapter 2 easing: smoother starts and one free first continue remain active.')
+            };
+        }
+        if (chapter.chapter === 2 && wins < 8 && gap > 0) {
+            return {
+                active: true,
+                bonusMoves: gap >= 220 ? 2 : 1,
+                bonusEnergy: gap >= 220 ? 10 : 6,
+                progressBonus: gap >= 220 ? 1 : 0,
+                bossGrace: isBoss ? 1 : 0,
+                drainReduction: isBoss ? 2 : 0,
+                note: text('第二章追赶保护：如果战力还没跟上，系统会再补一点容错。', 'Chapter 2 catch-up assist: if your deck is still behind, the game adds a bit more forgiveness.')
+            };
+        }
+        if (chapter.chapter === 3 && wins < 10 && gap >= 260) {
             return {
                 active: true,
                 bonusMoves: 1,
                 bonusEnergy: 8,
-                progressBonus: 0,
-                bossGrace: 0,
-                drainReduction: 0,
-                note: text('第二章缓冲：先把节奏重新找回来。', 'Chapter 2 easing: regain your tempo first.')
+                progressBonus: 1,
+                bossGrace: isBoss ? 1 : 0,
+                drainReduction: isBoss ? 2 : 0,
+                note: text('第三章追赶保护：仍会给一次轻量扶梯，避免断层卡关。', 'Chapter 3 catch-up assist: a light safety ramp remains to avoid a hard wall.')
             };
         }
         return {
@@ -2189,23 +2365,23 @@
             pressureTier,
             rookie,
             bonusMoves: rookie.bonusMoves + (state.save.starterBoost ? 1 : 0) + supportTier,
-            bonusEnergy: rookie.bonusEnergy + (state.save.starterBoost ? 14 : 0) + supportTier * 10,
+            bonusEnergy: rookie.bonusEnergy + (state.save.starterBoost ? 18 : 0) + (state.save.premiumSeason && chapter.chapter >= 2 ? 8 : 0) + supportTier * 10,
             progressBonus: rookie.progressBonus + (state.save.vaultRelay ? 1 : 0) + supportTier,
-            bossPulseEvery: Math.max(2, 4 + supportTier + (state.save.vaultRelay ? 1 : 0) + rookie.bossGrace - pressureTier),
-            bossShieldPulse: Math.max(1, 2 + chapter.chapter + pressureTier - (state.save.vaultRelay ? 1 : 0)),
-            bossEnergyDrain: Math.max(8, 16 + (chapter.chapter * 4) + (pressureTier * 6) - (state.save.vaultRelay ? 6 : 0) - rookie.drainReduction)
+            bossPulseEvery: Math.max(2, 4 + supportTier + (state.save.vaultRelay ? 2 : 0) + rookie.bossGrace - pressureTier),
+            bossShieldPulse: Math.max(1, 2 + chapter.chapter + pressureTier - (state.save.vaultRelay ? 2 : 0)),
+            bossEnergyDrain: Math.max(8, 16 + (chapter.chapter * 4) + (pressureTier * 6) - (state.save.vaultRelay ? 10 : 0) - rookie.drainReduction)
         };
     }
 
     function getRunAssistSummary(chapter, assist = getRunAssistState(chapter)) {
         if (isTutorialEntryFree(chapter, assist)) {
-            return text(`首通教学免费：本关不扣日常次数，且开局提供 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量。`, `Tutorial entry is free on this first clear. You also start with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy.`);
+            return text(`首通教学免费：本关不扣日常次数，且开局提供 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，首补也免费。`, `Tutorial entry is free on this first clear. You also start with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, and the first continue is free.`);
         }
         if (assist.rookie.active && assist.gap > 0) {
-            return text(`当前仍差 ${formatCompact(assist.gap)}，但本关提供新手保护：开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量。`, `Still short by ${formatCompact(assist.gap)}, but rookie assist grants +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy this run.`);
+            return text(`当前仍差 ${formatCompact(assist.gap)}，但本关提供新手保护：开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，且首补免费。`, `Still short by ${formatCompact(assist.gap)}, but rookie assist grants +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy this run, and the first continue is free.`);
         }
         if (assist.rookie.active) {
-            return text(`新手保护生效：开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，大消除额外推进 ${assist.progressBonus}。`, `Rookie assist is active: open with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, and big clears deal +${assist.progressBonus} extra pressure.`);
+            return text(`新手保护生效：开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，大消除额外推进 ${assist.progressBonus}，首补免费。`, `Rookie assist is active: open with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, big clears deal +${assist.progressBonus} extra pressure, and the first continue is free.`);
         }
         if (assist.gap > 0) {
             return isBossChapter(chapter)
@@ -2507,6 +2683,143 @@
         return String(txid || '').trim().toLowerCase();
     }
 
+    function shortenTxid(txid) {
+        const normalized = normalizeTxid(txid);
+        if (normalized.length <= 12) return normalized || '--';
+        return `${normalized.slice(0, 6)}…${normalized.slice(-6)}`;
+    }
+
+    function createOrderId(offerId, createdAt = Date.now()) {
+        const offerCode = String(offerId || 'pack').replace(/[^a-z0-9]/gi, '').slice(0, 6).toUpperCase() || 'PACK';
+        const stamp = Number(createdAt || Date.now()).toString(36).slice(-6).toUpperCase();
+        const salt = Math.random().toString(36).slice(2, 5).toUpperCase();
+        return `${offerCode}-${stamp}-${salt}`;
+    }
+
+    function formatTimeLabel(value) {
+        if (!value) return '--';
+        try {
+            return new Date(value).toLocaleString(state.lang === 'en' ? 'en-US' : 'zh-CN', {
+                month: 'numeric',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        } catch (error) {
+            return '--';
+        }
+    }
+
+    function sanitizeCardLevels(levels) {
+        const nextLevels = {};
+        allCardIds.forEach((cardId) => {
+            const type = cardTypeMap[cardId];
+            const rawLevel = Number(levels?.[cardId]) || 1;
+            nextLevels[cardId] = Math.min(getCardMaxLevel(type), Math.max(1, Math.round(rawLevel)));
+        });
+        return nextLevels;
+    }
+
+    function sanitizeNumericValue(value, fallback = 0) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return fallback;
+        return Math.max(0, Math.round(number));
+    }
+
+    function sanitizeIdList(list, validIds) {
+        const allowed = new Set(validIds);
+        const unique = [];
+        const seen = new Set();
+        (Array.isArray(list) ? list : []).forEach((item) => {
+            const id = String(item || '');
+            if (!allowed.has(id) || seen.has(id)) return;
+            seen.add(id);
+            unique.push(id);
+        });
+        return unique;
+    }
+
+    function sanitizeSelectedModules(list) {
+        return sanitizeIdList(list, Object.keys(moduleMap)).slice(0, 2);
+    }
+
+    function sanitizeSeasonClaims(trackType, list) {
+        const validIds = (trackType === 'premium' ? config.seasonPremiumTrack : config.seasonFreeTrack).map((item) => item.id);
+        return sanitizeIdList(list, validIds);
+    }
+
+    function sanitizeStats(stats) {
+        return {
+            runs: sanitizeNumericValue(stats?.runs),
+            wins: sanitizeNumericValue(stats?.wins),
+            matchedTiles: sanitizeNumericValue(stats?.matchedTiles),
+            upgrades: sanitizeNumericValue(stats?.upgrades),
+            researchUpgrades: sanitizeNumericValue(stats?.researchUpgrades)
+        };
+    }
+
+    function sanitizeResearchLevels(levels) {
+        return Object.fromEntries(config.research.map((item) => {
+            const rawLevel = sanitizeNumericValue(levels?.[item.id]);
+            return [item.id, Math.min(item.maxLevel, rawLevel)];
+        }));
+    }
+
+    function sanitizePendingOrders(list) {
+        if (!Array.isArray(list)) return [];
+        const seenOffers = new Set();
+        return list
+            .map((item) => {
+                const createdAt = Number(item?.createdAt) || 0;
+                return {
+                    id: String(item?.id || createOrderId(item?.offerId, createdAt)),
+                    offerId: String(item?.offerId || ''),
+                    createdAt,
+                    txid: normalizeTxid(item?.txid || '')
+                };
+            })
+            .filter((item) => offerMap[item.offerId] && item.createdAt > 0 && (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS)
+            .sort((left, right) => right.createdAt - left.createdAt)
+            .filter((item) => {
+                if (seenOffers.has(item.offerId)) return false;
+                seenOffers.add(item.offerId);
+                return true;
+            })
+            .slice(0, 6);
+    }
+
+    function sanitizePaymentHistory(list) {
+        if (!Array.isArray(list)) return [];
+        const seenTxids = new Set();
+        return list
+            .map((item) => ({
+                orderId: String(item?.orderId || '--'),
+                offerId: String(item?.offerId || ''),
+                txid: normalizeTxid(item?.txid || ''),
+                amount: Number(item?.amount) || 0,
+                verifiedAt: Number(item?.verifiedAt) || 0
+            }))
+            .filter((item) => offerMap[item.offerId] && PAYMENT_TXID_RE.test(item.txid) && item.verifiedAt > 0)
+            .sort((left, right) => right.verifiedAt - left.verifiedAt)
+            .filter((item) => {
+                if (seenTxids.has(item.txid)) return false;
+                seenTxids.add(item.txid);
+                return true;
+            })
+            .slice(0, 12);
+    }
+
+    function sanitizeVerifiedTxids(list, paymentHistory = []) {
+        const txids = [
+            ...(Array.isArray(list) ? list : []),
+            ...paymentHistory.map((item) => item.txid)
+        ]
+            .map((item) => normalizeTxid(item))
+            .filter((item) => PAYMENT_TXID_RE.test(item));
+        return [...new Set(txids)].slice(0, 64);
+    }
+
     function isOfferOwned(offerId) {
         if (offerId === 'seasonPass') return !!state.save.premiumSeason;
         if (offerId === 'starterPack') return !!state.save.starterBoost;
@@ -2556,21 +2869,30 @@
         const base = createDefaultSave();
         try {
             const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
+            const paymentHistory = sanitizePaymentHistory(raw.paymentHistory);
             const save = {
                 ...base,
                 ...raw,
-                cardLevels: { ...base.cardLevels, ...(raw.cardLevels || {}) },
-                researchLevels: { ...base.researchLevels, ...(raw.researchLevels || {}) },
-                stats: { ...base.stats, ...(raw.stats || {}) },
+                credits: sanitizeNumericValue(raw.credits, base.credits),
+                keyBits: sanitizeNumericValue(raw.keyBits, base.keyBits),
+                cipherDust: sanitizeNumericValue(raw.cipherDust, base.cipherDust),
+                seasonXp: sanitizeNumericValue(raw.seasonXp, base.seasonXp),
+                freeRunsUsed: sanitizeNumericValue(raw.freeRunsUsed, base.freeRunsUsed),
+                freeRunsStamp: typeof raw.freeRunsStamp === 'string' && raw.freeRunsStamp ? raw.freeRunsStamp : base.freeRunsStamp,
+                dailyShopStamp: typeof raw.dailyShopStamp === 'string' ? raw.dailyShopStamp : base.dailyShopStamp,
+                cardLevels: sanitizeCardLevels({ ...base.cardLevels, ...(raw.cardLevels || {}) }),
+                researchLevels: sanitizeResearchLevels({ ...base.researchLevels, ...(raw.researchLevels || {}) }),
+                stats: sanitizeStats({ ...base.stats, ...(raw.stats || {}) }),
                 seasonClaims: {
-                    free: Array.isArray(raw.seasonClaims?.free) ? raw.seasonClaims.free : [],
-                    premium: Array.isArray(raw.seasonClaims?.premium) ? raw.seasonClaims.premium : []
+                    free: sanitizeSeasonClaims('free', raw.seasonClaims?.free),
+                    premium: sanitizeSeasonClaims('premium', raw.seasonClaims?.premium)
                 },
-                claimedMissions: Array.isArray(raw.claimedMissions) ? raw.claimedMissions : [],
-                clearedChapters: Array.isArray(raw.clearedChapters) ? raw.clearedChapters : [],
-                selectedModules: Array.isArray(raw.selectedModules) ? raw.selectedModules.filter((id) => moduleMap[id]).slice(0, 2) : base.selectedModules,
-                pendingOrders: Array.isArray(raw.pendingOrders) ? raw.pendingOrders : [],
-                verifiedTxids: Array.isArray(raw.verifiedTxids) ? raw.verifiedTxids.map((item) => normalizeTxid(item)).filter(Boolean) : []
+                claimedMissions: sanitizeIdList(raw.claimedMissions, config.missions.map((item) => item.id)),
+                clearedChapters: sanitizeIdList(raw.clearedChapters, config.chapters.map((item) => item.id)),
+                selectedModules: sanitizeSelectedModules(raw.selectedModules),
+                pendingOrders: sanitizePendingOrders(raw.pendingOrders),
+                paymentHistory,
+                verifiedTxids: sanitizeVerifiedTxids(raw.verifiedTxids, paymentHistory)
             };
             if (!leaderMap[save.selectedLeader]) save.selectedLeader = base.selectedLeader;
             if (!skillMap[save.selectedSkill]) save.selectedSkill = base.selectedSkill;
@@ -2605,6 +2927,7 @@
             vaultRelay: false,
             clearedChapters: [],
             pendingOrders: [],
+            paymentHistory: [],
             verifiedTxids: [],
             stats: {
                 runs: 0,
@@ -2618,15 +2941,29 @@
 
     function resetDailyState() {
         const today = getTodayStamp();
+        let changed = false;
         if (state.save.freeRunsStamp !== today) {
             state.save.freeRunsStamp = today;
             state.save.freeRunsUsed = 0;
+            changed = true;
         }
-        state.save.pendingOrders = state.save.pendingOrders.filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS);
+        const pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
+        const paymentHistory = sanitizePaymentHistory(state.save.paymentHistory);
+        const verifiedTxids = sanitizeVerifiedTxids(state.save.verifiedTxids, paymentHistory);
+        if (JSON.stringify(state.save.pendingOrders) !== JSON.stringify(pendingOrders)) changed = true;
+        if (JSON.stringify(state.save.paymentHistory) !== JSON.stringify(paymentHistory)) changed = true;
+        if (JSON.stringify(state.save.verifiedTxids) !== JSON.stringify(verifiedTxids)) changed = true;
+        state.save.pendingOrders = pendingOrders;
+        state.save.paymentHistory = paymentHistory;
+        state.save.verifiedTxids = verifiedTxids;
+        if (changed) saveProgress();
     }
 
     function saveProgress() {
         try {
+            state.save.pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
+            state.save.paymentHistory = sanitizePaymentHistory(state.save.paymentHistory);
+            state.save.verifiedTxids = sanitizeVerifiedTxids(state.save.verifiedTxids, state.save.paymentHistory);
             localStorage.setItem(SAVE_KEY, JSON.stringify(state.save));
         } catch (error) {}
     }
@@ -2658,10 +2995,30 @@
             if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(value);
                 showToast(successText, 'good');
-                return;
+                return true;
             }
         } catch (error) {}
-        showToast(successText, 'good');
+        let copied = false;
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = value;
+            textarea.setAttribute('readonly', 'true');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            textarea.style.pointerEvents = 'none';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+            copied = !!document.execCommand?.('copy');
+            textarea.remove();
+        } catch (error) {}
+        if (copied) {
+            showToast(successText, 'good');
+            return true;
+        }
+        showToast(text('复制失败，请手动长按复制。', 'Copy failed. Please long-press and copy manually.'), 'warn');
+        return false;
     }
 
     function readLang() {
