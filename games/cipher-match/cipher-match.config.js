@@ -381,10 +381,10 @@
         seasonPremiumTrack: [
             { id: 'p1', xp: 80, reward: { credits: 520, keyBits: 36 } },
             { id: 'p2', xp: 200, reward: { credits: 760, keyBits: 54, cipherDust: 16 } },
-            { id: 'p3', xp: 380, reward: { credits: 1160, keyBits: 88, cipherDust: 22 } },
-            { id: 'p4', xp: 620, reward: { credits: 1680, keyBits: 124, cipherDust: 30 } },
-            { id: 'p5', xp: 920, reward: { credits: 2480, keyBits: 182, cipherDust: 42 } },
-            { id: 'p6', xp: 1320, reward: { credits: 3360, keyBits: 248, cipherDust: 58 } }
+            { id: 'p3', xp: 380, reward: { credits: 1260, keyBits: 96, cipherDust: 26 } },
+            { id: 'p4', xp: 620, reward: { credits: 1820, keyBits: 136, cipherDust: 36 } },
+            { id: 'p5', xp: 920, reward: { credits: 2780, keyBits: 208, cipherDust: 50 } },
+            { id: 'p6', xp: 1320, reward: { credits: 3880, keyBits: 292, cipherDust: 72 } }
         ],
         shopItems: [
             {
@@ -426,7 +426,7 @@
                 id: 'seasonPass',
                 price: 18,
                 name: { zh: '赛季通行证', en: 'Season Pass' },
-                permanent: { zh: '适合 2-2 / 2-3 研究卡点：解锁高级轨道，研究更便宜，技能循环更顺。', en: 'Built for the 2-2 / 2-3 research gate: unlocks the premium track, cheaper research, and smoother skill cycles.' },
+                permanent: { zh: '适合 2-2 / 2-3 研究卡点：解锁高级轨道，研究更便宜，中后段开局与收益也更稳。', en: 'Built for the 2-2 / 2-3 research gate: unlocks the premium track, lowers research cost, and steadies late-run openers and payouts.' },
                 oneTime: true,
                 reward: { premiumSeason: true, credits: 4200, keyBits: 320, cipherDust: 160, seasonXp: 180 }
             },
@@ -434,7 +434,7 @@
                 id: 'breakerVault',
                 price: 68,
                 name: { zh: '破关金库', en: 'Breaker Vault' },
-                permanent: { zh: '适合 3-3 / 4-x 首领卡点：永久减轻首领反制，并提高后段结算收益。', en: 'Built for the 3-3 / 4-x boss gate: permanently softens boss counters and boosts late-stage payouts.' },
+                permanent: { zh: '适合 3-3 / 4-x 首领卡点：永久减轻首领反制，让后段 Boss 战更可控，并提高后段结算收益。', en: 'Built for the 3-3 / 4-x boss gate: permanently softens boss counters, makes late boss fights more controllable, and boosts late-stage payouts.' },
                 oneTime: true,
                 reward: { vaultRelay: true, credits: 18000, keyBits: 1350, cipherDust: 560 }
             }

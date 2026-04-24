@@ -2327,9 +2327,9 @@
             case 'keyBits': return `${text('密钥位', 'Key Bits')} +${formatCompact(value)}`;
             case 'cipherDust': return `${text('密码尘', 'Cipher Dust')} +${formatCompact(value)}`;
             case 'seasonXp': return `${text('赛季经验', 'Season XP')} +${formatCompact(value)}`;
-            case 'premiumSeason': return text('高级赛季与中期增益已解锁', 'Premium track and midgame boost unlocked');
+            case 'premiumSeason': return text('高级赛季 / 研究更便宜 / 中后段更稳', 'Premium track / cheaper research / steadier late runs');
             case 'starterBoost': return text('每日免费局 +1 / 开局更稳', '+1 daily free run / steadier starts');
-            case 'vaultRelay': return text('首领反制减弱 / 收益提高', 'Boss counters softened / rewards boosted');
+            case 'vaultRelay': return text('首领反制减弱 / 后段收益提高', 'Boss counters softened / late rewards boosted');
             default: return `${key} +${value}`;
         }
     }
@@ -2374,7 +2374,7 @@
     function getResearchCost(researchId) {
         const item = researchMap[researchId];
         const level = getResearchLevel(researchId);
-        const discount = state.save.premiumSeason ? 0.12 : 0;
+        const discount = state.save.premiumSeason ? 0.15 : 0;
         return {
             credits: Math.max(1, Math.round(item.baseCredits * Math.pow(1.32, level) * (1 - discount))),
             cipherDust: Math.max(1, Math.round(item.baseDust * Math.pow(1.24, level) * (1 - discount)))
@@ -2382,7 +2382,11 @@
     }
 
     function getScaledChapterReward(chapter) {
-        const rewardRate = 1 + getResearchLevel('lootRelay') * 0.05 + (hasModule('relayCache') ? 0.08 : 0) + (state.save.vaultRelay ? 0.15 : 0);
+        const premiumBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 0.05 : 0;
+        const vaultBonus = state.save.vaultRelay
+            ? chapter.chapter >= 4 ? 0.24 : chapter.chapter >= 3 ? 0.18 : 0
+            : 0;
+        const rewardRate = 1 + getResearchLevel('lootRelay') * 0.05 + (hasModule('relayCache') ? 0.08 : 0) + premiumBonus + vaultBonus;
         return {
             credits: Math.round(chapter.reward.credits * rewardRate),
             keyBits: Math.round(chapter.reward.keyBits * rewardRate),
@@ -2418,7 +2422,7 @@
         }
         const chapter = chapterMap[state.run.chapterId];
         const base = config.board.buyMovesBase * Math.pow(2, state.run.continuesBought) * Math.max(1, chapter.chapter);
-        const discount = Math.min(0.2, (state.save.starterBoost ? 0.12 : 0) + (state.save.vaultRelay ? 0.08 : 0));
+        const discount = Math.min(0.24, (state.save.starterBoost ? 0.12 : 0) + (state.save.vaultRelay ? 0.12 : 0));
         return Math.round(base * (1 - discount));
     }
 
@@ -2431,7 +2435,7 @@
     }
 
     function getRunMaxEnergy() {
-        return 100 + getResearchLevel('pulseBattery') * 6 + (state.save.premiumSeason ? 10 : 0);
+        return 100 + getResearchLevel('pulseBattery') * 6 + (state.save.premiumSeason ? 12 : 0);
     }
 
     function getDailyFreeRunsLimit() {
@@ -2569,20 +2573,31 @@
         const power = getDeckPower();
         const gap = Math.max(0, chapter.recommended - power);
         const surplus = Math.max(0, power - chapter.recommended);
+        const isBoss = isBossChapter(chapter);
         const supportTier = surplus >= 320 ? 2 : surplus >= 120 ? 1 : 0;
         const pressureTier = gap >= 420 ? 2 : gap >= 180 ? 1 : 0;
         const rookie = getRookieAssistState(chapter);
+        const premiumMoveBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 1 : 0;
+        const premiumEnergyBonus = state.save.premiumSeason ? (chapter.chapter >= 4 ? 14 : chapter.chapter >= 2 ? 10 : 0) : 0;
+        const premiumProgressBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 1 : 0;
+        const premiumBossGrace = state.save.premiumSeason && chapter.chapter >= 3 && isBoss ? 1 : 0;
+        const premiumDrainReduction = state.save.premiumSeason && chapter.chapter >= 3 && isBoss ? 4 : 0;
+        const vaultMoveBonus = state.save.vaultRelay && isBoss ? 1 : 0;
+        const vaultProgressBonus = state.save.vaultRelay ? (isBoss ? 2 : 1) : 0;
+        const vaultPulseRelief = state.save.vaultRelay ? (chapter.chapter >= 4 ? 3 : 2) : 0;
+        const vaultShieldRelief = state.save.vaultRelay ? 3 : 0;
+        const vaultDrainReduction = state.save.vaultRelay ? 12 : 0;
         return {
             gap,
             supportTier,
             pressureTier,
             rookie,
-            bonusMoves: rookie.bonusMoves + (state.save.starterBoost ? 1 : 0) + supportTier,
-            bonusEnergy: rookie.bonusEnergy + (state.save.starterBoost ? 18 : 0) + (state.save.premiumSeason && chapter.chapter >= 2 ? 8 : 0) + supportTier * 10,
-            progressBonus: rookie.progressBonus + (state.save.vaultRelay ? 1 : 0) + supportTier,
-            bossPulseEvery: Math.max(2, 4 + supportTier + (state.save.vaultRelay ? 2 : 0) + rookie.bossGrace - pressureTier),
-            bossShieldPulse: Math.max(1, 2 + chapter.chapter + pressureTier - (state.save.vaultRelay ? 2 : 0)),
-            bossEnergyDrain: Math.max(8, 16 + (chapter.chapter * 4) + (pressureTier * 6) - (state.save.vaultRelay ? 10 : 0) - rookie.drainReduction)
+            bonusMoves: rookie.bonusMoves + (state.save.starterBoost ? 1 : 0) + premiumMoveBonus + vaultMoveBonus + supportTier,
+            bonusEnergy: rookie.bonusEnergy + (state.save.starterBoost ? 18 : 0) + premiumEnergyBonus + supportTier * 10,
+            progressBonus: rookie.progressBonus + premiumProgressBonus + vaultProgressBonus + supportTier,
+            bossPulseEvery: Math.max(2, 4 + supportTier + vaultPulseRelief + premiumBossGrace + rookie.bossGrace - pressureTier),
+            bossShieldPulse: Math.max(1, 2 + chapter.chapter + pressureTier - vaultShieldRelief - (state.save.premiumSeason && chapter.chapter >= 4 ? 1 : 0)),
+            bossEnergyDrain: Math.max(6, 16 + (chapter.chapter * 4) + (pressureTier * 6) - vaultDrainReduction - premiumDrainReduction - rookie.drainReduction)
         };
     }
 
