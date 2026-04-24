@@ -739,6 +739,7 @@
         const dailyClaimed = isDailyShopClaimed();
         const pendingOrders = getPendingOrderCount();
         const ownedOffers = getOwnedOfferCount();
+        const gatePlan = getStageGatePlan();
         return `
             <div class="cm-stack">
                 ${renderRunLockNotice()}
@@ -761,6 +762,7 @@
                 </div>
 
                 ${renderPaymentStatusCard()}
+                ${renderShopGateGuide(gatePlan)}
 
                 <div class="cm-card">
                     <div class="cm-card-head">
@@ -821,6 +823,7 @@
     function renderRunGuide(chapter, power) {
         const gap = Math.max(0, chapter.recommended - power);
         const assist = getRunAssistState(chapter);
+        const gatePlan = getStageGatePlan(chapter, power, assist);
         const tutorialFree = isTutorialEntryFree(chapter, assist);
         const readyBonus = assist.bonusMoves > 0 || assist.bonusEnergy > 0 || assist.progressBonus > 0;
         const masteryLabel = getPlayerMasteryLabel();
@@ -874,6 +877,7 @@
                     </span>
                 </div>
                 <div class="cm-copy">${escapeHtml(getRunAssistSummary(chapter, assist))}</div>
+                ${renderStageGateCard(gatePlan)}
             </div>
         `;
     }
@@ -1029,6 +1033,13 @@
         const order = getPendingOrder(item.id);
         const lastVerified = getLastVerifiedPayment(item.id);
         const metaLocked = isMetaActionLocked();
+        const targetSummary = getOfferTargetSummary(item.id);
+        const recommendedNow = isOfferRecommendedNow(item.id);
+        const fitLabel = owned && recommendedNow
+            ? text('当前卡点已覆盖', 'Current gate covered')
+            : recommendedNow
+                ? text('当前卡点推荐', 'Recommended now')
+                : '';
         const badge = owned
             ? text('已拥有', 'Owned')
             : order
@@ -1053,6 +1064,10 @@
                     <span class="cm-tag ${owned ? 'is-good' : order ? 'is-warning' : ''}">${escapeHtml(badge)}</span>
                 </div>
                 <div class="cm-reward-row">${renderRewardChips(item.reward)}</div>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">${escapeHtml(text('适配卡点', 'Best For'))} · ${escapeHtml(targetSummary)}</span>
+                    ${fitLabel ? `<span class="cm-chip">${escapeHtml(fitLabel)}</span>` : ''}
+                </div>
                 <button class="cm-btn" type="button" data-action="previewOffer" data-value="${item.id}" ${metaLocked ? 'disabled' : ''}>${escapeHtml(
                     owned
                         ? text('查看内容', 'View Pack')
@@ -1099,6 +1114,170 @@
                 ` : ''}
             </div>
         `;
+    }
+
+    function renderStageGateCard(gatePlan) {
+        if (!gatePlan) return '';
+        const offer = gatePlan.offerId ? offerMap[gatePlan.offerId] : null;
+        const recommendationLabel = gatePlan.owned
+            ? text('对应礼包已持有', 'Recommended pack owned')
+            : gatePlan.recommendedNow
+                ? text('当前卡点推荐', 'Recommended now')
+                : text('下一卡点预告', 'Next gate prep');
+        return `
+            <div class="cm-note-bar ${gatePlan.owned || !gatePlan.recommendedNow ? 'is-idle' : ''}">
+                <strong>${escapeHtml(gatePlan.title)}</strong>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">${escapeHtml(gatePlan.tag)}</span>
+                    ${offer ? `<span class="cm-chip">${escapeHtml(recommendationLabel)} · ${escapeHtml(localize(offer.name))}</span>` : ''}
+                </div>
+                <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
+                <div class="cm-copy">${escapeHtml(gatePlan.statusCopy)}</div>
+                <div class="cm-copy">${escapeHtml(text('白嫖', 'Free'))}：${escapeHtml(gatePlan.freePath)}</div>
+                <div class="cm-copy">${escapeHtml(text('小氪', 'Light Spend'))}：${escapeHtml(gatePlan.lightPath)}</div>
+                <div class="cm-copy">${escapeHtml(text('中氪', 'Mid Spend'))}：${escapeHtml(gatePlan.midPath)}</div>
+            </div>
+        `;
+    }
+
+    function renderShopGateGuide(gatePlan) {
+        if (!gatePlan || !gatePlan.offerId) return '';
+        const offer = offerMap[gatePlan.offerId];
+        if (!offer) return '';
+        const recommendationLabel = gatePlan.owned
+            ? text('对应礼包已持有', 'Recommended pack already owned')
+            : gatePlan.recommendedNow
+                ? text('当前卡点推荐', 'Recommended now')
+                : text('下一卡点预告', 'Next gate prep');
+        const recommendationCopy = gatePlan.owned
+            ? text('当前卡点对应的永久增强已经具备，商店里优先拿每日免费和功能补给即可。', 'You already have the permanent perk for this gate, so the daily free supply and utility packs should be the priority here.')
+            : gatePlan.recommendedNow
+                ? text('这档付费正对应你当前的卡点与增强缺口，买到后会直接作用在闯关体验上。', 'This offer matches your current gate and missing power, so the boost applies directly to your run experience.')
+                : text('这档付费主要服务你下一段成长卡点，不急着现在购买。', 'This offer mainly serves your next growth gate, so there is no need to rush the purchase.')
+        return `
+            <div class="cm-card">
+                <div class="cm-card-head">
+                    <div>
+                        <div class="eyebrow">${escapeHtml(text('当前卡点指引', 'Current Gate Guide'))}</div>
+                        <strong>${escapeHtml(gatePlan.title)}</strong>
+                        <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
+                    </div>
+                    <span class="cm-tag ${gatePlan.owned ? 'is-good' : gatePlan.recommendedNow ? 'is-warning' : ''}">${escapeHtml(recommendationLabel)}</span>
+                </div>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">${escapeHtml(text('适配区间', 'Best For'))} · ${escapeHtml(gatePlan.packFit)}</span>
+                    <span class="cm-chip">${escapeHtml(text('推荐礼包', 'Pack'))} · ${escapeHtml(localize(offer.name))}</span>
+                </div>
+                <div class="cm-copy">${escapeHtml(gatePlan.statusCopy)}</div>
+                <div class="cm-copy">${escapeHtml(recommendationCopy)}</div>
+                <div class="cm-copy">${escapeHtml(text('白嫖', 'Free'))}：${escapeHtml(gatePlan.freePath)}</div>
+                <div class="cm-copy">${escapeHtml(text('快进', 'Fast Path'))}：${escapeHtml(gatePlan.lightPath)}</div>
+                <div class="cm-copy">${escapeHtml(text('强化解法', 'Power Solve'))}：${escapeHtml(gatePlan.midPath)}</div>
+            </div>
+        `;
+    }
+
+    function getStageGatePlan(chapter = getSelectedChapter(), power = getDeckPower(), assist = getRunAssistState(chapter)) {
+        const gap = Math.max(0, chapter.recommended - power);
+        let plan;
+        if (chapter.id === '1-1' || chapter.id === '1-2') {
+            plan = {
+                title: text('新手热身段', 'Rookie Ramp'),
+                tag: text('下一墙：1-3', 'Next wall: 1-3'),
+                summary: text('这段先学交换、三连和拆盾，真正的早期卡点会在 1-3 出现。', 'Use this stretch to learn swaps, 3-matches, and shield breaking before the first real gate at 1-3.'),
+                freePath: text('补到 2 轮核心构筑，或 1 轮核心构筑加稳定网格 2~3 级。', 'Reach 2 core build rounds, or 1 core round plus Stability Mesh level 2 to 3.'),
+                lightPath: text('想更顺地进到 2-1，可提前用新手破译包补开局节奏。', 'If you want a smoother route into 2-1, the Starter Decode Pack is the early tempo shortcut.'),
+                midPath: text('中氪先别在这里出手，把预算留给 2-2 / 2-3 更值。', 'Mid spend is better saved for 2-2 / 2-3 instead of being used here.'),
+                offerId: 'starterPack',
+                packFit: '1-3 / 2-1'
+            };
+        } else if (chapter.id === '1-3' || chapter.id === '2-1') {
+            plan = {
+                title: text('早期软卡点', 'Early Soft Gate'),
+                tag: text('节奏与拆盾', 'Tempo and shield break'),
+                summary: text('这里开始要求主力构筑成型，同时学会先拆盾再收尾。', 'This is where the main build needs to come together and boss shield timing starts to matter.'),
+                freePath: text('建议补到 2 轮核心构筑，或 1 轮核心构筑加稳定网格 2~3 级。', 'Aim for 2 core build rounds, or 1 core round plus Stability Mesh level 2 to 3.'),
+                lightPath: text('新手破译包对应当前缺口：补早期资源、每日免费局和更稳的开局。', 'The Starter Decode Pack covers this gap with early resources, an extra daily free run, and steadier starts.'),
+                midPath: text('中氪不用提前跨档，真正的中档价值点在 2-2 / 2-3。', 'There is no need to jump into mid spend yet; the real mid-tier value begins at 2-2 / 2-3.'),
+                offerId: 'starterPack',
+                packFit: '1-3 / 2-1'
+            };
+        } else if (chapter.id === '2-2' || chapter.id === '2-3' || chapter.id === '3-1') {
+            plan = {
+                title: text('中期研究卡点', 'Mid Research Gate'),
+                tag: text('卡牌转研究', 'Cards into research'),
+                summary: text('只升卡会开始吃力，这段需要把研究、每日补给和免费赛季也拉进成长链。', 'Card upgrades alone start to stall here, so research, daily supplies, and the free season track must join the growth loop.'),
+                freePath: text('目标是 4~5 轮核心构筑，并把稳定网格补到 4~5 级、脉冲电池补到 2 级。', 'Target 4 to 5 core build rounds, Stability Mesh 4 to 5, and Pulse Battery 2.'),
+                lightPath: text('已有新手破译包时，重点是把节省下来的时间转成研究与任务进度。', 'If you already own the Starter Decode Pack, convert that saved time into research and mission progress.'),
+                midPath: text('赛季通行证正对这段缺口：研究打折、高级轨道补给、额外能量和中期资源。', 'The Season Pass is built for this stretch with research discounts, premium track supplies, extra energy, and midgame resources.'),
+                offerId: 'seasonPass',
+                packFit: '2-2 / 2-3 / 3-1'
+            };
+        } else if (chapter.id === '3-2') {
+            plan = {
+                title: text('首领墙预热段', 'Boss Wall Prep'),
+                tag: text('下一墙：3-3', 'Next wall: 3-3'),
+                summary: text('这关本身是过渡，但它要求你提前把后段 Boss 构筑切好。', 'This stage is a transition, but it asks you to prepare the late boss build before the real wall at 3-3.'),
+                freePath: text('建议补到 7 轮核心构筑，并把稳定网格补到 5~6 级、脉冲电池补到 3~4 级。', 'Aim for 7 core build rounds, Stability Mesh 5 to 6, and Pulse Battery 3 to 4.'),
+                lightPath: text('小氪更适合保持新手包和赛季通行证的成长红利，同时开始切 Boss 构筑。', 'Light spend works best by keeping the Starter Pack plus Season Pass value online while switching into a boss build.'),
+                midPath: text('如果想让下一道 Boss 墙从硬拖变成可控，破关金库会在这里开始对位。', 'If you want the next boss wall to feel controllable instead of dragged out, Breaker Vault starts to line up here.'),
+                offerId: 'breakerVault',
+                packFit: '3-2 / 3-3 / 4-x'
+            };
+        } else if (chapter.id === '3-3' || chapter.id === '4-1') {
+            plan = {
+                title: text('后段首领墙', 'Late Boss Wall'),
+                tag: text('Boss 反制压力', 'Boss counter pressure'),
+                summary: text('这里开始同时考验数值、首领对策和资源滚动速度。', 'This is where raw numbers, boss counterplay, and long-run resource pacing are all tested together.'),
+                freePath: text('目标是 7~8 轮核心构筑、稳定网格 5~6 级、脉冲电池 3~4 级，并完成 Boss 构筑切换。', 'Target 7 to 8 core build rounds, Stability Mesh 5 to 6, Pulse Battery 3 to 4, and a proper boss build swap.'),
+                lightPath: text('小氪路线仍以新手包加赛季通行为主，但必须配合 Boss 构筑而不是无脑平推。', 'Light spend still leans on Starter Pack plus Season Pass, but the boss build still matters more than brute forcing.'),
+                midPath: text('破关金库是这一墙的专门解：减轻反制，同时让后段收益更像一次正反馈。', 'Breaker Vault is the dedicated answer here: it softens counters and makes late rewards feel like a meaningful payoff.'),
+                offerId: 'breakerVault',
+                packFit: '3-2 / 3-3 / 4-x'
+            };
+        } else {
+            plan = {
+                title: text('终盘成长墙', 'Endgame Growth Wall'),
+                tag: text('长线资源经营', 'Long-term resource loop'),
+                summary: text('终盘不是单次补强，而是构筑、研究、Boss 增益和每日经营一起闭环。', 'The endgame is not about one upgrade spike; it is about closing the loop between build, research, boss perks, and daily income.'),
+                freePath: text('白嫖也能过，但要把 9~10 轮核心构筑、中高等级研究、免费赛季和每日都尽量吃满。', 'Free players can still clear it, but it asks for 9 to 10 core build rounds, high lab levels, and strong daily plus season collection.'),
+                lightPath: text('小氪更像买时间，把 4-2 / 4-3 当成 1~2 周的终盘目标更合理。', 'Light spend mainly buys time here, so treating 4-2 / 4-3 as a 1 to 2 week endgame target is healthier.'),
+                midPath: text('中氪路线需要三档都到位，其中破关金库负责把后段 Boss 战从高波动拉回可控。', 'Mid spend wants the full stack, and Breaker Vault is what pulls late boss fights back from high variance into controllable runs.'),
+                offerId: 'breakerVault',
+                packFit: '3-2 / 3-3 / 4-x'
+            };
+        }
+        return {
+            ...plan,
+            gap,
+            owned: isOfferOwned(plan.offerId),
+            recommendedNow: isOfferRecommendedNow(plan.offerId, chapter),
+            statusCopy: gap > 0
+                ? text(`当前仍差 ${formatCompact(gap)} 战力，先补这一段最缺的成长块，再硬推会更顺。`, `You are still short by ${formatCompact(gap)} power. Fill the missing piece this gate asks for before forcing the push.`)
+                : text('当前已接近或达到推荐线，这段更考验路线、构筑切换和资源分配。', 'You are near or above the recommended line, so route choice, build swaps, and resource routing matter more now.')
+        };
+    }
+
+    function getOfferTargetSummary(offerId) {
+        switch (offerId) {
+            case 'starterPack': return '1-3 / 2-1';
+            case 'seasonPass': return '2-2 / 2-3 / 3-1';
+            case 'breakerVault': return '3-2 / 3-3 / 4-x';
+            default: return text('成长补强', 'Growth support');
+        }
+    }
+
+    function isOfferRecommendedNow(offerId, chapter = getSelectedChapter()) {
+        switch (offerId) {
+            case 'starterPack':
+                return chapter.id === '1-3' || chapter.id === '2-1';
+            case 'seasonPass':
+                return chapter.id === '2-2' || chapter.id === '2-3' || chapter.id === '3-1';
+            case 'breakerVault':
+                return chapter.id === '3-2' || chapter.id === '3-3' || chapter.chapter >= 4;
+            default:
+                return false;
+        }
     }
 
     function renderPendingOrderStatus(order) {
