@@ -71,7 +71,7 @@ button:disabled {
     z-index: 1;
     width: min(100%, 760px);
     margin: 0 auto;
-    padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 92px);
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px calc(env(safe-area-inset-bottom, 0px) + 88px);
 }
 
 .cm-topbar,
@@ -82,7 +82,7 @@ button:disabled {
 .cm-card-list,
 .cm-grid {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .cm-topline {
@@ -126,7 +126,7 @@ button:disabled {
 .cm-season-card,
 .cm-shop-card,
 .cm-offer-card {
-    padding: 12px;
+    padding: 10px;
 }
 
 .cm-hero-card {
@@ -147,7 +147,7 @@ button:disabled {
 }
 
 .cm-main {
-    margin-top: 12px;
+    margin-top: 10px;
 }
 
 .cm-resource-strip,
@@ -223,7 +223,7 @@ button:disabled {
 }
 
 .cm-value {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 800;
     line-height: 1;
 }
@@ -234,11 +234,11 @@ button:disabled {
 .cm-goal-chip small,
 .cm-input-wrap small {
     font-size: 12px;
-    line-height: 1.5;
+    line-height: 1.35;
 }
 
 .cm-copy {
-    font-size: 12.5px;
+    font-size: 12px;
 }
 
 .cm-tag-row,
@@ -265,7 +265,7 @@ button:disabled {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 10px;
+    padding: 7px 9px;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
@@ -287,10 +287,10 @@ button:disabled {
 }
 
 .cm-stage-chip {
-    min-width: 116px;
-    padding: 9px 11px;
+    min-width: 102px;
+    padding: 8px 10px;
     display: grid;
-    gap: 6px;
+    gap: 4px;
     cursor: pointer;
     transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
@@ -308,7 +308,7 @@ button:disabled {
 
 .cm-stage-card {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .cm-stage-card.is-boss {
@@ -320,7 +320,7 @@ button:disabled {
 
 .cm-stage-grid {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .cm-battle-hud,
@@ -328,24 +328,37 @@ button:disabled {
 .cm-wallet-row {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
 }
 
 .cm-hud-pill,
 .cm-wallet-pill,
 .cm-stat-pill {
     min-width: 0;
-    padding: 8px;
-    border-radius: 13px;
+    padding: 7px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     display: grid;
     gap: 3px;
 }
 
+.cm-metric-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 11px;
+    line-height: 1;
+    color: var(--cm-text);
+    flex: 0 0 auto;
+}
+
 .cm-board-wrap {
     position: relative;
-    padding: 10px;
+    padding: 8px;
     overflow: hidden;
 }
 
@@ -487,6 +500,96 @@ button:disabled {
     background: linear-gradient(180deg, rgba(118, 168, 255, 0.08), rgba(255, 255, 255, 0.03));
 }
 
+.cm-run-focus-head,
+.cm-run-stage-main,
+.cm-goal-token-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cm-run-focus-head {
+    justify-content: space-between;
+}
+
+.cm-run-stage-main {
+    min-width: 0;
+}
+
+.cm-run-stage-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.cm-run-stage-badge {
+    min-width: 52px;
+    padding: 8px 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 800;
+    text-align: center;
+}
+
+.cm-run-board-column {
+    gap: 8px;
+}
+
+.cm-goal-strip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.cm-goal-token {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px 9px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.cm-goal-token-head strong {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.cm-goal-token-head small {
+    color: var(--cm-text-soft);
+}
+
+.cm-goal-token-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--cm-text);
+    font-size: 11px;
+}
+
+.cm-run-reward-strip {
+    gap: 6px;
+}
+
+.cm-run-tip {
+    padding: 7px 9px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--cm-text-soft);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.cm-deck-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .cm-control-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -555,7 +658,7 @@ button:disabled {
 .cm-shop-card,
 .cm-offer-card {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .cm-guide-card {
@@ -649,6 +752,46 @@ button:disabled {
 
 body:not([data-cm-tab="run"]) .cm-hero-copy p {
     display: none;
+}
+
+body[data-cm-tab="run"] .cm-hero-copy p,
+body[data-cm-tab="run"] .cm-quick-row {
+    display: none;
+}
+
+body[data-cm-tab="run"] .cm-resource-strip,
+body[data-cm-tab="run"] .cm-summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+body[data-cm-tab="run"] .cm-resource-pill,
+body[data-cm-tab="run"] .cm-summary-item {
+    min-height: 54px;
+    padding: 8px;
+}
+
+body[data-cm-tab="run"] .cm-resource-pill strong,
+body[data-cm-tab="run"] .cm-resource-pill small,
+body[data-cm-tab="run"] .cm-summary-item strong,
+body[data-cm-tab="run"] .cm-summary-item small {
+    display: none;
+}
+
+body[data-cm-tab="run"] .cm-resource-pill .cm-value,
+body[data-cm-tab="run"] .cm-summary-item .cm-value {
+    font-size: 14px;
+}
+
+.cm-card-grid .cm-copy,
+.cm-mission-list .cm-copy,
+.cm-season-list .cm-copy,
+.cm-shop-list .cm-copy,
+.cm-offer-list .cm-copy {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .cm-tab-icon {
@@ -772,7 +915,7 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
 
 @media (min-width: 720px) {
     .cm-stage-grid {
-        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+        grid-template-columns: minmax(0, 1fr);
         align-items: start;
     }
 
@@ -808,8 +951,8 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
     .cm-season-card,
     .cm-shop-card,
     .cm-offer-card {
-        padding: 10px;
-        border-radius: 20px;
+        padding: 9px;
+        border-radius: 18px;
     }
 
     .cm-hero-copy h1 {
@@ -830,6 +973,11 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    body[data-cm-tab="run"] .cm-resource-strip,
+    body[data-cm-tab="run"] .cm-summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     .cm-battle-hud {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 6px;
@@ -845,20 +993,20 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
 
     .cm-resource-pill,
     .cm-summary-item {
-        min-height: 62px;
-        padding: 9px;
+        min-height: 56px;
+        padding: 8px;
     }
 
     .cm-wallet-pill,
     .cm-stat-pill {
-        min-height: 60px;
-        padding: 8px;
+        min-height: 56px;
+        padding: 7px;
     }
 
     .cm-wallet-pill .cm-value,
     .cm-stat-pill .cm-value,
     .cm-summary-item .cm-value {
-        font-size: 17px;
+        font-size: 15px;
     }
 
     .cm-wallet-pill small,
@@ -869,7 +1017,7 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
 
     .cm-card-head .cm-copy {
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -877,8 +1025,17 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
     .cm-chip,
     .cm-tag,
     .cm-goal-chip {
-        padding: 7px 8px;
+        padding: 6px 8px;
         gap: 5px;
+    }
+
+    .cm-stage-chip {
+        min-width: 92px;
+        padding: 7px 8px;
+    }
+
+    .cm-stage-chip small {
+        display: none;
     }
 
     .cm-card-grid,
@@ -907,7 +1064,7 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
     }
 
     .cm-hud-pill .cm-value {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .cm-hud-pill small {
@@ -926,8 +1083,26 @@ body:not([data-cm-tab="run"]) .cm-hero-copy p {
     .cm-btn,
     .cm-btn-soft,
     .cm-btn-ghost {
-        min-height: 42px;
-        padding: 0 12px;
+        min-height: 40px;
+        padding: 0 10px;
+    }
+
+    .cm-goal-strip,
+    .cm-deck-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cm-goal-token {
+        padding: 7px 8px;
+    }
+
+    .cm-goal-token-head strong {
+        font-size: 14px;
+    }
+
+    .cm-run-tip {
+        padding: 6px 8px;
+        font-size: 11.5px;
     }
 
     .cm-tabbar {

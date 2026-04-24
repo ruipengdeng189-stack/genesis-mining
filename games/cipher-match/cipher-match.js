@@ -425,13 +425,10 @@
         const assist = isCurrentRun ? (run.assist || getRunAssistState(chapter)) : getRunAssistState(chapter);
         const goals = isCurrentRun ? run.goals : chapter.goals.map((goal) => ({ ...goal, remaining: goal.amount }));
         const boardHtml = isCurrentRun ? renderLiveBoard(run) : renderPreviewBoard();
-        const activeLeaderId = isCurrentRun ? getRunLeaderId(run) : state.save.selectedLeader;
         const activeSkillId = isCurrentRun ? getRunSkillId(run) : state.save.selectedSkill;
-        const activeModuleIds = isCurrentRun ? getRunModuleIds(run) : state.save.selectedModules;
         const skill = skillMap[activeSkillId];
         const stageReward = getScaledChapterReward(chapter);
         const firstClearReward = state.save.clearedChapters.includes(chapter.id) ? null : getFirstClearReward(chapter);
-        const boardHintTitle = isCurrentRun ? text('战斗提示', 'Battle Hint') : text('开局提示', 'Start Hint');
         const boardHintCopy = isCurrentRun
             ? (run.notice || text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.'))
             : getRunOpeningHint(chapter, assist);
@@ -443,39 +440,44 @@
         ].filter(Boolean).join(' ');
 
         return `
-            <div class="cm-stack">
+            <div class="cm-stack cm-run-stack">
                 <div class="cm-stage-strip">
                     ${config.chapters.map((item) => renderStageChip(item)).join('')}
                 </div>
 
-                ${!isCurrentRun ? renderRunGuide(chapter, power) : ''}
-
                 <div class="cm-card cm-stage-card ${isBoss ? 'is-boss' : ''}">
-                    <div class="cm-card-head">
-                        <div>
-                            <div class="eyebrow">${escapeHtml(text('主舞台', 'Main Stage'))}</div>
-                            <strong>${escapeHtml(`${chapter.id} · ${localize(chapter.name)}`)}</strong>
-                            <div class="cm-copy">${escapeHtml(localize(chapter.pressure))} · ${escapeHtml(localize(chapter.rewardFocus))}</div>
+                    <div class="cm-run-focus-head">
+                        <div class="cm-run-stage-main">
+                            <div class="cm-run-stage-badge">${escapeHtml(chapter.id)}</div>
+                            <div class="cm-run-stage-copy">
+                                <strong>${escapeHtml(localize(chapter.name))}</strong>
+                                <div class="cm-chip-row">
+                                    <span class="cm-chip">${escapeHtml(localize(chapter.pressure))}</span>
+                                    ${!isCurrentRun ? `<span class="cm-chip">${escapeHtml(localize(chapter.rewardFocus))}</span>` : ''}
+                                    ${tutorialEntryFree ? `<span class="cm-chip is-good">${escapeHtml(text('教学免费', 'Tutorial Free'))}</span>` : ''}
+                                </div>
+                            </div>
                         </div>
                         <div class="cm-tag-row">
-                            <span class="cm-tag">${escapeHtml(text('推荐', 'Recommended'))} ${chapter.recommended}</span>
-                            <span class="cm-tag ${power >= chapter.recommended ? 'is-good' : ''}">${escapeHtml(text('当前', 'Current'))} ${power}</span>
-                            ${isBoss ? `<span class="cm-tag is-danger-text">${escapeHtml(text('首领关', 'Boss'))}</span>` : ''}
+                            <span class="cm-tag">${escapeHtml(text('推', 'Rec'))} ${chapter.recommended}</span>
+                            <span class="cm-tag ${power >= chapter.recommended ? 'is-good' : 'is-warn'}">${escapeHtml(text('战', 'Pow'))} ${power}</span>
+                            ${isBoss ? `<span class="cm-tag is-danger-text">${escapeHtml(text('Boss', 'Boss'))}</span>` : ''}
                         </div>
                     </div>
 
                     <div class="cm-stage-grid">
-                        <div class="cm-stack">
+                        <div class="cm-stack cm-run-board-column">
                             <div class="cm-battle-hud">
-                                ${renderHudPill(text('步数', 'Moves'), isCurrentRun ? run.movesLeft : chapter.moves, text('仅有效交换才扣步数', 'Only valid swaps spend moves'))}
-                                ${renderHudPill(text('能量', 'Energy'), isCurrentRun ? `${run.energy}/${run.maxEnergy}` : `${assist.bonusEnergy}/${getRunMaxEnergy()}`, escapeHtml(localize(skill.name)))}
-                                ${renderHudPill(text('分数', 'Score'), isCurrentRun ? formatCompact(run.score) : '0', text('4 连和连锁得分更高', '4-matches and cascades score more'))}
+                                ${renderHudPill(text('步', 'Moves'), isCurrentRun ? run.movesLeft : chapter.moves, text('有效交换', 'Valid swaps'), '◫')}
+                                ${renderHudPill(text('能', 'Energy'), isCurrentRun ? `${run.energy}/${run.maxEnergy}` : `${assist.bonusEnergy}/${getRunMaxEnergy()}`, localize(skill.name), '⚡')}
+                                ${renderHudPill(text('分', 'Score'), isCurrentRun ? formatCompact(run.score) : '0', text('4 连更高', '4-match up'), '✦')}
                                 ${isCurrentRun && isBoss
-                                    ? renderHudPill(text('反制', 'Counter'), `${run.bossTurnsLeft}/${run.bossPulseEvery}`, text('归零后首领会回补护盾并抽离能量', 'At zero, the boss restores shield and drains energy.'))
+                                    ? renderHudPill(text('反', 'Counter'), `${run.bossTurnsLeft}/${run.bossPulseEvery}`, text('归零触发', 'Zero triggers'), '⛨')
                                     : renderHudPill(
-                                        text('门票', 'Entry'),
-                                        tutorialEntryFree ? text('教学免费', 'Tutorial') : getRemainingFreeRuns() > 0 ? text('免费', 'Free') : `${entryCost}`,
-                                        tutorialEntryFree ? text('首通练手不扣次数', 'First clear training entry') : getRemainingFreeRuns() > 0 ? `${getRemainingFreeRuns()}/${getDailyFreeRunsLimit()}` : text('金币消耗', 'Credit cost')
+                                        text('票', 'Entry'),
+                                        tutorialEntryFree ? text('免', 'Free') : getRemainingFreeRuns() > 0 ? `${getRemainingFreeRuns()}` : `${entryCost}`,
+                                        tutorialEntryFree ? text('教学', 'Tutorial') : getRemainingFreeRuns() > 0 ? `${getDailyFreeRunsLimit()}` : text('金币', 'Credits'),
+                                        '◎'
                                     )}
                             </div>
 
@@ -484,63 +486,30 @@
                                 ${isCurrentRun && run.feedback ? renderBattleFeedback(run.feedback) : ''}
                             </div>
 
-                            <div class="cm-note-bar ${isCurrentRun ? '' : 'is-idle'}">
-                                <strong>${escapeHtml(boardHintTitle)}</strong>
-                                <span class="cm-note">${escapeHtml(boardHintCopy)}</span>
+                            <div class="cm-goal-strip">
+                                ${goals.map((goal) => renderCompactGoal(goal)).join('')}
                             </div>
+
+                            ${!isCurrentRun ? `
+                                <div class="cm-chip-row cm-run-reward-strip">
+                                    ${renderCompactRewardPills(stageReward)}
+                                    ${firstClearReward ? `<span class="cm-chip is-good">${escapeHtml(text('首通+', '1st+'))}</span>${renderCompactRewardPills(firstClearReward)}` : ''}
+                                </div>
+                            ` : ''}
+
+                            ${!isCurrentRun || run.failed ? `<div class="cm-run-tip">${escapeHtml(boardHintCopy)}</div>` : ''}
 
                             <div class="cm-control-row">
                                 <button class="cm-btn-soft" type="button" data-action="useSkill" ${!isCurrentRun || run.failed ? 'disabled' : ''}>
-                                    ${escapeHtml(text('释放技能', 'Cast Skill'))}
+                                    ${escapeHtml(text('放技', 'Skill'))}
                                 </button>
                                 ${isCurrentRun ? `
                                     <button class="cm-btn" type="button" data-action="${run.failed ? 'buyMoves' : 'abandonRun'}">
-                                        ${escapeHtml(run.failed ? text('+5 步继续', '+5 Moves') : text('结束本局', 'Retreat'))}
+                                        ${escapeHtml(run.failed ? text('+5 步', '+5 Moves') : text('退出', 'Retreat'))}
                                     </button>
                                 ` : `
-                                    <button class="cm-btn" type="button" data-action="startRun">${escapeHtml(text('开始解码', 'Start Run'))}</button>
+                                    <button class="cm-btn" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
                                 `}
-                            </div>
-                        </div>
-
-                        <div class="cm-board-side">
-                            <div class="cm-mini-card">
-                                <div class="cm-card-head">
-                                    <div>
-                                        <strong>${escapeHtml(text('当前目标', 'Current Goals'))}</strong>
-                                        <div class="cm-copy">${escapeHtml(text('清空全部目标即可通关。', 'Clear all goals to win.'))}</div>
-                                    </div>
-                                </div>
-                                <div class="cm-goal-list">${goals.map((goal) => renderGoal(goal)).join('')}</div>
-                            </div>
-
-                            <div class="cm-mini-card">
-                                <div class="cm-card-head">
-                                    <div>
-                                        <strong>${escapeHtml(text('本关收益', 'Stage Reward'))}</strong>
-                                        <div class="cm-copy">${escapeHtml(text('研究、模块和永久特权都会放大结算收益。', 'Research, modules, and permanent perks all improve rewards.'))}</div>
-                                    </div>
-                                </div>
-                                <div class="cm-reward-row">${renderRewardChips(stageReward)}</div>
-                                ${firstClearReward ? `
-                                    <div class="cm-copy">${escapeHtml(text('首通还会追加一波奖励。', 'First clear also grants an extra payout.'))}</div>
-                                    <div class="cm-reward-row">${renderRewardChips(firstClearReward)}</div>
-                                ` : `<div class="cm-copy">${escapeHtml(text('首通奖励已领取，当前展示常规结算。', 'First-clear rewards are already claimed; this shows the normal payout.'))}</div>`}
-                            </div>
-
-                            <div class="cm-mini-card">
-                                <div class="cm-card-head">
-                                    <div>
-                                        <strong>${escapeHtml(text('当前装配', 'Active Loadout'))}</strong>
-                                        <div class="cm-copy">${escapeHtml(localize(skill.effect))}</div>
-                                    </div>
-                                </div>
-                                <div class="cm-chip-row">
-                                    <span class="cm-chip">${escapeHtml(localize(leaderMap[activeLeaderId].name))}</span>
-                                    ${activeModuleIds.map((id) => `<span class="cm-chip">${escapeHtml(localize(moduleMap[id].name))}</span>`).join('')}
-                                    <span class="cm-chip">${escapeHtml(localize(skill.name))}</span>
-                                </div>
-                                <div class="cm-copy">${escapeHtml(getRunAssistSummary(chapter, assist))}</div>
                             </div>
                         </div>
                     </div>
@@ -554,32 +523,51 @@
         const skill = skillMap[state.save.selectedSkill];
         const chapter = getSelectedChapter();
         const assist = getRunAssistState(chapter);
+        const stageReward = getScaledChapterReward(chapter);
+        const firstClearReward = state.save.clearedChapters.includes(chapter.id) ? null : getFirstClearReward(chapter);
         const equippedModules = state.save.selectedModules.length
-            ? state.save.selectedModules.map((id) => `<span class="cm-chip">${escapeHtml(localize(moduleMap[id].name))}</span>`).join('')
+            ? state.save.selectedModules.map((id) => `<span class="cm-chip">▣ ${escapeHtml(localize(moduleMap[id].name))}</span>`).join('')
             : `<span class="cm-chip">${escapeHtml(text('模块空槽', 'Module Slot Empty'))}</span>`;
 
         return `
             <div class="cm-stack">
                 ${renderRunLockNotice()}
                 <div class="cm-wallet-row">
-                    ${renderWalletPill(text('金币', 'Credits'), formatCompact(state.save.credits), text('卡牌升级主消耗', 'Main card upgrade spend'))}
-                    ${renderWalletPill(text('密钥位', 'Key Bits'), formatCompact(state.save.keyBits), text('队长 / 模块 / 技能升级', 'Leader / module / skill upgrades'))}
-                    ${renderWalletPill(text('构筑战力', 'Power'), `${getDeckPower()}/${chapter.recommended}`, text('对照当前关卡推荐线', 'Compared with current stage line'))}
-                    ${renderWalletPill(text('当前关卡', 'Stage'), chapter.id, localize(chapter.name))}
+                    ${renderWalletPill(text('金币', 'Credits'), formatCompact(state.save.credits), text('升级主消耗', 'Upgrade spend'), '◎')}
+                    ${renderWalletPill(text('密钥位', 'Key Bits'), formatCompact(state.save.keyBits), text('卡牌升级', 'Card upgrades'), '◇')}
+                    ${renderWalletPill(text('战力', 'Power'), `${getDeckPower()}/${chapter.recommended}`, text('当前推荐线', 'Current stage line'), '⚔')}
+                    ${renderWalletPill(text('关卡', 'Stage'), chapter.id, localize(chapter.name), '▣')}
                 </div>
 
-                <div class="cm-card">
-                    <div class="cm-card-head">
-                        <div>
-                            <div class="eyebrow">${escapeHtml(text('当前出战', 'Current Loadout'))}</div>
-                            <strong>${escapeHtml(text('这套构筑会直接作用到闯关难度', 'This loadout directly changes run difficulty'))}</strong>
-                            <div class="cm-copy">${escapeHtml(getRunAssistSummary(chapter, assist))}</div>
+                <div class="cm-inline-grid cm-deck-overview">
+                    <div class="cm-mini-card">
+                        <div class="cm-card-head">
+                            <div>
+                                <div class="eyebrow">${escapeHtml(text('当前出战', 'Current Loadout'))}</div>
+                                <strong>${escapeHtml(text('直接影响闯关手感', 'Directly affects the run feel'))}</strong>
+                            </div>
+                            <span class="cm-tag">${escapeHtml(text('战力', 'Power'))} ${getDeckPower()}</span>
                         </div>
+                        <div class="cm-chip-row">
+                            <span class="cm-chip">👑 ${escapeHtml(localize(leader.name))}</span>
+                            <span class="cm-chip">✦ ${escapeHtml(localize(skill.name))}</span>
+                            ${equippedModules}
+                        </div>
+                        <div class="cm-copy">${escapeHtml(getRunAssistSummary(chapter, assist))}</div>
                     </div>
-                    <div class="cm-chip-row">
-                        <span class="cm-chip">${escapeHtml(localize(leader.name))}</span>
-                        <span class="cm-chip">${escapeHtml(localize(skill.name))}</span>
-                        ${equippedModules}
+
+                    <div class="cm-mini-card">
+                        <div class="cm-card-head">
+                            <div>
+                                <div class="eyebrow">${escapeHtml(text('当前关卡收益', 'Stage Loot'))}</div>
+                                <strong>${escapeHtml(`${chapter.id} · ${localize(chapter.name)}`)}</strong>
+                            </div>
+                        </div>
+                        <div class="cm-chip-row">
+                            ${renderCompactRewardPills(stageReward)}
+                            ${firstClearReward ? `<span class="cm-chip is-good">${escapeHtml(text('首通+', '1st+'))}</span>` : `<span class="cm-chip">${escapeHtml(text('常规结算', 'Normal'))}</span>`}
+                        </div>
+                        ${firstClearReward ? `<div class="cm-chip-row">${renderCompactRewardPills(firstClearReward)}</div>` : `<div class="cm-copy">${escapeHtml(localize(chapter.rewardFocus))}</div>`}
                     </div>
                 </div>
 
@@ -588,7 +576,6 @@
                         <div>
                             <div class="eyebrow">${escapeHtml(text('队长', 'Leader'))}</div>
                             <strong>${escapeHtml(text('选择 1 名核心队长', 'Choose 1 leader'))}</strong>
-                            <div class="cm-copy">${escapeHtml(text('决定被动方向和核心战力。', 'Sets your passive direction and core power.'))}</div>
                         </div>
                     </div>
                     <div class="cm-card-grid">${config.leaders.map((item) => renderCardItem('leader', item, item.id === state.save.selectedLeader)).join('')}</div>
@@ -599,7 +586,6 @@
                         <div>
                             <div class="eyebrow">${escapeHtml(text('模块', 'Modules'))}</div>
                             <strong>${escapeHtml(text('最多装配 2 个模块', 'Equip up to 2 modules'))}</strong>
-                            <div class="cm-copy">${escapeHtml(text('模块影响续航、收益和首领压制。', 'Modules shape sustain, rewards, and boss pressure.'))}</div>
                         </div>
                     </div>
                     <div class="cm-card-grid">${config.modules.map((item) => renderCardItem('module', item, state.save.selectedModules.includes(item.id))).join('')}</div>
@@ -610,7 +596,6 @@
                         <div>
                             <div class="eyebrow">${escapeHtml(text('主动技', 'Skills'))}</div>
                             <strong>${escapeHtml(text('切换 1 个主动技能', 'Swap 1 active skill'))}</strong>
-                            <div class="cm-copy">${escapeHtml(text('满能量释放，直接决定闯关节奏。', 'Cast at full energy to change your run tempo.'))}</div>
                         </div>
                     </div>
                     <div class="cm-card-grid">${config.skills.map((item) => renderCardItem('skill', item, item.id === state.save.selectedSkill)).join('')}</div>
@@ -629,10 +614,10 @@
             <div class="cm-stack">
                 ${renderRunLockNotice()}
                 <div class="cm-wallet-row">
-                    ${renderWalletPill(text('密码尘', 'Cipher Dust'), formatCompact(state.save.cipherDust), text('研究升级主材料', 'Main research material'))}
-                    ${renderWalletPill(text('开局步数', 'Start Moves'), decodeBonus > 0 ? `+${decodeBonus}` : '0', text('来自解码缓存', 'From Decode Cache'))}
-                    ${renderWalletPill(text('最大能量', 'Max Energy'), energyBonus > 0 ? `+${energyBonus}` : '0', text('来自脉冲电池', 'From Pulse Battery'))}
-                    ${renderWalletPill(text('章节收益', 'Loot Bonus'), lootBonus > 0 ? `+${lootBonus}%` : '0%', text('来自战利中继', 'From Loot Relay'))}
+                    ${renderWalletPill(text('密码尘', 'Cipher Dust'), formatCompact(state.save.cipherDust), text('研究材料', 'Research material'), '✦')}
+                    ${renderWalletPill(text('开局步', 'Start Moves'), decodeBonus > 0 ? `+${decodeBonus}` : '0', text('解码缓存', 'Decode Cache'), '◫')}
+                    ${renderWalletPill(text('能量上限', 'Max Energy'), energyBonus > 0 ? `+${energyBonus}` : '0', text('脉冲电池', 'Pulse Battery'), '⚡')}
+                    ${renderWalletPill(text('章节收益', 'Loot Bonus'), lootBonus > 0 ? `+${lootBonus}%` : '0%', text('战利中继', 'Loot Relay'), '🎁')}
                 </div>
 
                 <div class="cm-inline-grid">
@@ -653,7 +638,6 @@
                         <div>
                             <div class="eyebrow">${escapeHtml(text('研究作用', 'Research Impact'))}</div>
                             <strong>${escapeHtml(text('每项研究都对应一个明确战斗效果', 'Every node maps to a clear run benefit'))}</strong>
-                            <div class="cm-copy">${escapeHtml(text('优先补当前卡点最明显的那一项。', 'Upgrade the node that solves your current wall first.'))}</div>
                         </div>
                     </div>
                     <div class="cm-card-grid">
@@ -672,10 +656,10 @@
             <div class="cm-stack">
                 ${renderRunLockNotice()}
                 <div class="cm-wallet-row">
-                    ${renderWalletPill(text('可领取', 'Ready'), claimable, text('已自动置顶显示', 'Pinned to the top'))}
-                    ${renderWalletPill(text('已完成', 'Claimed'), `${claimed}/${missions.length}`, text('任务完成进度', 'Mission completion'))}
-                    ${renderWalletPill(text('对局数', 'Runs'), formatCompact(state.save.stats.runs), text('完成任意闯关累计', 'Finished runs total'))}
-                    ${renderWalletPill(text('胜场', 'Wins'), formatCompact(state.save.stats.wins), text('推动赛季与任务成长', 'Feeds season and mission growth'))}
+                    ${renderWalletPill(text('可领', 'Ready'), claimable, text('自动置顶', 'Pinned'), '🎁')}
+                    ${renderWalletPill(text('完成', 'Claimed'), `${claimed}/${missions.length}`, text('任务进度', 'Mission progress'), '✓')}
+                    ${renderWalletPill(text('对局', 'Runs'), formatCompact(state.save.stats.runs), text('完成累计', 'Finished total'), '▷')}
+                    ${renderWalletPill(text('胜场', 'Wins'), formatCompact(state.save.stats.wins), text('推动成长', 'Feeds growth'), '⚔')}
                 </div>
 
                 <div class="cm-card">
@@ -683,7 +667,6 @@
                         <div>
                             <div class="eyebrow">${escapeHtml(text('任务', 'Missions'))}</div>
                             <strong>${escapeHtml(text('可领奖励优先显示', 'Claimable rewards first'))}</strong>
-                            <div class="cm-copy">${escapeHtml(text('闯关、升级、研究都会同步推进。', 'Runs, upgrades, and research all move this forward.'))}</div>
                         </div>
                     </div>
                     <div class="cm-mission-list">
@@ -704,10 +687,10 @@
             <div class="cm-stack">
                 ${renderRunLockNotice()}
                 <div class="cm-wallet-row">
-                    ${renderWalletPill(text('赛季经验', 'Season XP'), formatCompact(state.save.seasonXp), text('闯关 / 任务 / 商店', 'Runs / missions / shop'))}
-                    ${renderWalletPill(text('赛季等级', 'Season Lv'), Math.floor(state.save.seasonXp / 120) + 1, text('约每 120 经验升 1 级', 'About 1 level per 120 XP'))}
-                    ${renderWalletPill(text('免费可领', 'Free Ready'), freeReady, text('优先领取最近档位', 'Claim the closest milestones first'))}
-                    ${renderWalletPill(text('高级轨道', 'Premium'), state.save.premiumSeason ? premiumReady : text('未解锁', 'Locked'), state.save.premiumSeason ? text('已可领取的高级档位', 'Premium rewards ready to claim') : text('解锁后奖励更厚', 'Unlock for denser rewards'))}
+                    ${renderWalletPill(text('赛季经验', 'Season XP'), formatCompact(state.save.seasonXp), text('闯关 / 任务 / 商店', 'Runs / missions / shop'), '✧')}
+                    ${renderWalletPill(text('赛季等级', 'Season Lv'), Math.floor(state.save.seasonXp / 120) + 1, text('每 120 经验', 'Per 120 XP'), '⇡')}
+                    ${renderWalletPill(text('免费可领', 'Free Ready'), freeReady, text('最近档位', 'Closest milestones'), '🎁')}
+                    ${renderWalletPill(text('高级轨', 'Premium'), state.save.premiumSeason ? premiumReady : text('未解锁', 'Locked'), state.save.premiumSeason ? text('高级可领', 'Premium ready') : text('解锁更厚', 'Unlock for more'), '⟡')}
                 </div>
 
                 <div class="cm-card">
@@ -725,7 +708,6 @@
                         <div>
                             <div class="eyebrow">${escapeHtml(text('高级轨道', 'Premium Track'))}</div>
                             <strong>${escapeHtml(state.save.premiumSeason ? text('高级奖励已开启', 'Premium rewards unlocked') : text('解锁后可领取更多奖励', 'Unlock for extra rewards'))}</strong>
-                            <div class="cm-copy">${escapeHtml(state.save.premiumSeason ? text('当前只保留最近可领的高级档位。', 'Only the nearest premium milestones are shown.') : text('可在商店中直接打开支付弹窗。', 'You can unlock it from the shop payment modal.'))}</div>
                         </div>
                         ${state.save.premiumSeason ? '' : `<button class="cm-btn-soft" type="button" data-action="previewOffer" data-value="seasonPass" ${metaLocked ? 'disabled' : ''}>${escapeHtml(text('解锁通行证', 'Unlock Pass'))}</button>`}
                     </div>
@@ -744,10 +726,10 @@
             <div class="cm-stack">
                 ${renderRunLockNotice()}
                 <div class="cm-wallet-row">
-                    ${renderWalletPill(text('金币', 'Credits'), formatCompact(state.save.credits), text('升级 / 门票 / 商店', 'Upgrades / entry / shop'))}
-                    ${renderWalletPill(text('密钥位', 'Key Bits'), formatCompact(state.save.keyBits), text('卡牌升级核心', 'Core card upgrade cost'))}
-                    ${renderWalletPill(text('密码尘', 'Cipher Dust'), formatCompact(state.save.cipherDust), text('研究主材料', 'Main research material'))}
-                    ${renderWalletPill(text('订单 / 特权', 'Orders / Perks'), `${pendingOrders}/${ownedOffers}`, dailyClaimed ? text('每日补给已领', 'Daily supply claimed') : text('今日仍有免费补给', 'Daily free supply ready'))}
+                    ${renderWalletPill(text('金币', 'Credits'), formatCompact(state.save.credits), text('升级 / 门票 / 商店', 'Upgrades / entry / shop'), '◎')}
+                    ${renderWalletPill(text('密钥位', 'Key Bits'), formatCompact(state.save.keyBits), text('卡牌升级', 'Card upgrades'), '◇')}
+                    ${renderWalletPill(text('密码尘', 'Cipher Dust'), formatCompact(state.save.cipherDust), text('研究主材料', 'Main research material'), '✦')}
+                    ${renderWalletPill(text('订单 / 特权', 'Orders / Perks'), `${pendingOrders}/${ownedOffers}`, dailyClaimed ? text('每日补给已领', 'Daily supply claimed') : text('今日仍有免费补给', 'Daily free supply ready'), '🧾')}
                 </div>
 
                 <div class="cm-card">
@@ -815,6 +797,23 @@
                     <strong>${escapeHtml(meta.label)}</strong>
                 </div>
                 <small>${escapeHtml(text('剩余', 'Left'))} ${Math.max(0, goal.remaining)} / ${total}</small>
+                <div class="cm-progress"><span style="width:${percent}%"></span></div>
+            </div>
+        `;
+    }
+
+    function renderCompactGoal(goal) {
+        const meta = getGoalMeta(goal.type);
+        const total = Math.max(1, goal.amount || goal.remaining || 1);
+        const done = Math.max(0, total - goal.remaining);
+        const percent = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+        return `
+            <div class="cm-goal-token">
+                <div class="cm-goal-token-head">
+                    <span class="cm-goal-token-icon" aria-hidden="true">${escapeHtml(meta.icon)}</span>
+                    <strong>${Math.max(0, goal.remaining)}</strong>
+                    <small>/ ${total}</small>
+                </div>
                 <div class="cm-progress"><span style="width:${percent}%"></span></div>
             </div>
         `;
@@ -919,9 +918,9 @@
                 </div>
                 <div class="cm-copy">${escapeHtml(localize(item.effect || item.skill))}</div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('战力', 'Power'))} +${power}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('已满级', 'Maxed') : `${text('下级', 'Next')} +${nextPower}`)}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('升满完成', 'Upgrade complete') : `${text('升级', 'Upgrade')} ${formatCompact(cost.credits)} / ${formatCompact(cost.keyBits)}`)}</span>
+                    <span class="cm-chip">⚔ ${power}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 满', '✓ Max') : `⇡ +${nextPower}`)}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 完成', '✓ Done') : `◎${formatCompact(cost.credits)} ◇${formatCompact(cost.keyBits)}`)}</span>
                 </div>
                 <div class="cm-control-row">
                     <button class="cm-btn-soft" type="button" data-action="${action}" data-value="${item.id}" ${metaLocked ? 'disabled' : ''}>${escapeHtml(selectLabel)}</button>
@@ -947,9 +946,9 @@
                     <span class="cm-tag">${escapeHtml(text('等级', 'Lv'))} ${level}/${item.maxLevel}</span>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(getResearchImpactLabel(item.id, level))}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('已满级', 'Maxed') : getResearchNextImpactLabel(item.id, level))}</span>
-                    <span class="cm-chip">${escapeHtml(text('花费', 'Cost'))} ${formatCompact(cost.credits)} / ${formatCompact(cost.cipherDust)}</span>
+                    <span class="cm-chip">◉ ${escapeHtml(getResearchImpactLabel(item.id, level))}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 满', '✓ Max') : `⇡ ${getResearchNextImpactLabel(item.id, level)}`)}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 完成', '✓ Done') : `◎${formatCompact(cost.credits)} ✦${formatCompact(cost.cipherDust)}`)}</span>
                 </div>
                 <button class="cm-btn" type="button" data-action="upgradeResearch" data-value="${item.id}" ${(canAfford && !metaLocked) ? '' : 'disabled'}>
                     ${escapeHtml(maxed ? text('已满级', 'Maxed') : text('研究升级', 'Upgrade'))}
@@ -2151,24 +2150,59 @@
         `;
     }
 
-    function renderHudPill(label, value, meta) {
+    function renderHudPill(label, value, meta, icon = '•') {
         return `
             <div class="cm-hud-pill">
-                <strong>${escapeHtml(label)}</strong>
+                <div class="cm-pill-head">
+                    <span class="cm-metric-icon" aria-hidden="true">${escapeHtml(icon)}</span>
+                    <strong>${escapeHtml(label)}</strong>
+                </div>
                 <span class="cm-value">${escapeHtml(String(value))}</span>
                 <small>${escapeHtml(meta)}</small>
             </div>
         `;
     }
 
-    function renderWalletPill(label, value, meta) {
+    function renderWalletPill(label, value, meta, icon = '•') {
         return `
             <div class="cm-wallet-pill">
-                <strong>${escapeHtml(label)}</strong>
+                <div class="cm-pill-head">
+                    <span class="cm-metric-icon" aria-hidden="true">${escapeHtml(icon)}</span>
+                    <strong>${escapeHtml(label)}</strong>
+                </div>
                 <span class="cm-value">${escapeHtml(String(value))}</span>
                 <small>${escapeHtml(meta)}</small>
             </div>
         `;
+    }
+
+    function getRewardIcon(key) {
+        switch (key) {
+            case 'credits': return '◎';
+            case 'keyBits': return '◇';
+            case 'cipherDust': return '✦';
+            case 'seasonXp': return '✧';
+            case 'premiumSeason': return '⟡';
+            case 'starterBoost': return '▲';
+            case 'vaultRelay': return '⬡';
+            default: return '+';
+        }
+    }
+
+    function renderCompactRewardPills(reward) {
+        return Object.entries(reward).map(([key, value]) => {
+            if (!value) return '';
+            const label = value === true
+                ? (key === 'premiumSeason'
+                    ? text('高级轨', 'Pass')
+                    : key === 'starterBoost'
+                        ? text('开局稳', 'Boost')
+                        : key === 'vaultRelay'
+                            ? text('Boss稳', 'Boss')
+                            : key)
+                : formatCompact(value);
+            return `<span class="cm-chip">${escapeHtml(getRewardIcon(key))} ${escapeHtml(String(label))}</span>`;
+        }).join('');
     }
 
     function renderRewardChips(reward) {
