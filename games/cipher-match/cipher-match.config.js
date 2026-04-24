@@ -1,0 +1,340 @@
+(function () {
+    window.GENESIS_CIPHER_MATCH_CONFIG = {
+        meta: {
+            id: 'cipher-match',
+            title: { zh: '密码消除', en: 'Cipher Match' },
+            subtitle: {
+                zh: '6x6 解码消除，兼顾章节闯关、构筑成长与赛季循环。',
+                en: 'A 6x6 decode puzzler with chapter runs, deck growth, and season loops.'
+            }
+        },
+        tabs: [
+            { id: 'run', label: { zh: '闯关', en: 'Run' } },
+            { id: 'deck', label: { zh: '构筑', en: 'Deck' } },
+            { id: 'lab', label: { zh: '研究', en: 'Lab' } },
+            { id: 'missions', label: { zh: '任务', en: 'Missions' } },
+            { id: 'season', label: { zh: '赛季', en: 'Season' } },
+            { id: 'shop', label: { zh: '商店', en: 'Shop' } }
+        ],
+        currencies: [
+            { id: 'credits', label: { zh: '金币', en: 'Credits' }, icon: '◎' },
+            { id: 'keyBits', label: { zh: '密钥位', en: 'Key Bits' }, icon: '◇' },
+            { id: 'cipherDust', label: { zh: '密码尘', en: 'Cipher Dust' }, icon: '✦' },
+            { id: 'seasonXp', label: { zh: '赛季经验', en: 'Season XP' }, icon: '✧' }
+        ],
+        board: {
+            size: 6,
+            freeRunsPerDay: 4,
+            buyMovesBase: 180,
+            entryCostByChapter: { 1: 160, 2: 280, 3: 420 },
+            colors: [
+                { id: 'alpha', icon: 'A', name: { zh: '蓝码', en: 'Azure' } },
+                { id: 'beta', icon: 'B', name: { zh: '紫码', en: 'Violet' } },
+                { id: 'gamma', icon: 'C', name: { zh: '青码', en: 'Cyan' } },
+                { id: 'delta', icon: 'D', name: { zh: '金码', en: 'Gold' } },
+                { id: 'omega', icon: 'Ω', name: { zh: '核码', en: 'Core' } }
+            ]
+        },
+        upgradeCurves: {
+            leader: { baseCredits: 190, creditGrowth: 1.34, baseBits: 24, bitGrowth: 1.22 },
+            module: { baseCredits: 130, creditGrowth: 1.28, baseBits: 16, bitGrowth: 1.18 },
+            skill: { baseCredits: 160, creditGrowth: 1.31, baseBits: 18, bitGrowth: 1.2 }
+        },
+        leaders: [
+            {
+                id: 'glintFox',
+                name: { zh: '微光狐', en: 'Glint Fox' },
+                role: { zh: '快节奏连锁', en: 'Fast cascades' },
+                skill: { zh: '让当前缺口最大的目标额外减少 6 点。', en: 'Removes 6 extra progress from your biggest remaining target.' },
+                effect: { zh: '连锁加速', en: 'Cascade tempo' },
+                basePower: 92
+            },
+            {
+                id: 'wardenNine',
+                name: { zh: '九号守门人', en: 'Warden Nine' },
+                role: { zh: '步数与容错', en: 'Moves and stability' },
+                skill: { zh: '立刻恢复 3 步，并把能量回到 35。', en: 'Immediately restores 3 moves and resets energy to 35.' },
+                effect: { zh: '稳扎稳打', en: 'Steady control' },
+                basePower: 108
+            },
+            {
+                id: 'novaEcho',
+                name: { zh: '新星回声', en: 'Nova Echo' },
+                role: { zh: 'Boss 破防', en: 'Boss break' },
+                skill: { zh: '对全部目标造成额外压制，护盾目标额外 -4。', en: 'Pressures all goals and deals an extra -4 to shield targets.' },
+                effect: { zh: '破盾推进', en: 'Boss pressure' },
+                basePower: 102
+            }
+        ],
+        modules: [
+            {
+                id: 'prismTap',
+                name: { zh: '棱镜触发', en: 'Prism Tap' },
+                role: { zh: '充能更快', en: 'Faster charge' },
+                effect: { zh: '每回合额外获得能量。', en: 'Earns extra energy every successful move.' },
+                basePower: 48
+            },
+            {
+                id: 'relayCache',
+                name: { zh: '中继缓存', en: 'Relay Cache' },
+                role: { zh: '提高收益', en: 'More rewards' },
+                effect: { zh: '结算金币 / 密钥位收益提高。', en: 'Improves credits and key bit rewards on victory.' },
+                basePower: 44
+            },
+            {
+                id: 'hardPatch',
+                name: { zh: '硬补丁', en: 'Hard Patch' },
+                role: { zh: '开局多步', en: 'More opening moves' },
+                effect: { zh: '开局步数 +1。', en: 'Adds 1 starting move.' },
+                basePower: 52
+            },
+            {
+                id: 'burstIndex',
+                name: { zh: '爆发索引', en: 'Burst Index' },
+                role: { zh: '大连击分数', en: 'Big match score' },
+                effect: { zh: '4 连及以上时获得额外分数。', en: 'Adds bonus score on 4+ tile clears.' },
+                basePower: 58
+            },
+            {
+                id: 'traceMine',
+                name: { zh: '追迹针', en: 'Trace Mine' },
+                role: { zh: '护盾压制', en: 'Shield pressure' },
+                effect: { zh: '每次有效交换后，护盾目标额外 -1。', en: 'Deals an extra -1 to shield goals after each valid move.' },
+                basePower: 55
+            }
+        ],
+        skills: [
+            {
+                id: 'gridBurst',
+                name: { zh: '棋盘爆破', en: 'Grid Burst' },
+                role: { zh: '目标直压', en: 'Goal burst' },
+                effect: { zh: '最大缺口目标 -6。', en: 'Largest remaining goal -6.' },
+                energyCost: 100,
+                basePower: 68
+            },
+            {
+                id: 'colorHack',
+                name: { zh: '颜色劫持', en: 'Color Hack' },
+                role: { zh: '收色更快', en: 'Fast color clear' },
+                effect: { zh: '缺口最大的颜色目标 -8。', en: 'Largest remaining color goal -8.' },
+                energyCost: 100,
+                basePower: 72
+            },
+            {
+                id: 'stasisField',
+                name: { zh: '停滞场', en: 'Stasis Field' },
+                role: { zh: '补步续命', en: 'Move recovery' },
+                effect: { zh: '恢复 3 步并清空一个小目标 3 点。', en: 'Restores 3 moves and trims a small goal by 3.' },
+                energyCost: 100,
+                basePower: 70
+            }
+        ],
+        chapters: [
+            {
+                id: '1-1',
+                chapter: 1,
+                name: { zh: '断码码头', en: 'Broken Dock' },
+                recommended: 210,
+                moves: 18,
+                goals: [
+                    { type: 'alpha', amount: 12 },
+                    { type: 'beta', amount: 10 }
+                ],
+                pressure: { zh: '新手引导', en: 'Starter route' },
+                rewardFocus: { zh: '基础金币', en: 'Starter credits' },
+                reward: { credits: 220, keyBits: 26, cipherDust: 10, seasonXp: 28 }
+            },
+            {
+                id: '1-2',
+                chapter: 1,
+                name: { zh: '循环街区', en: 'Loop Block' },
+                recommended: 340,
+                moves: 19,
+                goals: [
+                    { type: 'gamma', amount: 13 },
+                    { type: 'delta', amount: 12 }
+                ],
+                pressure: { zh: '节奏检查', en: 'Tempo check' },
+                rewardFocus: { zh: '密钥位', en: 'Key bits' },
+                reward: { credits: 280, keyBits: 34, cipherDust: 12, seasonXp: 34 }
+            },
+            {
+                id: '1-3',
+                chapter: 1,
+                name: { zh: '防火墙门', en: 'Firewall Gate' },
+                recommended: 520,
+                moves: 21,
+                goals: [
+                    { type: 'omega', amount: 12 },
+                    { type: 'shield', amount: 8 }
+                ],
+                pressure: { zh: '首个 Boss', en: 'First boss' },
+                rewardFocus: { zh: '密码尘', en: 'Cipher dust' },
+                reward: { credits: 360, keyBits: 46, cipherDust: 18, seasonXp: 42 }
+            },
+            {
+                id: '2-1',
+                chapter: 2,
+                name: { zh: '镜像港', en: 'Mirror Port' },
+                recommended: 760,
+                moves: 20,
+                goals: [
+                    { type: 'alpha', amount: 16 },
+                    { type: 'delta', amount: 14 }
+                ],
+                pressure: { zh: '双线目标', en: 'Dual goals' },
+                rewardFocus: { zh: '高额金币', en: 'Higher credits' },
+                reward: { credits: 520, keyBits: 66, cipherDust: 20, seasonXp: 56 }
+            },
+            {
+                id: '2-2',
+                chapter: 2,
+                name: { zh: '裂屏矩阵', en: 'Fracture Matrix' },
+                recommended: 980,
+                moves: 21,
+                goals: [
+                    { type: 'beta', amount: 17 },
+                    { type: 'gamma', amount: 16 }
+                ],
+                pressure: { zh: '研究门槛', en: 'Research gate' },
+                rewardFocus: { zh: '研究材料', en: 'Research dust' },
+                reward: { credits: 680, keyBits: 82, cipherDust: 28, seasonXp: 68 }
+            },
+            {
+                id: '2-3',
+                chapter: 2,
+                name: { zh: '主密钥冠', en: 'Crown Key' },
+                recommended: 1280,
+                moves: 23,
+                goals: [
+                    { type: 'omega', amount: 14 },
+                    { type: 'shield', amount: 12 }
+                ],
+                pressure: { zh: '第二章 Boss', en: 'Chapter boss' },
+                rewardFocus: { zh: '中期成长', en: 'Mid growth' },
+                reward: { credits: 860, keyBits: 108, cipherDust: 36, seasonXp: 84 }
+            }
+        ],
+        research: [
+            {
+                id: 'decodeCache',
+                icon: '➕',
+                name: { zh: '解码缓存', en: 'Decode Cache' },
+                desc: { zh: '每 3 级开局多 1 步。', en: 'Gain +1 starting move every 3 levels.' },
+                effect: { zh: '开局步数成长', en: 'Opening moves' },
+                maxLevel: 12,
+                baseCredits: 140,
+                baseDust: 10
+            },
+            {
+                id: 'pulseBattery',
+                icon: '⚡',
+                name: { zh: '脉冲电池', en: 'Pulse Battery' },
+                desc: { zh: '每级提升能量上限 6。', en: 'Each level raises max energy by 6.' },
+                effect: { zh: '技能充能上限', en: 'Skill energy cap' },
+                maxLevel: 10,
+                baseCredits: 160,
+                baseDust: 12
+            },
+            {
+                id: 'signalAmp',
+                icon: '✦',
+                name: { zh: '讯号增幅', en: 'Signal Amp' },
+                desc: { zh: '技能效果每级提高 4%。', en: 'Skill impact grows 4% per level.' },
+                effect: { zh: '主动技加成', en: 'Skill power' },
+                maxLevel: 10,
+                baseCredits: 180,
+                baseDust: 14
+            },
+            {
+                id: 'lootRelay',
+                icon: '◎',
+                name: { zh: '战利中继', en: 'Loot Relay' },
+                desc: { zh: '胜利金币 / 密钥位奖励每级 +5%。', en: 'Victory credits and bits +5% per level.' },
+                effect: { zh: '章节收益', en: 'Chapter rewards' },
+                maxLevel: 12,
+                baseCredits: 190,
+                baseDust: 16
+            },
+            {
+                id: 'stabilityMesh',
+                icon: '⬢',
+                name: { zh: '稳定网格', en: 'Stability Mesh' },
+                desc: { zh: '构筑战力每级 +3%。', en: 'Deck power +3% per level.' },
+                effect: { zh: '推荐战力追赶', en: 'Power growth' },
+                maxLevel: 10,
+                baseCredits: 220,
+                baseDust: 18
+            }
+        ],
+        missions: [
+            { id: 'm1', title: { zh: '完成 2 局', en: 'Finish 2 Runs' }, metric: 'runs', target: 2, reward: { credits: 280, keyBits: 22 } },
+            { id: 'm2', title: { zh: '获胜 2 局', en: 'Win 2 Runs' }, metric: 'wins', target: 2, reward: { credits: 360, keyBits: 28, cipherDust: 6 } },
+            { id: 'm3', title: { zh: '累计消除 90 格', en: 'Clear 90 Tiles' }, metric: 'matchedTiles', target: 90, reward: { credits: 420, keyBits: 34 } },
+            { id: 'm4', title: { zh: '升级卡牌 4 次', en: 'Upgrade 4 Cards' }, metric: 'upgrades', target: 4, reward: { credits: 520, keyBits: 42, cipherDust: 8 } },
+            { id: 'm5', title: { zh: '研究升级 3 次', en: 'Upgrade Research 3 Times' }, metric: 'researchUpgrades', target: 3, reward: { credits: 560, keyBits: 40, cipherDust: 10 } },
+            { id: 'm6', title: { zh: '通过 3 个章节关卡', en: 'Clear 3 Stages' }, metric: 'chapterClears', target: 3, reward: { credits: 720, keyBits: 56, cipherDust: 12, seasonXp: 40 } }
+        ],
+        seasonFreeTrack: [
+            { id: 'f1', xp: 80, reward: { credits: 240, keyBits: 16 } },
+            { id: 'f2', xp: 200, reward: { credits: 320, keyBits: 24, cipherDust: 8 } },
+            { id: 'f3', xp: 380, reward: { credits: 460, keyBits: 38 } },
+            { id: 'f4', xp: 620, reward: { credits: 640, keyBits: 56, cipherDust: 12 } },
+            { id: 'f5', xp: 920, reward: { credits: 920, keyBits: 78, cipherDust: 18 } }
+        ],
+        seasonPremiumTrack: [
+            { id: 'p1', xp: 80, reward: { credits: 520, keyBits: 36 } },
+            { id: 'p2', xp: 200, reward: { credits: 760, keyBits: 54, cipherDust: 16 } },
+            { id: 'p3', xp: 380, reward: { credits: 1160, keyBits: 88, cipherDust: 22 } },
+            { id: 'p4', xp: 620, reward: { credits: 1680, keyBits: 124, cipherDust: 30 } },
+            { id: 'p5', xp: 920, reward: { credits: 2480, keyBits: 182, cipherDust: 42 } }
+        ],
+        shopItems: [
+            {
+                id: 'dailyFree',
+                title: { zh: '每日免费补给', en: 'Daily Free Supply' },
+                price: 0,
+                reward: { credits: 180, keyBits: 16, cipherDust: 6, seasonXp: 16 },
+                daily: true
+            },
+            {
+                id: 'bitBundle',
+                title: { zh: '密钥位补给', en: 'Key Bit Bundle' },
+                price: 480,
+                reward: { keyBits: 48 }
+            },
+            {
+                id: 'dustPack',
+                title: { zh: '密码尘补给', en: 'Dust Pack' },
+                price: 620,
+                reward: { cipherDust: 24 }
+            },
+            {
+                id: 'boosterTray',
+                title: { zh: '闯关加速盘', en: 'Run Booster Tray' },
+                price: 960,
+                reward: { credits: 400, keyBits: 36, cipherDust: 14, seasonXp: 28 }
+            }
+        ],
+        paymentOffers: [
+            {
+                id: 'starterPack',
+                price: 6,
+                name: { zh: '新手破译包', en: 'Starter Decode Pack' },
+                reward: { credits: 3200, keyBits: 220, cipherDust: 80 }
+            },
+            {
+                id: 'seasonPass',
+                price: 18,
+                name: { zh: '赛季通行证', en: 'Season Pass' },
+                reward: { premiumSeason: true, credits: 2800, keyBits: 180, cipherDust: 60 }
+            },
+            {
+                id: 'breakerVault',
+                price: 68,
+                name: { zh: '破关金库', en: 'Breaker Vault' },
+                reward: { credits: 26000, keyBits: 1800, cipherDust: 680 }
+            }
+        ]
+    };
+}());

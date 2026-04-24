@@ -154,12 +154,12 @@
                             "en":  "A casual puzzle game for daily missions, pass EXP, and soft long-term retention."
                         },
         "icon":  "CM",
-        "href":  "/games/coming-soon/?id=cipher-match",
+        "href":  "/games/cipher-match/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u9884\u89c8\u4e2d",
+                      "en":  "Preview"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
                       "zh":  "\u5bc6\u7801\u6d88\u9664",
                       "en":  "Cipher Match"

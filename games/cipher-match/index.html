@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>密码消除</title>
+    <meta name="description" content="密码消除 - 6x6 解码消除、局外构筑、研究成长、赛季与商店闭环。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../shared/hub.css">
+    <link rel="stylesheet" href="./cipher-match.css">
+</head>
+<body data-cm-tab="run">
+    <div class="cm-bg" aria-hidden="true"></div>
+    <div class="cm-shell">
+        <header class="cm-topbar">
+            <div class="cm-topline">
+                <a class="back-link" href="/" id="backToHubLink">&larr; 返回大厅</a>
+                <div class="lang-toggle" role="group" aria-label="语言切换">
+                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">中</button>
+                    <button class="lang-btn" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
+                </div>
+            </div>
+
+            <section class="cm-hero-card">
+                <div class="cm-hero-copy">
+                    <div class="eyebrow" id="heroEyebrow">创世 · 密码消除</div>
+                    <h1 id="heroTitle">密码消除</h1>
+                    <p id="heroSubtitle">6x6 解码消除，兼顾章节闯关、构筑成长与赛季循环。</p>
+                </div>
+                <div class="cm-resource-strip" id="resourceStrip"></div>
+            </section>
+        </header>
+
+        <main class="cm-main">
+            <section class="cm-summary-card" id="heroSummary"></section>
+            <section class="cm-panel-card">
+                <div class="cm-panel-content" id="panelContent"></div>
+            </section>
+        </main>
+
+        <nav class="cm-tabbar" id="tabBar" aria-label="密码消除页签"></nav>
+
+        <div class="cm-modal is-hidden" id="modalRoot" aria-hidden="true">
+            <div class="cm-modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                <div class="cm-modal-head">
+                    <div>
+                        <div class="eyebrow" id="modalEyebrow">信息</div>
+                        <h2 id="modalTitle">密码消除</h2>
+                        <p id="modalSubtitle"></p>
+                    </div>
+                    <button class="ghost-btn icon-btn" id="modalCloseBtn" type="button" aria-label="关闭弹窗">&times;</button>
+                </div>
+                <div class="cm-modal-body" id="modalBody"></div>
+                <div class="cm-modal-actions" id="modalActions"></div>
+            </div>
+        </div>
+
+        <div class="cm-toast" id="toast" aria-live="polite"></div>
+    </div>
+
+    <script src="./cipher-match.config.js"></script>
+    <script src="./cipher-match.js"></script>
+</body>
+</html>
