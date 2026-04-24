@@ -71,7 +71,7 @@ button:disabled {
     z-index: 1;
     width: min(100%, 760px);
     margin: 0 auto;
-    padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px calc(env(safe-area-inset-bottom, 0px) + 100px);
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px calc(env(safe-area-inset-bottom, 0px) + 92px);
 }
 
 .cm-topbar,
@@ -126,24 +126,24 @@ button:disabled {
 .cm-season-card,
 .cm-shop-card,
 .cm-offer-card {
-    padding: 14px;
+    padding: 12px;
 }
 
 .cm-hero-card {
-    gap: 12px;
+    gap: 10px;
 }
 
 .cm-hero-copy h1 {
     margin: 4px 0 0;
-    font-size: clamp(28px, 5vw, 38px);
+    font-size: clamp(24px, 4.8vw, 32px);
     line-height: 1.04;
 }
 
 .cm-hero-copy p {
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     color: var(--cm-text-soft);
-    font-size: 14px;
-    line-height: 1.55;
+    font-size: 13px;
+    line-height: 1.45;
 }
 
 .cm-main {
@@ -172,11 +172,11 @@ button:disabled {
 .cm-resource-pill,
 .cm-summary-item {
     min-width: 0;
-    min-height: 74px;
+    min-height: 68px;
     display: grid;
     gap: 6px;
     align-content: start;
-    padding: 12px;
+    padding: 10px;
     border-radius: 18px;
     background: linear-gradient(180deg, rgba(255, 226, 107, 0.1), rgba(255, 255, 255, 0.03));
 }
@@ -219,7 +219,7 @@ button:disabled {
 .cm-titleline strong,
 .cm-row-head strong,
 .cm-card-head strong {
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .cm-value {
@@ -238,7 +238,7 @@ button:disabled {
 }
 
 .cm-copy {
-    font-size: 13px;
+    font-size: 12.5px;
 }
 
 .cm-tag-row,
@@ -252,6 +252,11 @@ button:disabled {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+.cm-quick-row > * {
+    flex: 1 1 calc(33.333% - 8px);
+    min-width: 0;
 }
 
 .cm-chip,
@@ -282,8 +287,8 @@ button:disabled {
 }
 
 .cm-stage-chip {
-    min-width: 124px;
-    padding: 10px 12px;
+    min-width: 116px;
+    padding: 9px 11px;
     display: grid;
     gap: 6px;
     cursor: pointer;
@@ -303,7 +308,7 @@ button:disabled {
 
 .cm-stage-card {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .cm-stage-card.is-boss {
@@ -315,7 +320,7 @@ button:disabled {
 
 .cm-stage-grid {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .cm-battle-hud,
@@ -330,17 +335,17 @@ button:disabled {
 .cm-wallet-pill,
 .cm-stat-pill {
     min-width: 0;
-    padding: 10px;
-    border-radius: 16px;
+    padding: 8px;
+    border-radius: 13px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.06);
     display: grid;
-    gap: 4px;
+    gap: 3px;
 }
 
 .cm-board-wrap {
     position: relative;
-    padding: 12px;
+    padding: 10px;
     overflow: hidden;
 }
 
@@ -360,7 +365,7 @@ button:disabled {
 .cm-board {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
 }
 
 .cm-cell {
@@ -368,7 +373,7 @@ button:disabled {
     padding: 0;
     display: grid;
     place-items: center;
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     color: #fff;
     font-weight: 800;
@@ -460,6 +465,28 @@ button:disabled {
     margin-bottom: 4px;
 }
 
+.cm-note-bar {
+    display: grid;
+    gap: 3px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.cm-note-bar.is-idle {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.cm-note-bar strong {
+    font-size: 12px;
+}
+
+.cm-lock-card {
+    border-color: rgba(118, 168, 255, 0.2);
+    background: linear-gradient(180deg, rgba(118, 168, 255, 0.08), rgba(255, 255, 255, 0.03));
+}
+
 .cm-control-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -536,6 +563,23 @@ button:disabled {
     align-content: start;
 }
 
+.cm-run-brief {
+    gap: 8px;
+}
+
+.cm-run-brief .cm-chip-row {
+    gap: 6px;
+}
+
+.cm-run-steps .cm-chip {
+    padding: 7px 9px;
+}
+
+.cm-run-steps .cm-chip strong {
+    font-size: 11px;
+    color: var(--cm-text-soft);
+}
+
 .cm-guide-card.is-warning {
     border-color: rgba(255, 184, 106, 0.28);
 }
@@ -603,6 +647,10 @@ button:disabled {
     box-shadow: inset 0 0 0 1px rgba(255, 226, 107, 0.18);
 }
 
+body:not([data-cm-tab="run"]) .cm-hero-copy p {
+    display: none;
+}
+
 .cm-tab-icon {
     font-size: 18px;
     line-height: 1;
@@ -618,6 +666,7 @@ button:disabled {
     padding: 16px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
     background: rgba(5, 7, 14, 0.72);
     backdrop-filter: blur(10px);
+    overscroll-behavior: contain;
 }
 
 .cm-modal.is-hidden {
@@ -631,6 +680,7 @@ button:disabled {
     grid-template-rows: auto minmax(0, 1fr) auto;
     padding: 16px;
     overflow: hidden;
+    touch-action: pan-y;
 }
 
 .cm-modal-head {
@@ -657,6 +707,9 @@ button:disabled {
     display: grid;
     gap: 12px;
     padding: 12px 2px 10px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .cm-modal-actions {
@@ -746,10 +799,40 @@ button:disabled {
         padding-right: 12px;
     }
 
-    .cm-battle-hud,
+    .cm-hero-card,
+    .cm-summary-card,
+    .cm-panel-card,
+    .cm-card,
+    .cm-mini-card,
+    .cm-mission-card,
+    .cm-season-card,
+    .cm-shop-card,
+    .cm-offer-card {
+        padding: 10px;
+        border-radius: 20px;
+    }
+
+    .cm-hero-copy h1 {
+        font-size: 22px;
+    }
+
+    .cm-hero-copy p {
+        font-size: 12px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     .cm-board-info,
     .cm-wallet-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cm-battle-hud {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
     }
 
     .cm-card-grid {
@@ -758,6 +841,93 @@ button:disabled {
 
     .cm-guide-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cm-resource-pill,
+    .cm-summary-item {
+        min-height: 62px;
+        padding: 9px;
+    }
+
+    .cm-wallet-pill,
+    .cm-stat-pill {
+        min-height: 60px;
+        padding: 8px;
+    }
+
+    .cm-wallet-pill .cm-value,
+    .cm-stat-pill .cm-value,
+    .cm-summary-item .cm-value {
+        font-size: 17px;
+    }
+
+    .cm-wallet-pill small,
+    .cm-stat-pill small,
+    .cm-summary-item small {
+        display: none;
+    }
+
+    .cm-card-head .cm-copy {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .cm-chip,
+    .cm-tag,
+    .cm-goal-chip {
+        padding: 7px 8px;
+        gap: 5px;
+    }
+
+    .cm-card-grid,
+    .cm-mission-list,
+    .cm-season-list,
+    .cm-shop-list,
+    .cm-offer-list {
+        gap: 8px;
+    }
+
+    .cm-board-overlay,
+    .cm-board-notice {
+        left: 10px;
+        right: 10px;
+        padding: 8px 10px;
+    }
+
+    .cm-hud-pill {
+        padding: 7px;
+        border-radius: 12px;
+    }
+
+    .cm-hud-pill strong {
+        font-size: 11px;
+        line-height: 1.1;
+    }
+
+    .cm-hud-pill .cm-value {
+        font-size: 16px;
+    }
+
+    .cm-hud-pill small {
+        display: none;
+    }
+
+    .cm-lock-card .cm-action-row > * {
+        width: 100%;
+    }
+
+    .cm-board-centerfx {
+        width: min(80%, 240px);
+        padding: 10px 12px;
+    }
+
+    .cm-btn,
+    .cm-btn-soft,
+    .cm-btn-ghost {
+        min-height: 42px;
+        padding: 0 12px;
     }
 
     .cm-tabbar {
