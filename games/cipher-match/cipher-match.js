@@ -595,7 +595,7 @@
                 </div>
 
                 <div class="cm-inline-grid cm-deck-overview">
-                    <div class="cm-mini-card">
+                    <div class="cm-mini-card cm-deck-summary-card">
                         <div class="cm-card-head">
                             <div>
                                 <div class="eyebrow">${escapeHtml(text('当前出战', 'Current Loadout'))}</div>
@@ -611,7 +611,7 @@
                         <div class="cm-copy">${escapeHtml(getRunAssistSummary(chapter, assist))}</div>
                     </div>
 
-                    <div class="cm-mini-card">
+                    <div class="cm-mini-card cm-deck-summary-card">
                         <div class="cm-card-head">
                             <div>
                                 <div class="eyebrow">${escapeHtml(text('当前关卡收益', 'Stage Loot'))}</div>
@@ -1125,41 +1125,46 @@
         const nextPower = maxed ? power : power + getCardPowerStep(type);
         const action = type === 'leader' ? 'setLeader' : type === 'module' ? 'toggleModule' : 'setSkill';
         const selectLabel = type === 'module'
-            ? selected ? text('卸下', 'Unequip') : text('装配', 'Equip')
-            : selected ? text('已上阵', 'Active') : text('设为当前', 'Set Active');
+            ? selected ? text('\u5378\u4e0b', 'Unequip') : text('\u88c5\u5907', 'Equip')
+            : selected ? text('\u5df2\u4e0a\u9635', 'Active') : text('\u8bbe\u4e3a\u5f53\u524d', 'Set Active');
         const stateLabel = type === 'module'
-            ? selected ? text('已装配', 'Equipped') : text('待装配', 'Idle')
-            : selected ? text('当前生效', 'Applied') : text('待命中', 'Idle');
+            ? selected ? text('\u5df2\u88c5\u5907', 'Equipped') : text('\u5f85\u88c5\u5907', 'Idle')
+            : selected ? text('\u5f53\u524d\u751f\u6548', 'Applied') : text('\u5f85\u547d', 'Idle');
+        const costLabel = maxed
+            ? text('\u5b8c\u6210', 'Done')
+            : `\u20bf${formatCompact(cost.credits)} \u25c6${formatCompact(cost.keyBits)}`;
 
         return `
-            <div class="cm-mini-card">
+            <div class="cm-mini-card cm-card-item">
                 <div class="cm-card-head">
                     <div>
                         <strong>${escapeHtml(localize(item.name))}</strong>
                         <div class="cm-copy">${escapeHtml(localize(item.role))}</div>
                     </div>
-                    <span class="cm-tag ${selected ? 'is-good' : ''}">${escapeHtml(stateLabel)} · ${escapeHtml(text('等级', 'Lv'))} ${level}/${maxLevel}</span>
+                    <span class="cm-tag ${selected ? 'is-good' : ''}">${escapeHtml(stateLabel)} 路 ${escapeHtml(text('\u7b49\u7ea7', 'Lv'))} ${level}/${maxLevel}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(localize(item.effect || item.skill))}</div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">⚔ ${power}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 满', '✓ Max') : `⇡ +${nextPower}`)}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 完成', '✓ Done') : `◎${formatCompact(cost.credits)} ◇${formatCompact(cost.keyBits)}`)}</span>
+                    <span class="cm-chip">⚡${power}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('\u6ee1\u7ea7', 'Max') : `+${nextPower}`)}</span>
+                    <span class="cm-chip">${escapeHtml(costLabel)}</span>
                 </div>
                 <div class="cm-control-row">
                     <button class="cm-btn-soft" type="button" data-action="${action}" data-value="${item.id}" ${metaLocked ? 'disabled' : ''}>${escapeHtml(selectLabel)}</button>
-                    <button class="cm-btn" type="button" data-action="upgradeCard" data-type="${type}" data-value="${item.id}" ${(canAfford && !metaLocked) ? '' : 'disabled'}>${escapeHtml(maxed ? text('已满级', 'Maxed') : text('升级', 'Upgrade'))}</button>
+                    <button class="cm-btn" type="button" data-action="upgradeCard" data-type="${type}" data-value="${item.id}" ${(canAfford && !metaLocked) ? '' : 'disabled'}>${escapeHtml(maxed ? text('\u5df2\u6ee1\u7ea7', 'Maxed') : text('\u5347\u7ea7', 'Upgrade'))}</button>
                 </div>
             </div>
         `;
     }
-
     function renderResearchItem(item) {
         const level = getResearchLevel(item.id);
         const maxed = level >= item.maxLevel;
         const cost = getResearchCost(item.id);
         const canAfford = !maxed && state.save.credits >= cost.credits && state.save.cipherDust >= cost.cipherDust;
         const metaLocked = isMetaActionLocked();
+        const costLabel = maxed
+            ? text('\u5b8c\u6210', 'Done')
+            : `\u20bf${formatCompact(cost.credits)} ✦${formatCompact(cost.cipherDust)}`;
         return `
             <div class="cm-mini-card">
                 <div class="cm-card-head">
@@ -1167,20 +1172,19 @@
                         <strong>${escapeHtml(item.icon)} ${escapeHtml(localize(item.name))}</strong>
                         <div class="cm-copy">${escapeHtml(localize(item.effect))}</div>
                     </div>
-                    <span class="cm-tag">${escapeHtml(text('等级', 'Lv'))} ${level}/${item.maxLevel}</span>
+                    <span class="cm-tag">${escapeHtml(text('\u7b49\u7ea7', 'Lv'))} ${level}/${item.maxLevel}</span>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">◉ ${escapeHtml(getResearchImpactLabel(item.id, level))}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 满', '✓ Max') : `⇡ ${getResearchNextImpactLabel(item.id, level)}`)}</span>
-                    <span class="cm-chip">${escapeHtml(maxed ? text('✓ 完成', '✓ Done') : `◎${formatCompact(cost.credits)} ✦${formatCompact(cost.cipherDust)}`)}</span>
+                    <span class="cm-chip">⚙${escapeHtml(getResearchImpactLabel(item.id, level))}</span>
+                    <span class="cm-chip">${escapeHtml(maxed ? text('\u6ee1\u7ea7', 'Max') : `+ ${getResearchNextImpactLabel(item.id, level)}`)}</span>
+                    <span class="cm-chip">${escapeHtml(costLabel)}</span>
                 </div>
                 <button class="cm-btn" type="button" data-action="upgradeResearch" data-value="${item.id}" ${(canAfford && !metaLocked) ? '' : 'disabled'}>
-                    ${escapeHtml(maxed ? text('已满级', 'Maxed') : text('研究升级', 'Upgrade'))}
+                    ${escapeHtml(maxed ? text('\u5df2\u6ee1\u7ea7', 'Maxed') : text('\u7814\u7a76\u5347\u7ea7', 'Upgrade'))}
                 </button>
             </div>
         `;
     }
-
     function renderMissionItem(mission) {
         const percent = Math.min(100, Math.round((mission.progress / mission.target) * 100));
         const metaLocked = isMetaActionLocked();
@@ -1235,7 +1239,7 @@
         const action = item.daily ? 'claimDailySupply' : 'buyShopItem';
         const metaLocked = isMetaActionLocked();
         return `
-            <div class="cm-shop-card">
+            <div class="cm-shop-card cm-shop-item-card">
                 <div class="cm-card-head">
                     <div>
                         <strong>${escapeHtml(localize(item.title))}</strong>
@@ -1278,7 +1282,7 @@
                     ? localize(item.permanent)
                     : text('支付验证通过后立即发放。', 'Delivered right after payment.');
         return `
-            <div class="cm-offer-card">
+            <div class="cm-offer-card cm-offer-item-card">
                 <div class="cm-card-head">
                     <div>
                         <strong>${escapeHtml(localize(item.name))}</strong>
@@ -1307,24 +1311,29 @@
         const paymentHistory = getRecentPaymentHistory(3);
         const ownedOffers = config.paymentOffers.filter((item) => isOfferOwned(item.id));
         return `
-            <div class="cm-card">
+            <div class="cm-card cm-card--payment-status">
                 <div class="cm-card-head">
                     <div>
-                        <div class="eyebrow">${escapeHtml(text('支付状态', 'Payment Status'))}</div>
-                        <strong>${escapeHtml(text('订单、特权与到账记录', 'Orders, perks, and delivery log'))}</strong>
-                        <div class="cm-copy">${escapeHtml(text('本地闭环版：创建订单 → 转账 → 粘贴交易哈希 → 验证后立即到账。', 'Local loop: create order → transfer → paste tx hash → verify → rewards arrive instantly.'))}</div>
+                        <div class="eyebrow">${escapeHtml(text('\u652f\u4ed8\u72b6\u6001', 'Payment Status'))}</div>
+                        <strong>${escapeHtml(text('\u8ba2\u5355\u3001\u7279\u6743\u4e0e\u5230\u8d26\u8bb0\u5f55', 'Orders, perks, and delivery log'))}</strong>
+                        <div class="cm-copy">${escapeHtml(text('\u672c\u5730\u95ed\u73af\u7248\uff1a\u521b\u5efa\u8ba2\u5355 → \u8f6c\u8d26 → \u7c98\u8d34 TxID → \u9a8c\u8bc1 → \u5956\u52b1\u7acb\u5373\u53d1\u653e\u3002', 'Local loop: create order → transfer → paste TxID → verify → rewards arrive instantly.'))}</div>
                     </div>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('待验证订单', 'Pending Orders'))} · ${pendingOrders.length}</span>
-                    <span class="cm-chip">${escapeHtml(text('已激活特权', 'Active Perks'))} · ${ownedOffers.length}</span>
-                    <span class="cm-chip">${escapeHtml(text('最近到账', 'Recent Verifications'))} · ${paymentHistory.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u5f85\u9a8c\u8bc1', 'Pending'))} 路 ${pendingOrders.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u5df2\u751f\u6548\u7279\u6743', 'Perks'))} 路 ${ownedOffers.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u6700\u8fd1\u5230\u8d26', 'Recent'))} 路 ${paymentHistory.length}</span>
                 </div>
                 ${pendingOrders.length ? `
                     <div class="cm-stack">
                         ${pendingOrders.map((order) => renderPendingOrderStatus(order)).join('')}
                     </div>
-                ` : `<div class="cm-copy">${escapeHtml(text('当前没有待验证订单；可直接打开礼包创建新的支付单。', 'No pending orders right now. Open any offer to create a new payment order.'))}</div>`}
+                ` : `
+                    <div class="cm-chip-row cm-payment-empty-row">
+                        <span class="cm-chip">${escapeHtml(text('\u65e0\u5f85\u9a8c\u8bc1', 'No Pending'))}</span>
+                        <span class="cm-chip">${escapeHtml(text('\u6253\u5f00\u793c\u5305', 'Open Pack'))}</span>
+                    </div>
+                `}
                 ${ownedOffers.length ? `
                     <div class="cm-chip-row">
                         ${ownedOffers.map((item) => `<span class="cm-chip">${escapeHtml(localize(item.name))}</span>`).join('')}
@@ -1338,27 +1347,49 @@
             </div>
         `;
     }
-
     function renderStageGateCard(gatePlan) {
         if (!gatePlan) return '';
         const offer = gatePlan.offerId ? offerMap[gatePlan.offerId] : null;
         const recommendationLabel = gatePlan.owned
-            ? text('对应礼包已持有', 'Recommended pack owned')
+            ? text('\u5bf9\u5e94\u793c\u5305\u5df2\u6301\u6709', 'Recommended pack owned')
             : gatePlan.recommendedNow
-                ? text('当前卡点推荐', 'Recommended now')
-                : text('下一卡点预告', 'Next gate prep');
+                ? text('\u5f53\u524d\u5361\u70b9\u63a8\u8350', 'Recommended now')
+                : text('\u4e0b\u4e00\u5361\u70b9\u9884\u544a', 'Next gate prep');
+        const gapLabel = gatePlan.gap > 0
+            ? text(`\u5dee\u503c ${formatCompact(gatePlan.gap)}`, `Gap ${formatCompact(gatePlan.gap)}`)
+            : text('\u5df2\u5230\u7ebf', 'On Line');
         return `
             <div class="cm-note-bar ${gatePlan.owned || !gatePlan.recommendedNow ? 'is-idle' : ''}">
                 <strong>${escapeHtml(gatePlan.title)}</strong>
                 <div class="cm-chip-row">
                     <span class="cm-chip">${escapeHtml(gatePlan.tag)}</span>
-                    ${offer ? `<span class="cm-chip">${escapeHtml(recommendationLabel)} · ${escapeHtml(localize(offer.name))}</span>` : ''}
+                    ${offer ? `<span class="cm-chip">${escapeHtml(recommendationLabel)} 路 ${escapeHtml(localize(offer.name))}</span>` : ''}
+                    <span class="cm-chip ${gatePlan.gap > 0 ? 'is-warn' : 'is-good'}">${escapeHtml(gapLabel)}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
                 <div class="cm-copy">${escapeHtml(gatePlan.statusCopy)}</div>
-                <div class="cm-copy">${escapeHtml(text('白嫖', 'Free'))}：${escapeHtml(gatePlan.freePath)}</div>
-                <div class="cm-copy">${escapeHtml(text('小氪', 'Light Spend'))}：${escapeHtml(gatePlan.lightPath)}</div>
-                <div class="cm-copy">${escapeHtml(text('中氪', 'Mid Spend'))}：${escapeHtml(gatePlan.midPath)}</div>
+                ${renderGatePathChips(gatePlan, 'run')}
+            </div>
+        `;
+    }
+
+    function renderGatePathChips(gatePlan, mode = 'run') {
+        const pathItems = [
+            { icon: '◌', label: text('\u767d\u5ad6', 'Free'), value: gatePlan.freePath, tone: '' },
+            { icon: '▲', label: mode === 'shop' ? text('\u5feb\u8fdb', 'Fast') : text('\u5c0f\u6c2a', 'Light'), value: gatePlan.lightPath, tone: 'is-warning' },
+            { icon: '✦', label: mode === 'shop' ? text('\u5f3a\u5316', 'Power') : text('\u4e2d\u6c2a', 'Mid'), value: gatePlan.midPath, tone: 'is-good' }
+        ];
+        return `
+            <div class="cm-path-grid">
+                ${pathItems.map((item) => `
+                    <div class="cm-path-chip ${item.tone}">
+                        <span class="cm-path-icon" aria-hidden="true">${escapeHtml(item.icon)}</span>
+                        <div class="cm-path-copy">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <small>${escapeHtml(item.value)}</small>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         `;
     }
@@ -1368,38 +1399,39 @@
         const offer = offerMap[gatePlan.offerId];
         if (!offer) return '';
         const recommendationLabel = gatePlan.owned
-            ? text('对应礼包已持有', 'Recommended pack already owned')
+            ? text('\u5bf9\u5e94\u793c\u5305\u5df2\u6301\u6709', 'Recommended pack already owned')
             : gatePlan.recommendedNow
-                ? text('当前卡点推荐', 'Recommended now')
-                : text('下一卡点预告', 'Next gate prep');
+                ? text('\u5f53\u524d\u5361\u70b9\u63a8\u8350', 'Recommended now')
+                : text('\u4e0b\u4e00\u5361\u70b9\u9884\u544a', 'Next gate prep');
         const recommendationCopy = gatePlan.owned
-            ? text('当前卡点对应的永久增强已经具备，商店里优先拿每日免费和功能补给即可。', 'You already have the permanent perk for this gate, so the daily free supply and utility packs should be the priority here.')
+            ? text('\u5f53\u524d\u5361\u70b9\u5bf9\u5e94\u7684\u6c38\u4e45\u589e\u5f3a\u5df2\u7ecf\u5177\u5907\uff0c\u5546\u5e97\u91cc\u4f18\u5148\u62ff\u6bcf\u65e5\u514d\u8d39\u548c\u529f\u80fd\u8865\u7ed9\u5373\u53ef\u3002', 'You already have the permanent perk for this gate, so the daily free supply and utility packs should be the priority here.')
             : gatePlan.recommendedNow
-                ? text('这档付费正对应你当前的卡点与增强缺口，买到后会直接作用在闯关体验上。', 'This offer matches your current gate and missing power, so the boost applies directly to your run experience.')
-                : text('这档付费主要服务你下一段成长卡点，不急着现在购买。', 'This offer mainly serves your next growth gate, so there is no need to rush the purchase.')
+                ? text('\u8fd9\u6863\u4ed8\u8d39\u6b63\u5bf9\u5e94\u4f60\u5f53\u524d\u7684\u5361\u70b9\u4e0e\u589e\u5f3a\u7f3a\u53e3\uff0c\u4e70\u5230\u540e\u4f1a\u76f4\u63a5\u4f5c\u7528\u5728\u95ef\u5173\u4f53\u9a8c\u4e0a\u3002', 'This offer matches your current gate and missing power, so the boost applies directly to your run experience.')
+                : text('\u8fd9\u6863\u4ed8\u8d39\u4e3b\u8981\u670d\u52a1\u4f60\u4e0b\u4e00\u6bb5\u6210\u957f\u5361\u70b9\uff0c\u4e0d\u7528\u6025\u7740\u73b0\u5728\u8d2d\u4e70\u3002', 'This offer mainly serves your next growth gate, so there is no need to rush the purchase.');
+        const gapLabel = gatePlan.gap > 0
+            ? text(`\u5dee\u503c ${formatCompact(gatePlan.gap)}`, `Gap ${formatCompact(gatePlan.gap)}`)
+            : text('\u5df2\u5230\u7ebf', 'On Line');
         return `
-            <div class="cm-card">
+            <div class="cm-card cm-card--shop-gate">
                 <div class="cm-card-head">
                     <div>
-                        <div class="eyebrow">${escapeHtml(text('当前卡点指引', 'Current Gate Guide'))}</div>
+                        <div class="eyebrow">${escapeHtml(text('\u5f53\u524d\u5361\u70b9\u6307\u5f15', 'Current Gate Guide'))}</div>
                         <strong>${escapeHtml(gatePlan.title)}</strong>
                         <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
                     </div>
                     <span class="cm-tag ${gatePlan.owned ? 'is-good' : gatePlan.recommendedNow ? 'is-warning' : ''}">${escapeHtml(recommendationLabel)}</span>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('适配区间', 'Best For'))} · ${escapeHtml(gatePlan.packFit)}</span>
-                    <span class="cm-chip">${escapeHtml(text('推荐礼包', 'Pack'))} · ${escapeHtml(localize(offer.name))}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u9002\u914d\u533a\u95f4', 'Best For'))} 路 ${escapeHtml(gatePlan.packFit)}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u63a8\u8350\u793c\u5305', 'Pack'))} 路 ${escapeHtml(localize(offer.name))}</span>
+                    <span class="cm-chip ${gatePlan.gap > 0 ? 'is-warn' : 'is-good'}">${escapeHtml(gapLabel)}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(gatePlan.statusCopy)}</div>
                 <div class="cm-copy">${escapeHtml(recommendationCopy)}</div>
-                <div class="cm-copy">${escapeHtml(text('白嫖', 'Free'))}：${escapeHtml(gatePlan.freePath)}</div>
-                <div class="cm-copy">${escapeHtml(text('快进', 'Fast Path'))}：${escapeHtml(gatePlan.lightPath)}</div>
-                <div class="cm-copy">${escapeHtml(text('强化解法', 'Power Solve'))}：${escapeHtml(gatePlan.midPath)}</div>
+                ${renderGatePathChips(gatePlan, 'shop')}
             </div>
         `;
     }
-
     function getStageGatePlan(chapter = getSelectedChapter(), power = getDeckPower(), assist = getRunAssistState(chapter)) {
         const gap = Math.max(0, chapter.recommended - power);
         let plan;
@@ -2532,7 +2564,14 @@
     function renderRewardChips(reward) {
         return Object.entries(reward).map(([key, value]) => {
             if (!value) return '';
-            return `<span class="cm-chip">${escapeHtml(getRewardLabel(key, value))}</span>`;
+            const meta = getRewardChipMeta(key, value);
+            return `
+                <span class="cm-chip cm-reward-chip" data-reward-key="${escapeHtml(key)}">
+                    <span class="cm-reward-icon" aria-hidden="true">${escapeHtml(meta.icon)}</span>
+                    <span class="cm-reward-label">${escapeHtml(meta.label)}</span>
+                    <span class="cm-reward-value">${escapeHtml(meta.value)}</span>
+                </span>
+            `;
         }).join('');
     }
 
@@ -2852,19 +2891,26 @@
             .map(([type]) => type);
     }
 
-    function getRewardLabel(key, value) {
+    function getRewardChipMeta(key, value) {
         switch (key) {
-            case 'credits': return `${text('金币', 'Credits')} +${formatCompact(value)}`;
-            case 'keyBits': return `${text('密钥位', 'Key Bits')} +${formatCompact(value)}`;
-            case 'cipherDust': return `${text('密码尘', 'Cipher Dust')} +${formatCompact(value)}`;
-            case 'seasonXp': return `${text('赛季经验', 'Season XP')} +${formatCompact(value)}`;
-            case 'premiumSeason': return text('高级赛季 / 研究更便宜 / 中后段更稳', 'Premium track / cheaper research / steadier late runs');
-            case 'starterBoost': return text('每日免费局 +1 / 开局更稳', '+1 daily free run / steadier starts');
-            case 'vaultRelay': return text('首领反制减弱 / 后段收益提高', 'Boss counters softened / late rewards boosted');
-            default: return `${key} +${value}`;
+            case 'credits':
+                return { icon: getRewardIcon(key), label: text('金币', 'Credits'), value: `+${formatCompact(value)}` };
+            case 'keyBits':
+                return { icon: getRewardIcon(key), label: text('密钥位', 'Bits'), value: `+${formatCompact(value)}` };
+            case 'cipherDust':
+                return { icon: getRewardIcon(key), label: text('密码尘', 'Dust'), value: `+${formatCompact(value)}` };
+            case 'seasonXp':
+                return { icon: getRewardIcon(key), label: text('赛季经验', 'XP'), value: `+${formatCompact(value)}` };
+            case 'premiumSeason':
+                return { icon: getRewardIcon(key), label: text('高级轨', 'Pass'), value: text('解锁', 'Unlock') };
+            case 'starterBoost':
+                return { icon: getRewardIcon(key), label: text('起步稳', 'Boost'), value: text('+1 免费', '+1 Free') };
+            case 'vaultRelay':
+                return { icon: getRewardIcon(key), label: text('Boss稳', 'Boss'), value: text('后段+', 'Late+') };
+            default:
+                return { icon: getRewardIcon(key), label: key, value: `+${value}` };
         }
     }
-
     function getSelectedChapter() {
         return chapterMap[state.save.selectedChapter] || config.chapters[0];
     }

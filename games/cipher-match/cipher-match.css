@@ -277,6 +277,66 @@ button:disabled {
     font-size: 12px;
 }
 
+.cm-reward-chip {
+    gap: 5px;
+}
+
+.cm-reward-icon {
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.cm-reward-label,
+.cm-reward-value {
+    white-space: nowrap;
+}
+
+.cm-reward-value {
+    color: var(--cm-text);
+    font-weight: 700;
+}
+
+.cm-path-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.cm-path-chip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cm-path-icon {
+    flex: 0 0 auto;
+    line-height: 1.1;
+    font-size: 15px;
+}
+
+.cm-path-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.cm-path-copy strong {
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.cm-path-copy small {
+    color: var(--cm-text-soft);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .cm-stage-strip {
     display: flex;
     flex-wrap: nowrap;
@@ -1360,6 +1420,10 @@ body:not([data-cm-tab="run"]) .cm-summary-card {
         overflow: hidden;
     }
 
+    body[data-cm-tab="run"] .cm-hero-copy p {
+        display: none;
+    }
+
     .cm-board-info,
     .cm-wallet-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1452,6 +1516,159 @@ body:not([data-cm-tab="run"]) .cm-summary-card {
 
     body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-coach {
         padding: 7px 9px;
+    }
+
+    body[data-cm-tab="run"] .cm-run-brief .cm-copy,
+    body[data-cm-tab="run"] .cm-note-bar .cm-copy {
+        display: none;
+    }
+
+    body[data-cm-tab="run"] .cm-run-stage-copy .cm-chip-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 4px;
+        scrollbar-width: none;
+    }
+
+    body[data-cm-tab="run"] .cm-run-stage-copy .cm-chip-row::-webkit-scrollbar {
+        display: none;
+    }
+
+    body[data-cm-tab="run"] .cm-run-stage-copy .cm-chip-row > * {
+        flex: 0 0 auto;
+    }
+
+    body[data-cm-tab="run"] .cm-goal-token-note {
+        display: none;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="active"] .cm-summary-card {
+        display: none;
+    }
+
+    body[data-cm-tab="deck"] .cm-wallet-row,
+    body[data-cm-tab="shop"] .cm-wallet-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    body[data-cm-tab="deck"] .cm-wallet-pill,
+    body[data-cm-tab="shop"] .cm-wallet-pill {
+        min-height: 52px;
+        padding: 8px 7px;
+        border-radius: 16px;
+    }
+
+    body[data-cm-tab="deck"] .cm-wallet-pill strong,
+    body[data-cm-tab="deck"] .cm-wallet-pill small,
+    body[data-cm-tab="shop"] .cm-wallet-pill strong,
+    body[data-cm-tab="shop"] .cm-wallet-pill small {
+        display: none;
+    }
+
+    body[data-cm-tab="deck"] .cm-wallet-pill .cm-pill-head,
+    body[data-cm-tab="shop"] .cm-wallet-pill .cm-pill-head {
+        gap: 0;
+    }
+
+    body[data-cm-tab="deck"] .cm-wallet-pill .cm-value,
+    body[data-cm-tab="shop"] .cm-wallet-pill .cm-value {
+        font-size: 14px;
+    }
+
+    body[data-cm-tab="deck"] .cm-card .eyebrow,
+    body[data-cm-tab="shop"] .cm-card .eyebrow {
+        display: none;
+    }
+
+    body[data-cm-tab="deck"] .cm-deck-summary-card .cm-copy,
+    body[data-cm-tab="deck"] .cm-card-item .cm-copy,
+    body[data-cm-tab="shop"] .cm-shop-item-card .cm-copy,
+    body[data-cm-tab="shop"] .cm-offer-item-card .cm-copy,
+    body[data-cm-tab="shop"] .cm-card--payment-status .cm-card-head .cm-copy,
+    body[data-cm-tab="shop"] .cm-card--shop-gate .cm-copy {
+        display: none;
+    }
+
+    body[data-cm-tab="deck"] .cm-card-item,
+    body[data-cm-tab="shop"] .cm-shop-item-card,
+    body[data-cm-tab="shop"] .cm-offer-item-card {
+        gap: 6px;
+    }
+
+    body[data-cm-tab="deck"] .cm-card-head strong,
+    body[data-cm-tab="shop"] .cm-card-head strong {
+        font-size: 14px;
+    }
+
+    body[data-cm-tab="deck"] .cm-hero-copy p,
+    body[data-cm-tab="shop"] .cm-hero-copy p {
+        display: none;
+    }
+
+    body[data-cm-tab="deck"] .cm-card-item .cm-chip-row,
+    body[data-cm-tab="shop"] .cm-shop-item-card .cm-reward-row,
+    body[data-cm-tab="shop"] .cm-offer-item-card .cm-reward-row {
+        gap: 4px;
+    }
+
+    body[data-cm-tab="deck"] .cm-card-item .cm-chip,
+    body[data-cm-tab="shop"] .cm-shop-item-card .cm-chip,
+    body[data-cm-tab="shop"] .cm-offer-item-card .cm-chip,
+    body[data-cm-tab="shop"] .cm-card--payment-status .cm-chip,
+    body[data-cm-tab="shop"] .cm-card--shop-gate .cm-chip {
+        padding: 5px 7px;
+        font-size: 11px;
+    }
+
+    body[data-cm-tab="deck"] .cm-card-item .cm-tag,
+    body[data-cm-tab="shop"] .cm-offer-item-card .cm-tag,
+    body[data-cm-tab="shop"] .cm-shop-item-card .cm-tag {
+        font-size: 11px;
+        padding: 5px 7px;
+    }
+
+    body[data-cm-tab="deck"] .cm-reward-chip .cm-reward-label,
+    body[data-cm-tab="shop"] .cm-reward-chip .cm-reward-label {
+        display: none;
+    }
+
+    body[data-cm-tab="deck"] .cm-reward-chip,
+    body[data-cm-tab="shop"] .cm-reward-chip {
+        gap: 4px;
+    }
+
+    body[data-cm-tab="shop"] .cm-card--payment-status .cm-stack,
+    body[data-cm-tab="shop"] .cm-card--shop-gate {
+        gap: 8px;
+    }
+
+    body[data-cm-tab="shop"] .cm-card--payment-status .cm-stack .cm-copy {
+        display: none;
+    }
+
+    body[data-cm-tab="shop"] .cm-card > .cm-card-head .cm-copy {
+        display: none;
+    }
+
+    body[data-cm-tab="shop"] .cm-payment-empty-row {
+        gap: 4px;
+    }
+
+    body[data-cm-tab="run"] .cm-path-grid,
+    body[data-cm-tab="shop"] .cm-path-grid {
+        gap: 6px;
+    }
+
+    body[data-cm-tab="run"] .cm-path-chip,
+    body[data-cm-tab="shop"] .cm-path-chip {
+        padding: 7px 8px;
+        gap: 7px;
+    }
+
+    body[data-cm-tab="deck"] .cm-control-row,
+    body[data-cm-tab="shop"] .cm-control-row {
+        gap: 6px;
     }
 
     .cm-quick-row {
