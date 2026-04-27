@@ -411,6 +411,18 @@ button:disabled {
     box-shadow: 0 0 0 2px rgba(255, 226, 107, 0.34);
 }
 
+.cm-cell.is-hinting {
+    box-shadow:
+        0 0 0 1px rgba(70, 247, 167, 0.24),
+        0 0 0 3px rgba(70, 247, 167, 0.14);
+    animation: cmHintPulse 1.25s ease-in-out infinite;
+}
+
+.cm-cell.is-adjacent-hint {
+    border-color: rgba(255, 226, 107, 0.34);
+    box-shadow: 0 0 0 1px rgba(255, 226, 107, 0.16);
+}
+
 .cm-cell.is-swapping {
     z-index: 3;
     animation: cmTileSwap 0.18s cubic-bezier(0.2, 0.9, 0.28, 1) both;
@@ -542,6 +554,22 @@ button:disabled {
     }
 }
 
+@keyframes cmHintPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow:
+            0 0 0 1px rgba(70, 247, 167, 0.24),
+            0 0 0 3px rgba(70, 247, 167, 0.14);
+    }
+    50% {
+        transform: scale(1.03);
+        box-shadow:
+            0 0 0 1px rgba(70, 247, 167, 0.34),
+            0 0 0 4px rgba(70, 247, 167, 0.18),
+            0 0 18px rgba(70, 247, 167, 0.14);
+    }
+}
+
 @keyframes cmTileClear {
     0% {
         opacity: 1;
@@ -628,6 +656,17 @@ button:disabled {
     }
 }
 
+@keyframes cmCtaPulse {
+    0%, 100% {
+        box-shadow: 0 14px 28px rgba(255, 226, 107, 0.14);
+        transform: translateY(0);
+    }
+    50% {
+        box-shadow: 0 18px 34px rgba(255, 226, 107, 0.2);
+        transform: translateY(-1px);
+    }
+}
+
 .cm-board-overlay strong,
 .cm-board-notice strong {
     display: block;
@@ -708,9 +747,44 @@ button:disabled {
     background: rgba(255, 255, 255, 0.035);
 }
 
+.cm-goal-token.is-done {
+    border-color: rgba(70, 247, 167, 0.22);
+    background: rgba(70, 247, 167, 0.08);
+}
+
+.cm-goal-token.is-shield {
+    border-color: rgba(255, 111, 143, 0.18);
+}
+
+.cm-goal-token.is-focus {
+    border-color: rgba(118, 168, 255, 0.24);
+    background: rgba(118, 168, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(118, 168, 255, 0.1);
+}
+
 .cm-goal-token-head strong {
     font-size: 15px;
     line-height: 1;
+}
+
+.cm-goal-token-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.cm-goal-token-label {
+    font-size: 11px;
+    color: var(--cm-text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cm-goal-token-value {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
 }
 
 .cm-goal-token-head small {
@@ -730,6 +804,42 @@ button:disabled {
 
 .cm-run-reward-strip {
     gap: 6px;
+}
+
+.cm-run-coach {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 16px;
+    border: 1px solid rgba(118, 168, 255, 0.18);
+    background: linear-gradient(135deg, rgba(118, 168, 255, 0.08), rgba(70, 247, 167, 0.06));
+}
+
+.cm-run-coach-icon {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 12px;
+}
+
+.cm-run-coach-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.cm-run-coach-copy strong {
+    font-size: 13px;
+}
+
+.cm-run-coach-copy small {
+    color: var(--cm-text-soft);
+    line-height: 1.35;
 }
 
 .cm-run-tip {
@@ -767,6 +877,10 @@ button:disabled {
 .cm-btn {
     background: linear-gradient(135deg, rgba(255, 226, 107, 0.26), rgba(118, 168, 255, 0.2));
     box-shadow: 0 14px 28px rgba(255, 226, 107, 0.14);
+}
+
+.cm-btn.is-cta {
+    animation: cmCtaPulse 1.45s ease-in-out infinite;
 }
 
 .cm-btn-soft {
@@ -832,6 +946,12 @@ button:disabled {
 
 .cm-run-steps .cm-chip {
     padding: 7px 9px;
+}
+
+.cm-run-steps .cm-chip.is-active {
+    border-color: rgba(255, 226, 107, 0.22);
+    background: rgba(255, 226, 107, 0.08);
+    box-shadow: 0 0 0 1px rgba(255, 226, 107, 0.08);
 }
 
 .cm-run-steps .cm-chip strong {

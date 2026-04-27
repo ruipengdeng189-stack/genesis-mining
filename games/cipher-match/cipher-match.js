@@ -439,7 +439,9 @@
         const isBoss = isBossChapter(chapter);
         const assist = isCurrentRun ? (run.assist || getRunAssistState(chapter)) : getRunAssistState(chapter);
         const goals = isCurrentRun ? run.goals : chapter.goals.map((goal) => ({ ...goal, remaining: goal.amount }));
-        const boardHtml = isCurrentRun ? renderLiveBoard(run) : renderPreviewBoard();
+        const suggestedMove = isCurrentRun && assist.rookie.active && !run.inputLocked && run.selectedCell === null ? findSuggestedMove(run.board, goals) : null;
+        const focusGoalType = suggestedMove?.meta?.matchType || '';
+        const boardHtml = isCurrentRun ? renderLiveBoard(run, suggestedMove) : renderPreviewBoard();
         const activeSkillId = isCurrentRun ? getRunSkillId(run) : state.save.selectedSkill;
         const skill = skillMap[activeSkillId];
         const skillReady = isCurrentRun && run.energy >= skill.energyCost;
@@ -505,9 +507,10 @@
                             </div>
 
                             <div class="cm-goal-strip">
-                                ${goals.map((goal) => renderCompactGoal(goal)).join('')}
+                                ${goals.map((goal) => renderCompactGoal(goal, { isFocus: goal.type === focusGoalType })).join('')}
                             </div>
 
+                            ${renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree })}
                             ${renderRunStepRow(isCurrentRun, run, assist)}
 
                             ${!isCurrentRun ? `
@@ -528,7 +531,7 @@
                                         ${escapeHtml(run.failed ? text('+5 步', '+5 Moves') : text('退出', 'Retreat'))}
                                     </button>
                                 ` : `
-                                    <button class="cm-btn" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
+                                    <button class="cm-btn ${assist.rookie.active ? 'is-cta' : ''}" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
                                 `}
                             </div>
                         </div>
@@ -800,16 +803,23 @@
         return `<div class="cm-board">${cells.join('')}</div>`;
     }
 
-    function renderLiveBoard(run) {
+    function renderLiveBoard(run, suggestedMove = null) {
         const cells = [];
         const selectedIndex = Number.isInteger(run.selectedCell) ? run.selectedCell : -1;
         const selectedTile = selectedIndex >= 0 ? tileMap[run.board[selectedIndex]] : null;
         const activeFx = run.fx || null;
+        const rookieActive = !!run.assist?.rookie?.active;
+        const hintIndices = rookieActive && suggestedMove ? [suggestedMove.from, suggestedMove.to] : [];
+        const adjacentHints = rookieActive && selectedIndex >= 0 ? getAdjacentIndices(selectedIndex, config.board.size) : [];
         const noticeCopy = selectedTile
-            ? text(`已选 ${localize(selectedTile.name)}，再点相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap an adjacent tile to swap.`)
+            ? text(`已选 ${localize(selectedTile.name)}，再点发光的相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap a glowing adjacent tile to swap.`)
+            : rookieActive && suggestedMove
+                ? text('试试交换发光的两格，先做出第一组 3 连。', 'Try the glowing pair for your first 3-match.')
             : text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.');
         const overlayCopy = run.energy >= run.maxEnergy
-            ? text('能量已满，可随时点“放技”。', 'Energy is full. Cast Skill any time.')
+            ? rookieActive
+                ? text('能量已满，点“放技”试一次技能。', 'Energy is full. Tap Cast Skill to try it.')
+                : text('能量已满，可随时点“放技”。', 'Energy is full. Cast Skill any time.')
             : '';
 
         for (let index = 0; index < run.board.length; index += 1) {
@@ -823,6 +833,8 @@
                 'cm-cell',
                 `cm-cell--${escapeHtml(type)}`,
                 selected ? 'is-selected' : '',
+                hintIndices.includes(index) ? 'is-hinting' : '',
+                adjacentHints.includes(index) ? 'is-adjacent-hint' : '',
                 activeFx?.swap?.includes(index) ? 'is-swapping' : '',
                 activeFx?.clearing?.includes(index) ? 'is-clearing' : '',
                 activeFx?.dropping?.includes(index) ? 'is-dropping' : '',
@@ -883,33 +895,94 @@
         `;
     }
 
-    function renderCompactGoal(goal) {
+    function renderCompactGoal(goal, options = {}) {
         const meta = getGoalMeta(goal.type);
         const total = Math.max(1, goal.amount || goal.remaining || 1);
         const done = Math.max(0, total - goal.remaining);
         const percent = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+        const completed = goal.remaining <= 0;
         return `
-            <div class="cm-goal-token">
+            <div class="cm-goal-token ${completed ? 'is-done' : ''} ${goal.type === 'shield' ? 'is-shield' : ''} ${options.isFocus ? 'is-focus' : ''}">
                 <div class="cm-goal-token-head">
                     <span class="cm-goal-token-icon" aria-hidden="true">${escapeHtml(meta.icon)}</span>
-                    <strong>${Math.max(0, goal.remaining)}</strong>
-                    <small>/ ${total}</small>
+                    <div class="cm-goal-token-copy">
+                        <span class="cm-goal-token-label">${escapeHtml(meta.label)}</span>
+                        <div class="cm-goal-token-value">
+                            <strong>${Math.max(0, goal.remaining)}</strong>
+                            <small>/ ${total}</small>
+                        </div>
+                    </div>
                 </div>
                 <div class="cm-progress"><span style="width:${percent}%"></span></div>
             </div>
         `;
     }
 
+    function renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree }) {
+        const shouldShow = assist.rookie.active || skillReady;
+        if (!shouldShow) return '';
+
+        let icon = '◎';
+        let title = text('新手引导', 'Coach');
+        let detail = '';
+
+        if (!isCurrentRun) {
+            icon = '▶';
+            title = tutorialEntryFree ? text('教学局免费', 'Free tutorial run') : text('准备开打', 'Ready to start');
+            detail = tutorialEntryFree
+                ? text('本关不扣日常次数；点“开打”后，先交换两格做出第一组 3 连。', 'This run does not consume daily entries. Tap Start, then swap 2 tiles for your first 3-match.')
+                : text('点“开打”进入实战；本关先学会交换两格和完成 3 连。', 'Tap Start to enter battle; learn swap and 3-match first.');
+        } else if (run.selectedCell !== null) {
+            icon = '②';
+            title = text('第二步', 'Step 2');
+            detail = text('再点一个发光的相邻格，就会完成交换。', 'Tap one glowing adjacent tile to complete the swap.');
+        } else if (skillReady) {
+            icon = '✦';
+            title = text('技能已就绪', 'Skill ready');
+            detail = text(`现在可以点“放技”，立即触发 ${localize(skill.name)}。`, `You can cast ${localize(skill.name)} now.`);
+        } else if (suggestedMove) {
+            const targetMeta = suggestedMove.meta?.matchType ? getGoalMeta(suggestedMove.meta.matchType) : null;
+            icon = '①';
+            title = targetMeta
+                ? text(`先消 ${targetMeta.label}`, `Target ${targetMeta.label} first`)
+                : text('先试这一步', 'Try this move');
+            detail = targetMeta
+                ? text(`发光的两格会优先推进 ${targetMeta.label} 目标，更适合首局上手。`, `The glowing pair advances the ${targetMeta.label} goal first, which is ideal for onboarding.`)
+                : text('棋盘上发光的两格是当前最容易做出 3 连的一步。', 'The glowing pair is the easiest 3-match on the board right now.');
+        } else {
+            icon = '◎';
+            title = text('先做任意 3 连', 'Any 3-match first');
+            detail = text('先把下方目标压下去，能量满了再放技能。', 'Push the goals below first, then cast your skill at full energy.');
+        }
+
+        return `
+            <div class="cm-run-coach">
+                <span class="cm-run-coach-icon" aria-hidden="true">${escapeHtml(icon)}</span>
+                <div class="cm-run-coach-copy">
+                    <strong>${escapeHtml(title)}</strong>
+                    <small>${escapeHtml(detail)}</small>
+                </div>
+            </div>
+        `;
+    }
+
     function renderRunStepRow(isCurrentRun, run, assist) {
+        const currentStep = !isCurrentRun
+            ? 1
+            : run && run.energy >= run.maxEnergy
+                ? 4
+                : run && run.selectedCell !== null
+                    ? 2
+                    : 3;
         const steps = isCurrentRun
             ? [
-                { icon: '①', label: text('点 1 格', 'Pick 1') },
-                { icon: '②', label: text('点相邻格', 'Adjacent') },
-                { icon: '③', label: text('凑 3 连', 'Match 3') },
-                { icon: '④', label: run && run.energy >= run.maxEnergy ? text('现在放技', 'Cast now') : text('满能量放技', 'Cast at 100'), tone: run && run.energy >= run.maxEnergy ? 'is-good' : '' }
+                { icon: '①', label: text('点 1 格', 'Pick 1'), tone: currentStep === 1 ? 'is-active' : '' },
+                { icon: '②', label: text('点相邻格', 'Adjacent'), tone: currentStep === 2 ? 'is-active' : '' },
+                { icon: '③', label: text('凑 3 连', 'Match 3'), tone: currentStep === 3 ? 'is-active' : '' },
+                { icon: '④', label: run && run.energy >= run.maxEnergy ? text('现在放技', 'Cast now') : text('满能量放技', 'Cast at 100'), tone: currentStep === 4 ? 'is-good is-active' : '' }
             ]
             : [
-                { icon: '①', label: text('先开打', 'Start') },
+                { icon: '①', label: text('先开打', 'Start'), tone: 'is-active' },
                 { icon: '②', label: text('点 2 格', 'Pick 2') },
                 { icon: '③', label: text('凑 3 连', 'Match 3') },
                 { icon: '④', label: text('满能量放技', 'Cast at 100') }
@@ -2558,6 +2631,72 @@
         };
     }
 
+    function getAdjacentIndices(index, size) {
+        const row = Math.floor(index / size);
+        const col = index % size;
+        return [
+            row > 0 ? index - size : -1,
+            row < size - 1 ? index + size : -1,
+            col > 0 ? index - 1 : -1,
+            col < size - 1 ? index + 1 : -1
+        ].filter((value) => value >= 0);
+    }
+
+    function findSuggestedMove(board, goals = []) {
+        const size = config.board.size;
+        let bestMove = null;
+        let bestScore = -1;
+        for (let row = 0; row < size; row += 1) {
+            for (let col = 0; col < size; col += 1) {
+                const from = row * size + col;
+                const candidates = [];
+                if (col < size - 1) candidates.push(from + 1);
+                if (row < size - 1) candidates.push(from + size);
+                for (const to of candidates) {
+                    const probe = board.slice();
+                    swapItems(probe, from, to);
+                    const match = findMatches(probe);
+                    if (match.indices.length) {
+                        const meta = getSuggestedMoveMeta(probe, match, goals);
+                        const topBias = Math.max(0, 4 - Math.max(Math.floor(from / size), Math.floor(to / size)));
+                        const score = (meta.goalMatched ? 100 : 0) + meta.totalCleared + topBias;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMove = { from, to, meta };
+                        }
+                    }
+                }
+            }
+        }
+        return bestMove;
+    }
+
+    function getSuggestedMoveMeta(swappedBoard, match, goals = []) {
+        const counts = {};
+        match.indices.forEach((index) => {
+            const type = swappedBoard[index];
+            if (!type) return;
+            counts[type] = (counts[type] || 0) + 1;
+        });
+        const goalTypes = new Set((Array.isArray(goals) ? goals : [])
+            .filter((goal) => goal.type !== 'shield' && (goal.remaining ?? goal.amount ?? 0) > 0)
+            .map((goal) => goal.type));
+        let matchType = '';
+        let bestScore = -1;
+        Object.entries(counts).forEach(([type, amount]) => {
+            const score = amount + (goalTypes.has(type) ? 100 : 0);
+            if (score > bestScore) {
+                bestScore = score;
+                matchType = type;
+            }
+        });
+        return {
+            matchType,
+            goalMatched: goalTypes.has(matchType),
+            totalCleared: match.indices.length
+        };
+    }
+
     function getChangedIndices(beforeBoard, afterBoard) {
         const changed = [];
         for (let index = 0; index < Math.max(beforeBoard.length, afterBoard.length); index += 1) {
@@ -2973,22 +3112,52 @@
         };
     }
 
-    function createFreshBoard() {
+    function createFreshBoard(chapter = getSelectedChapter(), assist = getRunAssistState(chapter)) {
         const size = config.board.size;
-        const board = new Array(size * size).fill('');
         const types = config.board.colors.map((item) => item.id);
-        for (let row = 0; row < size; row += 1) {
-            for (let col = 0; col < size; col += 1) {
-                let type = randomFrom(types);
-                let guard = 0;
-                while (createsInitialMatch(board, row, col, size, type) && guard < 12) {
-                    type = randomFrom(types);
-                    guard += 1;
+        const buildBoard = () => {
+            const board = new Array(size * size).fill('');
+            for (let row = 0; row < size; row += 1) {
+                for (let col = 0; col < size; col += 1) {
+                    let type = randomFrom(types);
+                    let guard = 0;
+                    while (createsInitialMatch(board, row, col, size, type) && guard < 12) {
+                        type = randomFrom(types);
+                        guard += 1;
+                    }
+                    board[row * size + col] = type;
                 }
-                board[row * size + col] = type;
+            }
+            return board;
+        };
+
+        let fallbackBoard = buildBoard();
+        if (!assist.rookie.active) {
+            return fallbackBoard;
+        }
+
+        let bestBoard = fallbackBoard;
+        let bestScore = -1;
+        for (let attempt = 0; attempt < 24; attempt += 1) {
+            const board = attempt === 0 ? fallbackBoard : buildBoard();
+            const suggestedMove = findSuggestedMove(board, chapter.goals);
+            if (!suggestedMove) continue;
+            const sizeHalf = Math.floor(size / 2);
+            const fromRow = Math.floor(suggestedMove.from / size);
+            const toRow = Math.floor(suggestedMove.to / size);
+            const topBias = Math.max(0, sizeHalf - Math.max(fromRow, toRow));
+            const goalBias = suggestedMove.meta?.goalMatched ? 8 : 0;
+            const clearBias = suggestedMove.meta?.totalCleared || 0;
+            const score = goalBias + clearBias + topBias;
+            if (score > bestScore) {
+                bestScore = score;
+                bestBoard = board;
+            }
+            if (goalBias >= 8 && topBias >= 1) {
+                return board;
             }
         }
-        return board;
+        return bestBoard;
     }
 
     function createsInitialMatch(board, row, col, size, type) {
