@@ -43,7 +43,7 @@
 
     const FX_TIMINGS = {
         swap: 180,
-        clear: 220,
+        clear: 980,
         drop: 220,
         skill: 560,
         boss: 420
@@ -889,7 +889,7 @@
                     <span aria-hidden="true">${escapeHtml(meta.icon)}</span>
                     <strong>${escapeHtml(meta.label)}</strong>
                 </div>
-                <small>${escapeHtml(text('剩余', 'Left'))} ${Math.max(0, goal.remaining)} / ${total}</small>
+                <small>${escapeHtml(text('剩余', 'Left'))} ${Math.max(0, goal.remaining)} / ${total}${meta.note ? ` · ${escapeHtml(meta.note)}` : ''}</small>
                 <div class="cm-progress"><span style="width:${percent}%"></span></div>
             </div>
         `;
@@ -907,6 +907,7 @@
                     <span class="cm-goal-token-icon" aria-hidden="true">${escapeHtml(meta.icon)}</span>
                     <div class="cm-goal-token-copy">
                         <span class="cm-goal-token-label">${escapeHtml(meta.label)}</span>
+                        ${meta.note ? `<small class="cm-goal-token-note">${escapeHtml(meta.note)}</small>` : ''}
                         <div class="cm-goal-token-value">
                             <strong>${Math.max(0, goal.remaining)}</strong>
                             <small>/ ${total}</small>
@@ -1723,12 +1724,18 @@
         if (!run) return;
         const chapter = chapterMap[run.chapterId];
         const leaderId = getRunLeaderId(run);
+        const matchedGoalType = getDominantMatchedGoalType(result.byType, run.goals);
         const summary = {
             shieldDamage: 0,
             progressDamage: 0,
             powerDamage: 0,
             moveRefund: 0,
-            bonusCharge: 0
+            bonusCharge: 0,
+            goalDelta: {}
+        };
+        const addGoalDelta = (type, amount) => {
+            if (!type || amount <= 0) return;
+            summary.goalDelta[type] = (summary.goalDelta[type] || 0) + amount;
         };
 
         const energyFromModules = runHasModule('prismTap', run) ? 10 : 0;
@@ -1738,26 +1745,35 @@
 
         run.goals.forEach((goal) => {
             if (goal.type === 'shield') {
-                const before = goal.remaining;
-                goal.remaining = Math.max(0, goal.remaining - Math.max(1, Math.floor(result.totalCleared / 4)));
-                if (runHasModule('traceMine', run)) {
-                    goal.remaining = Math.max(0, goal.remaining - 1);
-                }
-                summary.shieldDamage += Math.max(0, before - goal.remaining);
                 return;
             }
             const before = goal.remaining;
             goal.remaining = Math.max(0, goal.remaining - (result.byType[goal.type] || 0));
-            summary.progressDamage += Math.max(0, before - goal.remaining);
+            const dealt = Math.max(0, before - goal.remaining);
+            summary.progressDamage += dealt;
+            addGoalDelta(goal.type, dealt);
         });
 
+        if (isBossChapter(chapter)) {
+            const shieldBreak = getBossShieldBreakDamage(result, run);
+            if (shieldBreak > 0) {
+                const reduced = reduceGoalType('shield', shieldBreak);
+                summary.shieldDamage += reduced;
+                addGoalDelta('shield', reduced);
+            }
+        }
+
         if ((run.assist?.progressBonus || 0) > 0 && (result.biggestGroup >= 4 || result.cascades >= 2)) {
-            const pressure = applyLargestGoalPressure(run.assist.progressBonus);
-            summary.powerDamage = pressure.amount;
-            if (pressure.type === 'shield') {
-                summary.shieldDamage += pressure.amount;
-            } else {
-                summary.progressDamage += pressure.amount;
+            if (isBossChapter(chapter)) {
+                const extraShield = reduceGoalType('shield', run.assist.progressBonus);
+                summary.shieldDamage += extraShield;
+                summary.powerDamage = extraShield;
+                addGoalDelta('shield', extraShield);
+            } else if (matchedGoalType) {
+                const extraProgress = reduceGoalType(matchedGoalType, run.assist.progressBonus);
+                summary.progressDamage += extraProgress;
+                summary.powerDamage = extraProgress;
+                addGoalDelta(matchedGoalType, extraProgress);
             }
         }
 
@@ -1774,6 +1790,7 @@
         if (leaderId === 'novaEcho' && isBossChapter(chapter) && summary.shieldDamage > 0) {
             const extraBreak = reduceGoalType('shield', 2 + (run.assist?.supportTier || 0));
             summary.shieldDamage += extraBreak;
+            addGoalDelta('shield', extraBreak);
         }
 
         state.save.stats.matchedTiles += result.totalCleared;
@@ -2473,10 +2490,10 @@
                 'danger',
                 text('首领到场', 'Boss Arrived'),
                 assist.rookie.active
-                    ? text(`本关已放慢首领反制，先压护盾；你有 ${assist.bossPulseEvery} 步窗口。`, `Boss counters are slowed for this run. Break the shield first; you have a ${assist.bossPulseEvery}-move window.`)
+                    ? text(`本关护盾只会被 4 连、连锁或技能压低；首领反制已放慢，你有 ${assist.bossPulseEvery} 步窗口。`, `The shield only drops from 4-matches, cascades, or skills. Boss counters are slowed, giving you a ${assist.bossPulseEvery}-move window.`)
                     : assist.gap > 0
-                        ? text(`先压护盾；当前战力不足，首领每 ${assist.bossPulseEvery} 步会发动一次反制。`, `Break the shield first; your power is short, and the boss counters every ${assist.bossPulseEvery} moves.`)
-                        : text(`先压护盾；你有 ${assist.bossPulseEvery} 步窗口来稳住节奏。`, `Break the shield first; you have a ${assist.bossPulseEvery}-move window before each boss counter.`)
+                        ? text(`护盾只会被 4 连、连锁或技能压低；当前战力不足，首领每 ${assist.bossPulseEvery} 步会发动一次反制。`, `The shield only drops from 4-matches, cascades, or skills. Your power is short, and the boss counters every ${assist.bossPulseEvery} moves.`)
+                        : text(`护盾只会被 4 连、连锁或技能压低；你有 ${assist.bossPulseEvery} 步窗口来稳住节奏。`, `The shield only drops from 4-matches, cascades, or skills. You have a ${assist.bossPulseEvery}-move window before each boss counter.`)
             );
         }
         if (assist.rookie.active) {
@@ -2501,6 +2518,7 @@
     }
 
     function buildMatchFeedback(result, summary, run) {
+        const goalDeltaSummary = formatGoalDeltaSummary(summary.goalDelta);
         if (run.energy >= run.maxEnergy) {
             return makeFeedback(
                 'good',
@@ -2513,7 +2531,7 @@
             return makeFeedback(
                 'danger',
                 text('防火墙受损', 'Firewall Cracked'),
-                `${text('护盾压低', 'Shield reduced')} -${summary.shieldDamage}`
+                goalDeltaSummary || `${text('护盾压低', 'Shield reduced')} -${summary.shieldDamage}`
             );
         }
 
@@ -2521,7 +2539,7 @@
             return makeFeedback(
                 'good',
                 text('稳态回收', 'Move Refund'),
-                text('4 连及以上返还 1 步，继续滚起节奏。', 'A 4+ match refunded 1 move. Keep the tempo rolling.')
+                `${text('4 连及以上返还 1 步', 'A 4+ match refunded 1 move.')}${goalDeltaSummary ? ` · ${goalDeltaSummary}` : ''}`
             );
         }
 
@@ -2529,7 +2547,7 @@
             return makeFeedback(
                 'good',
                 text('连锁充能', 'Cascade Charge'),
-                `${text('额外充能', 'Bonus Charge')} +${summary.bonusCharge}`
+                `${text('额外充能', 'Bonus Charge')} +${summary.bonusCharge}${goalDeltaSummary ? ` · ${goalDeltaSummary}` : ''}`
             );
         }
 
@@ -2537,7 +2555,15 @@
             return makeFeedback(
                 'good',
                 text('构筑压制', 'Deck Pressure'),
-                `${text('额外推进', 'Extra pressure')} +${summary.powerDamage}`
+                `${text('额外推进', 'Extra pressure')} +${summary.powerDamage}${goalDeltaSummary ? ` · ${goalDeltaSummary}` : ''}`
+            );
+        }
+
+        if (goalDeltaSummary) {
+            return makeFeedback(
+                'good',
+                text('目标推进', 'Goal Progress'),
+                goalDeltaSummary
             );
         }
 
@@ -2703,6 +2729,45 @@
             if (beforeBoard[index] !== afterBoard[index]) changed.push(index);
         }
         return changed;
+    }
+
+    function getDominantMatchedGoalType(byType = {}, goals = []) {
+        let bestType = '';
+        let bestValue = 0;
+        goals
+            .filter((goal) => goal.type !== 'shield' && goal.remaining > 0)
+            .forEach((goal) => {
+                const value = byType[goal.type] || 0;
+                if (value > bestValue) {
+                    bestValue = value;
+                    bestType = goal.type;
+                }
+            });
+        return bestType;
+    }
+
+    function getBossShieldBreakDamage(result, run = state.run) {
+        let damage = 0;
+        if (result.biggestGroup >= 4) {
+            damage += 1;
+        }
+        if (result.cascades >= 2) {
+            damage += Math.max(1, result.cascades - 1);
+        }
+        if (runHasModule('traceMine', run) && damage > 0) {
+            damage += 1;
+        }
+        return damage;
+    }
+
+    function formatGoalDeltaSummary(goalDelta = {}) {
+        const parts = Object.entries(goalDelta)
+            .filter(([, amount]) => amount > 0)
+            .map(([type, amount]) => {
+                const meta = getGoalMeta(type);
+                return `${meta.icon} -${amount}`;
+            });
+        return parts.join(' · ');
     }
 
     function getRewardLabel(key, value) {
@@ -2941,14 +3006,14 @@
     function getRunOpeningHint(chapter, assist = getRunAssistState(chapter)) {
         if (isBossChapter(chapter)) {
             return assist.rookie.active
-                ? text('这关先拆护盾，再用技能收尾；系统已放慢首领反制。', 'Break the shield first, then finish with skills. Boss counters are slowed for this run.')
-                : text('这关先拆护盾，再把 4 连和技能留给核心目标。', 'Break the shield first, then save 4-matches and skills for the core goal.');
+                ? text('这关先拆护盾：普通 3 连不会扣盾，只有 4 连、连锁或技能会生效；系统已放慢首领反制。', 'Break the shield first: basic 3-matches do not damage it, and only 4-matches, cascades, or skills will. Boss counters are slowed for this run.')
+                : text('这关先拆护盾：普通 3 连不会扣盾，把 4 连和技能留给护盾与核心目标。', 'Break the shield first: basic 3-matches do not damage it, so save 4-matches and skills for the shield and core goal.');
         }
         if (assist.rookie.active) {
             return text('先随手做一个 3 连熟悉交换，再开始追 4 连和连锁。', 'Start with any easy 3-match to learn the board, then look for 4-matches and cascades.');
         }
         if (assist.progressBonus > 0) {
-            return text('这局开局更顺，优先找 4 连把节奏滚起来。', 'This opener is stronger, so look for a 4-match first and snowball the tempo.');
+            return text('这局大消除会额外推进已命中的目标，优先找 4 连把节奏滚起来。', 'Big clears add extra pressure to the matched goal this run, so look for a 4-match first and snowball the tempo.');
         }
         return text('优先处理最容易完成的颜色目标。', 'Start with the easiest color goal on the board.');
     }
@@ -2989,6 +3054,12 @@
         if (isTutorialEntryFree(chapter, assist)) {
             return text(`首通教学免费：本关不扣日常次数，且开局提供 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，首补也免费。`, `Tutorial entry is free on this first clear. You also start with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, and the first continue is free.`);
         }
+        if (isBossChapter(chapter) && assist.rookie.active && assist.gap > 0) {
+            return text(`当前仍差 ${formatCompact(assist.gap)}，但本关护盾只会被 4 连、连锁或技能压低；开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，且首补免费。`, `Still short by ${formatCompact(assist.gap)}, but the boss shield only drops from 4-matches, cascades, or skills. You also start with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, and the first continue is free.`);
+        }
+        if (isBossChapter(chapter) && assist.rookie.active) {
+            return text(`新手保护生效：护盾只会被 4 连、连锁或技能压低；开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，大消除额外推进 ${assist.progressBonus}，首补免费。`, `Rookie assist is active: the boss shield only drops from 4-matches, cascades, or skills. You open with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, big clears add ${assist.progressBonus} extra pressure, and the first continue is free.`);
+        }
         if (assist.rookie.active && assist.gap > 0) {
             return text(`当前仍差 ${formatCompact(assist.gap)}，但本关提供新手保护：开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，且首补免费。`, `Still short by ${formatCompact(assist.gap)}, but rookie assist grants +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy this run, and the first continue is free.`);
         }
@@ -2997,11 +3068,13 @@
         }
         if (assist.gap > 0) {
             return isBossChapter(chapter)
-                ? text(`当前仍差 ${formatCompact(assist.gap)}，首领将每 ${assist.bossPulseEvery} 步发动一次反制。`, `Still short by ${formatCompact(assist.gap)}. The boss counters every ${assist.bossPulseEvery} moves.`)
+                ? text(`当前仍差 ${formatCompact(assist.gap)}；护盾只会被 4 连、连锁或技能压低，首领将每 ${assist.bossPulseEvery} 步发动一次反制。`, `Still short by ${formatCompact(assist.gap)}. The boss shield only drops from 4-matches, cascades, or skills, and the boss counters every ${assist.bossPulseEvery} moves.`)
                 : text(`当前仍差 ${formatCompact(assist.gap)}，建议先补主力卡与研究。`, `Still short by ${formatCompact(assist.gap)}. Upgrade your core cards and lab first.`);
         }
         if (assist.bonusMoves > 0 || assist.bonusEnergy > 0 || assist.progressBonus > 0) {
-            return text(`开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，大消除额外推进 ${assist.progressBonus}。`, `Open with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, and big clears deal +${assist.progressBonus} extra pressure.`);
+            return isBossChapter(chapter)
+                ? text(`开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量；护盾只会被 4 连、连锁或技能压低，大消除额外推进 ${assist.progressBonus}。`, `Open with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy. The boss shield only drops from 4-matches, cascades, or skills, and big clears add +${assist.progressBonus} extra pressure.`)
+                : text(`开局 +${assist.bonusMoves} 步 / +${assist.bonusEnergy} 能量，大消除额外推进 ${assist.progressBonus}。`, `Open with +${assist.bonusMoves} moves / +${assist.bonusEnergy} energy, and big clears deal +${assist.progressBonus} extra pressure.`);
         }
         return text('当前构筑已达到推荐线，可稳定推进。', 'Your current deck meets the recommended line and can push steadily.');
     }
@@ -3009,10 +3082,10 @@
     function getRunStartNotice(chapter, assist = getRunAssistState(chapter)) {
         if (isBossChapter(chapter)) {
             return assist.rookie.active
-                ? text('首领反制已放慢：先拆盾，再用技能收尾。', 'Boss counters are slowed. Break the shield first, then finish with skills.')
+                ? text('首领反制已放慢：普通 3 连不会扣盾，先用 4 连、连锁或技能拆盾。', 'Boss counters are slowed. Basic 3-matches do not damage the shield, so use 4-matches, cascades, or skills first.')
                 : assist.gap > 0
-                    ? text('先压护盾，再用技能收尾；当前战力不足时首领反制会更快。', 'Break the shield first, then finish with skills; low power makes boss counters arrive faster.')
-                    : text('先压护盾，再把大消除留给核心目标。', 'Break the shield first, then save big clears for the core goal.');
+                    ? text('先压护盾：普通 3 连不会扣盾；当前战力不足时首领反制会更快。', 'Break the shield first: basic 3-matches do not damage it, and low power makes boss counters arrive faster.')
+                    : text('先压护盾：普通 3 连不会扣盾，把 4 连和技能留给护盾与核心目标。', 'Break the shield first: basic 3-matches do not damage it, so save 4-matches and skills for the shield and core goal.');
         }
         if (assist.rookie.active) {
             return text('先做任意 3 连熟悉交换，系统已给你额外步数和能量。', 'Start with any easy 3-match. Extra moves and energy are active for this run.');
@@ -3292,13 +3365,15 @@
         if (type === 'shield') {
             return {
                 icon: '⛨',
-                label: text('护盾', 'Shield')
+                label: text('护盾', 'Shield'),
+                note: text('4连 / 连锁 / 技能', '4+ / Cascade / Skill')
             };
         }
         const tile = tileMap[type];
         return {
             icon: tile?.icon || '?',
-            label: tile ? localize(tile.name) : type
+            label: tile ? localize(tile.name) : type,
+            note: ''
         };
     }
 
