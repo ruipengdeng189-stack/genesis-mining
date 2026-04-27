@@ -441,6 +441,8 @@
         const goals = isCurrentRun ? run.goals : chapter.goals.map((goal) => ({ ...goal, remaining: goal.amount }));
         const suggestedMove = isCurrentRun && assist.rookie.active && !run.inputLocked && run.selectedCell === null ? findSuggestedMove(run.board, goals) : null;
         const focusGoalType = suggestedMove?.meta?.matchType || '';
+        const goalHitTypes = isCurrentRun ? getGoalHitTypes(run.fx?.goalDelta) : [];
+        const shieldHit = isCurrentRun && !!run.fx?.shieldHit;
         const boardHtml = isCurrentRun ? renderLiveBoard(run, suggestedMove) : renderPreviewBoard();
         const activeSkillId = isCurrentRun ? getRunSkillId(run) : state.save.selectedSkill;
         const skill = skillMap[activeSkillId];
@@ -456,6 +458,7 @@
             isBoss ? 'is-boss' : '',
             isCurrentRun && run.energy >= run.maxEnergy ? 'is-skill-ready' : '',
             isCurrentRun && run.fx?.kind === 'skill' ? 'is-skill-cast' : '',
+            isCurrentRun && run.fx?.shieldHit ? 'is-shield-hit' : '',
             isCurrentRun && run.fx?.kind === 'boss' ? 'is-boss-pulse' : ''
         ].filter(Boolean).join(' ');
 
@@ -507,7 +510,11 @@
                             </div>
 
                             <div class="cm-goal-strip">
-                                ${goals.map((goal) => renderCompactGoal(goal, { isFocus: goal.type === focusGoalType })).join('')}
+                                ${goals.map((goal) => renderCompactGoal(goal, {
+                                    isFocus: goal.type === focusGoalType,
+                                    isHit: goalHitTypes.includes(goal.type),
+                                    isBurst: shieldHit && goal.type === 'shield'
+                                })).join('')}
                             </div>
 
                             ${renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree })}
@@ -805,17 +812,22 @@
 
     function renderLiveBoard(run, suggestedMove = null) {
         const cells = [];
+        const chapter = chapterMap[run.chapterId];
         const selectedIndex = Number.isInteger(run.selectedCell) ? run.selectedCell : -1;
         const selectedTile = selectedIndex >= 0 ? tileMap[run.board[selectedIndex]] : null;
         const activeFx = run.fx || null;
         const rookieActive = !!run.assist?.rookie?.active;
+        const shieldGoal = run.goals.find((goal) => goal.type === 'shield' && goal.remaining > 0);
+        const shieldActive = isBossChapter(chapter) && !!shieldGoal;
         const hintIndices = rookieActive && suggestedMove ? [suggestedMove.from, suggestedMove.to] : [];
         const adjacentHints = rookieActive && selectedIndex >= 0 ? getAdjacentIndices(selectedIndex, config.board.size) : [];
         const noticeCopy = selectedTile
             ? text(`已选 ${localize(selectedTile.name)}，再点发光的相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap a glowing adjacent tile to swap.`)
             : rookieActive && suggestedMove
                 ? text('试试交换发光的两格，先做出第一组 3 连。', 'Try the glowing pair for your first 3-match.')
-            : text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.');
+                : shieldActive
+                    ? text('普通 3 连不会扣护盾，优先找 4 连 / 连锁，或攒满能量放技能。', 'Basic 3-matches do not damage the shield. Look for 4-matches, cascades, or a full-energy skill.')
+                    : text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.');
         const overlayCopy = run.energy >= run.maxEnergy
             ? rookieActive
                 ? text('能量已满，点“放技”试一次技能。', 'Energy is full. Tap Cast Skill to try it.')
@@ -902,7 +914,7 @@
         const percent = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
         const completed = goal.remaining <= 0;
         return `
-            <div class="cm-goal-token ${completed ? 'is-done' : ''} ${goal.type === 'shield' ? 'is-shield' : ''} ${options.isFocus ? 'is-focus' : ''}">
+            <div class="cm-goal-token ${completed ? 'is-done' : ''} ${goal.type === 'shield' ? 'is-shield' : ''} ${options.isFocus ? 'is-focus' : ''} ${options.isHit ? 'is-hit' : ''} ${options.isBurst ? 'is-burst' : ''}">
                 <div class="cm-goal-token-head">
                     <span class="cm-goal-token-icon" aria-hidden="true">${escapeHtml(meta.icon)}</span>
                     <div class="cm-goal-token-copy">
@@ -1683,10 +1695,19 @@
             ? text('已触发连锁，继续冲技能。', 'Cascade triggered. Keep charging your skill.')
             : text('有效交换成功，继续压低目标。', 'Successful swap. Keep pushing your goals.');
         const dropping = getChangedIndices(boardBeforeCollapse, run.board);
-        run.fx = dropping.length ? { kind: 'drop', dropping } : null;
+        const goalHits = getGoalHitTypes(summary.goalDelta);
+        run.fx = (dropping.length || goalHits.length)
+            ? {
+                kind: dropping.length ? 'drop' : 'goal',
+                dropping,
+                goalHits,
+                goalDelta: summary.goalDelta,
+                shieldHit: !!summary.goalDelta?.shield
+            }
+            : null;
         const clearedStage = areGoalsComplete(run.goals);
         renderAll();
-        await wait(dropping.length ? FX_TIMINGS.drop : 40);
+        await wait(dropping.length ? FX_TIMINGS.drop : goalHits.length ? 260 : 40);
         if (state.run !== run || !run.active) return;
 
         run.fx = null;
@@ -1809,43 +1830,49 @@
         const boostRate = 1 + getResearchLevel('signalAmp') * 0.04;
         const skillValue = Math.round(6 * boostRate);
         const leaderId = getRunLeaderId(run);
-        let skillSummary = '';
+        const goalSnapshot = captureGoalSnapshot(run.goals);
+        const detailParts = [];
         run.inputLocked = true;
 
         if (skill.id === 'gridBurst') {
-            const reduced = reduceLargestGoal(skillValue);
-            skillSummary = text(`最大缺口目标 -${reduced}`, `Largest target -${reduced}`);
+            reduceLargestGoal(skillValue);
         } else if (skill.id === 'colorHack') {
-            const reduced = reduceLargestColorGoal(Math.round(8 * boostRate));
-            skillSummary = text(`主色目标 -${reduced}`, `Primary color goal -${reduced}`);
+            reduceLargestColorGoal(Math.round(8 * boostRate));
         } else if (skill.id === 'stasisField') {
             run.movesLeft += 3;
-            const reduced = reduceSmallestGoal(Math.round(3 * boostRate));
-            skillSummary = text(`步数 +3 / 小目标 -${reduced}`, `Moves +3 / Small target -${reduced}`);
+            detailParts.push(text('步数 +3', 'Moves +3'));
+            reduceSmallestGoal(Math.round(3 * boostRate));
         }
 
-        let leaderBonusSummary = '';
         if (leaderId === 'novaEcho') {
             const shieldGoal = run.goals.find((goal) => goal.type === 'shield' && goal.remaining > 0);
             if (shieldGoal) {
-                const before = shieldGoal.remaining;
                 shieldGoal.remaining = Math.max(0, shieldGoal.remaining - 4);
-                const dealt = before - shieldGoal.remaining;
-                if (dealt > 0) leaderBonusSummary = text(`护盾 -${dealt}`, `Shield -${dealt}`);
             }
         }
 
         if (leaderId === 'wardenNine') {
             run.movesLeft += 1;
-            leaderBonusSummary = text('额外步数 +1', 'Extra move +1');
+            detailParts.push(text('额外步数 +1', 'Extra move +1'));
+        }
+
+        const skillGoalDelta = getGoalDeltaFromSnapshot(goalSnapshot, run.goals);
+        const goalSummary = formatGoalDeltaSummary(skillGoalDelta);
+        if (goalSummary) {
+            detailParts.unshift(goalSummary);
         }
 
         run.energy = leaderId === 'wardenNine' ? 35 : 0;
-        run.fx = { kind: 'skill' };
+        run.fx = {
+            kind: 'skill',
+            goalHits: getGoalHitTypes(skillGoalDelta),
+            goalDelta: skillGoalDelta,
+            shieldHit: !!skillGoalDelta.shield
+        };
         run.feedback = makeFeedback(
             'good',
             text('技能释放', 'Skill Cast'),
-            [skillSummary, leaderBonusSummary].filter(Boolean).join(' · ') || `${localize(skill.name)} · ${localize(skill.effect)}`,
+            detailParts.join(' · ') || goalSummary || `${localize(skill.name)} · ${localize(skill.effect)}`,
             { icon: '✦', duration: 1150 }
         );
         run.notice = text('技能已释放。', 'Skill cast.');
@@ -2760,6 +2787,24 @@
         return damage;
     }
 
+    function captureGoalSnapshot(goals = []) {
+        return goals.reduce((snapshot, goal) => {
+            snapshot[goal.type] = goal.remaining;
+            return snapshot;
+        }, {});
+    }
+
+    function getGoalDeltaFromSnapshot(snapshot = {}, goals = []) {
+        return goals.reduce((delta, goal) => {
+            const before = snapshot[goal.type];
+            const dealt = Math.max(0, (Number.isFinite(before) ? before : goal.remaining) - goal.remaining);
+            if (dealt > 0) {
+                delta[goal.type] = (delta[goal.type] || 0) + dealt;
+            }
+            return delta;
+        }, {});
+    }
+
     function formatGoalDeltaSummary(goalDelta = {}) {
         const parts = Object.entries(goalDelta)
             .filter(([, amount]) => amount > 0)
@@ -2768,6 +2813,18 @@
                 return `${meta.icon} -${amount}`;
             });
         return parts.join(' · ');
+    }
+
+    function getGoalHitTypes(goalDelta = {}) {
+        return Object.entries(goalDelta)
+            .filter(([, amount]) => amount > 0)
+            .sort(([leftType, leftAmount], [rightType, rightAmount]) => {
+                const leftWeight = leftType === 'shield' ? 2 : 0;
+                const rightWeight = rightType === 'shield' ? 2 : 0;
+                if (leftWeight !== rightWeight) return rightWeight - leftWeight;
+                return rightAmount - leftAmount;
+            })
+            .map(([type]) => type);
     }
 
     function getRewardLabel(key, value) {
