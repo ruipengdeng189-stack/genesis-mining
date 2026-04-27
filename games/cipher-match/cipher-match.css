@@ -279,6 +279,7 @@ button:disabled {
 
 .cm-stage-strip {
     display: flex;
+    flex-wrap: nowrap;
     gap: 8px;
     align-items: stretch;
     overflow-x: auto;
@@ -1415,6 +1416,42 @@ body:not([data-cm-tab="run"]) .cm-summary-card {
     body:not([data-cm-tab="run"]) .cm-resource-pill .cm-value,
     body:not([data-cm-tab="run"]) .cm-summary-item .cm-value {
         font-size: 14px;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-board-column > .cm-control-row:last-child,
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-tip {
+        display: none;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-coach-copy small {
+        display: none;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-steps,
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-reward-strip {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-steps::-webkit-scrollbar,
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-reward-strip::-webkit-scrollbar {
+        display: none;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-steps > *,
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-reward-strip > * {
+        flex: 0 0 auto;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-steps .cm-chip,
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-reward-strip .cm-chip {
+        padding: 6px 8px;
+    }
+
+    body[data-cm-tab="run"][data-cm-run="idle"] .cm-run-coach {
+        padding: 7px 9px;
     }
 
     .cm-quick-row {

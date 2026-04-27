@@ -462,7 +462,28 @@
             isCurrentRun && run.fx?.shieldHit ? 'is-shield-hit' : '',
             isCurrentRun && run.fx?.kind === 'boss' ? 'is-boss-pulse' : ''
         ].filter(Boolean).join(' ');
-
+        const skillButtonLabel = !isCurrentRun
+            ? text('放技', 'Skill')
+            : skillReady
+                ? text('放技', 'Cast Skill')
+                : text(`充能 ${run.energy}/${skill.energyCost}`, `Charge ${run.energy}/${skill.energyCost}`);
+        const secondaryButtonHtml = isCurrentRun
+            ? `
+                <button class="cm-btn" type="button" data-action="${run.failed ? 'buyMoves' : 'abandonRun'}" ${run.inputLocked ? 'disabled' : ''}>
+                    ${escapeHtml(run.failed ? text('+5 步', '+5 Moves') : text('退出', 'Retreat'))}
+                </button>
+            `
+            : `
+                <button class="cm-btn ${assist.rookie.active ? 'is-cta' : ''}" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
+            `;
+        const controlRowHtml = `
+            <div class="cm-control-row">
+                <button class="cm-btn-soft" type="button" data-action="useSkill" ${!isCurrentRun || run.failed || run.inputLocked || !skillReady ? 'disabled' : ''}>
+                    ${escapeHtml(skillButtonLabel)}
+                </button>
+                ${secondaryButtonHtml}
+            </div>
+        `;
         return `
             <div class="cm-stack cm-run-stack">
                 ${isCurrentRun ? '' : `
@@ -520,6 +541,7 @@
                                 })).join('')}
                             </div>
 
+                            ${!isCurrentRun ? controlRowHtml : ''}
                             ${renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree })}
                             ${renderRunStepRow(isCurrentRun, run, assist)}
 
