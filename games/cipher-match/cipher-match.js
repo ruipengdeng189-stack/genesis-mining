@@ -35,7 +35,18 @@
         tab: 'run',
         modal: null,
         toastTimer: 0,
+        feedbackTimer: 0,
+        feedbackSyncId: '',
+        feedbackSeed: 0,
         run: null
+    };
+
+    const FX_TIMINGS = {
+        swap: 180,
+        clear: 220,
+        drop: 220,
+        skill: 560,
+        boss: 420
     };
 
     const ui = {};
@@ -239,6 +250,7 @@
         renderTabBar();
         renderPanel();
         renderModal();
+        syncRunFeedbackTimer();
     }
 
     function renderTexts() {
@@ -430,6 +442,7 @@
         const boardHtml = isCurrentRun ? renderLiveBoard(run) : renderPreviewBoard();
         const activeSkillId = isCurrentRun ? getRunSkillId(run) : state.save.selectedSkill;
         const skill = skillMap[activeSkillId];
+        const skillReady = isCurrentRun && run.energy >= skill.energyCost;
         const stageReward = getScaledChapterReward(chapter);
         const firstClearReward = state.save.clearedChapters.includes(chapter.id) ? null : getFirstClearReward(chapter);
         const boardHintCopy = isCurrentRun
@@ -439,7 +452,9 @@
         const boardWrapClass = [
             'cm-board-wrap',
             isBoss ? 'is-boss' : '',
-            isCurrentRun && run.energy >= run.maxEnergy ? 'is-skill-ready' : ''
+            isCurrentRun && run.energy >= run.maxEnergy ? 'is-skill-ready' : '',
+            isCurrentRun && run.fx?.kind === 'skill' ? 'is-skill-cast' : '',
+            isCurrentRun && run.fx?.kind === 'boss' ? 'is-boss-pulse' : ''
         ].filter(Boolean).join(' ');
 
         return `
@@ -505,11 +520,11 @@
                             ${!isCurrentRun || run.failed ? `<div class="cm-run-tip">${escapeHtml(boardHintCopy)}</div>` : ''}
 
                             <div class="cm-control-row">
-                                <button class="cm-btn-soft" type="button" data-action="useSkill" ${!isCurrentRun || run.failed ? 'disabled' : ''}>
-                                    ${escapeHtml(text('放技', 'Skill'))}
+                                <button class="cm-btn-soft" type="button" data-action="useSkill" ${!isCurrentRun || run.failed || run.inputLocked || !skillReady ? 'disabled' : ''}>
+                                    ${escapeHtml(!isCurrentRun ? text('放技', 'Skill') : skillReady ? text('放技', 'Cast Skill') : text(`充能 ${run.energy}/${skill.energyCost}`, `Charge ${run.energy}/${skill.energyCost}`))}
                                 </button>
                                 ${isCurrentRun ? `
-                                    <button class="cm-btn" type="button" data-action="${run.failed ? 'buyMoves' : 'abandonRun'}">
+                                    <button class="cm-btn" type="button" data-action="${run.failed ? 'buyMoves' : 'abandonRun'}" ${run.inputLocked ? 'disabled' : ''}>
                                         ${escapeHtml(run.failed ? text('+5 步', '+5 Moves') : text('退出', 'Retreat'))}
                                     </button>
                                 ` : `
@@ -789,6 +804,7 @@
         const cells = [];
         const selectedIndex = Number.isInteger(run.selectedCell) ? run.selectedCell : -1;
         const selectedTile = selectedIndex >= 0 ? tileMap[run.board[selectedIndex]] : null;
+        const activeFx = run.fx || null;
         const noticeCopy = selectedTile
             ? text(`已选 ${localize(selectedTile.name)}，再点相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap an adjacent tile to swap.`)
             : text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.');
@@ -802,15 +818,31 @@
             const selected = index === selectedIndex;
             const row = Math.floor(index / config.board.size) + 1;
             const col = (index % config.board.size) + 1;
+            const swapFx = activeFx?.swapMap?.[index] || null;
+            const cellClass = [
+                'cm-cell',
+                `cm-cell--${escapeHtml(type)}`,
+                selected ? 'is-selected' : '',
+                activeFx?.swap?.includes(index) ? 'is-swapping' : '',
+                activeFx?.clearing?.includes(index) ? 'is-clearing' : '',
+                activeFx?.dropping?.includes(index) ? 'is-dropping' : '',
+                activeFx?.kind === 'skill' ? 'is-skill-hit' : ''
+            ].filter(Boolean).join(' ');
+            const cellStyle = [];
+            if (swapFx) {
+                cellStyle.push(`--cm-swap-tx: calc(${swapFx.x} * (100% + 6px))`);
+                cellStyle.push(`--cm-swap-ty: calc(${swapFx.y} * (100% + 6px))`);
+            }
             cells.push(`
                 <button
-                    class="cm-cell cm-cell--${escapeHtml(type)}${selected ? ' is-selected' : ''}"
+                    class="${cellClass}"
                     type="button"
                     data-action="tapCell"
                     data-value="${index}"
                     aria-pressed="${selected ? 'true' : 'false'}"
                     aria-label="${escapeHtml(text(`${localize(tile.name)} ${row}行${col}列`, `${localize(tile.name)} row ${row} col ${col}`))}"
-                    ${run.failed ? 'disabled' : ''}
+                    ${cellStyle.length ? `style="${cellStyle.join(';')}"` : ''}
+                    ${run.failed || run.inputLocked ? 'disabled' : ''}
                 >${escapeHtml(tile.icon)}</button>
             `);
         }
@@ -963,7 +995,8 @@
 
     function renderBattleFeedback(feedback) {
         return `
-            <div class="cm-board-centerfx tone-${escapeHtml(feedback.tone || 'good')}">
+            <div class="cm-board-centerfx tone-${escapeHtml(feedback.tone || 'good')}${feedback.persist ? ' is-persistent' : ''}" style="--cm-feedback-life:${Math.max(0.4, (feedback.duration || 1300) / 1000)}s;">
+                ${feedback.icon ? `<div class="cm-board-centerfx-icon" aria-hidden="true">${escapeHtml(feedback.icon)}</div>` : ''}
                 <strong>${escapeHtml(feedback.title || '')}</strong>
                 <span>${escapeHtml(feedback.detail || '')}</span>
             </div>
@@ -1476,6 +1509,8 @@
             settled: false,
             failed: false,
             feedback: buildRunStartFeedback(chapter, assist),
+            fx: null,
+            inputLocked: false,
             bestCascade: 0,
             assist,
             bossPulseEvery: isBossChapter(chapter) ? assist.bossPulseEvery : 0,
@@ -1495,9 +1530,9 @@
         );
     }
 
-    function tapCell(value) {
+    async function tapCell(value) {
         const run = state.run;
-        if (!run?.active || run.failed) return;
+        if (!run?.active || run.failed || run.inputLocked) return;
         const index = Number(value);
         if (!Number.isFinite(index)) return;
 
@@ -1528,8 +1563,9 @@
             return;
         }
 
+        const sourceIndex = run.selectedCell;
         const board = run.board.slice();
-        swapItems(board, run.selectedCell, index);
+        swapItems(board, sourceIndex, index);
         const check = findMatches(board);
 
         if (!check.indices.length) {
@@ -1545,12 +1581,44 @@
         run.board = board;
         run.movesLeft = Math.max(0, run.movesLeft - 1);
         run.selectedCell = null;
+        run.inputLocked = true;
+        run.fx = {
+            kind: 'swap',
+            swap: [sourceIndex, index],
+            swapMap: createSwapFxMap(sourceIndex, index, config.board.size)
+        };
+        renderAll();
+        await wait(FX_TIMINGS.swap);
+        if (state.run !== run || !run.active) return;
+
+        const visibleMatch = findMatches(run.board);
+        run.fx = {
+            kind: 'clear',
+            clearing: visibleMatch.indices
+        };
+        renderAll();
+        await wait(FX_TIMINGS.clear);
+        if (state.run !== run || !run.active) return;
+
+        const boardBeforeCollapse = run.board.slice();
         const result = resolveBoard(run.board);
         const summary = applyBoardResult(result);
         run.bestCascade = Math.max(run.bestCascade || 0, result.cascades || 0);
         run.feedback = buildMatchFeedback(result, summary, run);
+        run.notice = result.cascades > 1
+            ? text('已触发连锁，继续冲技能。', 'Cascade triggered. Keep charging your skill.')
+            : text('有效交换成功，继续压低目标。', 'Successful swap. Keep pushing your goals.');
+        const dropping = getChangedIndices(boardBeforeCollapse, run.board);
+        run.fx = dropping.length ? { kind: 'drop', dropping } : null;
+        const clearedStage = areGoalsComplete(run.goals);
+        renderAll();
+        await wait(dropping.length ? FX_TIMINGS.drop : 40);
+        if (state.run !== run || !run.active) return;
 
-        if (areGoalsComplete(run.goals)) {
+        run.fx = null;
+
+        if (clearedStage) {
+            run.inputLocked = false;
             finishRun(true);
             return;
         }
@@ -1559,17 +1627,20 @@
         if (bossCounter) {
             run.feedback = bossCounter.feedback;
             run.notice = bossCounter.notice;
-        } else {
-            run.notice = result.cascades > 1
-                ? text('已触发连锁，继续冲技能。', 'Cascade triggered. Keep charging your skill.')
-                : text('有效交换成功，继续压低目标。', 'Successful swap. Keep pushing your goals.');
+            run.fx = { kind: 'boss' };
+            renderAll();
+            await wait(FX_TIMINGS.boss);
+            if (state.run !== run || !run.active) return;
+            run.fx = null;
         }
 
         if (run.movesLeft <= 0) {
+            run.inputLocked = false;
             openRunFailModal();
             return;
         }
 
+        run.inputLocked = false;
         saveProgress();
         renderAll();
     }
@@ -1636,9 +1707,9 @@
         return summary;
     }
 
-    function useSkill() {
+    async function useSkill() {
         const run = state.run;
-        if (!run?.active || run.failed) return;
+        if (!run?.active || run.failed || run.inputLocked) return;
         const skill = skillMap[getRunSkillId(run)];
         if (run.energy < skill.energyCost) {
             showToast(text('能量未充满。', 'Not enough energy.'), 'warn');
@@ -1648,34 +1719,58 @@
         const boostRate = 1 + getResearchLevel('signalAmp') * 0.04;
         const skillValue = Math.round(6 * boostRate);
         const leaderId = getRunLeaderId(run);
+        let skillSummary = '';
+        run.inputLocked = true;
 
         if (skill.id === 'gridBurst') {
-            reduceLargestGoal(skillValue);
+            const reduced = reduceLargestGoal(skillValue);
+            skillSummary = text(`最大缺口目标 -${reduced}`, `Largest target -${reduced}`);
         } else if (skill.id === 'colorHack') {
-            reduceLargestColorGoal(Math.round(8 * boostRate));
+            const reduced = reduceLargestColorGoal(Math.round(8 * boostRate));
+            skillSummary = text(`主色目标 -${reduced}`, `Primary color goal -${reduced}`);
         } else if (skill.id === 'stasisField') {
             run.movesLeft += 3;
-            reduceSmallestGoal(Math.round(3 * boostRate));
+            const reduced = reduceSmallestGoal(Math.round(3 * boostRate));
+            skillSummary = text(`步数 +3 / 小目标 -${reduced}`, `Moves +3 / Small target -${reduced}`);
         }
 
+        let leaderBonusSummary = '';
         if (leaderId === 'novaEcho') {
             const shieldGoal = run.goals.find((goal) => goal.type === 'shield' && goal.remaining > 0);
-            if (shieldGoal) shieldGoal.remaining = Math.max(0, shieldGoal.remaining - 4);
+            if (shieldGoal) {
+                const before = shieldGoal.remaining;
+                shieldGoal.remaining = Math.max(0, shieldGoal.remaining - 4);
+                const dealt = before - shieldGoal.remaining;
+                if (dealt > 0) leaderBonusSummary = text(`护盾 -${dealt}`, `Shield -${dealt}`);
+            }
         }
 
         if (leaderId === 'wardenNine') {
             run.movesLeft += 1;
+            leaderBonusSummary = text('额外步数 +1', 'Extra move +1');
         }
 
         run.energy = leaderId === 'wardenNine' ? 35 : 0;
-        run.feedback = makeFeedback('good', text('技能释放', 'Skill Cast'), `${localize(skill.name)} · ${localize(skill.effect)}`);
+        run.fx = { kind: 'skill' };
+        run.feedback = makeFeedback(
+            'good',
+            text('技能释放', 'Skill Cast'),
+            [skillSummary, leaderBonusSummary].filter(Boolean).join(' · ') || `${localize(skill.name)} · ${localize(skill.effect)}`,
+            { icon: '✦', duration: 1150 }
+        );
         run.notice = text('技能已释放。', 'Skill cast.');
+        renderAll();
+        await wait(FX_TIMINGS.skill);
+        if (state.run !== run || !run.active) return;
+        run.fx = null;
 
         if (areGoalsComplete(run.goals)) {
+            run.inputLocked = false;
             finishRun(true);
             return;
         }
 
+        run.inputLocked = false;
         saveProgress();
         renderAll();
         showToast(text('技能释放成功。', 'Skill activated.'), 'good');
@@ -1686,7 +1781,7 @@
         if (!run) return;
         const continueCost = getContinueCost();
         run.failed = true;
-        run.feedback = makeFeedback('danger', text('步数耗尽', 'Out of Moves'), text('可补 5 步继续，或直接退出调整构筑。', 'Buy 5 more moves or retreat to adjust your deck.'));
+        run.feedback = makeFeedback('danger', text('步数耗尽', 'Out of Moves'), text('可补 5 步继续，或直接退出调整构筑。', 'Buy 5 more moves or retreat to adjust your deck.'), { icon: '!', persist: true });
         run.notice = text('步数耗尽，可继续购买步数或结束本局。', 'Out of moves. Buy more or retreat.');
         openModal({
             eyebrow: text('本局失败', 'Run Failed'),
@@ -1732,7 +1827,7 @@
     }
 
     function abandonRun() {
-        if (!state.run?.active) return;
+        if (!state.run?.active || state.run.inputLocked) return;
         if (!state.run.settled) {
             state.save.stats.runs += 1;
             state.run.settled = true;
@@ -2404,8 +2499,71 @@
         );
     }
 
-    function makeFeedback(tone, title, detail) {
-        return { tone, title, detail };
+    function makeFeedback(tone, title, detail, options = {}) {
+        return {
+            id: `fb-${Date.now()}-${state.feedbackSeed += 1}`,
+            tone,
+            title,
+            detail,
+            icon: options.icon || '',
+            persist: !!options.persist,
+            duration: options.duration || (tone === 'warn' ? 980 : tone === 'danger' ? 1450 : 1250)
+        };
+    }
+
+    function clearRunFeedbackTimer() {
+        if (state.feedbackTimer) {
+            window.clearTimeout(state.feedbackTimer);
+            state.feedbackTimer = 0;
+        }
+    }
+
+    function syncRunFeedbackTimer() {
+        const feedback = state.run?.feedback || null;
+        if (!feedback) {
+            clearRunFeedbackTimer();
+            state.feedbackSyncId = '';
+            return;
+        }
+        if (feedback.persist) {
+            clearRunFeedbackTimer();
+            state.feedbackSyncId = feedback.id || '';
+            return;
+        }
+        if (state.feedbackSyncId === feedback.id) return;
+        clearRunFeedbackTimer();
+        state.feedbackSyncId = feedback.id || '';
+        state.feedbackTimer = window.setTimeout(() => {
+            if (!state.run?.feedback || state.run.feedback.id !== feedback.id) return;
+            state.run.feedback = null;
+            state.feedbackSyncId = '';
+            renderAll();
+        }, feedback.duration || 1250);
+    }
+
+    function wait(ms) {
+        return new Promise((resolve) => {
+            window.setTimeout(resolve, ms);
+        });
+    }
+
+    function createSwapFxMap(leftIndex, rightIndex, size) {
+        const leftRow = Math.floor(leftIndex / size);
+        const leftCol = leftIndex % size;
+        const rightRow = Math.floor(rightIndex / size);
+        const rightCol = rightIndex % size;
+        return {
+            [leftIndex]: { x: rightCol - leftCol, y: rightRow - leftRow },
+            [rightIndex]: { x: leftCol - rightCol, y: leftRow - rightRow }
+        };
+    }
+
+    function getChangedIndices(beforeBoard, afterBoard) {
+        const changed = [];
+        for (let index = 0; index < Math.max(beforeBoard.length, afterBoard.length); index += 1) {
+            if (beforeBoard[index] !== afterBoard[index]) changed.push(index);
+        }
+        return changed;
     }
 
     function getRewardLabel(key, value) {
@@ -2810,7 +2968,7 @@
         ].filter(Boolean).join(' · ');
 
         return {
-            feedback: makeFeedback('danger', text('首领反制', 'Boss Counter'), detail || text('首领压力升高。', 'Boss pressure rises.')),
+            feedback: makeFeedback('danger', text('首领反制', 'Boss Counter'), detail || text('首领压力升高。', 'Boss pressure rises.'), { icon: '⚠', duration: 1350 }),
             notice: text('首领已发动反制，下一步优先找 4 连或技能回合。', 'The boss has countered. Prioritize a 4-match or skill turn next.')
         };
     }
