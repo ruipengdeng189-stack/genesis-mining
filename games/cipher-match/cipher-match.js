@@ -136,6 +136,9 @@
             case 'startRun':
                 startRun();
                 break;
+            case 'previewTap':
+                previewTap();
+                break;
             case 'tapCell':
                 tapCell(value);
                 break;
@@ -431,7 +434,7 @@
         const firstClearReward = state.save.clearedChapters.includes(chapter.id) ? null : getFirstClearReward(chapter);
         const boardHintCopy = isCurrentRun
             ? (run.notice || text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.'))
-            : getRunOpeningHint(chapter, assist);
+            : text('先点“开打”进入战斗；开局后点 2 个相邻格交换，凑 3 个相同即可消除，能量满了再点“放技”。', 'Tap Start to enter battle; then swap 2 adjacent tiles, match 3 to clear, and cast Skill at full energy.');
         const tutorialEntryFree = !isCurrentRun && isTutorialEntryFree(chapter, assist);
         const boardWrapClass = [
             'cm-board-wrap',
@@ -489,6 +492,8 @@
                             <div class="cm-goal-strip">
                                 ${goals.map((goal) => renderCompactGoal(goal)).join('')}
                             </div>
+
+                            ${renderRunStepRow(isCurrentRun, run, assist)}
 
                             ${!isCurrentRun ? `
                                 <div class="cm-chip-row cm-run-reward-strip">
@@ -767,10 +772,54 @@
             for (let col = 0; col < config.board.size; col += 1) {
                 const type = preview[(row + col) % preview.length];
                 const tile = tileMap[type];
-                cells.push(`<div class="cm-cell cm-cell--${escapeHtml(type)}" aria-hidden="true">${escapeHtml(tile.icon)}</div>`);
+                cells.push(`
+                    <button
+                        class="cm-cell cm-cell--${escapeHtml(type)}"
+                        type="button"
+                        data-action="previewTap"
+                        aria-label="${escapeHtml(text(`预览格子：${localize(tile.name)}。先点“开打”再操作。`, `Preview tile: ${localize(tile.name)}. Start the run first.`))}"
+                    >${escapeHtml(tile.icon)}</button>
+                `);
             }
         }
         return `<div class="cm-board">${cells.join('')}</div>`;
+    }
+
+    function renderLiveBoard(run) {
+        const cells = [];
+        const selectedIndex = Number.isInteger(run.selectedCell) ? run.selectedCell : -1;
+        const selectedTile = selectedIndex >= 0 ? tileMap[run.board[selectedIndex]] : null;
+        const noticeCopy = selectedTile
+            ? text(`已选 ${localize(selectedTile.name)}，再点相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap an adjacent tile to swap.`)
+            : text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.');
+        const overlayCopy = run.energy >= run.maxEnergy
+            ? text('能量已满，可随时点“放技”。', 'Energy is full. Cast Skill any time.')
+            : '';
+
+        for (let index = 0; index < run.board.length; index += 1) {
+            const type = run.board[index];
+            const tile = tileMap[type];
+            const selected = index === selectedIndex;
+            const row = Math.floor(index / config.board.size) + 1;
+            const col = (index % config.board.size) + 1;
+            cells.push(`
+                <button
+                    class="cm-cell cm-cell--${escapeHtml(type)}${selected ? ' is-selected' : ''}"
+                    type="button"
+                    data-action="tapCell"
+                    data-value="${index}"
+                    aria-pressed="${selected ? 'true' : 'false'}"
+                    aria-label="${escapeHtml(text(`${localize(tile.name)} ${row}行${col}列`, `${localize(tile.name)} row ${row} col ${col}`))}"
+                    ${run.failed ? 'disabled' : ''}
+                >${escapeHtml(tile.icon)}</button>
+            `);
+        }
+
+        return `
+            <div class="cm-board-notice">${escapeHtml(noticeCopy)}</div>
+            <div class="cm-board">${cells.join('')}</div>
+            ${overlayCopy ? `<div class="cm-board-overlay">${escapeHtml(overlayCopy)}</div>` : ''}
+        `;
     }
 
     function renderStageChip(chapter) {
@@ -815,6 +864,37 @@
                     <small>/ ${total}</small>
                 </div>
                 <div class="cm-progress"><span style="width:${percent}%"></span></div>
+            </div>
+        `;
+    }
+
+    function renderRunStepRow(isCurrentRun, run, assist) {
+        const steps = isCurrentRun
+            ? [
+                { icon: '①', label: text('点 1 格', 'Pick 1') },
+                { icon: '②', label: text('点相邻格', 'Adjacent') },
+                { icon: '③', label: text('凑 3 连', 'Match 3') },
+                { icon: '④', label: run && run.energy >= run.maxEnergy ? text('现在放技', 'Cast now') : text('满能量放技', 'Cast at 100'), tone: run && run.energy >= run.maxEnergy ? 'is-good' : '' }
+            ]
+            : [
+                { icon: '①', label: text('先开打', 'Start') },
+                { icon: '②', label: text('点 2 格', 'Pick 2') },
+                { icon: '③', label: text('凑 3 连', 'Match 3') },
+                { icon: '④', label: text('满能量放技', 'Cast at 100') }
+            ];
+
+        if (!isCurrentRun && assist.rookie.active) {
+            steps.push({ icon: '⑤', label: text('首补免费', '1st continue free'), tone: 'is-good' });
+        }
+
+        return `
+            <div class="cm-chip-row cm-run-steps">
+                ${steps.map((item) => `
+                    <span class="cm-chip ${escapeHtml(item.tone || '')}">
+                        <strong aria-hidden="true">${escapeHtml(item.icon)}</strong>
+                        <span>${escapeHtml(item.label)}</span>
+                    </span>
+                `).join('')}
             </div>
         `;
     }
@@ -1406,6 +1486,13 @@
         saveProgress();
         renderAll();
         showToast(tutorialEntryFree ? text('教学关免费进入。', 'Tutorial entry is free.') : text('解码开始。', 'Run started.'), 'good');
+    }
+
+    function previewTap() {
+        showToast(
+            text('先点“开打”进入战斗；开局后点 2 个相邻格交换，凑 3 个相同即可消除。', 'Tap Start to enter battle; then swap 2 adjacent tiles and match 3 to clear.'),
+            'good'
+        );
     }
 
     function tapCell(value) {

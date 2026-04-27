@@ -382,12 +382,16 @@ button:disabled {
 }
 
 .cm-cell {
+    appearance: none;
+    -webkit-appearance: none;
     aspect-ratio: 1;
+    width: 100%;
     padding: 0;
     display: grid;
     place-items: center;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.08);
+    font: inherit;
     color: #fff;
     font-weight: 800;
     font-size: clamp(18px, 4.4vw, 22px);
@@ -416,6 +420,7 @@ button:disabled {
     position: absolute;
     left: 12px;
     right: 12px;
+    pointer-events: none;
     border-radius: 16px;
     padding: 10px 12px;
     background: rgba(5, 8, 16, 0.78);
@@ -437,6 +442,7 @@ button:disabled {
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 2;
+    pointer-events: none;
     width: min(76%, 260px);
     padding: 12px 14px;
     border-radius: 18px;
