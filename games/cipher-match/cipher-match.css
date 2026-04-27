@@ -71,7 +71,7 @@ button:disabled {
     z-index: 1;
     width: min(100%, 760px);
     margin: 0 auto;
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px calc(env(safe-area-inset-bottom, 0px) + 88px);
+    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px calc(env(safe-area-inset-bottom, 0px) + 104px);
 }
 
 .cm-topbar,
@@ -148,6 +148,7 @@ button:disabled {
 
 .cm-main {
     margin-top: 10px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
 }
 
 .cm-resource-strip,
@@ -277,6 +278,9 @@ button:disabled {
 }
 
 .cm-stage-strip {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
     overflow-x: auto;
     padding-bottom: 2px;
     scrollbar-width: none;
@@ -1166,6 +1170,10 @@ body[data-cm-tab="run"] .cm-summary-item .cm-value {
     font-size: 14px;
 }
 
+body:not([data-cm-tab="run"]) .cm-summary-card {
+    gap: 8px;
+}
+
 .cm-card-grid .cm-copy,
 .cm-mission-list .cm-copy,
 .cm-season-list .cm-copy,
@@ -1361,6 +1369,12 @@ body[data-cm-tab="run"] .cm-summary-item .cm-value {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
+    body:not([data-cm-tab="run"]) .cm-resource-strip,
+    body:not([data-cm-tab="run"]) .cm-summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+    }
+
     .cm-battle-hud {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 6px;
@@ -1378,6 +1392,33 @@ body[data-cm-tab="run"] .cm-summary-item .cm-value {
     .cm-summary-item {
         min-height: 56px;
         padding: 8px;
+    }
+
+    body:not([data-cm-tab="run"]) .cm-resource-pill,
+    body:not([data-cm-tab="run"]) .cm-summary-item {
+        min-height: 52px;
+        padding: 8px 7px;
+        border-radius: 16px;
+    }
+
+    body:not([data-cm-tab="run"]) .cm-resource-pill strong,
+    body:not([data-cm-tab="run"]) .cm-resource-pill small,
+    body:not([data-cm-tab="run"]) .cm-summary-item strong {
+        display: none;
+    }
+
+    body:not([data-cm-tab="run"]) .cm-resource-pill .cm-pill-head,
+    body:not([data-cm-tab="run"]) .cm-summary-item .cm-pill-head {
+        gap: 0;
+    }
+
+    body:not([data-cm-tab="run"]) .cm-resource-pill .cm-value,
+    body:not([data-cm-tab="run"]) .cm-summary-item .cm-value {
+        font-size: 14px;
+    }
+
+    .cm-quick-row {
+        display: none;
     }
 
     .cm-wallet-pill,

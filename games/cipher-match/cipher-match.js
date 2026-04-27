@@ -244,6 +244,7 @@
     function renderAll() {
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN';
         document.body.dataset.cmTab = state.tab;
+        document.body.dataset.cmRun = state.run?.active ? 'active' : 'idle';
         renderTexts();
         renderResourceStrip();
         renderHeroSummary();
@@ -464,9 +465,11 @@
 
         return `
             <div class="cm-stack cm-run-stack">
-                <div class="cm-stage-strip">
-                    ${config.chapters.map((item) => renderStageChip(item)).join('')}
-                </div>
+                ${isCurrentRun ? '' : `
+                    <div class="cm-stage-strip">
+                        ${config.chapters.map((item) => renderStageChip(item)).join('')}
+                    </div>
+                `}
 
                 <div class="cm-card cm-stage-card ${isBoss ? 'is-boss' : ''}">
                     <div class="cm-run-focus-head">
