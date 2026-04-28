@@ -1134,23 +1134,29 @@
         const owned = isOfferOwned(offerId);
         const order = getPendingPaymentOrder(offerId);
         const expired = !!(order && isPaymentOrderExpired(order));
+        const activeOrder = getPendingPaymentOrder();
+        const otherLiveOrder = activeOrder && activeOrder.offerId !== offerId && !isPaymentOrderExpired(activeOrder)
+            ? activeOrder
+            : null;
         openModal({
             eyebrow: text('Payment Center', 'Payment Center'),
             title: localize(offer.name),
             subtitle: owned ? text('Verified and granted', 'Verified and granted') : `${offer.price} USDT • ${PAYMENT_NETWORK}`,
-            body: renderOfferPaymentBody(offer, { owned, order, expired }),
-            actions: getOfferModalActions(offer, { owned, order, expired })
+            body: renderOfferPaymentBody(offer, { owned, order, expired, otherLiveOrder }),
+            actions: getOfferModalActions(offer, { owned, order, expired, otherLiveOrder })
         });
     }
 
-    function renderOfferPaymentBody(offer, { owned, order, expired }) {
+    function renderOfferPaymentBody(offer, { owned, order, expired, otherLiveOrder }) {
         const statusText = owned
             ? text('This pack has already been verified and the rewards are permanently attached to your account.', 'This pack has already been verified and the rewards are permanently attached to your account.')
-            : order && !expired
-                ? text('Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.', 'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.')
-                : order && expired
-                    ? text('The previous order expired. Create a fresh order to continue payment and reward verification.', 'The previous order expired. Create a fresh order to continue payment and reward verification.')
-                    : text('Create an exact order first. The first successful top-up unlocks the sponsor season track.', 'Create an exact order first. The first successful top-up unlocks the sponsor season track.');
+            : otherLiveOrder
+                ? text(`当前还有 1 笔 ${localize(offerMap[otherLiveOrder.offerId]?.name || otherLiveOrder.offerId)} 待处理订单，请先完成或取消。`, `Another ${localize(offerMap[otherLiveOrder.offerId]?.name || otherLiveOrder.offerId)} order is still pending. Finish or cancel it first.`)
+                : order && !expired
+                    ? text('Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.', 'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.')
+                    : order && expired
+                        ? text('The previous order expired. Create a fresh order to continue payment and reward verification.', 'The previous order expired. Create a fresh order to continue payment and reward verification.')
+                        : text('Create an exact order first. The first successful top-up unlocks the sponsor season track.', 'Create an exact order first. The first successful top-up unlocks the sponsor season track.');
         const verifiedOrder = getRecentOfferOrder(offer.id);
         return `
             <div class="nc-inline-note">${escapeHtml(statusText)}</div>
@@ -1168,10 +1174,12 @@
                 </div>
                 <div class="nc-action-row">
                     <button class="ghost-btn" type="button" data-action="copyOfferAddress">${escapeHtml(text('Copy Address', 'Copy Address'))}</button>
-                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${order ? '' : 'disabled'}>${escapeHtml(text('Copy Amount', 'Copy Amount'))}</button>
+                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${order && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('Copy Amount', 'Copy Amount'))}</button>
                 </div>
                 ${owned ? `
                     <div class="nc-payment-status is-good">${escapeHtml(text('Payment verified. Rewards were granted and the sponsor pass is active on this account.', 'Payment verified. Rewards were granted and the sponsor pass is active on this account.'))}</div>
+                ` : otherLiveOrder ? `
+                    <div class="nc-payment-status is-warning">${escapeHtml(text(`当前待处理订单：${otherLiveOrder.id}`, `Active pending order: ${otherLiveOrder.id}`))}</div>
                 ` : `
                     <label class="nc-payment-field">
                         <span class="nc-stat-label">${escapeHtml(text('Paste OKX Wallet txid', 'Paste OKX Wallet txid'))}</span>
@@ -1186,7 +1194,7 @@
                     )}</div>
                 `}
             </div>
-            <div class="nc-inline-note">${escapeHtml(text('First verified top-up unlocks the sponsor season track. Tactical Pack adds +1 daily free clash. Champion Pack grants +8% squad ATK/HP.', 'First verified top-up unlocks the sponsor season track. Tactical Pack adds +1 daily free clash. Champion Pack grants +8% squad ATK/HP.'))}</div>
+            <div class="nc-inline-note">${escapeHtml(text('首笔验证成功的充值会解锁赞助赛季；战术包额外提供每日 +1 免费对战；队长包提供领袖技充能 +6%；冠军包提供全队攻击与生命 +8%。', 'First verified top-up unlocks the sponsor season track. Tactical Pack adds +1 daily free clash. Captain Pack adds +6% leader skill charge. Champion Pack grants +8% squad ATK/HP.'))}</div>
         `;
     }
 
@@ -1202,10 +1210,16 @@
         `;
     }
 
-    function getOfferModalActions(offer, { owned, order, expired }) {
+    function getOfferModalActions(offer, { owned, order, expired, otherLiveOrder }) {
         if (owned) {
             return [
                 { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
+                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+            ];
+        }
+        if (otherLiveOrder) {
+            return [
+                { label: text('继续待处理订单', 'Resume Pending Order'), action: 'previewOffer', value: otherLiveOrder.offerId },
                 { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
             ];
         }
@@ -1437,10 +1451,15 @@
             showToast(text('This pack has already been claimed.', 'This pack has already been claimed.'), 'warning');
             return;
         }
-        const current = getPendingPaymentOrder(offerId);
-        if (current && !isPaymentOrderExpired(current)) {
-            previewOffer(offerId);
-            showToast(text('Resume the active order below.', 'Resume the active order below.'), 'warning');
+        const activeOrder = getPendingPaymentOrder();
+        if (activeOrder && !isPaymentOrderExpired(activeOrder)) {
+            if (activeOrder.offerId === offerId) {
+                previewOffer(offerId);
+                showToast(text('Resume the active order below.', 'Resume the active order below.'), 'warning');
+                return;
+            }
+            previewOffer(activeOrder.offerId);
+            showToast(text('当前还有 1 笔待处理订单，请先完成或取消。', 'Another payment order is still pending. Finish or cancel it first.'), 'warning');
             return;
         }
 
@@ -2563,7 +2582,7 @@
             maxEnergy: 10 + Math.floor(energyLevel / 4),
             energyRegen: 1 * (1 + (energyLevel * 0.02) + (hasStarterPaymentPerk() ? 0.03 : 0)) * tuning.energyRegenScale,
             leaderCharge: 0,
-            leaderChargeRate: (Number(leaderMap[state.save.selectedLeaderId]?.stats?.charge) || 1) * (1.45 + (tacticLevel * 0.03)),
+            leaderChargeRate: (Number(leaderMap[state.save.selectedLeaderId]?.stats?.charge) || 1) * (1.45 + (tacticLevel * 0.03)) * (hasCaptainPaymentPerk() ? 1.06 : 1),
             leaderReadyMarked: false,
             focusLaneId: getPrimaryBattleLaneIdFromIds(laneIds),
             boosts: [],
@@ -3837,7 +3856,7 @@
         const leaderPower = getCardPower('leader', state.save.selectedLeaderId);
         const unitPower = state.save.selectedUnits.reduce((sum, unitId) => sum + getCardPower('unit', unitId), 0);
         const tacticPower = getCardPower('tactic', state.save.selectedTacticId);
-        const researchBonus = getTotalResearchLevels() * 14;
+        const researchBonus = getTotalResearchLevels() * 18;
         return Math.round(leaderPower + unitPower + tacticPower + researchBonus);
     }
 
@@ -4064,16 +4083,78 @@
         return !!state.save.payment.sponsorPass;
     }
 
+    function inferLegacyOwnedOfferIds(payment = state.save.payment) {
+        const claimedOfferIds = Array.isArray(payment?.claimedOfferIds) ? payment.claimedOfferIds.filter((id) => !!offerMap[id]) : [];
+        const recentOrders = Array.isArray(payment?.recentOrders) ? payment.recentOrders.filter((item) => !!offerMap[item?.offerId]) : [];
+        if (claimedOfferIds.length || recentOrders.length) return [];
+
+        const totalSpent = roundMoney(Number(payment?.totalSpent || 0));
+        const purchaseCount = clampNumber(Number(payment?.purchaseCount) || 0, 0, 0, config.paymentOffers.length);
+        if (totalSpent <= 0 || (!payment?.sponsorPass && purchaseCount <= 0)) return [];
+
+        const offers = config.paymentOffers.map((offer) => ({
+            id: offer.id,
+            price: roundMoney(Number(offer.price) || 0)
+        }));
+
+        let bestMatch = null;
+        const totalMasks = Math.pow(2, offers.length);
+        for (let mask = 1; mask < totalMasks; mask += 1) {
+            const ids = [];
+            let sum = 0;
+            for (let index = 0; index < offers.length; index += 1) {
+                if (!(mask & (1 << index))) continue;
+                ids.push(offers[index].id);
+                sum = roundMoney(sum + offers[index].price);
+            }
+            if (purchaseCount && ids.length !== purchaseCount) continue;
+            if (sum > totalSpent + 0.001) continue;
+            const gap = Math.abs(totalSpent - sum);
+            if (!bestMatch || gap < bestMatch.gap || (gap === bestMatch.gap && sum > bestMatch.sum)) {
+                bestMatch = { ids, gap, sum };
+            }
+        }
+
+        if (bestMatch?.ids?.length) return bestMatch.ids;
+
+        const fallback = offers
+            .filter((offer) => offer.price <= totalSpent + 0.001)
+            .sort((left, right) => right.price - left.price)[0];
+        return fallback ? [fallback.id] : [];
+    }
+
+    function getOwnedOfferIds(payment = state.save.payment) {
+        const owned = new Set();
+        (Array.isArray(payment?.claimedOfferIds) ? payment.claimedOfferIds : []).forEach((offerId) => {
+            if (offerMap[offerId]) owned.add(offerId);
+        });
+        (Array.isArray(payment?.recentOrders) ? payment.recentOrders : []).forEach((order) => {
+            if (offerMap[order?.offerId]) owned.add(order.offerId);
+        });
+        inferLegacyOwnedOfferIds(payment).forEach((offerId) => {
+            if (offerMap[offerId]) owned.add(offerId);
+        });
+        return Array.from(owned);
+    }
+
+    function hasPaymentOffer(offerId) {
+        return getOwnedOfferIds().includes(offerId);
+    }
+
     function hasStarterPaymentPerk() {
-        return state.save.payment.claimedOfferIds.includes('starter') || (!state.save.payment.claimedOfferIds.length && Number(state.save.payment.totalSpent || 0) >= 6);
+        return hasPaymentOffer('starter');
     }
 
     function hasTacticalPaymentPerk() {
-        return state.save.payment.claimedOfferIds.includes('tactical') || (!state.save.payment.claimedOfferIds.length && Number(state.save.payment.totalSpent || 0) >= 15);
+        return hasPaymentOffer('tactical');
+    }
+
+    function hasCaptainPaymentPerk() {
+        return hasPaymentOffer('captain');
     }
 
     function hasChampionPaymentPerk() {
-        return state.save.payment.claimedOfferIds.includes('champion') || (!state.save.payment.claimedOfferIds.length && Number(state.save.payment.totalSpent || 0) >= 68);
+        return hasPaymentOffer('champion');
     }
 
     function getPaymentFreeClashBonus() {
@@ -4102,7 +4183,7 @@
     }
 
     function isOfferOwned(offerId) {
-        return state.save.payment.claimedOfferIds.includes(offerId);
+        return hasPaymentOffer(offerId);
     }
 
     function getPendingPaymentOrder(offerId = '') {
@@ -4220,6 +4301,10 @@
         if (reward?.seasonXp) entries.push({ icon: '&#10039;', label: text('Season XP', 'Season XP'), value: `+${formatCompact(reward.seasonXp)}` });
         if (reward?.standardCrates) entries.push({ icon: '&#9638;', label: text('Standard', 'Standard'), value: `+${formatCompact(reward.standardCrates)}` });
         if (reward?.eliteCrates) entries.push({ icon: '&#9670;', label: text('Elite', 'Elite'), value: `+${formatCompact(reward.eliteCrates)}` });
+        const fragmentTotal = reward?.cardFragments && typeof reward.cardFragments === 'object'
+            ? Object.values(reward.cardFragments).reduce((sum, amount) => sum + Math.max(0, Number(amount) || 0), 0)
+            : 0;
+        if (fragmentTotal) entries.push({ icon: '&#10032;', label: text('Fragments', 'Fragments'), value: `+${formatCompact(fragmentTotal)}` });
         return entries;
     }
 
@@ -4757,6 +4842,15 @@
                 }))
                 .filter((item) => !!item.offerId)
             : [];
+        next.payment.recentOrders.forEach((item) => {
+            if (!next.payment.claimedOfferIds.includes(item.offerId)) next.payment.claimedOfferIds.push(item.offerId);
+            if (!next.payment.claimedOrderIds.includes(item.id)) next.payment.claimedOrderIds.push(item.id);
+            if (item.txid && !next.payment.verifiedTxids.includes(item.txid)) next.payment.verifiedTxids.push(item.txid);
+        });
+        inferLegacyOwnedOfferIds(next.payment).forEach((offerId) => {
+            if (!next.payment.claimedOfferIds.includes(offerId)) next.payment.claimedOfferIds.push(offerId);
+        });
+        next.payment.verifiedTxids = next.payment.verifiedTxids.slice(0, 40);
         next.payment.pendingOrder = parsed?.payment?.pendingOrder && typeof parsed.payment.pendingOrder === 'object'
             ? {
                 id: typeof parsed.payment.pendingOrder.id === 'string' ? parsed.payment.pendingOrder.id : '',
@@ -4769,6 +4863,11 @@
             }
             : null;
         if (!next.payment.pendingOrder?.id || !next.payment.pendingOrder?.offerId) next.payment.pendingOrder = null;
+        if (next.payment.pendingOrder && (next.payment.claimedOrderIds.includes(next.payment.pendingOrder.id) || next.payment.claimedOfferIds.includes(next.payment.pendingOrder.offerId))) {
+            next.payment.pendingOrder = null;
+        }
+        next.payment.purchaseCount = Math.max(next.payment.purchaseCount, next.payment.recentOrders.length, next.payment.claimedOrderIds.length, next.payment.claimedOfferIds.length);
+        next.payment.sponsorPass = next.payment.sponsorPass || next.payment.purchaseCount > 0 || next.payment.claimedOfferIds.length > 0 || next.payment.recentOrders.length > 0;
         next.lastResult = parsed?.lastResult && typeof parsed.lastResult === 'object' ? parsed.lastResult : null;
         return next;
     }
