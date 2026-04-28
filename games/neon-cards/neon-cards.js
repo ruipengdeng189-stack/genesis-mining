@@ -1773,6 +1773,10 @@
         const battle = state.battle;
         const playableCount = getBattlePlayableCardIds().length;
         const commandState = getBattleCommandState(selectedCard, battle);
+        const showLaneQuick = battle.lanes.length > 1;
+        const stepTwoLabel = battle.lanes.length === 1
+            ? (commandState.ready ? text('② 自动上阵', '2 Auto Deploy') : text('② 蓄能中', '2 Charging'))
+            : (commandState.ready ? text('② 点路线', '2 Tap Lane') : text('② 蓄能中', '2 Charging'));
         return `
             <section class="nc-battle-command nc-battle-command--lanes-${battle.lanes.length}">
                 <div class="nc-battle-command-head">
@@ -1787,7 +1791,7 @@
                 ${commandState.showSteps ? `
                     <div class="nc-battle-command-steps">
                         <span class="nc-tag nc-tag--mini ${selectedCard ? 'is-good' : ''}">${escapeHtml(text('① 选卡', '1 Card'))}</span>
-                        <span class="nc-tag nc-tag--mini ${commandState.ready ? 'is-good' : 'is-warning'}">${escapeHtml(commandState.ready ? text('② 点路线', '2 Tap Lane') : text('② 蓄能中', '2 Charging'))}</span>
+                        <span class="nc-tag nc-tag--mini ${commandState.ready ? 'is-good' : 'is-warning'}">${escapeHtml(stepTwoLabel)}</span>
                     </div>
                 ` : ''}
 
@@ -1795,13 +1799,15 @@
                     ${battle.hand.map((cardId) => renderBattleHandCard(cardId)).join('')}
                 </div>
 
-                <div class="nc-battle-lane-quick" style="--nc-battle-quick-columns:${battle.lanes.length};">
-                    ${battle.lanes.map((lane) => `
-                        <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(lane.id)}" ${battle.active && !battle.reinforcementPending && !battle.result && commandState.ready ? '' : 'disabled'}>
-                            ${renderBattleLaneQuickLabel(lane.id, commandState.ready, selectedCard)}
-                        </button>
-                    `).join('')}
-                </div>
+                ${showLaneQuick ? `
+                    <div class="nc-battle-lane-quick" style="--nc-battle-quick-columns:${battle.lanes.length};">
+                        ${battle.lanes.map((lane) => `
+                            <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(lane.id)}" ${battle.active && !battle.reinforcementPending && !battle.result && commandState.ready ? '' : 'disabled'}>
+                                ${renderBattleLaneQuickLabel(lane.id, commandState.ready, selectedCard)}
+                            </button>
+                        `).join('')}
+                    </div>
+                ` : ''}
 
                 <div class="nc-action-row nc-action-row--battle">
                     <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`✦ 技能 ${getBattleLaneLabel(battle.focusLaneId)}`, `✦ Skill ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
@@ -1878,6 +1884,7 @@
 
     function renderBattleLane(lane) {
         const battle = state.battle;
+        const isSingleLane = battle.lanes.length === 1;
         const isFocus = battle.focusLaneId === lane.id;
         const pulseClass = lane.pulseUntil > battle.time ? ` is-pulse-${lane.pulseTone || 'good'}` : '';
         const impactClass = lane.impactUntil > battle.time ? ` is-impact-${lane.impactTone || 'good'} is-impact-${lane.impactSide || 'ally'}` : '';
@@ -1890,7 +1897,9 @@
             : battle.reinforcementPending
                 ? text('选强化', 'Pick Boost')
                 : canAct
-                    ? (selectedCard?.type === 'tactic' ? text('点路放术', 'Tap To Cast') : text('点路出兵', 'Tap To Deploy'))
+                    ? (selectedCard?.type === 'tactic'
+                        ? (isSingleLane ? text('点卡放术', 'Tap Card To Cast') : text('点路放术', 'Tap To Cast'))
+                        : (isSingleLane ? text('点卡自动上阵', 'Tap Card Auto Deploy') : text('点路出兵', 'Tap To Deploy')))
                     : text('蓄能中', 'Charging')
         const actionTone = battle.result ? '' : canAct ? 'is-good' : (commandState.tone ? `is-${commandState.tone}` : '');
         return `
@@ -2256,10 +2265,6 @@
             pushLaneEvent(laneId, '&#9654;', localize(card.name), 'good');
             markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
-            const totalFriendlyUnits = battle.lanes.reduce((sum, item) => sum + item.friendly.length, 0);
-            if (totalFriendlyUnits === 1 && battle.time < 10) {
-                markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 已部署`, `${getBattleLaneLabel(laneId)} deployment confirmed`), 'good');
-            }
         } else {
             battle.energy -= card.cost;
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
@@ -2571,17 +2576,8 @@
             arenaTone: '',
             arenaGlowUntil: 0,
             tuning,
-            banner: {
-                title: text('对战开始', 'Clash Start'),
-                detail: tuning.openingBannerDetail,
-                tone: 'good',
-                until: 2.4
-            },
-            notice: {
-                text: tuning.openingNotice,
-                tone: 'good',
-                until: 2.6
-            },
+            banner: null,
+            notice: null,
             lanes: laneIds.map((id) => ({
                 id,
                 playerCoreMax: Math.round(playerCoreBase * getBattleLaneScale(id, laneIds)),
@@ -3299,6 +3295,7 @@
     }
 
     function getBattleCommandState(card, battle = state.battle) {
+        const isSingleLane = (battle?.lanes?.length || 0) === 1;
         if (!battle) {
             return {
                 ready: false,
@@ -3326,7 +3323,9 @@
                 ready: false,
                 tone: 'warning',
                 title: text('等待出牌', 'Waiting For Card'),
-                hint: getBattleLaneActionPrompt(battle),
+                hint: isSingleLane
+                    ? text('单路线点亮可出卡会自动上阵。', 'Single-lane auto deploys when you tap a ready card.')
+                    : getBattleLaneActionPrompt(battle),
                 badge: text('蓄能中', 'Charging'),
                 showHint: true,
                 showSteps: true
@@ -3361,9 +3360,9 @@
             tone: 'good',
             title: localize(card.name),
             hint: card.type === 'tactic'
-                ? text('点路线放术', 'Tap lane to cast')
-                : text('点路线出兵', 'Tap lane to deploy'),
-            badge: text('点路线', 'Tap Lane'),
+                ? (isSingleLane ? text('点卡会自动对主线放术', 'Tap the card to auto-cast on Main.') : text('点路线放术', 'Tap lane to cast'))
+                : (isSingleLane ? text('点卡会自动上阵到主线', 'Tap the card to auto-deploy on Main.') : text('点路线出兵', 'Tap lane to deploy')),
+            badge: isSingleLane ? text('自动出兵', 'Auto Deploy') : text('点路线', 'Tap Lane'),
             showHint: false,
             showSteps: false
         };

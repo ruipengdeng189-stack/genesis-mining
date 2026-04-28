@@ -1962,7 +1962,7 @@ body[data-neon-live="1"] .nc-panel-card {
 }
 
 body[data-neon-live="1"] .nc-battle-card--live {
-    gap: 8px;
+    gap: 5px;
 }
 
 body[data-neon-live="1"] .nc-battle-card--live .nc-card-copy {
@@ -1970,45 +1970,76 @@ body[data-neon-live="1"] .nc-battle-card--live .nc-card-copy {
 }
 
 body[data-neon-live="1"] .nc-battle-hud-box {
-    min-height: 46px;
-    padding: 6px 7px;
+    min-height: 40px;
+    padding: 5px 6px;
 }
 
 body[data-neon-live="1"] .nc-battle-hud-box strong {
-    font-size: 13px;
+    font-size: 12px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena {
-    min-height: 330px;
-    padding: 38px 8px 8px;
+    min-height: 380px;
+    padding: 22px 8px 8px;
 }
 
 body[data-neon-live="1"] .nc-battle-lane {
-    min-height: 78px;
-    padding: 7px 8px;
-    gap: 4px;
+    min-height: 102px;
+    padding: 8px 9px 7px;
+    gap: 5px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-single-lane {
-    min-height: clamp(176px, 30dvh, 214px);
-    padding: 30px 7px 7px;
+    min-height: clamp(238px, 38dvh, 294px);
+    padding: 14px 8px 7px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-two-lane {
-    min-height: clamp(228px, 40dvh, 286px);
-    padding: 30px 7px 7px;
+    min-height: clamp(304px, 48dvh, 372px);
+    padding: 18px 8px 7px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-single-lane .nc-battle-lane {
-    min-height: 106px;
+    min-height: 176px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-two-lane .nc-battle-lane {
-    min-height: 92px;
+    min-height: 132px;
+}
+
+body[data-neon-live="1"] .nc-battle-arena.is-single-lane .nc-battle-track {
+    min-height: 128px;
+}
+
+body[data-neon-live="1"] .nc-battle-arena.is-two-lane .nc-battle-track {
+    min-height: 96px;
 }
 
 body[data-neon-live="1"] .nc-battle-command {
-    gap: 7px;
+    gap: 6px;
+}
+
+body[data-neon-live="1"] .nc-battle-lane-foot {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+}
+
+body[data-neon-live="1"] .nc-battle-lane-status,
+body[data-neon-live="1"] .nc-battle-event-strip,
+body[data-neon-live="1"] .nc-battle-card--live .nc-note-mini,
+body[data-neon-live="1"] .nc-battle-lane-touch {
+    display: none;
+}
+
+body[data-neon-live="1"] .nc-battle-lane-effects {
+    gap: 4px;
+    margin-top: 0;
+}
+
+body[data-neon-live="1"] .nc-battle-command-copy small,
+body[data-neon-live="1"] .nc-battle-command-steps,
+body[data-neon-live="1"] .nc-battle-hand .nc-battle-hand-meta {
+    display: none;
 }
 
 body[data-neon-live="1"] .nc-battle-pressure {
@@ -2470,17 +2501,17 @@ body[data-neon-live="1"] .nc-battle-event-strip {
 
     body[data-neon-live="1"] .nc-shell {
         padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 188px);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 156px);
     }
 
     body[data-neon-live="1"] .nc-battle-hud {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 3px;
+        gap: 2px;
     }
 
     body[data-neon-live="1"] .nc-battle-hud-box {
-        min-height: 36px;
+        min-height: 34px;
         padding: 4px 5px;
     }
 
@@ -2493,25 +2524,22 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-state-strip {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 3px;
-        overflow: visible;
+        display: none;
     }
 
     body[data-neon-live="1"] .nc-battle-arena {
-        min-height: clamp(276px, 48dvh, 360px);
-        padding: 34px 7px 7px;
+        min-height: clamp(356px, 58dvh, 448px);
+        padding: 16px 8px 7px;
     }
 
     body[data-neon-live="1"] .nc-battle-arena.is-single-lane {
-        min-height: clamp(176px, 30dvh, 214px);
-        padding-top: 30px;
+        min-height: clamp(268px, 43dvh, 328px);
+        padding-top: 10px;
     }
 
     body[data-neon-live="1"] .nc-battle-arena.is-two-lane {
-        min-height: clamp(228px, 40dvh, 286px);
-        padding-top: 30px;
+        min-height: clamp(336px, 53dvh, 404px);
+        padding-top: 12px;
     }
 
     body[data-neon-live="1"] .nc-battle-notice {
@@ -2536,16 +2564,16 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-card--live {
-        gap: 7px;
+        gap: 5px;
     }
 
     body[data-neon-live="1"] .nc-battle-card--live .nc-card-head {
-        gap: 6px;
+        gap: 4px;
     }
 
     body[data-neon-live="1"] .nc-battle-card--live .nc-card-head h3,
     body[data-neon-tab="clash"] .nc-battle-card--setup .nc-card-head h3 {
-        font-size: 15px;
+        font-size: 14px;
     }
 
     body[data-neon-live="1"] .nc-battle-card--live .nc-card-copy {
@@ -2576,8 +2604,8 @@ body[data-neon-live="1"] .nc-battle-event-strip {
 
     body[data-neon-live="1"] .nc-battle-command {
         bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
-        gap: 5px;
-        padding: 7px 8px;
+        gap: 4px;
+        padding: 6px 7px;
     }
 
     body[data-neon-live="1"] .nc-battle-command-head {
@@ -2589,26 +2617,25 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-command-copy strong {
-        font-size: 12px;
-        line-height: 1.15;
+        font-size: 13px;
+        line-height: 1.1;
     }
 
     body[data-neon-live="1"] .nc-battle-command-copy small {
-        font-size: 9px;
-        line-height: 1.25;
+        display: none;
     }
 
     body[data-neon-live="1"] .nc-battle-command-steps {
-        gap: 4px;
+        display: none;
     }
 
     body[data-neon-live="1"] .nc-hand-row--battle-dock .nc-battle-hand {
-        flex-basis: min(94px, 29vw);
-        min-height: 62px;
+        flex-basis: min(116px, 34vw);
+        min-height: 72px;
     }
 
     body[data-neon-live="1"] .nc-battle-command--lanes-1 .nc-hand-row--battle-dock .nc-battle-hand {
-        flex-basis: min(86px, 26vw);
+        flex-basis: min(122px, 36vw);
     }
 
     body[data-neon-live="1"] .nc-battle-lane-quick {
@@ -2622,24 +2649,25 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-hand {
-        padding: 7px;
-        gap: 4px;
+        padding: 8px;
+        gap: 5px;
     }
 
     body[data-neon-live="1"] .nc-battle-hand strong {
-        font-size: 10px;
+        font-size: 12px;
+        line-height: 1.15;
     }
 
     body[data-neon-live="1"] .nc-battle-hand-icon,
     body[data-neon-live="1"] .nc-battle-hand-cost,
     body[data-neon-live="1"] .nc-battle-hand-state {
-        min-height: 18px;
-        padding: 0 6px;
-        font-size: 9px;
+        min-height: 20px;
+        padding: 0 7px;
+        font-size: 10px;
     }
 
     body[data-neon-live="1"] .nc-battle-hand .nc-battle-hand-meta {
-        font-size: 9px;
+        display: none;
     }
 
     body[data-neon-live="1"] .nc-action-row--battle {
@@ -2647,9 +2675,9 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-action-row--battle .wide-btn {
-        min-height: 32px;
+        min-height: 30px;
         padding: 0 6px;
-        font-size: 10px;
+        font-size: 9px;
     }
 
     body[data-neon-live="1"] .nc-battle-pressure-bar {
@@ -2662,14 +2690,22 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-track {
-        min-height: 66px;
+        min-height: 92px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-arena.is-single-lane .nc-battle-track {
+        min-height: 140px;
+    }
+
+    body[data-neon-live="1"] .nc-battle-arena.is-two-lane .nc-battle-track {
+        min-height: 104px;
     }
 
     body[data-neon-live="1"] .nc-battle-core {
-        top: 6px;
-        bottom: 6px;
-        width: 46px;
-        padding: 6px 4px;
+        top: 7px;
+        bottom: 7px;
+        width: 54px;
+        padding: 6px 5px;
     }
 
     body[data-neon-live="1"] .nc-battle-core span {
@@ -2677,15 +2713,15 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-core strong {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     body[data-neon-live="1"] .nc-battle-unit-layer {
-        inset: 0 48px;
+        inset: 0 56px;
     }
 
     body[data-neon-live="1"] .nc-battle-floater-layer {
-        inset: 0 48px;
+        inset: 0 56px;
     }
 
     body[data-neon-live="1"] .nc-battle-floater {
@@ -2700,19 +2736,16 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-unit {
-        min-width: 46px;
-        padding: 4px 5px 5px;
+        min-width: 54px;
+        padding: 5px 6px 6px;
     }
 
     body[data-neon-live="1"] .nc-battle-unit strong {
-        font-size: 9px;
+        font-size: 10px;
     }
 
     body[data-neon-live="1"] .nc-battle-lane-touch {
-        right: 5px;
-        bottom: 5px;
-        max-width: 108px;
-        padding: 4px 6px;
+        display: none;
     }
 
     body[data-neon-live="1"] .nc-battle-lane-touch strong {
@@ -2724,7 +2757,6 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-event-strip {
-        gap: 5px;
-        margin-top: 5px;
+        display: none;
     }
 }
