@@ -167,15 +167,15 @@
                 id: '1-3',
                 chapter: 1,
                 name: { zh: '防火墙门', en: 'Firewall Gate' },
-                recommended: 400,
-                moves: 22,
+                recommended: 380,
+                moves: 23,
                 goals: [
-                    { type: 'omega', amount: 12 },
-                    { type: 'shield', amount: 8 }
+                    { type: 'omega', amount: 11 },
+                    { type: 'shield', amount: 7 }
                 ],
                 pressure: { zh: '首个软卡点', en: 'First soft gate' },
                 rewardFocus: { zh: '首领破盾材料', en: 'Boss break dust' },
-                reward: { credits: 390, keyBits: 50, cipherDust: 18, seasonXp: 44 }
+                reward: { credits: 420, keyBits: 54, cipherDust: 20, seasonXp: 46 }
             },
             {
                 id: '2-1',
@@ -195,22 +195,22 @@
                 id: '2-2',
                 chapter: 2,
                 name: { zh: '裂屏矩阵', en: 'Fracture Matrix' },
-                recommended: 650,
-                moves: 22,
+                recommended: 620,
+                moves: 23,
                 goals: [
                     { type: 'beta', amount: 17 },
                     { type: 'gamma', amount: 16 }
                 ],
                 pressure: { zh: '研究卡点', en: 'Research gate' },
                 rewardFocus: { zh: '研究材料补强', en: 'Research dust' },
-                reward: { credits: 730, keyBits: 90, cipherDust: 28, seasonXp: 72 }
+                reward: { credits: 760, keyBits: 96, cipherDust: 32, seasonXp: 76 }
             },
             {
                 id: '2-3',
                 chapter: 2,
                 name: { zh: '主密钥冠', en: 'Crown Key' },
-                recommended: 780,
-                moves: 24,
+                recommended: 760,
+                moves: 25,
                 goals: [
                     { type: 'omega', amount: 14 },
                     { type: 'shield', amount: 12 }
@@ -223,7 +223,7 @@
                 id: '3-1',
                 chapter: 3,
                 name: { zh: '回声桥', en: 'Echo Bridge' },
-                recommended: 900,
+                recommended: 880,
                 moves: 22,
                 goals: [
                     { type: 'alpha', amount: 18 },
@@ -237,7 +237,7 @@
                 id: '3-2',
                 chapter: 3,
                 name: { zh: '裂隙缓存', en: 'Rift Cache' },
-                recommended: 1030,
+                recommended: 1000,
                 moves: 23,
                 goals: [
                     { type: 'beta', amount: 19 },
@@ -252,15 +252,15 @@
                 id: '3-3',
                 chapter: 3,
                 name: { zh: '终焉防火墙', en: 'Terminal Firewall' },
-                recommended: 1160,
-                moves: 25,
+                recommended: 1120,
+                moves: 26,
                 goals: [
-                    { type: 'omega', amount: 18 },
-                    { type: 'shield', amount: 16 }
+                    { type: 'omega', amount: 16 },
+                    { type: 'shield', amount: 14 }
                 ],
                 pressure: { zh: '后段首领卡点', en: 'Late boss gate' },
                 rewardFocus: { zh: '后段资源爆发', en: 'Late burst rewards' },
-                reward: { credits: 1880, keyBits: 236, cipherDust: 78, seasonXp: 142 }
+                reward: { credits: 1940, keyBits: 246, cipherDust: 82, seasonXp: 148 }
             },
             {
                 id: '4-1',
@@ -420,6 +420,7 @@
                 name: { zh: '新手破译包', en: 'Starter Decode Pack' },
                 permanent: { zh: '适合 1-3 / 2-1 首次卡点：永久 +1 每日免费局，每局开局更稳。', en: 'Built for the 1-3 / 2-1 soft gate: +1 daily free run and stronger starts every run.' },
                 oneTime: true,
+                unlockStage: '1-1',
                 reward: { starterBoost: true, credits: 2600, keyBits: 220, cipherDust: 72 }
             },
             {
@@ -428,7 +429,8 @@
                 name: { zh: '赛季通行证', en: 'Season Pass' },
                 permanent: { zh: '适合 2-2 / 2-3 研究卡点：解锁高级轨道，研究更便宜，中后段开局与收益也更稳。', en: 'Built for the 2-2 / 2-3 research gate: unlocks the premium track, lowers research cost, and steadies late-run openers and payouts.' },
                 oneTime: true,
-                reward: { premiumSeason: true, credits: 4200, keyBits: 320, cipherDust: 160, seasonXp: 180 }
+                unlockStage: '1-3',
+                reward: { premiumSeason: true, credits: 3600, keyBits: 280, cipherDust: 140, seasonXp: 160 }
             },
             {
                 id: 'breakerVault',
@@ -436,7 +438,8 @@
                 name: { zh: '破关金库', en: 'Breaker Vault' },
                 permanent: { zh: '适合 3-3 / 4-x 首领卡点：永久减轻首领反制，让后段 Boss 战更可控，并提高后段结算收益。', en: 'Built for the 3-3 / 4-x boss gate: permanently softens boss counters, makes late boss fights more controllable, and boosts late-stage payouts.' },
                 oneTime: true,
-                reward: { vaultRelay: true, credits: 18000, keyBits: 1350, cipherDust: 560 }
+                unlockStage: '3-1',
+                reward: { vaultRelay: true, credits: 16500, keyBits: 1180, cipherDust: 500 }
             }
         ]
     };

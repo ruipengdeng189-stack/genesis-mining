@@ -11,6 +11,7 @@
 
     const tabMap = Object.fromEntries(config.tabs.map((item) => [item.id, item]));
     const chapterMap = Object.fromEntries(config.chapters.map((item) => [item.id, item]));
+    const chapterIndexMap = Object.fromEntries(config.chapters.map((item, index) => [item.id, index]));
     const leaderMap = Object.fromEntries(config.leaders.map((item) => [item.id, item]));
     const moduleMap = Object.fromEntries(config.modules.map((item) => [item.id, item]));
     const skillMap = Object.fromEntries(config.skills.map((item) => [item.id, item]));
@@ -45,7 +46,7 @@
         swap: 180,
         clear: 980,
         drop: 220,
-        skill: 560,
+        skill: 980,
         boss: 420
     };
 
@@ -204,10 +205,18 @@
                 break;
             case 'previewOffer':
                 if (guardMetaActionDuringRun()) return;
+                if (!isOfferUnlocked(value)) {
+                    showToast(getOfferUnlockLabel(value), 'warn');
+                    return;
+                }
                 previewOffer(value);
                 break;
             case 'createOfferOrder':
                 if (guardMetaActionDuringRun()) return;
+                if (!isOfferUnlocked(value)) {
+                    showToast(getOfferUnlockLabel(value), 'warn');
+                    return;
+                }
                 createOfferOrder(value);
                 break;
             case 'verifyOfferTxid':
@@ -438,6 +447,7 @@
         const run = state.run;
         const isCurrentRun = run?.active && run.chapterId === chapter.id;
         const isBoss = isBossChapter(chapter);
+        const displayPower = isCurrentRun ? (run.deckPower || power) : power;
         const assist = isCurrentRun ? (run.assist || getRunAssistState(chapter)) : getRunAssistState(chapter);
         const goals = isCurrentRun ? run.goals : chapter.goals.map((goal) => ({ ...goal, remaining: goal.amount }));
         const suggestedMove = isCurrentRun && assist.rookie.active && !run.inputLocked && run.selectedCell === null ? findSuggestedMove(run.board, goals) : null;
@@ -454,6 +464,7 @@
             ? (run.notice || text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.'))
             : text('先点“开打”进入战斗；开局后点 2 个相邻格交换，凑 3 个相同即可消除，能量满了再点“放技”。', 'Tap Start to enter battle; then swap 2 adjacent tiles, match 3 to clear, and cast Skill at full energy.');
         const tutorialEntryFree = !isCurrentRun && isTutorialEntryFree(chapter, assist);
+        const battleLegendHtml = isCurrentRun ? renderBattleLegend(chapter, run, skillReady) : '';
         const boardWrapClass = [
             'cm-board-wrap',
             isBoss ? 'is-boss' : '',
@@ -484,6 +495,34 @@
                 ${secondaryButtonHtml}
             </div>
         `;
+        const stageHeaderHtml = isCurrentRun
+            ? `
+                <div class="cm-chip-row cm-run-compact-head">
+                    <span class="cm-chip cm-run-compact-id">${escapeHtml(chapter.id)}</span>
+                    ${isBoss ? `<span class="cm-chip is-danger-text">${escapeHtml(text('Boss', 'Boss'))}</span>` : ''}
+                    <span class="cm-chip ${displayPower >= chapter.recommended ? 'is-good' : 'is-warn'}">${escapeHtml(text('战', 'Pow'))} ${displayPower}/${chapter.recommended}</span>
+                </div>
+            `
+            : `
+                <div class="cm-run-focus-head">
+                    <div class="cm-run-stage-main">
+                        <div class="cm-run-stage-badge">${escapeHtml(chapter.id)}</div>
+                        <div class="cm-run-stage-copy">
+                            <strong>${escapeHtml(localize(chapter.name))}</strong>
+                            <div class="cm-chip-row">
+                                <span class="cm-chip">${escapeHtml(localize(chapter.pressure))}</span>
+                                <span class="cm-chip">${escapeHtml(localize(chapter.rewardFocus))}</span>
+                                ${tutorialEntryFree ? `<span class="cm-chip is-good">${escapeHtml(text('教学免费', 'Tutorial Free'))}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cm-tag-row">
+                        <span class="cm-tag">${escapeHtml(text('推', 'Rec'))} ${chapter.recommended}</span>
+                        <span class="cm-tag ${displayPower >= chapter.recommended ? 'is-good' : 'is-warn'}">${escapeHtml(text('战', 'Pow'))} ${displayPower}</span>
+                        ${isBoss ? `<span class="cm-tag is-danger-text">${escapeHtml(text('Boss', 'Boss'))}</span>` : ''}
+                    </div>
+                </div>
+            `;
         return `
             <div class="cm-stack cm-run-stack">
                 ${isCurrentRun ? '' : `
@@ -493,24 +532,7 @@
                 `}
 
                 <div class="cm-card cm-stage-card ${isBoss ? 'is-boss' : ''}">
-                    <div class="cm-run-focus-head">
-                        <div class="cm-run-stage-main">
-                            <div class="cm-run-stage-badge">${escapeHtml(chapter.id)}</div>
-                            <div class="cm-run-stage-copy">
-                                <strong>${escapeHtml(localize(chapter.name))}</strong>
-                                <div class="cm-chip-row">
-                                    <span class="cm-chip">${escapeHtml(localize(chapter.pressure))}</span>
-                                    ${!isCurrentRun ? `<span class="cm-chip">${escapeHtml(localize(chapter.rewardFocus))}</span>` : ''}
-                                    ${tutorialEntryFree ? `<span class="cm-chip is-good">${escapeHtml(text('教学免费', 'Tutorial Free'))}</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="cm-tag-row">
-                            <span class="cm-tag">${escapeHtml(text('推', 'Rec'))} ${chapter.recommended}</span>
-                            <span class="cm-tag ${power >= chapter.recommended ? 'is-good' : 'is-warn'}">${escapeHtml(text('战', 'Pow'))} ${power}</span>
-                            ${isBoss ? `<span class="cm-tag is-danger-text">${escapeHtml(text('Boss', 'Boss'))}</span>` : ''}
-                        </div>
-                    </div>
+                    ${stageHeaderHtml}
 
                     <div class="cm-stage-grid">
                         <div class="cm-stack cm-run-board-column">
@@ -537,13 +559,15 @@
                                 ${goals.map((goal) => renderCompactGoal(goal, {
                                     isFocus: goal.type === focusGoalType,
                                     isHit: goalHitTypes.includes(goal.type),
+                                    isSkill: isCurrentRun && run.fx?.kind === 'skill' && goalHitTypes.includes(goal.type),
                                     isBurst: shieldHit && goal.type === 'shield'
                                 })).join('')}
                             </div>
 
                             ${!isCurrentRun ? controlRowHtml : ''}
-                            ${renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree })}
-                            ${renderRunStepRow(isCurrentRun, run, assist)}
+                            ${battleLegendHtml}
+                            ${!isCurrentRun ? renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree }) : ''}
+                            ${!isCurrentRun ? renderRunStepRow(isCurrentRun, run, assist) : ''}
 
                             ${!isCurrentRun ? `
                                 <div class="cm-chip-row cm-run-reward-strip">
@@ -843,16 +867,13 @@
         const activeFx = run.fx || null;
         const rookieActive = !!run.assist?.rookie?.active;
         const shieldGoal = run.goals.find((goal) => goal.type === 'shield' && goal.remaining > 0);
-        const shieldActive = isBossChapter(chapter) && !!shieldGoal;
         const hintIndices = rookieActive && suggestedMove ? [suggestedMove.from, suggestedMove.to] : [];
         const adjacentHints = rookieActive && selectedIndex >= 0 ? getAdjacentIndices(selectedIndex, config.board.size) : [];
         const noticeCopy = selectedTile
             ? text(`已选 ${localize(selectedTile.name)}，再点发光的相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap a glowing adjacent tile to swap.`)
             : rookieActive && suggestedMove
                 ? text('试试交换发光的两格，先做出第一组 3 连。', 'Try the glowing pair for your first 3-match.')
-                : shieldActive
-                    ? text('普通 3 连不会扣护盾，优先找 4 连 / 连锁，或攒满能量放技能。', 'Basic 3-matches do not damage the shield. Look for 4-matches, cascades, or a full-energy skill.')
-                    : text('先点 1 格，再点相邻 1 格完成交换。', 'Tap one tile, then an adjacent tile to swap.');
+                : '';
         const overlayCopy = run.energy >= run.maxEnergy
             ? rookieActive
                 ? text('能量已满，点“放技”试一次技能。', 'Energy is full. Tap Cast Skill to try it.')
@@ -897,7 +918,7 @@
         }
 
         return `
-            <div class="cm-board-notice">${escapeHtml(noticeCopy)}</div>
+            ${noticeCopy ? `<div class="cm-board-notice">${escapeHtml(noticeCopy)}</div>` : ''}
             <div class="cm-board">${cells.join('')}</div>
             ${overlayCopy ? `<div class="cm-board-overlay">${escapeHtml(overlayCopy)}</div>` : ''}
         `;
@@ -939,7 +960,7 @@
         const percent = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
         const completed = goal.remaining <= 0;
         return `
-            <div class="cm-goal-token ${completed ? 'is-done' : ''} ${goal.type === 'shield' ? 'is-shield' : ''} ${options.isFocus ? 'is-focus' : ''} ${options.isHit ? 'is-hit' : ''} ${options.isBurst ? 'is-burst' : ''}">
+            <div class="cm-goal-token ${completed ? 'is-done' : ''} ${goal.type === 'shield' ? 'is-shield' : ''} ${options.isFocus ? 'is-focus' : ''} ${options.isHit ? 'is-hit' : ''} ${options.isSkill ? 'is-skill' : ''} ${options.isBurst ? 'is-burst' : ''}">
                 <div class="cm-goal-token-head">
                     <span class="cm-goal-token-icon" aria-hidden="true">${escapeHtml(meta.icon)}</span>
                     <div class="cm-goal-token-copy">
@@ -1042,6 +1063,45 @@
         `;
     }
 
+    function renderBattleLegendChip(icon, copy, tone = '') {
+        return `
+            <span class="cm-chip cm-battle-legend-chip ${escapeHtml(tone)}">
+                <strong aria-hidden="true">${escapeHtml(icon)}</strong>
+                <span>${escapeHtml(copy)}</span>
+            </span>
+        `;
+    }
+
+    function renderBattleLegend(chapter, run, skillReady) {
+        if (!run?.active) return '';
+        const shieldGoal = run.goals.find((goal) => goal.type === 'shield' && goal.remaining > 0);
+        const chips = [];
+
+        if (shieldGoal) {
+            chips.push(renderBattleLegendChip('🛡', text('目标盾', 'Shield Goal'), 'is-danger'));
+        }
+
+        if (run.selectedCell !== null) {
+            chips.push(renderBattleLegendChip('↔', text('点相邻交换', 'Tap adjacent'), 'is-focus'));
+        } else if (skillReady) {
+            chips.push(renderBattleLegendChip('✨', text('技能可放', 'Skill Ready'), 'is-good'));
+        } else if (shieldGoal) {
+            chips.push(renderBattleLegendChip('💥', text('4+ / 连锁破盾', 'Break shield with 4+ / cascades'), 'is-focus'));
+        } else {
+            chips.push(renderBattleLegendChip('🎯', text('按下方目标消除', 'Match the goal icons below')));
+        }
+
+        if (shieldGoal) {
+            chips.push(renderBattleLegendChip('⚠', text(`反 ${run.bossTurnsLeft}/${run.bossPulseEvery}`, `Counter ${run.bossTurnsLeft}/${run.bossPulseEvery}`), 'is-warn'));
+        }
+
+        return `
+            <div class="cm-chip-row cm-battle-legend">
+                ${chips.join('')}
+            </div>
+        `;
+    }
+
     function renderRunGuide(chapter, power) {
         const gap = Math.max(0, chapter.recommended - power);
         const assist = getRunAssistState(chapter);
@@ -1105,8 +1165,10 @@
     }
 
     function renderBattleFeedback(feedback) {
+        const duration = Math.max(480, feedback.duration || 1300);
+        const exitDelay = Math.max(0.22, (duration - 220) / 1000);
         return `
-            <div class="cm-board-centerfx tone-${escapeHtml(feedback.tone || 'good')}${feedback.persist ? ' is-persistent' : ''}" style="--cm-feedback-life:${Math.max(0.4, (feedback.duration || 1300) / 1000)}s;">
+            <div class="cm-board-centerfx tone-${escapeHtml(feedback.tone || 'good')}${feedback.persist ? ' is-persistent' : ''}" style="--cm-feedback-life:${exitDelay}s;">
                 ${feedback.icon ? `<div class="cm-board-centerfx-icon" aria-hidden="true">${escapeHtml(feedback.icon)}</div>` : ''}
                 <strong>${escapeHtml(feedback.title || '')}</strong>
                 <span>${escapeHtml(feedback.detail || '')}</span>
@@ -1255,7 +1317,7 @@
         `;
     }
 
-    function renderOfferItem(item) {
+    function renderOfferItemLegacy(item) {
         const owned = isOfferOwned(item.id);
         const order = getPendingOrder(item.id);
         const lastVerified = getLastVerifiedPayment(item.id);
@@ -1888,17 +1950,25 @@
         const skillValue = Math.round(6 * boostRate);
         const leaderId = getRunLeaderId(run);
         const goalSnapshot = captureGoalSnapshot(run.goals);
-        const detailParts = [];
+        const skillFxMeta = {
+            gridBurst: { icon: '⚡', pulse: text('锁定最大目标', 'Largest goal burst') },
+            colorHack: { icon: '✦', pulse: text('劫持主色目标', 'Color goal hacked') },
+            stasisField: { icon: '⟳', pulse: text('冻结局势回步', 'Stasis field active') }
+        };
+        const skillMeta = skillFxMeta[skill.id] || { icon: '✦', pulse: localize(skill.name) };
+        const detailParts = [skillMeta.pulse];
+        let moveGain = 0;
         run.inputLocked = true;
 
         if (skill.id === 'gridBurst') {
-            reduceLargestGoal(skillValue);
+            applyLargestGoalPressure(skillValue);
         } else if (skill.id === 'colorHack') {
-            reduceLargestColorGoal(Math.round(8 * boostRate));
+            applyLargestColorPressure(Math.round(8 * boostRate));
         } else if (skill.id === 'stasisField') {
+            moveGain += 3;
             run.movesLeft += 3;
             detailParts.push(text('步数 +3', 'Moves +3'));
-            reduceSmallestGoal(Math.round(3 * boostRate));
+            applySmallestGoalPressure(Math.round(3 * boostRate));
         }
 
         if (leaderId === 'novaEcho') {
@@ -1910,21 +1980,28 @@
 
         if (leaderId === 'wardenNine') {
             run.movesLeft += 1;
+            moveGain += 1;
             detailParts.push(text('额外步数 +1', 'Extra move +1'));
         }
 
         const skillGoalDelta = getGoalDeltaFromSnapshot(goalSnapshot, run.goals);
         const goalSummary = formatGoalDeltaSummary(skillGoalDelta);
+        const goalHits = getGoalHitTypes(skillGoalDelta);
         if (goalSummary) {
             detailParts.unshift(goalSummary);
+        }
+        if (leaderId === 'novaEcho' && skillGoalDelta.shield) {
+            detailParts.push(text('穿盾连携', 'Shield pierce'));
         }
 
         run.energy = leaderId === 'wardenNine' ? 35 : 0;
         run.fx = {
             kind: 'skill',
-            goalHits: getGoalHitTypes(skillGoalDelta),
+            skillId: skill.id,
+            goalHits,
             goalDelta: skillGoalDelta,
-            shieldHit: !!skillGoalDelta.shield
+            shieldHit: !!skillGoalDelta.shield,
+            moveGain
         };
         run.feedback = makeFeedback(
             'good',
@@ -1933,6 +2010,12 @@
             { icon: '✦', duration: 1150 }
         );
         run.notice = text('技能已释放。', 'Skill cast.');
+        run.feedback.tone = 'skill';
+        run.feedback.title = localize(skill.name);
+        run.feedback.detail = detailParts.join(' · ') || goalSummary || localize(skill.effect);
+        run.feedback.icon = skillMeta.icon;
+        run.feedback.duration = 1650;
+        run.notice = text('技能已释放，趁高亮继续追击目标。', 'Skill cast. Chase the highlighted goals now.');
         renderAll();
         await wait(FX_TIMINGS.skill);
         if (state.run !== run || !run.active) return;
@@ -2176,6 +2259,10 @@
         const item = list.find((entry) => entry.id === tierId);
         if (!item) return;
         if (trackType === 'premium' && !state.save.premiumSeason) {
+            if (!isOfferUnlocked('seasonPass')) {
+                showToast(getOfferUnlockLabel('seasonPass'), 'warn');
+                return;
+            }
             previewOffer('seasonPass');
             return;
         }
@@ -2697,7 +2784,7 @@
             detail,
             icon: options.icon || '',
             persist: !!options.persist,
-            duration: options.duration || (tone === 'warn' ? 980 : tone === 'danger' ? 1450 : 1250)
+            duration: options.duration || (tone === 'warn' ? 980 : tone === 'danger' ? 1450 : tone === 'skill' ? 1600 : 1250)
         };
     }
 
@@ -2951,7 +3038,7 @@
     function getResearchCost(researchId) {
         const item = researchMap[researchId];
         const level = getResearchLevel(researchId);
-        const discount = state.save.premiumSeason ? 0.15 : 0;
+        const discount = state.save.premiumSeason ? 0.10 : 0;
         return {
             credits: Math.max(1, Math.round(item.baseCredits * Math.pow(1.32, level) * (1 - discount))),
             cipherDust: Math.max(1, Math.round(item.baseDust * Math.pow(1.24, level) * (1 - discount)))
@@ -2959,9 +3046,9 @@
     }
 
     function getScaledChapterReward(chapter) {
-        const premiumBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 0.05 : 0;
+        const premiumBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 0.03 : 0;
         const vaultBonus = state.save.vaultRelay
-            ? chapter.chapter >= 4 ? 0.24 : chapter.chapter >= 3 ? 0.18 : 0
+            ? chapter.chapter >= 4 ? 0.18 : chapter.chapter >= 3 ? 0.12 : 0
             : 0;
         const rewardRate = 1 + getResearchLevel('lootRelay') * 0.05 + (hasModule('relayCache') ? 0.08 : 0) + premiumBonus + vaultBonus;
         return {
@@ -2999,7 +3086,7 @@
         }
         const chapter = chapterMap[state.run.chapterId];
         const base = config.board.buyMovesBase * Math.pow(2, state.run.continuesBought) * Math.max(1, chapter.chapter);
-        const discount = Math.min(0.24, (state.save.starterBoost ? 0.12 : 0) + (state.save.vaultRelay ? 0.12 : 0));
+        const discount = Math.min(0.18, (state.save.starterBoost ? 0.08 : 0) + (state.save.vaultRelay ? 0.10 : 0));
         return Math.round(base * (1 - discount));
     }
 
@@ -3012,7 +3099,7 @@
     }
 
     function getRunMaxEnergy() {
-        return 100 + getResearchLevel('pulseBattery') * 6 + (state.save.premiumSeason ? 12 : 0);
+        return 100 + getResearchLevel('pulseBattery') * 6 + (state.save.premiumSeason ? 8 : 0);
     }
 
     function getDailyFreeRunsLimit() {
@@ -3057,44 +3144,44 @@
         if (chapter.id === '1-3' && wins < 4) {
             return {
                 active: true,
-                bonusMoves: 1,
-                bonusEnergy: 10,
-                progressBonus: 0,
+                bonusMoves: 2,
+                bonusEnergy: 14,
+                progressBonus: 1,
                 bossGrace: 1,
-                drainReduction: 4,
+                drainReduction: 6,
                 note: text('首个首领已放慢反制，先拆盾。', 'The first boss counter is slowed. Break the shield first.')
             };
         }
         if (chapter.chapter === 2 && wins < 5) {
             return {
                 active: true,
-                bonusMoves: gap >= 140 ? 2 : 1,
-                bonusEnergy: gap >= 140 ? 12 : 8,
-                progressBonus: gap >= 180 ? 1 : 0,
+                bonusMoves: gap >= 120 ? 2 : 1,
+                bonusEnergy: gap >= 120 ? 14 : 10,
+                progressBonus: gap >= 140 ? 1 : 0,
                 bossGrace: isBoss ? 1 : 0,
-                drainReduction: isBoss ? 4 : 0,
+                drainReduction: isBoss ? 6 : 0,
                 note: text('第二章缓冲：继续给你更顺的开局与一次免费首补。', 'Chapter 2 easing: smoother starts and one free first continue remain active.')
             };
         }
         if (chapter.chapter === 2 && wins < 8 && gap > 0) {
             return {
                 active: true,
-                bonusMoves: gap >= 220 ? 2 : 1,
-                bonusEnergy: gap >= 220 ? 10 : 6,
-                progressBonus: gap >= 220 ? 1 : 0,
+                bonusMoves: gap >= 180 ? 2 : 1,
+                bonusEnergy: gap >= 180 ? 12 : 8,
+                progressBonus: gap >= 180 ? 1 : 0,
                 bossGrace: isBoss ? 1 : 0,
-                drainReduction: isBoss ? 2 : 0,
+                drainReduction: isBoss ? 4 : 0,
                 note: text('第二章追赶保护：如果战力还没跟上，系统会再补一点容错。', 'Chapter 2 catch-up assist: if your deck is still behind, the game adds a bit more forgiveness.')
             };
         }
-        if (chapter.chapter === 3 && wins < 10 && gap >= 260) {
+        if (chapter.chapter === 3 && wins < 10 && gap >= 220) {
             return {
                 active: true,
                 bonusMoves: 1,
-                bonusEnergy: 8,
+                bonusEnergy: 10,
                 progressBonus: 1,
                 bossGrace: isBoss ? 1 : 0,
-                drainReduction: isBoss ? 2 : 0,
+                drainReduction: isBoss ? 3 : 0,
                 note: text('第三章追赶保护：仍会给一次轻量扶梯，避免断层卡关。', 'Chapter 3 catch-up assist: a light safety ramp remains to avoid a hard wall.')
             };
         }
@@ -3154,23 +3241,23 @@
         const supportTier = surplus >= 320 ? 2 : surplus >= 120 ? 1 : 0;
         const pressureTier = gap >= 420 ? 2 : gap >= 180 ? 1 : 0;
         const rookie = getRookieAssistState(chapter);
-        const premiumMoveBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 1 : 0;
-        const premiumEnergyBonus = state.save.premiumSeason ? (chapter.chapter >= 4 ? 14 : chapter.chapter >= 2 ? 10 : 0) : 0;
-        const premiumProgressBonus = state.save.premiumSeason && chapter.chapter >= 3 ? 1 : 0;
+        const premiumMoveBonus = state.save.premiumSeason && chapter.chapter >= 4 ? 1 : 0;
+        const premiumEnergyBonus = state.save.premiumSeason ? (chapter.chapter >= 4 ? 10 : chapter.chapter >= 2 ? 6 : 0) : 0;
+        const premiumProgressBonus = state.save.premiumSeason && chapter.chapter >= 4 ? 1 : 0;
         const premiumBossGrace = state.save.premiumSeason && chapter.chapter >= 3 && isBoss ? 1 : 0;
-        const premiumDrainReduction = state.save.premiumSeason && chapter.chapter >= 3 && isBoss ? 4 : 0;
+        const premiumDrainReduction = state.save.premiumSeason && chapter.chapter >= 3 && isBoss ? 2 : 0;
         const vaultMoveBonus = state.save.vaultRelay && isBoss ? 1 : 0;
-        const vaultProgressBonus = state.save.vaultRelay ? (isBoss ? 2 : 1) : 0;
-        const vaultPulseRelief = state.save.vaultRelay ? (chapter.chapter >= 4 ? 3 : 2) : 0;
-        const vaultShieldRelief = state.save.vaultRelay ? 3 : 0;
-        const vaultDrainReduction = state.save.vaultRelay ? 12 : 0;
+        const vaultProgressBonus = state.save.vaultRelay ? (isBoss ? 1 : 0) : 0;
+        const vaultPulseRelief = state.save.vaultRelay ? (chapter.chapter >= 4 ? 2 : 1) : 0;
+        const vaultShieldRelief = state.save.vaultRelay ? 2 : 0;
+        const vaultDrainReduction = state.save.vaultRelay ? 8 : 0;
         return {
             gap,
             supportTier,
             pressureTier,
             rookie,
             bonusMoves: rookie.bonusMoves + (state.save.starterBoost ? 1 : 0) + premiumMoveBonus + vaultMoveBonus + supportTier,
-            bonusEnergy: rookie.bonusEnergy + (state.save.starterBoost ? 18 : 0) + premiumEnergyBonus + supportTier * 10,
+            bonusEnergy: rookie.bonusEnergy + (state.save.starterBoost ? 12 : 0) + premiumEnergyBonus + supportTier * 10,
             progressBonus: rookie.progressBonus + premiumProgressBonus + vaultProgressBonus + supportTier,
             bossPulseEvery: Math.max(2, 4 + supportTier + vaultPulseRelief + premiumBossGrace + rookie.bossGrace - pressureTier),
             bossShieldPulse: Math.max(1, 2 + chapter.chapter + pressureTier - vaultShieldRelief - (state.save.premiumSeason && chapter.chapter >= 4 ? 1 : 0)),
@@ -3249,12 +3336,16 @@
         return applyLargestColorPressure(amount).amount;
     }
 
-    function reduceSmallestGoal(amount) {
+    function applySmallestGoalPressure(amount) {
         const goal = [...state.run.goals].filter((entry) => entry.remaining > 0).sort((left, right) => left.remaining - right.remaining)[0];
-        if (!goal || amount <= 0) return 0;
+        if (!goal || amount <= 0) return { type: '', amount: 0 };
         const before = goal.remaining;
         goal.remaining = Math.max(0, goal.remaining - amount);
-        return Math.max(0, before - goal.remaining);
+        return { type: goal.type, amount: Math.max(0, before - goal.remaining) };
+    }
+
+    function reduceSmallestGoal(amount) {
+        return applySmallestGoalPressure(amount).amount;
     }
 
     function reduceGoalType(type, amount) {
@@ -3493,8 +3584,8 @@
         if (type === 'shield') {
             return {
                 icon: '⛨',
-                label: text('护盾', 'Shield'),
-                note: text('4连 / 连锁 / 技能', '4+ / Cascade / Skill')
+                label: text('目标盾', 'Shield Goal'),
+                note: text('非消耗', 'Not spendable')
             };
         }
         const tile = tileMap[type];
@@ -3864,6 +3955,88 @@
         }
         showToast(text('复制失败，请手动长按复制。', 'Copy failed. Please long-press and copy manually.'), 'warn');
         return false;
+    }
+
+    function getOfferUnlockStage(offerId) {
+        return offerMap[offerId]?.unlockStage || null;
+    }
+
+    function getOfferUnlockLabel(offerId) {
+        const unlockStage = getOfferUnlockStage(offerId);
+        return unlockStage ? text(`通关 ${unlockStage} 后开放`, `Unlock at ${unlockStage}`) : '';
+    }
+
+    function isOfferUnlocked(offerId, chapter = getSelectedChapter()) {
+        const unlockStage = getOfferUnlockStage(offerId);
+        if (!unlockStage) return true;
+        const unlockIndex = chapterIndexMap[unlockStage];
+        if (!Number.isInteger(unlockIndex)) return true;
+        const currentIndex = chapter && Number.isInteger(chapterIndexMap[chapter.id]) ? chapterIndexMap[chapter.id] : -1;
+        const clearedIndex = (state.save?.clearedChapters || []).reduce((max, id) => {
+            const index = chapterIndexMap[id];
+            return Number.isInteger(index) ? Math.max(max, index) : max;
+        }, -1);
+        return Math.max(currentIndex, clearedIndex) >= unlockIndex;
+    }
+
+    function renderOfferItem(item) {
+        const owned = isOfferOwned(item.id);
+        const order = getPendingOrder(item.id);
+        const lastVerified = getLastVerifiedPayment(item.id);
+        const metaLocked = isMetaActionLocked();
+        const unlocked = isOfferUnlocked(item.id);
+        const unlockLabel = unlocked ? '' : getOfferUnlockLabel(item.id);
+        const targetSummary = getOfferTargetSummary(item.id);
+        const recommendedNow = isOfferRecommendedNow(item.id);
+        const fitLabel = owned && recommendedNow
+            ? text('当前卡点已覆盖', 'Current gate covered')
+            : recommendedNow
+                ? text('当前卡点推荐', 'Recommended now')
+                : '';
+        const badge = !unlocked && !owned
+            ? text('未开放', 'Locked')
+            : owned
+                ? text('已拥有', 'Owned')
+                : order
+                    ? text('待验证', 'Pending')
+                    : `USDT ${item.price}`;
+        const copy = !unlocked
+            ? unlockLabel
+            : owned && item.permanent
+                ? (lastVerified
+                    ? text(`最近到账：${formatTimeLabel(lastVerified.verifiedAt)}`, `Last verified: ${formatTimeLabel(lastVerified.verifiedAt)}`)
+                    : localize(item.permanent))
+                : order
+                    ? text('订单已创建，继续粘贴交易哈希即可完成验证。', 'Order created. Resume by pasting the TxID.')
+                    : item.permanent
+                        ? localize(item.permanent)
+                        : text('支付验证通过后立刻发放。', 'Delivered right after payment.');
+        return `
+            <div class="cm-offer-card cm-offer-item-card">
+                <div class="cm-card-head">
+                    <div>
+                        <strong>${escapeHtml(localize(item.name))}</strong>
+                        <div class="cm-copy">${escapeHtml(copy)}</div>
+                    </div>
+                    <span class="cm-tag ${owned ? 'is-good' : order ? 'is-warning' : !unlocked ? 'is-idle' : ''}">${escapeHtml(badge)}</span>
+                </div>
+                <div class="cm-reward-row">${renderRewardChips(item.reward)}</div>
+                <div class="cm-chip-row">
+                    <span class="cm-chip">${escapeHtml(text('适配卡点', 'Best For'))} · ${escapeHtml(targetSummary)}</span>
+                    ${unlockLabel ? `<span class="cm-chip">${escapeHtml(unlockLabel)}</span>` : ''}
+                    ${fitLabel ? `<span class="cm-chip">${escapeHtml(fitLabel)}</span>` : ''}
+                </div>
+                <button class="cm-btn" type="button" data-action="previewOffer" data-value="${item.id}" ${(metaLocked || !unlocked) ? 'disabled' : ''}>${escapeHtml(
+                    !unlocked
+                        ? text('未开放', 'Locked')
+                        : owned
+                            ? text('查看内容', 'View Pack')
+                            : order
+                                ? text('继续支付', 'Resume Payment')
+                                : text('打开支付', 'Open Payment')
+                )}</button>
+            </div>
+        `;
     }
 
     function readLang() {

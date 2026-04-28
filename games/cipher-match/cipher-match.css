@@ -503,7 +503,8 @@ button:disabled {
 }
 
 .cm-cell.is-skill-hit {
-    animation: cmSkillCellPulse 0.42s ease both;
+    z-index: 1;
+    animation: cmSkillCellPulse 0.98s cubic-bezier(0.18, 0.84, 0.28, 1) both;
 }
 
 .cm-cell--alpha { background: linear-gradient(180deg, #5298ff, #2d60c9); }
@@ -595,12 +596,50 @@ button:disabled {
     border-color: rgba(255, 111, 143, 0.34);
 }
 
+.cm-board-centerfx.tone-skill {
+    border-color: rgba(121, 236, 255, 0.42);
+    background:
+        radial-gradient(circle at top, rgba(255, 226, 107, 0.24), transparent 58%),
+        rgba(7, 10, 20, 0.94);
+    box-shadow:
+        0 22px 40px rgba(0, 0, 0, 0.34),
+        0 0 28px rgba(121, 236, 255, 0.16);
+}
+
+.cm-board-centerfx.tone-skill .cm-board-centerfx-icon {
+    background: linear-gradient(180deg, rgba(255, 226, 107, 0.24), rgba(121, 236, 255, 0.14));
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+        0 0 0 1px rgba(255, 226, 107, 0.16),
+        0 0 18px rgba(121, 236, 255, 0.18);
+}
+
+.cm-board-centerfx.tone-skill strong {
+    color: #fff2a8;
+}
+
+.cm-board-centerfx.tone-skill span {
+    color: rgba(255, 255, 255, 0.82);
+}
+
 .cm-board-wrap.is-skill-cast {
     box-shadow:
         inset 0 0 0 1px rgba(255, 226, 107, 0.34),
         0 0 0 1px rgba(255, 226, 107, 0.16),
         0 0 24px rgba(255, 226, 107, 0.16),
         var(--cm-shadow);
+    animation: cmSkillBoardPulse 0.98s cubic-bezier(0.2, 0.86, 0.26, 1) both;
+}
+
+.cm-board-wrap.is-skill-cast::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 22px;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 45%, rgba(255, 226, 107, 0.24), rgba(121, 236, 255, 0.14) 34%, transparent 70%);
+    animation: cmSkillBoardFlash 0.98s ease-out both;
 }
 
 .cm-board-wrap.is-boss-pulse {
@@ -700,15 +739,28 @@ button:disabled {
 @keyframes cmSkillCellPulse {
     0% {
         transform: scale(1);
-        filter: brightness(1);
+        filter: brightness(1) saturate(1);
+        box-shadow: 0 0 0 0 rgba(121, 236, 255, 0);
     }
-    45% {
-        transform: scale(1.08);
-        filter: brightness(1.28);
+    20% {
+        transform: scale(1.04);
+        filter: brightness(1.34) saturate(1.16);
+    }
+    48% {
+        transform: scale(1.11);
+        filter: brightness(1.72) saturate(1.34);
+        box-shadow:
+            0 0 0 1px rgba(255, 226, 107, 0.26),
+            0 0 20px rgba(121, 236, 255, 0.2);
+    }
+    72% {
+        transform: scale(1.03);
+        filter: brightness(1.2) saturate(1.08);
     }
     100% {
         transform: scale(1);
-        filter: brightness(1);
+        filter: brightness(1) saturate(1);
+        box-shadow: 0 0 0 0 rgba(121, 236, 255, 0);
     }
 }
 
@@ -747,6 +799,53 @@ button:disabled {
         box-shadow:
             inset 0 0 0 1px rgba(255, 111, 143, 0.14),
             var(--cm-shadow);
+    }
+}
+
+@keyframes cmSkillBoardPulse {
+    0% {
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 226, 107, 0.18),
+            var(--cm-shadow);
+    }
+    26% {
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 226, 107, 0.46),
+            0 0 0 1px rgba(121, 236, 255, 0.16),
+            0 0 34px rgba(121, 236, 255, 0.18),
+            0 0 48px rgba(255, 226, 107, 0.18),
+            var(--cm-shadow);
+    }
+    60% {
+        box-shadow:
+            inset 0 0 0 1px rgba(121, 236, 255, 0.34),
+            0 0 0 1px rgba(121, 236, 255, 0.14),
+            0 0 24px rgba(121, 236, 255, 0.14),
+            0 0 38px rgba(255, 226, 107, 0.14),
+            var(--cm-shadow);
+    }
+    100% {
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 226, 107, 0.18),
+            var(--cm-shadow);
+    }
+}
+
+@keyframes cmSkillBoardFlash {
+    0% {
+        opacity: 0;
+        transform: scale(0.94);
+    }
+    18% {
+        opacity: 0.88;
+        transform: scale(1);
+    }
+    55% {
+        opacity: 0.26;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.08);
     }
 }
 
@@ -803,6 +902,52 @@ button:disabled {
         box-shadow:
             0 0 0 1px rgba(255, 111, 143, 0.2),
             0 0 10px rgba(255, 111, 143, 0.1);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 111, 143, 0);
+    }
+}
+
+@keyframes cmGoalSkillPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(121, 236, 255, 0);
+    }
+    24% {
+        transform: scale(1.05);
+        box-shadow:
+            0 0 0 1px rgba(255, 226, 107, 0.28),
+            0 0 20px rgba(121, 236, 255, 0.18);
+    }
+    58% {
+        transform: scale(1.01);
+        box-shadow:
+            0 0 0 1px rgba(121, 236, 255, 0.14),
+            0 0 12px rgba(121, 236, 255, 0.1);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(121, 236, 255, 0);
+    }
+}
+
+@keyframes cmGoalSkillShieldPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 111, 143, 0);
+    }
+    22% {
+        transform: scale(1.05);
+        box-shadow:
+            0 0 0 1px rgba(255, 111, 143, 0.36),
+            0 0 20px rgba(255, 226, 107, 0.14);
+    }
+    56% {
+        transform: scale(1.01);
+        box-shadow:
+            0 0 0 1px rgba(255, 111, 143, 0.18),
+            0 0 12px rgba(255, 111, 143, 0.1);
     }
     100% {
         transform: scale(1);
@@ -885,6 +1030,18 @@ button:disabled {
     gap: 8px;
 }
 
+.cm-run-compact-head {
+    gap: 6px;
+    align-items: center;
+}
+
+.cm-run-compact-id {
+    min-width: 44px;
+    justify-content: center;
+    font-weight: 800;
+    color: var(--cm-text);
+}
+
 .cm-goal-strip {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -910,6 +1067,10 @@ button:disabled {
     border-color: rgba(255, 111, 143, 0.18);
 }
 
+.cm-goal-token.is-shield .cm-goal-token-label {
+    color: var(--cm-text);
+}
+
 .cm-goal-token.is-focus {
     border-color: rgba(118, 168, 255, 0.24);
     background: rgba(118, 168, 255, 0.08);
@@ -920,11 +1081,27 @@ button:disabled {
     animation: cmGoalHitPulse 0.56s ease both;
 }
 
+.cm-goal-token.is-skill {
+    animation: cmGoalSkillPulse 0.98s cubic-bezier(0.2, 0.86, 0.26, 1) both;
+    border-color: rgba(255, 226, 107, 0.3);
+    background:
+        linear-gradient(180deg, rgba(255, 226, 107, 0.16), rgba(121, 236, 255, 0.08)),
+        rgba(255, 255, 255, 0.04);
+}
+
 .cm-goal-token.is-hit.is-shield,
 .cm-goal-token.is-burst.is-shield {
     animation: cmGoalShieldPulse 0.72s ease both;
     border-color: rgba(255, 111, 143, 0.32);
     background: rgba(255, 111, 143, 0.1);
+}
+
+.cm-goal-token.is-skill.is-shield {
+    animation: cmGoalSkillShieldPulse 0.98s cubic-bezier(0.2, 0.86, 0.26, 1) both;
+    border-color: rgba(255, 111, 143, 0.34);
+    background:
+        linear-gradient(180deg, rgba(255, 111, 143, 0.16), rgba(255, 226, 107, 0.08)),
+        rgba(255, 255, 255, 0.04);
 }
 
 .cm-goal-token-head strong {
@@ -953,6 +1130,11 @@ button:disabled {
     line-height: 1.2;
 }
 
+.cm-goal-token.is-shield .cm-goal-token-note {
+    color: rgba(255, 184, 106, 0.88);
+    font-weight: 700;
+}
+
 .cm-goal-token-value {
     display: inline-flex;
     align-items: baseline;
@@ -976,6 +1158,43 @@ button:disabled {
 
 .cm-run-reward-strip {
     gap: 6px;
+}
+
+.cm-battle-legend {
+    gap: 6px;
+}
+
+.cm-battle-legend-chip {
+    min-height: 30px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.045);
+    font-size: 11px;
+    line-height: 1.1;
+}
+
+.cm-battle-legend-chip strong {
+    font-size: 12px;
+}
+
+.cm-battle-legend-chip.is-focus {
+    border-color: rgba(118, 168, 255, 0.28);
+    background: rgba(118, 168, 255, 0.1);
+}
+
+.cm-battle-legend-chip.is-good {
+    border-color: rgba(70, 247, 167, 0.24);
+    background: rgba(70, 247, 167, 0.08);
+}
+
+.cm-battle-legend-chip.is-warn {
+    border-color: rgba(255, 184, 106, 0.24);
+    background: rgba(255, 184, 106, 0.08);
+}
+
+.cm-battle-legend-chip.is-danger {
+    border-color: rgba(255, 111, 143, 0.28);
+    background: rgba(255, 111, 143, 0.09);
 }
 
 .cm-run-coach {
@@ -1229,6 +1448,57 @@ body[data-cm-tab="run"] .cm-summary-item small {
 body[data-cm-tab="run"] .cm-resource-pill .cm-value,
 body[data-cm-tab="run"] .cm-summary-item .cm-value {
     font-size: 14px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-hero-card,
+body[data-cm-tab="run"][data-cm-run="active"] .cm-summary-card {
+    display: none;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-main {
+    margin-top: 6px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-panel-card,
+body[data-cm-tab="run"][data-cm-run="active"] .cm-stage-card {
+    padding: 8px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-stage-grid,
+body[data-cm-tab="run"][data-cm-run="active"] .cm-run-board-column {
+    gap: 6px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-run-focus-head {
+    gap: 6px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-run-compact-head {
+    gap: 4px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-run-stage-copy {
+    display: none;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-run-stage-badge {
+    min-width: 46px;
+    padding: 6px 8px;
+    border-radius: 14px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-run-stage-copy strong {
+    font-size: 16px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-tag-row {
+    gap: 4px;
+}
+
+body[data-cm-tab="run"][data-cm-run="active"] .cm-tag,
+body[data-cm-tab="run"][data-cm-run="active"] .cm-chip {
+    padding: 5px 7px;
+    font-size: 11px;
 }
 
 body:not([data-cm-tab="run"]) .cm-summary-card {
