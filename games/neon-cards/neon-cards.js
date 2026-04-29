@@ -653,6 +653,7 @@
                     </div>
                 </div>
                 ${renderPaymentStatusPanel()}
+                ${renderPaymentInsightPanel()}
                 <div class="nc-card-grid nc-card-grid--two nc-card-grid--mobile-scroll">
                     ${premiumItems}
                 </div>
@@ -856,10 +857,41 @@
         `;
     }
 
+    function renderPaymentInsightPanel() {
+        const chapter = getSelectedChapter();
+        const checkpoint = getGrowthCheckpointSummary(chapter);
+        const paymentFit = getPaymentFitSummary(chapter, Math.max(0, chapter.recommended - getDeckPower()));
+        const activePerks = getActivePaymentPerkTexts();
+        return `
+            <div class="nc-card-grid nc-card-grid--two nc-card-grid--mobile-scroll">
+                <article class="nc-card-item nc-card-item--dense">
+                    <div class="nc-card-head">
+                        <div>
+                            <h3>${renderIconLabel('&#10022;', text('生效特权', 'Active Perks'))}</h3>
+                        </div>
+                        <span class="nc-tag ${activePerks.length ? 'is-good' : ''}">${escapeHtml(activePerks.length ? `${activePerks.length}/${config.paymentOffers.length}` : text('None', 'None'))}</span>
+                    </div>
+                    <div class="nc-inline-note">${escapeHtml(activePerks.length ? activePerks.join(' • ') : text('当前还没有永久充值特权生效。', 'No permanent top-up perks are active yet.'))}</div>
+                </article>
+                <article class="nc-card-item nc-card-item--dense">
+                    <div class="nc-card-head">
+                        <div>
+                            <h3>${renderIconLabel('&#9888;', text('当前卡点', 'Current Wall'))}</h3>
+                        </div>
+                        <span class="nc-tag ${paymentFit.urgent ? 'is-warning' : 'is-good'}">${escapeHtml(paymentFit.label)}</span>
+                    </div>
+                    <div class="nc-inline-note">${escapeHtml(checkpoint.focus)}</div>
+                    <div class="nc-note-mini">${escapeHtml(paymentFit.detail)}</div>
+                </article>
+            </div>
+        `;
+    }
+
     function renderOfferCard(offer) {
         const owned = isOfferOwned(offer.id);
         const pendingOrder = getPendingPaymentOrder(offer.id);
         const hasLiveOrder = !!(pendingOrder && !isPaymentOrderExpired(pendingOrder));
+        const fitHint = getOfferFitHint(offer.id);
         const badge = owned
             ? text('Claimed', 'Claimed')
             : hasLiveOrder
@@ -875,6 +907,7 @@
                 </div>
                 ${renderRewardPills(offer.reward)}
                 <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
+                ${fitHint ? `<div class="nc-note-mini">${escapeHtml(fitHint)}</div>` : ''}
                 <div class="nc-action-row">
                     <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(owned ? text('View Rewards', 'View Rewards') : hasLiveOrder ? text('Resume Order', 'Resume Order') : text('Create Order', 'Create Order'))}</button>
                 </div>
@@ -4139,6 +4172,108 @@
 
     function hasPaymentOffer(offerId) {
         return getOwnedOfferIds().includes(offerId);
+    }
+
+    function getActivePaymentPerkTexts() {
+        const owned = getOwnedOfferIds();
+        const items = [];
+        if (owned.includes('starter')) items.push(text('首充回能 +3%', 'Starter regen +3%'));
+        if (owned.includes('tactical')) items.push(text('每日免费对战 +1', 'Daily free clash +1'));
+        if (owned.includes('captain')) items.push(text('领袖技充能 +6%', 'Leader charge +6%'));
+        if (owned.includes('champion')) items.push(text('全队攻击/生命 +8%', 'Squad ATK/HP +8%'));
+        return items;
+    }
+
+    function getGrowthCheckpointSummary(chapter) {
+        const chapterNumber = Math.max(1, Number(chapter?.chapter) || 1);
+        const stageNumber = Number(String(chapter?.id || '1-1').split('-')[1]) || 1;
+        if (chapterNumber === 1 && stageNumber < 3) {
+            return {
+                focus: text('先把前排和主输出升到 Lv3~5，熟悉出兵与技能节奏。', 'Bring your frontline and carry to Lv3~5 first and learn deployment plus skill timing.')
+            };
+        }
+        if (chapterNumber === 1) {
+            return {
+                focus: text('这里是首个软卡点：需要 1 张前排 Lv5、1 张主输出 Lv5 和第一张 2★。', 'First soft wall: aim for one frontline Lv5, one carry Lv5, and your first 2-star card.')
+            };
+        }
+        if (chapterNumber === 2) {
+            return {
+                focus: text('第二章主要卡研究和战术：优先能量矩阵 Lv3、战术卡 Lv5。', 'Chapter 2 mainly checks lab and tactics: prioritize Energy Matrix Lv3 and your tactic card at Lv5.')
+            };
+        }
+        if (chapterNumber === 3) {
+            return {
+                focus: text('第三章开始吃队长和双研究线：队长 2★、两条主研究线 Lv5+ 更稳。', 'Chapter 3 starts checking leader depth and dual lab lines: leader 2-star plus two core research lines at Lv5+ stabilizes the run.')
+            };
+        }
+        return {
+            focus: text('终盘更看重高星主力与芯片研究：至少 2 张 4★ 主力更舒服。', 'Late game is mainly about high-star carries and chip-backed lab growth: at least two 4-star core cards makes it much smoother.')
+        };
+    }
+
+    function getPaymentFitSummary(chapter, gap = Math.max(0, (chapter?.recommended || 0) - getDeckPower())) {
+        const chapterNumber = Math.max(1, Number(chapter?.chapter) || 1);
+        const owned = getOwnedOfferIds();
+        if (gap <= 0) {
+            return {
+                label: text('已达标', 'On Pace'),
+                detail: text('当前更适合先回卡组或研究补效率，不急着靠充值解卡点。', 'You are on pace now; Deck or Lab upgrades matter more than spending immediately.'),
+                urgent: false
+            };
+        }
+        if (chapterNumber === 1 && !owned.includes('starter')) {
+            return {
+                label: text('首充适配', 'Starter Fit'),
+                detail: text('首充包当前最有体感，补的是前期升级、碎片和回能节奏。', 'Starter is the clearest boost here, mainly helping early upgrades, fragments, and energy tempo.'),
+                urgent: true
+            };
+        }
+        if (chapterNumber === 2 && !owned.includes('tactical')) {
+            return {
+                label: text('战术适配', 'Tactical Fit'),
+                detail: text('第二章更缺稳定出战频率和中期资源，战术包的日常价值最高。', 'Chapter 2 usually wants stable run frequency and midgame resources, so Tactical has the best steady value here.'),
+                urgent: true
+            };
+        }
+        if (chapterNumber <= 3 && !owned.includes('captain')) {
+            return {
+                label: text('队长适配', 'Captain Fit'),
+                detail: text('当前更偏领袖技与队长碎片成长，队长包的针对性最强。', 'This wall leans more on leader-skill tempo and leader fragments, which is exactly what Captain targets best.'),
+                urgent: true
+            };
+        }
+        if (chapterNumber >= 3 && !owned.includes('champion')) {
+            return {
+                label: text('冠军适配', 'Champion Fit'),
+                detail: text('后段首领墙更吃全队面板和容错，冠军包的强化最直接。', 'Late boss walls care more about raw squad stats and error margin, which Champion boosts most directly.'),
+                urgent: true
+            };
+        }
+        return {
+            label: text('先补构筑', 'Build First'),
+            detail: text('当前卡点更偏构筑或研究，不是单纯缺一个充值包。', 'This wall looks more like a build or lab issue than simply missing another pack.'),
+            urgent: false
+        };
+    }
+
+    function getOfferFitHint(offerId) {
+        const chapter = getSelectedChapter();
+        const chapterNumber = Math.max(1, Number(chapter?.chapter) || 1);
+        if (isOfferOwned(offerId)) return text('已拥有，永久收益已生效。', 'Owned already. Permanent perk is active.');
+        if (offerId === 'starter') return chapterNumber === 1
+            ? text('当前最适合前期开荒与首个软卡点。', 'Best fit right now for early push and the first soft wall.')
+            : text('偏早期追赶包，后段主要是补资源。', 'Mostly an early catch-up pack; later it is mainly raw resources.');
+        if (offerId === 'tactical') return chapterNumber === 2
+            ? text('当前最适合第二章日常推进与资源续航。', 'Best fit right now for Chapter 2 daily progression and resource sustain.')
+            : text('核心价值是长期多 1 次免费对战。', 'Its core value is the long-term extra daily free clash.');
+        if (offerId === 'captain') return chapterNumber >= 2 && chapterNumber <= 3
+            ? text('当前最适合 2-3 ~ 3-3 的领袖技节奏卡点。', 'Best fit right now for the 2-3 to 3-3 leader-skill tempo wall.')
+            : text('核心价值是队长碎片与领袖技充能。', 'Its core value is leader fragments plus faster leader charge.');
+        if (offerId === 'champion') return chapterNumber >= 3
+            ? text('当前最适合后段 Boss 墙与终盘容错。', 'Best fit right now for late boss walls and endgame error margin.')
+            : text('更偏后段强度包，前中期容易溢出。', 'This is more of a late-strength pack and can overshoot early-mid game.');
+        return '';
     }
 
     function hasStarterPaymentPerk() {
