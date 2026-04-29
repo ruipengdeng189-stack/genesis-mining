@@ -1,10 +1,13 @@
 (function () {
     const HUB_LANG_KEY = 'genesis_arcade_hub_lang_v1';
     const SAVE_KEY = 'genesis_cipher_match_save_v1';
+    const PAYMENT_API_BASE = '/api';
+    const PAYMENT_GAME_ID = 'cipher-match';
     const PAYMENT_NETWORK = 'TRON (TRC20)';
-    const PAYMENT_WALLET = 'TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW';
-    const PAYMENT_ORDER_EXPIRY_MS = 15 * 60 * 1000;
     const PAYMENT_TXID_RE = /^[a-fA-F0-9]{64}$/;
+    const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
+    const PAYMENT_ADDRESS_FIELDS = ['payAddress', 'pay_address', 'walletAddress', 'wallet_address', 'recipientAddress', 'recipient_address', 'receiveAddress', 'receive_address', 'receivingAddress', 'receiving_address', 'toAddress', 'to_address', 'address'];
 
     const config = window.GENESIS_CIPHER_MATCH_CONFIG;
     if (!config) return;
@@ -65,6 +68,7 @@
         cacheUi();
         bindEvents();
         renderAll();
+        Promise.resolve().then(() => flushPendingPaymentClaims().catch(() => {}));
     }
 
     function cacheUi() {
@@ -227,7 +231,7 @@
                 cancelOfferOrder(value);
                 break;
             case 'copyOfferAddress':
-                copyText(PAYMENT_WALLET, text('地址已复制。', 'Address copied.'));
+                copyOfferAddress(value);
                 break;
             case 'copyOfferAmount':
                 copyOfferAmount(value);
@@ -1437,9 +1441,9 @@
 
     function renderGatePathChips(gatePlan, mode = 'run') {
         const pathItems = [
-            { icon: '◌', label: text('\u767d\u5ad6', 'Free'), value: gatePlan.freePath, tone: '' },
-            { icon: '▲', label: mode === 'shop' ? text('\u5feb\u8fdb', 'Fast') : text('\u5c0f\u6c2a', 'Light'), value: gatePlan.lightPath, tone: 'is-warning' },
-            { icon: '✦', label: mode === 'shop' ? text('\u5f3a\u5316', 'Power') : text('\u4e2d\u6c2a', 'Mid'), value: gatePlan.midPath, tone: 'is-good' }
+            { icon: '◌', label: text('常规', 'Steady'), value: gatePlan.freePath, tone: '' },
+            { icon: '▲', label: text('提速', 'Boost'), value: gatePlan.lightPath, tone: 'is-warning' },
+            { icon: '✦', label: text('强化', 'Full'), value: gatePlan.midPath, tone: 'is-good' }
         ];
         return `
             <div class="cm-path-grid">
@@ -1468,8 +1472,8 @@
         const recommendationCopy = gatePlan.owned
             ? text('当前阶段对应的永久增益已经具备，商店里优先补每日免费和功能补给即可。', 'You already have the permanent perk for this stage, so daily free supply and utility packs should be the priority here.')
             : gatePlan.recommendedNow
-                ? text('这档付费正对应你当前的强化缺口，买到后会直接作用在闯关体验上。', 'This offer matches your current missing power, so the boost applies directly to your run experience.')
-                : text('这档付费主要服务你下一段成长，不用急着现在购买。', 'This offer mainly serves your next growth stage, so there is no need to rush the purchase.');
+                ? text('这档礼包正对应你当前的强化缺口，拿到后会直接作用在闯关体验上。', 'This pack matches your current missing power, so the boost applies directly to your run experience.')
+                : text('这档礼包更适合下一段成长，不必急着现在入手。', 'This pack mainly supports your next growth stage, so there is no need to rush it now.');
         const gapLabel = gatePlan.gap > 0
             ? text(`\u5dee\u503c ${formatCompact(gatePlan.gap)}`, `Gap ${formatCompact(gatePlan.gap)}`)
             : text('\u5df2\u5230\u7ebf', 'On Line');
@@ -1504,7 +1508,7 @@
                 summary: text('这段先学交换、三连和拆盾，1-3 会迎来首次明显的强度提升。', 'Use this stretch to learn swaps, 3-matches, and shield breaking before the first notable difficulty spike at 1-3.'),
                 freePath: text('补到 2 轮核心构筑，或 1 轮核心构筑加稳定网格 2~3 级。', 'Reach 2 core build rounds, or 1 core round plus Stability Mesh level 2 to 3.'),
                 lightPath: text('想更顺地进到 2-1，可提前用新手破译包补开局节奏。', 'If you want a smoother route into 2-1, the Starter Decode Pack is the early tempo shortcut.'),
-                midPath: text('中氪先别在这里出手，把预算留给 2-2 / 2-3 更值。', 'Mid spend is better saved for 2-2 / 2-3 instead of being used here.'),
+                midPath: text('如果想把预算留到 2-2 / 2-3 再用，整体收益会更集中。', 'If you want to save your budget for 2-2 / 2-3, the overall value lands better there.'),
                 offerId: 'starterPack',
                 packFit: '1-3 / 2-1'
             };
@@ -1515,7 +1519,7 @@
                 summary: text('这里开始要求主力构筑成型，同时学会先拆盾再收尾。', 'This is where the main build needs to come together and boss shield timing starts to matter.'),
                 freePath: text('建议补到 2 轮核心构筑，或 1 轮核心构筑加稳定网格 2~3 级。', 'Aim for 2 core build rounds, or 1 core round plus Stability Mesh level 2 to 3.'),
                 lightPath: text('新手破译包对应当前缺口：补早期资源、每日免费局和更稳的开局。', 'The Starter Decode Pack covers this gap with early resources, an extra daily free run, and steadier starts.'),
-                midPath: text('中氪不用提前跨档，真正的中档价值点在 2-2 / 2-3。', 'There is no need to jump into mid spend yet; the real mid-tier value begins at 2-2 / 2-3.'),
+                midPath: text('如果不想提前投入，这一段先正常推进即可，2-2 / 2-3 会更适合补强。', 'There is no need to jump early here; 2-2 / 2-3 is the cleaner timing for a stronger upgrade push.'),
                 offerId: 'starterPack',
                 packFit: '1-3 / 2-1'
             };
@@ -1536,7 +1540,7 @@
                 tag: text('下一阶段：3-3', 'Next stage: 3-3'),
                 summary: text('这关本身是过渡，但它要求你提前把后段 Boss 构筑切好。', 'This stage is a transition, but it asks you to prepare the late boss build before the bigger boss check at 3-3.'),
                 freePath: text('建议补到 7 轮核心构筑，并把稳定网格补到 5~6 级、脉冲电池补到 3~4 级。', 'Aim for 7 core build rounds, Stability Mesh 5 to 6, and Pulse Battery 3 to 4.'),
-                lightPath: text('小氪更适合保持新手包和赛季通行证的成长红利，同时开始切 Boss 构筑。', 'Light spend works best by keeping the Starter Pack plus Season Pass value online while switching into a boss build.'),
+                lightPath: text('这一段更适合把前面拿到的成长红利继续滚到 Boss 构筑切换上。', 'This is the point where earlier growth boosts should be converted into a proper boss-build transition.'),
                 midPath: text('如果想让下一场 Boss 战更可控，破关金库会在这里开始对位。', 'If you want the next boss fight to feel more controllable, Breaker Vault starts to line up here.'),
                 offerId: 'breakerVault',
                 packFit: '3-2 / 3-3 / 4-x'
@@ -1547,7 +1551,7 @@
                 tag: text('Boss 反制压力', 'Boss counter pressure'),
                 summary: text('这里开始同时考验数值、首领对策和资源滚动速度。', 'This is where raw numbers, boss counterplay, and long-run resource pacing are all tested together.'),
                 freePath: text('目标是 7~8 轮核心构筑、稳定网格 5~6 级、脉冲电池 3~4 级，并完成 Boss 构筑切换。', 'Target 7 to 8 core build rounds, Stability Mesh 5 to 6, Pulse Battery 3 to 4, and a proper boss build swap.'),
-                lightPath: text('小氪路线仍以新手包加赛季通行为主，但必须配合 Boss 构筑而不是无脑平推。', 'Light spend still leans on Starter Pack plus Season Pass, but the boss build still matters more than brute forcing.'),
+                lightPath: text('这一段仍建议先保证 Boss 构筑成型，再考虑补强。', 'At this stage, locking in the right boss build matters more than forcing the stage with extra spend.'),
                 midPath: text('破关金库是这一段的专门强化：减轻反制，同时让后段收益更像一次正反馈。', 'Breaker Vault is the dedicated boost here: it softens counters and makes late rewards feel like a meaningful payoff.'),
                 offerId: 'breakerVault',
                 packFit: '3-2 / 3-3 / 4-x'
@@ -1557,9 +1561,9 @@
                 title: text('终盘成长段', 'Endgame Growth'),
                 tag: text('长线资源经营', 'Long-term resource loop'),
                 summary: text('终盘不是单次补强，而是构筑、研究、Boss 增益和每日经营一起形成稳定成长。', 'The endgame is not about one upgrade spike; it is about build, research, boss perks, and daily income working together into steady growth.'),
-                freePath: text('白嫖也能过，但要把 9~10 轮核心构筑、中高等级研究、免费赛季和每日都尽量吃满。', 'Free players can still clear it, but it asks for 9 to 10 core build rounds, high lab levels, and strong daily plus season collection.'),
-                lightPath: text('小氪更像买时间，把 4-2 / 4-3 当成 1~2 周的终盘目标更合理。', 'Light spend mainly buys time here, so treating 4-2 / 4-3 as a 1 to 2 week endgame target is healthier.'),
-                midPath: text('中氪路线需要三档都到位，其中破关金库负责把后段 Boss 战从高波动拉回可控。', 'Mid spend wants the full stack, and Breaker Vault is what pulls late boss fights back from high variance into controllable runs.'),
+                freePath: text('常规推进也能过，但需要把 9~10 轮核心构筑、中高等级研究、免费赛季和每日收益尽量吃满。', 'A steady route can still clear it, but it asks for 9 to 10 core build rounds, higher lab levels, and strong daily plus free season collection.'),
+                lightPath: text('把 4-2 / 4-3 当成 1~2 周的终盘目标会更健康，也更容易把收益滚起来。', 'Treating 4-2 / 4-3 as a 1 to 2 week endgame target makes the pacing healthier and the reward loop steadier.'),
+                midPath: text('如果想更快把后段 Boss 战拉回可控，三档强化叠起来会更稳定。', 'If you want late boss fights to become controllable faster, stacking the full upgrade route makes the run much steadier.'),
                 offerId: 'breakerVault',
                 packFit: '3-2 / 3-3 / 4-x'
             };
@@ -2303,7 +2307,7 @@
         if (!offer) return;
         const owned = isOfferOwned(offerId);
         const lockedByOwnership = !!(owned && offer.oneTime);
-        const order = lockedByOwnership ? null : ensurePendingOrder(offerId, { silent: true });
+        const order = lockedByOwnership ? null : getPendingOrder(offerId);
         const lastVerified = getLastVerifiedPayment(offerId);
         const orderEta = order ? getPendingOrderEta(order) : '';
         const primaryAction = lockedByOwnership ? 'closeModal' : order ? 'verifyOfferTxid' : 'createOfferOrder';
@@ -2315,7 +2319,11 @@
         openModal({
             eyebrow: text('支付弹窗', 'Payment'),
             title: localize(offer.name),
-            subtitle: lockedByOwnership ? text('永久特权已激活', 'Permanent perk already active') : `${PAYMENT_NETWORK} · USDT ${formatPaymentAmount(order?.exactAmount || offer.price)}`,
+            subtitle: lockedByOwnership
+                ? text('永久特权已激活', 'Permanent perk already active')
+                : order
+                    ? `${PAYMENT_NETWORK} · USDT ${formatPaymentAmount(order.exactAmount || offer.price)}`
+                    : text(`${PAYMENT_NETWORK} · 待生成精确金额`, `${PAYMENT_NETWORK} · Exact amount pending`),
             body: `
                 <div class="cm-card">
                     <div class="cm-card-head">
@@ -2334,6 +2342,21 @@
                                 <strong>${escapeHtml(text('永久特权', 'Permanent Perk'))}</strong>
                                 <div class="cm-copy">${escapeHtml(localize(offer.permanent))}</div>
                             </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${!lockedByOwnership && !order ? `
+                    <div class="cm-card">
+                        <div class="cm-card-head">
+                            <div>
+                                <strong>${escapeHtml(text('先创建订单', 'Create Order First'))}</strong>
+                                <div class="cm-copy">${escapeHtml(text('创建后会生成本次专属精确金额与有效期，按订单金额支付后再填写交易哈希完成校验。', 'Creating an order generates the exact amount and expiry window for this purchase. Pay that order amount first, then paste the transaction hash to finish verification.'))}</div>
+                            </div>
+                        </div>
+                        <div class="cm-chip-row">
+                            <span class="cm-chip">${escapeHtml(text('基础价格', 'Base Price'))} · USDT ${escapeHtml(formatPaymentAmount(offer.price))}</span>
+                            <span class="cm-chip">${escapeHtml(text('有效期', 'Window'))} · 15m</span>
                         </div>
                     </div>
                 ` : ''}
@@ -2375,14 +2398,18 @@
                 ${lockedByOwnership ? '' : `
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('收款地址', 'Wallet Address'))}</strong>
-                        <input value="${escapeHtml(PAYMENT_WALLET)}" readonly>
-                        <small>${escapeHtml(text('请按上方地址转入本单对应的 USDT 金额。', 'Send the USDT amount for this order to the address above.'))}</small>
+                        <input value="${escapeHtml(resolvePaymentAddress(order) || '--')}" readonly>
+                        <small>${escapeHtml(order
+                            ? text('请按上方地址转入本单对应的 USDT 金额。', 'Send the USDT amount for this order to the address above.')
+                            : text('创建订单后会显示本单收款地址与精确金额。', 'Create an order first to reveal the receiving address and exact amount.'))}</small>
                     </div>
 
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('转账金额', 'Amount'))}</strong>
-                        <input value="USDT ${formatPaymentAmount(order?.exactAmount || offer.price)}" readonly>
-                        <small>${escapeHtml(text('请按本单精确金额转入，便于核对这笔订单。', 'Send the exact amount shown for this order so it can be checked quickly.'))}</small>
+                        <input value="${escapeHtml(order ? `USDT ${formatPaymentAmount(order.exactAmount || offer.price)}` : text('请先创建订单', 'Create order first'))}" readonly>
+                        <small>${escapeHtml(order
+                            ? text('请按本单精确金额转入，便于核对这笔订单。', 'Send the exact amount shown for this order so it can be checked quickly.')
+                            : text('这里只显示基础价格；创建订单后会生成本次专属精确金额。', 'This shows the base price only. Create the order to generate the exact amount for this purchase.'))}</small>
                     </div>
 
                     <div class="cm-input-wrap">
@@ -2393,7 +2420,7 @@
                 `}
             `,
             actions: `
-                ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAddress">${escapeHtml(text('复制地址', 'Copy Address'))}</button>`}
+                ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAddress" data-value="${offer.id}">${escapeHtml(text('复制地址', 'Copy Address'))}</button>`}
                 ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAmount" data-value="${offer.id}">${escapeHtml(text('复制金额', 'Copy Amount'))}</button>`}
                 ${lockedByOwnership || !order ? '' : `<button class="cm-btn-soft" type="button" data-action="cancelOfferOrder" data-value="${offer.id}">${escapeHtml(text('关闭订单', 'Cancel Order'))}</button>`}
                 <button class="cm-btn" type="button" data-action="${primaryAction}" data-value="${offer.id}">${escapeHtml(primaryLabel)}</button>
@@ -2402,19 +2429,28 @@
         renderAll();
     }
 
-    function createOfferOrder(offerId) {
+    async function createOfferOrder(offerId) {
         const offer = offerMap[offerId];
         if (!offer) return;
         if (offer.oneTime && isOfferOwned(offerId)) {
             showToast(text('该礼包已拥有，无需重复购买。', 'This pack is already owned.'), 'warn');
             return;
         }
-        ensurePendingOrder(offerId, { forceNew: true, silent: true });
-        previewOffer(offerId);
-        showToast(text('精确金额订单已更新。', 'Exact payment order updated.'), 'good');
+        try {
+            const order = await createBackendPaymentOrder(offerId);
+            if (!order) {
+                showToast(text('订单创建失败，请稍后重试。', 'Failed to create the order. Please try again later.'), 'warn');
+                return;
+            }
+            upsertPendingOrder(order);
+            previewOffer(offerId);
+            showToast(text('精确金额订单已创建。', 'Exact payment order created.'), 'good');
+        } catch (error) {
+            showToast(error?.message || text('订单创建失败，请稍后重试。', 'Failed to create the order. Please try again later.'), 'warn');
+        }
     }
 
-    function verifyOfferTxid(offerId) {
+    async function verifyOfferTxid(offerId) {
         const offer = offerMap[offerId];
         const order = getPendingOrder(offerId);
         const input = document.getElementById('offerTxidInput');
@@ -2447,33 +2483,73 @@
             showToast(text('该交易哈希已验证过，请勿重复使用。', 'This transaction hash has already been used.'), 'warn');
             return;
         }
-        const settledAmount = Number(order.exactAmount || offer.price || 0);
-        applyReward(offer.reward);
-        state.save.verifiedTxids.push(normalizedTxid);
-        state.save.paymentHistory = [
-            {
-                orderId: order.id || createOrderId(offerId, order.createdAt),
-                offerId,
-                txid: normalizedTxid,
-                amount: settledAmount,
-                basePrice: Number(offer.price || 0),
-                payAddress: order.payAddress || PAYMENT_WALLET,
-                network: order.network || PAYMENT_NETWORK,
-                verifiedAt: Date.now()
-            },
-            ...state.save.paymentHistory.filter((item) => item.txid !== normalizedTxid)
-        ].slice(0, 12);
-        state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== order.id);
-        saveProgress();
-        openModal({
-            eyebrow: text('支付成功', 'Payment Verified'),
-            title: localize(offer.name),
-            subtitle: `USDT ${formatPaymentAmount(settledAmount)} · ${PAYMENT_NETWORK}`,
-            body: `<div class="cm-card"><div class="cm-reward-row">${renderRewardChips(offer.reward)}</div></div>`,
-            actions: `<button class="cm-btn" type="button" data-action="closeModal">${escapeHtml(text('完成', 'Done'))}</button>`
-        });
-        renderAll();
-        showToast(text('支付验证通过。', 'Payment verified.'), 'good');
+        if (state.save.payment.claimedOrders[order.id]) {
+            showToast(text('该订单奖励已发放，无需重复验证。', 'Rewards for this order have already been granted.'), 'warn');
+            return;
+        }
+        try {
+            const verificationResult = await verifyBackendPayment(order.id, normalizedTxid);
+            const resolvedOrder = buildClientPaymentOrder({
+                ...order,
+                ...(verificationResult?.order || {}),
+                txid: verificationResult?.order?.txid || normalizedTxid
+            });
+            const alreadyClaimedLocally = !!state.save.payment.claimedOrders[resolvedOrder.id];
+            const backendGranted = !!(resolvedOrder.rewardGranted || resolvedOrder.status === 'granted');
+
+            upsertPendingOrder(resolvedOrder);
+
+            if (!alreadyClaimedLocally) {
+                applyReward(offer.reward);
+                state.save.payment.claimedOrders[resolvedOrder.id] = true;
+                pushVerifiedTxid(normalizedTxid);
+                pushPaymentHistoryEntry({
+                    orderId: resolvedOrder.id,
+                    offerId,
+                    txid: normalizedTxid,
+                    amount: Number(resolvedOrder.exactAmount || offer.price || 0),
+                    basePrice: Number(offer.price || 0),
+                    payAddress: resolvePaymentAddress(resolvedOrder, { allowLastKnown: false }),
+                    network: resolvedOrder.network || PAYMENT_NETWORK,
+                    verifiedAt: Date.now()
+                });
+            }
+
+            let successCopy = backendGranted
+                ? text('订单已完成校验，奖励已到账。', 'This order was already verified and the rewards are now available.')
+                : text('链上校验成功，奖励已到账。', 'On-chain verification succeeded and rewards were granted.');
+
+            if (!backendGranted) {
+                state.save.payment.pendingClaims[resolvedOrder.id] = normalizedTxid;
+                try {
+                    await claimBackendPayment(resolvedOrder.id, normalizedTxid);
+                    delete state.save.payment.pendingClaims[resolvedOrder.id];
+                } catch (claimError) {
+                    successCopy = text('链上校验成功，奖励已到账；后台发奖记录会继续自动同步。', 'On-chain verification succeeded and rewards were granted. Backend grant sync will continue automatically.');
+                }
+            } else {
+                delete state.save.payment.pendingClaims[resolvedOrder.id];
+            }
+
+            state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== resolvedOrder.id);
+            saveProgress();
+            openModal({
+                eyebrow: text('支付成功', 'Payment Verified'),
+                title: localize(offer.name),
+                subtitle: `USDT ${formatPaymentAmount(resolvedOrder.exactAmount || offer.price)} · ${escapeHtml(resolvedOrder.network || PAYMENT_NETWORK)}`,
+                body: `
+                    <div class="cm-card">
+                        <div class="cm-copy">${escapeHtml(successCopy)}</div>
+                        <div class="cm-reward-row">${renderRewardChips(offer.reward)}</div>
+                    </div>
+                `,
+                actions: `<button class="cm-btn" type="button" data-action="closeModal">${escapeHtml(text('完成', 'Done'))}</button>`
+            });
+            renderAll();
+            showToast(successCopy, 'good');
+        } catch (error) {
+            showToast(error?.message || text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.'), 'warn');
+        }
     }
 
     function cancelOfferOrder(offerId) {
@@ -3614,16 +3690,116 @@
         return assist.rookie.active && !state.save.clearedChapters.includes(chapter.id) && chapter.chapter <= 2;
     }
 
+    function getPaymentMinerId() {
+        if (state.save.payment.minerId) return state.save.payment.minerId;
+        state.save.payment.minerId = `CIPHER_${Math.random().toString(16).slice(2, 10).toUpperCase()}${Date.now().toString(16).slice(-6).toUpperCase()}`;
+        saveProgress();
+        return state.save.payment.minerId;
+    }
+
+    function resolvePaymentAddress(order = null, { allowLastKnown = true } = {}) {
+        const source = order && typeof order === 'object' ? order : null;
+        if (source) {
+            for (const field of PAYMENT_ADDRESS_FIELDS) {
+                const value = String(source[field] ?? '').trim();
+                if (value && value !== '--') return value;
+            }
+        }
+        if (allowLastKnown) {
+            const lastKnown = String(state.save?.payment?.lastPayAddress || '').trim();
+            if (lastKnown && lastKnown !== '--') return lastKnown;
+        }
+        return '';
+    }
+
+    function mapPaymentApiError(errorMessage) {
+        const raw = String(errorMessage || '').trim();
+        const lower = raw.toLowerCase();
+        if (!raw) return text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
+        if (lower.includes('txid not found')) return text('暂未在 TRON 主网上找到该交易哈希，请稍后再试。', 'This txid was not found on TRON mainnet yet.');
+        if (lower.includes('not confirmed yet')) return text('这笔转账还未确认，请稍后再试。', 'This transfer is not confirmed yet. Try again shortly.');
+        if (lower.includes('execution failed')) return text('链上交易执行失败，无法发放奖励。', 'The on-chain transaction failed, so rewards cannot be granted.');
+        if (lower.includes('not a trc20 contract transfer')) return text('这不是 TRC20 合约转账。', 'This transaction is not a TRC20 transfer.');
+        if (lower.includes('not trc20 usdt')) return text('这笔支付不是 TRC20-USDT。', 'This transaction is not a TRC20-USDT payment.');
+        if (lower.includes('recipient address')) return text('收款地址不匹配，请按当前订单地址支付。', 'Recipient address mismatch. Please pay to the address shown in the current order.');
+        if (lower.includes('amount mismatch')) return text('支付金额与当前订单的精确金额不一致。', 'The payment amount does not match the exact amount for this order.');
+        if (lower.includes('before this order was created')) return text('这笔转账早于订单创建时间，不能用于当前订单。', 'This transfer happened before the order was created and cannot be used for this order.');
+        if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单。', 'This order has expired. Please create a new order.');
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('该交易哈希已被其他订单使用。', 'This txid has already been used by another order.');
+        if (lower.includes('minerid does not match order')) return text('当前订单与本地账号不匹配，请重新创建订单。', 'This order does not belong to the current player. Please create a new order.');
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后重试。', 'The payment service is temporarily unavailable. Please try again later.');
+        return raw;
+    }
+
+    async function requestPaymentApi(path, init = {}) {
+        let response;
+        try {
+            response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+        } catch (error) {
+            throw new Error(text('支付服务暂时不可用，请检查网络后重试。', 'The payment service is temporarily unavailable. Please check your network and try again.'));
+        }
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.ok === false) {
+            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+        }
+        return payload;
+    }
+
+    function buildClientPaymentOrder(order) {
+        const createdAtRaw = order?.createdAt ?? order?.created_at;
+        const expiresAtRaw = order?.expiresAt ?? order?.expires_at;
+        return {
+            id: String(order?.id || order?.orderId || order?.order_id || '--'),
+            offerId: String(order?.offerId || order?.offer_id || ''),
+            offerName: String(order?.offerName || order?.offer_name || ''),
+            minerId: String(order?.minerId || order?.miner_id || ''),
+            createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
+            expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
+            exactAmount: Number(order?.exactAmount || order?.exact_amount || order?.baseAmount || order?.base_amount || 0),
+            payAddress: resolvePaymentAddress(order, { allowLastKnown: true }),
+            network: String(order?.network || PAYMENT_NETWORK),
+            status: String(order?.status || 'pending'),
+            txid: normalizeTxid(order?.txid || ''),
+            paidAt: String(order?.paidAt || order?.paid_at || ''),
+            rewardGranted: !!(order?.rewardGranted ?? order?.reward_granted)
+        };
+    }
+
     function getPendingOrder(offerId) {
         return getPendingOrders().find((item) => item.offerId === offerId) || null;
     }
 
+    function upsertPendingOrder(order) {
+        const normalized = buildClientPaymentOrder(order);
+        if (!normalized?.offerId || !normalized?.id || normalized.id === '--') return null;
+        const resolvedAddress = resolvePaymentAddress(normalized, { allowLastKnown: false });
+        if (resolvedAddress && state.save.payment.lastPayAddress !== resolvedAddress) {
+            state.save.payment.lastPayAddress = resolvedAddress;
+        }
+        state.save.pendingOrders = sanitizePendingOrders([
+            normalized,
+            ...state.save.pendingOrders.filter((item) => item.id !== normalized.id && item.offerId !== normalized.offerId)
+        ]);
+        saveProgress();
+        return state.save.pendingOrders.find((item) => item.offerId === normalized.offerId) || null;
+    }
+
     function isPendingOrderExpired(order) {
-        return !order || ((Number(order.createdAt) || 0) + PAYMENT_ORDER_EXPIRY_MS) <= Date.now();
+        if (!order) return true;
+        const status = String(order.status || 'pending');
+        if (status === 'expired' || status === 'cancelled' || status === 'granted') return true;
+        if (status === 'paid') return false;
+        const expiresAt = Number(order.expiresAt || 0) || ((Number(order.createdAt) || 0) + PAYMENT_ORDER_WINDOW_MS);
+        return expiresAt <= Date.now();
     }
 
     function getPendingOrderEta(order) {
-        const msLeft = Math.max(0, PAYMENT_ORDER_EXPIRY_MS - (Date.now() - order.createdAt));
+        const status = String(order?.status || 'pending');
+        if (status === 'granted') return text('已发放', 'Granted');
+        if (status === 'paid') return text('已支付', 'Paid');
+        const expiresAt = Number(order?.expiresAt || 0) || ((Number(order?.createdAt) || 0) + PAYMENT_ORDER_WINDOW_MS);
+        const msLeft = Math.max(0, expiresAt - Date.now());
         const minutes = Math.floor(msLeft / 60000);
         const seconds = Math.floor((msLeft % 60000) / 1000);
         return `${minutes}:${String(seconds).padStart(2, '0')}`;
@@ -3634,8 +3810,7 @@
     }
 
     function formatPaymentAmount(value) {
-        const amount = Math.round((Number(value) || 0) * 1000) / 1000;
-        return amount.toFixed(3).replace(/\.?0+$/, (match) => match === '.000' ? '' : match.replace(/0+$/, '').replace(/\.$/, ''));
+        return Number(value || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS);
     }
 
     function shortenTxid(txid) {
@@ -3651,76 +3826,115 @@
         return `${offerCode}-${stamp}-${salt}`;
     }
 
-    function getOfferExactAmount(offer, excludeOrderId = '') {
-        const basePrice = Math.round((Number(offer?.price || 0)) * 1000) / 1000;
-        const reserved = new Set();
-        sanitizePendingOrders(state.save.pendingOrders).forEach((item) => {
-            if (item.id !== excludeOrderId && Number(item.exactAmount || 0) > 0) {
-                reserved.add(formatPaymentAmount(item.exactAmount));
-            }
+    async function createBackendPaymentOrder(offerId) {
+        const payload = await requestPaymentApi('/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
         });
-        sanitizePaymentHistory(state.save.paymentHistory).forEach((item) => {
-            if (item.orderId !== excludeOrderId && Number(item.amount || 0) > 0) {
-                reserved.add(formatPaymentAmount(item.amount));
-            }
+        return buildClientPaymentOrder(payload?.order);
+    }
+
+    async function verifyBackendPayment(orderId, txid) {
+        const query = new URLSearchParams({ orderId: String(orderId || ''), txid: String(txid || ''), minerId: getPaymentMinerId() });
+        return requestPaymentApi(`/verify-payment?${query.toString()}`);
+    }
+
+    async function claimBackendPayment(orderId, txid) {
+        return requestPaymentApi('/claim-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, txid, minerId: getPaymentMinerId() })
         });
-        const seed = Date.now() % 89;
-        for (let index = 0; index < 89; index += 1) {
-            const suffix = ((seed + index) % 89) + 11;
-            const candidate = Math.round((basePrice + (suffix / 1000)) * 1000) / 1000;
-            if (!reserved.has(formatPaymentAmount(candidate))) return candidate;
-        }
-        return Math.round((basePrice + 0.097) * 1000) / 1000;
+    }
+
+    function pushVerifiedTxid(txid) {
+        state.save.verifiedTxids = sanitizeVerifiedTxids([normalizeTxid(txid), ...(state.save.verifiedTxids || [])], state.save.paymentHistory);
+    }
+
+    function pushPaymentHistoryEntry(entry) {
+        state.save.paymentHistory = sanitizePaymentHistory([
+            entry,
+            ...(state.save.paymentHistory || []).filter((item) => normalizeTxid(item.txid) !== normalizeTxid(entry.txid))
+        ]);
     }
 
     function isPendingOrderValid(order) {
         if (!order || typeof order !== 'object') return false;
         const offer = offerMap[order.offerId];
         if (!offer) return false;
-        const basePrice = Math.round((Number(offer.price || 0)) * 1000) / 1000;
         const exactAmount = Number(order.exactAmount || 0);
-        if (!(exactAmount > basePrice)) return false;
-        if (String(order.payAddress || '').trim() !== PAYMENT_WALLET) return false;
+        if (!(exactAmount > 0)) return false;
+        if (!String(order.id || '').trim() || String(order.id || '').trim() === '--') return false;
+        if (!String(order.minerId || '').trim()) return false;
+        if (!resolvePaymentAddress(order, { allowLastKnown: false })) return false;
         if (String(order.network || '').trim() !== PAYMENT_NETWORK) return false;
         if ((Number(order.createdAt) || 0) <= 0) return false;
+        if ((Number(order.expiresAt) || 0) <= 0) return false;
         return true;
     }
 
-    function ensurePendingOrder(offerId, { forceNew = false, silent = false } = {}) {
+    async function copyOfferAddress(offerId) {
         const offer = offerMap[offerId];
-        if (!offer) return null;
-        if (offer.oneTime && isOfferOwned(offerId)) return null;
-        state.save.pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
-        const existing = state.save.pendingOrders.find((item) => item.offerId === offerId) || null;
-        if (!forceNew && existing) return existing;
-        state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.offerId !== offerId);
-        const createdAt = Date.now();
-        const order = {
-            id: createOrderId(offerId, createdAt),
-            offerId,
-            exactAmount: getOfferExactAmount(offer, existing?.id || ''),
-            payAddress: PAYMENT_WALLET,
-            network: PAYMENT_NETWORK,
-            createdAt,
-            txid: ''
-        };
-        state.save.pendingOrders = sanitizePendingOrders([order, ...state.save.pendingOrders]);
-        saveProgress();
-        if (!silent) {
-            showToast(text('精确金额订单已更新。', 'Exact payment order updated.'), 'good');
+        if (!offer) return;
+        let order = getPendingOrder(offerId);
+        if (!order) {
+            try {
+                order = await createBackendPaymentOrder(offerId);
+                upsertPendingOrder(order);
+                previewOffer(offerId);
+            } catch (error) {
+                showToast(error?.message || text('订单创建失败，请稍后重试。', 'Failed to create the order. Please try again later.'), 'warn');
+                return;
+            }
         }
-        return state.save.pendingOrders.find((item) => item.offerId === offerId) || null;
+        const wallet = resolvePaymentAddress(order);
+        if (!wallet) {
+            showToast(text('当前订单暂无可用收款地址，请稍后重试。', 'The current order does not have a receiving address yet. Please try again shortly.'), 'warn');
+            return;
+        }
+        await copyText(wallet, text('地址已复制。', 'Address copied.'));
     }
 
     async function copyOfferAmount(offerId) {
         const offer = offerMap[offerId];
         if (!offer) return;
-        const order = getPendingOrder(offerId) || ensurePendingOrder(offerId, { forceNew: true, silent: true });
+        let order = getPendingOrder(offerId);
         if (!order) {
-            showToast(text('请先创建订单。', 'Create an order first.'), 'warn');
-            return;
+            try {
+                order = await createBackendPaymentOrder(offerId);
+                upsertPendingOrder(order);
+                previewOffer(offerId);
+            } catch (error) {
+                showToast(error?.message || text('订单创建失败，请稍后重试。', 'Failed to create the order. Please try again later.'), 'warn');
+                return;
+            }
         }
-        await copyText(String(formatPaymentAmount(order.exactAmount)), text('精确金额已复制。', 'Exact amount copied.'));
+        await copyText(String(Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)), text('精确金额已复制。', 'Exact amount copied.'));
+    }
+
+    async function flushPendingPaymentClaims({ silent = true } = {}) {
+        const pendingClaims = state.save.payment.pendingClaims || {};
+        const entries = Object.entries(pendingClaims);
+        if (!entries.length) return 0;
+        let syncedCount = 0;
+        for (const [orderId, txid] of entries) {
+            if (!orderId || !txid) {
+                delete pendingClaims[orderId];
+                continue;
+            }
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete pendingClaims[orderId];
+                syncedCount += 1;
+            } catch (error) {
+                if (!silent) {
+                    console.warn('Cipher Match payment claim sync failed.', { orderId, error });
+                }
+            }
+        }
+        saveProgress();
+        return syncedCount;
     }
 
     function formatTimeLabel(value) {
@@ -3797,18 +4011,7 @@
         if (!Array.isArray(list)) return [];
         const seenOffers = new Set();
         return list
-            .map((item) => {
-                const createdAt = Number(item?.createdAt) || 0;
-                return {
-                    id: String(item?.id || createOrderId(item?.offerId, createdAt)),
-                    offerId: String(item?.offerId || ''),
-                    exactAmount: Math.round((Number(item?.exactAmount || 0)) * 1000) / 1000,
-                    payAddress: String(item?.payAddress || ''),
-                    network: String(item?.network || ''),
-                    createdAt,
-                    txid: normalizeTxid(item?.txid || '')
-                };
-            })
+            .map((item) => buildClientPaymentOrder(item))
             .filter((item) => offerMap[item.offerId] && !isPendingOrderExpired(item) && isPendingOrderValid(item))
             .sort((left, right) => right.createdAt - left.createdAt)
             .filter((item) => {
@@ -3830,9 +4033,9 @@
                     orderId: String(item?.orderId || '--'),
                     offerId,
                     txid: normalizeTxid(item?.txid || ''),
-                    amount: Math.round((Number(item?.amount || item?.exactAmount || basePrice || 0)) * 1000) / 1000,
+                    amount: Number(item?.amount || item?.exactAmount || basePrice || 0),
                     basePrice,
-                    payAddress: String(item?.payAddress || PAYMENT_WALLET),
+                    payAddress: String(item?.payAddress || resolvePaymentAddress(null) || ''),
                     network: String(item?.network || PAYMENT_NETWORK),
                     verifiedAt: Number(item?.verifiedAt) || 0
                 };
@@ -3907,6 +4110,10 @@
         try {
             const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}');
             const paymentHistory = sanitizePaymentHistory(raw.paymentHistory);
+            const payment = {
+                ...base.payment,
+                ...(raw.payment || {})
+            };
             const save = {
                 ...base,
                 ...raw,
@@ -3927,6 +4134,12 @@
                 claimedMissions: sanitizeIdList(raw.claimedMissions, config.missions.map((item) => item.id)),
                 clearedChapters: sanitizeIdList(raw.clearedChapters, config.chapters.map((item) => item.id)),
                 selectedModules: sanitizeSelectedModules(raw.selectedModules),
+                payment: {
+                    minerId: typeof payment.minerId === 'string' ? payment.minerId : '',
+                    lastPayAddress: typeof payment.lastPayAddress === 'string' ? payment.lastPayAddress : '',
+                    claimedOrders: payment.claimedOrders && typeof payment.claimedOrders === 'object' ? { ...payment.claimedOrders } : {},
+                    pendingClaims: payment.pendingClaims && typeof payment.pendingClaims === 'object' ? { ...payment.pendingClaims } : {}
+                },
                 pendingOrders: sanitizePendingOrders(raw.pendingOrders),
                 paymentHistory,
                 verifiedTxids: sanitizeVerifiedTxids(raw.verifiedTxids, paymentHistory)
@@ -3963,6 +4176,12 @@
             starterBoost: false,
             vaultRelay: false,
             clearedChapters: [],
+            payment: {
+                minerId: '',
+                lastPayAddress: '',
+                claimedOrders: {},
+                pendingClaims: {}
+            },
             pendingOrders: [],
             paymentHistory: [],
             verifiedTxids: [],
@@ -3990,6 +4209,10 @@
         if (JSON.stringify(state.save.pendingOrders) !== JSON.stringify(pendingOrders)) changed = true;
         if (JSON.stringify(state.save.paymentHistory) !== JSON.stringify(paymentHistory)) changed = true;
         if (JSON.stringify(state.save.verifiedTxids) !== JSON.stringify(verifiedTxids)) changed = true;
+        if (!state.save.payment || typeof state.save.payment !== 'object') {
+            state.save.payment = createDefaultSave().payment;
+            changed = true;
+        }
         state.save.pendingOrders = pendingOrders;
         state.save.paymentHistory = paymentHistory;
         state.save.verifiedTxids = verifiedTxids;
@@ -3998,6 +4221,9 @@
 
     function saveProgress() {
         try {
+            if (!state.save.payment || typeof state.save.payment !== 'object') {
+                state.save.payment = createDefaultSave().payment;
+            }
             state.save.pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
             state.save.paymentHistory = sanitizePaymentHistory(state.save.paymentHistory);
             state.save.verifiedTxids = sanitizeVerifiedTxids(state.save.verifiedTxids, state.save.paymentHistory);

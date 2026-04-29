@@ -14,6 +14,11 @@ const OFFER_CATALOGS = {
     sovereign: { name: 'Sovereign Arsenal Pack', baseAmount: 68.0 },
     nexus: { name: 'Nexus Fleet Pack', baseAmount: 128.0 },
   },
+  'cipher-match': {
+    starterPack: { name: 'Starter Decode Pack', baseAmount: 6.0 },
+    seasonPass: { name: 'Season Pass', baseAmount: 18.0 },
+    breakerVault: { name: 'Breaker Vault', baseAmount: 68.0 },
+  },
 };
 
 const ORDER_AMOUNT_DISPLAY_DECIMALS = 4;
