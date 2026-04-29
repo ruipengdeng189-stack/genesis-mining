@@ -444,7 +444,7 @@
             hangar: [
                 { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
                 { icon: '&#9992;', label: text('Chassis', 'Chassis'), value: `${text('Lv', 'Lv')}.${getUnitLevel(state.save.chassisLevels, selectedChassis.id)}`, tone: '' },
-                { icon: '&#9651;', label: text('Wings', 'Wings'), value: `${state.save.selectedWingmen.filter(Boolean).length}/${unlockedWingSlots}`, tone: unlockedWingSlots >= 2 ? 'is-good' : '' },
+                { icon: '&#9651;', label: text('僚机', 'Wings'), value: `${state.save.selectedWingmen.filter(Boolean).length}/${unlockedWingSlots}`, tone: unlockedWingSlots >= 2 ? 'is-good' : '' },
                 { icon: '&#9638;', label: text('Modules', 'Modules'), value: `${equippedModules}/4`, tone: equippedModules >= 4 ? 'is-good' : '' }
             ],
             blueprints: [
@@ -461,7 +461,7 @@
             ],
             season: [
                 { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' },
-                { icon: '&#9733;', label: text('Claims', 'Claims'), value: seasonClaims, tone: seasonClaims > 0 ? 'is-good' : '' },
+                { icon: '&#9733;', label: text('可领', 'Claims'), value: seasonClaims, tone: seasonClaims > 0 ? 'is-good' : '' },
                 { icon: '&#9734;', label: text('Sponsor', 'Sponsor'), value: localize(sponsorTier.title), tone: isSeasonPassUnlocked() ? 'is-good' : 'is-warning' },
                 { icon: '&#9674;', label: text('Progress', 'Progress'), value: chapterProgress, tone: '' }
             ],
@@ -469,7 +469,7 @@
                 { icon: '&#9679;', label: text('Credits', 'Credits'), value: formatCompact(state.save.credits), tone: '' },
                 { icon: '&#9733;', label: text('Supply', 'Supply'), value: canClaimDailySupply() ? text('Ready', 'Ready') : text('Cooldown', 'Cooldown'), tone: canClaimDailySupply() ? 'is-good' : '' },
                 { icon: '&#9734;', label: text('Sponsor', 'Sponsor'), value: localize(sponsorTier.title), tone: isSeasonPassUnlocked() ? 'is-good' : 'is-warning' },
-                { icon: '&#9670;', label: text('Spent', 'Spent'), value: `${Number(state.save.payment.totalSpent || 0).toFixed(0)}U`, tone: Number(state.save.payment.totalSpent || 0) > 0 ? 'is-good' : '' }
+                { icon: '&#9670;', label: text('已充', 'Spent'), value: `${Number(state.save.payment.totalSpent || 0).toFixed(0)}U`, tone: Number(state.save.payment.totalSpent || 0) > 0 ? 'is-good' : '' }
             ]
         };
         const items = itemsByTab[state.tab] || itemsByTab.sortie;
@@ -737,7 +737,7 @@
     function renderHangarWalletStrip() {
         const items = [
             { icon: '&#9679;', label: text('\u6301\u6709', 'Wallet'), value: formatCompact(state.save.credits), meta: text('Credits', 'Credits') },
-            { icon: '&#10010;', label: text('\u5408\u91d1', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('Blueprints', 'Blueprints') },
+            { icon: '&#10010;', label: text('\u5408\u91d1', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('蓝图', 'Blueprints') },
             { icon: '&#9671;', label: text('\u6838\u82af', 'Core'), value: formatCompact(state.save.coreChips), meta: text('Research', 'Research') },
             { icon: '&#10057;', label: text('\u590d\u6d3b', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('Safety', 'Safety') }
         ];
@@ -1437,7 +1437,7 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9734;', text('Sponsor Status', 'Sponsor Status'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('This panel shows your lasting top-up impact: tier, season access, daily sorties, and permanent bonuses.', 'This panel shows your lasting top-up impact: tier, season access, daily sorties, and permanent bonuses.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('这里展示累计充值带来的长期增益：档位、赛季权限、每日出击和永久加成。', 'This panel shows your lasting top-up impact: tier, season access, daily sorties, and permanent bonuses.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag ${isSeasonPassUnlocked() ? 'is-good' : 'is-warning'}">${escapeHtml(localize(sponsorTier.title))}</span>
@@ -1458,7 +1458,7 @@
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(getPermanentBonusValue('bossDamage')))}</strong>
                     </div>
                     <div class="ds-stat-box">
-                        <span class="ds-stat-label">${escapeHtml(text('Credit Yield', 'Credit Yield'))}</span>
+                        <span class="ds-stat-label">${escapeHtml(text('金币收益', 'Credit Yield'))}</span>
                         <strong class="ds-stat-value">${escapeHtml(formatPercent(totalCreditYield))}</strong>
                     </div>
                     <div class="ds-stat-box">
@@ -3966,22 +3966,22 @@
 
     function getMissionHint(missionId) {
         switch (missionId) {
-            case 'm1': return text('Use your first three free sorties to learn the drag-dodge rhythm.', 'Use your first three free sorties to learn the drag-dodge rhythm.');
-            case 'm2': return text('Elites arrive three times during a run.', 'Elites arrive three times during a run.');
-            case 'm3': return text('Clearing 1-2 unlocks the second wing slot.', 'Clearing 1-2 unlocks the second wing slot.');
-            case 'm4': return text('After 1-3, the next stage starts checking your main upgrades more closely.', 'After 1-3, the next stage starts checking your main upgrades more closely.');
-            case 'm5': return text('Chassis levels are always your most direct power gain.', 'Chassis levels are always your most direct power gain.');
-            case 'm6': return text('Use the free craft, then craft a few more to start seeing rare modules.', 'Use the free craft, then craft a few more to start seeing rare modules.');
-            case 'm7': return text('2-2 is the first stage where alloy spending ramps up clearly.', '2-2 is the first stage where alloy spending ramps up clearly.');
-            case 'm8': return text('Push the chassis and both wingmen to 3 stars.', 'Push the chassis and both wingmen to 3 stars.');
-            case 'm9': return text('The first boss is the key test for your early hangar.', 'The first boss is the key test for your early hangar.');
-            case 'm10': return text('3-3 is the first full-version finish line before late-game chapters begin.', '3-3 is the first full-version finish line before late-game chapters begin.');
-            case 'm11': return text('4-1 starts checking shield, levels, and whether your daily investment kept up.', '4-1 starts checking shield, levels, and whether your daily investment kept up.');
-            case 'm12': return text('Epic modules mostly come from pity cycles, higher season rewards, and premium packs.', 'Epic modules mostly come from pity cycles, higher season rewards, and premium packs.');
-            case 'm13': return text('Research is permanent growth that directly improves combat stats and farming efficiency.', 'Research is permanent growth that directly improves combat stats and farming efficiency.');
-            case 'm14': return text('Chassis levels are the most stable late-game power source and one of the cheapest ways to keep progressing.', 'Chassis levels are the most stable late-game power source and one of the cheapest ways to keep progressing.');
-            case 'm15': return text('4-3 is the current endgame challenge and favors a high-star chassis, boss damage, and epic modules.', '4-3 is the current endgame challenge and favors a high-star chassis, boss damage, and epic modules.');
-            default: return text('Keep pushing.', 'Keep pushing.');
+            case 'm1': return text('先用前三次免费出击熟悉拖拽闪避节奏。', 'Use your first three free sorties to learn the drag-dodge rhythm.');
+            case 'm2': return text('每局会遇到三次精英敌人。', 'Elites arrive three times during a run.');
+            case 'm3': return text('通关 1-2 后会解锁第二个僚机位。', 'Clearing 1-2 unlocks the second wing slot.');
+            case 'm4': return text('通关 1-3 后，下一阶段会更看重主力养成。', 'After 1-3, the next stage starts checking your main upgrades more closely.');
+            case 'm5': return text('主机等级始终是最直接的战力提升。', 'Chassis levels are always your most direct power gain.');
+            case 'm6': return text('先用免费制造，再多做几次，就能开始看到稀有模组。', 'Use the free craft, then craft a few more to start seeing rare modules.');
+            case 'm7': return text('2-2 是第一个明显吃合金的阶段。', '2-2 is the first stage where alloy spending ramps up clearly.');
+            case 'm8': return text('尽量把主机和两架僚机都推进到 3 星。', 'Push the chassis and both wingmen to 3 stars.');
+            case 'm9': return text('第一个首领关是前期机库养成的关键检验。', 'The first boss is the key test for your early hangar.');
+            case 'm10': return text('3-3 是前中期完整内容的第一条终点线，之后进入后期章节。', '3-3 is the first full-version finish line before late-game chapters begin.');
+            case 'm11': return text('4-1 会开始同时检查护盾、等级和每日养成是否跟上。', '4-1 starts checking shield, levels, and whether your daily investment kept up.');
+            case 'm12': return text('史诗模组主要来自保底循环、更高赛季奖励和付费礼包。', 'Epic modules mostly come from pity cycles, higher season rewards, and premium packs.');
+            case 'm13': return text('研究是永久成长，会直接提升战斗属性和刷资源效率。', 'Research is permanent growth that directly improves combat stats and farming efficiency.');
+            case 'm14': return text('主机等级是后期最稳定、也最省资源的战力提升来源。', 'Chassis levels are the most stable late-game power source and one of the cheapest ways to keep progressing.');
+            case 'm15': return text('4-3 是当前终局挑战，推荐高星主机、首领增伤和史诗模组。', '4-3 is the current endgame challenge and favors a high-star chassis, boss damage, and epic modules.');
+            default: return text('继续推进。', 'Keep pushing.');
         }
     }
 
