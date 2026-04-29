@@ -1825,7 +1825,10 @@
         const battle = state.battle;
         const playableCount = getBattlePlayableCardIds().length;
         const commandState = getBattleCommandState(selectedCard, battle);
+        const singleLane = battle.lanes.length === 1;
         const showLaneQuick = battle.lanes.length > 1;
+        const canPressBattleActions = battle.active && !battle.reinforcementPending && !battle.result;
+        const singleLaneId = singleLane ? battle.lanes[0]?.id || '' : '';
         const stepTwoLabel = battle.lanes.length === 1
             ? (commandState.ready ? text('② 自动上阵', '2 Auto Deploy') : text('② 蓄能中', '2 Charging'))
             : (commandState.ready ? text('② 点路线', '2 Tap Lane') : text('② 蓄能中', '2 Charging'));
@@ -1854,14 +1857,19 @@
                 ${showLaneQuick ? `
                     <div class="nc-battle-lane-quick" style="--nc-battle-quick-columns:${battle.lanes.length};">
                         ${battle.lanes.map((lane) => `
-                            <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(lane.id)}" ${battle.active && !battle.reinforcementPending && !battle.result && commandState.ready ? '' : 'disabled'}>
+                            <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(lane.id)}" ${canPressBattleActions ? '' : 'disabled'}>
                                 ${renderBattleLaneQuickLabel(lane.id, commandState.ready, selectedCard)}
                             </button>
                         `).join('')}
                     </div>
                 ` : ''}
 
-                <div class="nc-action-row nc-action-row--battle">
+                <div class="nc-action-row nc-action-row--battle ${singleLane ? 'nc-action-row--battle-single' : ''}">
+                    ${singleLane ? `
+                        <button class="primary-btn wide-btn" type="button" data-action="playBattleCard" data-value="${escapeHtml(singleLaneId)}" ${canPressBattleActions ? '' : 'disabled'}>
+                            ${escapeHtml(renderBattleSingleLaneActionLabel(singleLaneId, selectedCard, commandState))}
+                        </button>
+                    ` : ''}
                     <button class="${leaderReady ? 'primary-btn' : 'ghost-btn'} wide-btn" type="button" data-action="useLeaderSkill" ${leaderReady ? '' : 'disabled'}>${escapeHtml(text(`✦ 技能 ${getBattleLaneLabel(battle.focusLaneId)}`, `✦ Skill ${getBattleLaneLabel(battle.focusLaneId)}`))}</button>
                     <button class="ghost-btn wide-btn" type="button" data-action="retreatBattle" ${battle.active && !battle.result ? '' : 'disabled'}>${escapeHtml(text('↩ 撤退', '↩ Retreat'))}</button>
                 </div>
@@ -1896,6 +1904,25 @@
             );
         }
         return escapeHtml(`${icon} ${getBattleLaneLabel(laneId)} ${text('待命', 'Standby')}`);
+    }
+
+    function renderBattleSingleLaneActionLabel(laneId, selectedCard, commandState) {
+        const icon = getBattleLaneIcon(laneId);
+        if (!selectedCard) {
+            return `${icon} ${text('先选卡', 'Pick Card')}`;
+        }
+        if (commandState.ready) {
+            return selectedCard.type === 'tactic'
+                ? `${icon} ${text('主线放术', 'Cast Main')}`
+                : `${icon} ${text('主线出兵', 'Deploy Main')}`;
+        }
+        if (commandState.badge === text('缺能量', 'Low Energy')) {
+            return `${icon} ${text('能量不足', 'Low Energy')}`;
+        }
+        if (commandState.badge === text('冷却中', 'Cooldown')) {
+            return `${icon} ${text('冷却中', 'Cooldown')}`;
+        }
+        return `${icon} ${text('待命中', 'Standby')}`;
     }
 
     function renderClashGuideStrip() {
