@@ -2089,13 +2089,16 @@
         const ready = cooldown <= 0.05;
         const affordable = battle.energy >= card.cost;
         const selected = battle.selectedCardId === cardId;
+        const feedbackTone = battle.commandFeedback?.cardId === cardId && battle.commandFeedback.until > battle.time
+            ? battle.commandFeedback.tone || ''
+            : '';
         const visual = getBattleCardVisual(card);
         const meta = getBattleCardCompactMeta(card);
         const stateLabel = ready
             ? (affordable ? text('可出', 'Ready') : text('缺能', 'Low'))
             : `${cooldown.toFixed(1)}s`;
         return `
-            <button class="nc-hand-card nc-battle-hand ${selected ? 'is-selected' : ''} ${ready ? 'is-ready' : 'is-cooling'} ${affordable && ready ? 'is-affordable' : ''}" type="button" data-action="selectBattleCard" data-value="${cardId}" ${battle.active && !battle.reinforcementPending && !battle.result ? '' : 'disabled'}>
+            <button class="nc-hand-card nc-battle-hand ${selected ? 'is-selected' : ''} ${ready ? 'is-ready' : 'is-cooling'} ${affordable && ready ? 'is-affordable' : ''} ${feedbackTone ? `is-feedback-${feedbackTone}` : ''}" type="button" data-action="selectBattleCard" data-value="${cardId}" ${battle.active && !battle.reinforcementPending && !battle.result ? '' : 'disabled'}>
                 <div class="nc-battle-hand-top">
                     <span class="nc-battle-hand-icon is-${visual.tone}" aria-hidden="true">${visual.icon}</span>
                     <span class="nc-battle-hand-cost">${escapeHtml(String(card.cost))}</span>
@@ -2248,15 +2251,26 @@
     function selectBattleCard(cardId) {
         const battle = state.battle;
         if (!battle || !battle.active || battle.reinforcementPending || battle.result) return;
+        const card = getBattleCardById(cardId);
+        if (!card) return;
         const nextSelected = battle.selectedCardId === cardId ? '' : cardId;
+        const cooldown = Math.max(0, battle.cooldowns[cardId] || 0);
+        const affordable = battle.energy >= card.cost;
         battle.selectedCardId = nextSelected;
+        markBattleCardFeedback(cardId, nextSelected ? (cooldown <= 0.05 && affordable ? 'good' : 'warning') : 'good');
         if (battle.lanes.length === 1 && nextSelected) {
-            const card = getBattleCardById(nextSelected);
-            const cooldown = Math.max(0, battle.cooldowns[nextSelected] || 0);
-            if (card && cooldown <= 0.05 && battle.energy >= card.cost) {
-                playBattleCard(battle.lanes[0].id);
+            if (cooldown > 0.05) {
+                markBattleNotice(text(`${localize(card.name)} 冷却 ${cooldown.toFixed(1)}s`, `${localize(card.name)} ready in ${cooldown.toFixed(1)}s`), 'warning', 1.15);
+                renderClashRuntime();
                 return;
             }
+            if (!affordable) {
+                markBattleNotice(text(`${localize(card.name)} 需要 ${card.cost} 点能量`, `${localize(card.name)} needs ${card.cost} energy`), 'warning', 1.15);
+                renderClashRuntime();
+                return;
+            }
+            playBattleCard(battle.lanes[0].id);
+            return;
         }
         renderClashRuntime();
     }
@@ -2274,6 +2288,7 @@
         }
 
         if (!battle.selectedCardId) {
+            markBattleNotice(text('先点下方卡牌，再执行出兵。', 'Pick a card below before deploying.'), 'warning', 1.15);
             renderClashRuntime();
             return;
         }
@@ -2281,19 +2296,15 @@
         let card = getBattleCardById(battle.selectedCardId);
         if (!card) return;
         let cooldown = Math.max(0, battle.cooldowns[card.id] || 0);
-        if (cooldown > 0.05 || battle.energy < card.cost) {
-            const fallbackCardId = getBattleCommandCardId(card.id);
-            if (fallbackCardId && fallbackCardId !== card.id) {
-                battle.selectedCardId = fallbackCardId;
-                card = getBattleCardById(fallbackCardId);
-                cooldown = Math.max(0, battle.cooldowns[card.id] || 0);
-            }
-        }
         if (cooldown > 0.05) {
+            markBattleCardFeedback(card.id, 'warning');
+            markBattleNotice(text(`${localize(card.name)} 冷却 ${cooldown.toFixed(1)}s`, `${localize(card.name)} ready in ${cooldown.toFixed(1)}s`), 'warning', 1.15);
             renderClashRuntime();
             return;
         }
         if (battle.energy < card.cost) {
+            markBattleCardFeedback(card.id, 'warning');
+            markBattleNotice(text(`${localize(card.name)} 需要 ${card.cost} 点能量`, `${localize(card.name)} needs ${card.cost} energy`), 'warning', 1.15);
             renderClashRuntime();
             return;
         }
@@ -2317,6 +2328,7 @@
             pushLaneEvent(laneId, '&#9654;', localize(card.name), 'good');
             markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
+            markBattleCardFeedback(card.id, 'good');
         } else {
             battle.energy -= card.cost;
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
@@ -2326,6 +2338,7 @@
             pushLaneEvent(laneId, '&#10038;', localize(card.name), tacticTone);
             markBattleArena(tacticTone, 1.1);
             markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 战术生效`, `${getBattleLaneLabel(laneId)} tactic released`), tacticTone);
+            markBattleCardFeedback(card.id, tacticTone === 'warning' ? 'warning' : 'good');
             applyBattleTactic(card.id, lane);
         }
 
@@ -3688,6 +3701,15 @@
         }
         state.battle.notice = {
             text: message,
+            tone,
+            until: state.battle.time + duration
+        };
+    }
+
+    function markBattleCardFeedback(cardId, tone = 'good', duration = 0.68) {
+        if (!state.battle || !cardId) return;
+        state.battle.commandFeedback = {
+            cardId,
             tone,
             until: state.battle.time + duration
         };

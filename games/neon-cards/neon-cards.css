@@ -1592,12 +1592,12 @@ button:disabled {
 
 .nc-battle-command {
     position: sticky;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 86px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
     z-index: 6;
     display: grid;
-    gap: 6px;
-    padding: 8px;
-    border-radius: 18px;
+    gap: 5px;
+    padding: 7px;
+    border-radius: 16px;
     border: 1px solid rgba(104, 255, 224, 0.16);
     background: rgba(8, 14, 28, 0.94);
     backdrop-filter: blur(12px);
@@ -1638,7 +1638,8 @@ button:disabled {
     gap: 8px;
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 2px;
+    padding-bottom: 1px;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
 }
 
@@ -1647,8 +1648,8 @@ button:disabled {
 }
 
 .nc-hand-row--battle-dock .nc-battle-hand {
-    flex: 0 0 min(100px, 30vw);
-    min-height: 68px;
+    flex: 0 0 min(94px, 29vw);
+    min-height: 64px;
 }
 
 .nc-battle-lane-quick {
@@ -1673,14 +1674,17 @@ button:disabled {
 }
 
 .nc-battle-hand {
-    min-height: 72px;
-    padding: 7px;
+    min-height: 68px;
+    padding: 6px;
     display: grid;
-    gap: 4px;
+    gap: 3px;
     align-content: start;
     border-width: 1px;
     cursor: pointer;
     transition: border-color 0.18s ease, transform 0.18s ease, opacity 0.18s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    scroll-snap-align: start;
 }
 
 .nc-battle-hand strong {
@@ -1774,6 +1778,13 @@ button:disabled {
     transform: translateY(-1px);
 }
 
+.nc-battle-hand:active,
+.nc-battle-lane[data-action]:active,
+.nc-battle-lane-quick .primary-btn:active,
+.nc-action-row--battle .wide-btn:active {
+    transform: scale(0.985);
+}
+
 .nc-battle-hand.is-ready {
     border-color: rgba(91, 141, 255, 0.18);
 }
@@ -1784,6 +1795,21 @@ button:disabled {
 
 .nc-battle-hand.is-cooling {
     opacity: 0.72;
+}
+
+.nc-battle-lane[data-action],
+.nc-battle-lane-quick .primary-btn,
+.nc-action-row--battle .wide-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.nc-battle-hand.is-feedback-good {
+    animation: nc-battle-hand-good 0.42s ease;
+}
+
+.nc-battle-hand.is-feedback-warning {
+    animation: nc-battle-hand-warning 0.48s ease;
 }
 
 .nc-action-row--battle {
@@ -1805,24 +1831,33 @@ body[data-neon-tab="clash"] .nc-battle-card--live .nc-battle-command {
     position: absolute;
     inset: 0;
     z-index: 4;
-    padding: 14px;
+    padding: 14px 14px calc(env(safe-area-inset-bottom, 0px) + 14px);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     background: rgba(4, 8, 18, 0.68);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .nc-battle-overlay-card {
     width: min(100%, 620px);
     max-height: 100%;
+    margin: auto;
     padding: 18px;
     display: grid;
     gap: 12px;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-radius: 22px;
     border: 1px solid rgba(104, 255, 224, 0.16);
     background: rgba(11, 18, 34, 0.96);
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.34);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 .nc-panel-head h3,
@@ -1875,6 +1910,41 @@ body[data-neon-tab="clash"] .nc-battle-card--live .nc-action-row {
     to {
         opacity: 1;
         transform: translate(-50%, -50%);
+    }
+}
+
+@keyframes nc-battle-hand-good {
+    0% {
+        transform: scale(0.97);
+        box-shadow: 0 0 0 rgba(104, 255, 224, 0);
+    }
+    60% {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 0 0 1px rgba(104, 255, 224, 0.24), 0 12px 20px rgba(20, 126, 102, 0.18);
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 0 0 rgba(104, 255, 224, 0);
+    }
+}
+
+@keyframes nc-battle-hand-warning {
+    0% {
+        transform: translateX(0);
+        border-color: rgba(255, 203, 107, 0.22);
+    }
+    30% {
+        transform: translateX(-2px);
+    }
+    60% {
+        transform: translateX(2px);
+        border-color: rgba(255, 203, 107, 0.4);
+        box-shadow: 0 0 0 1px rgba(255, 203, 107, 0.18);
+    }
+    100% {
+        transform: translateX(0);
+        border-color: rgba(255, 203, 107, 0.22);
+        box-shadow: 0 0 0 rgba(255, 203, 107, 0);
     }
 }
 
@@ -1962,7 +2032,7 @@ body[data-neon-live="1"] .nc-panel-card {
 }
 
 body[data-neon-live="1"] .nc-battle-card--live {
-    gap: 5px;
+    gap: 4px;
 }
 
 body[data-neon-live="1"] .nc-battle-card--live .nc-card-copy {
@@ -1979,8 +2049,8 @@ body[data-neon-live="1"] .nc-battle-hud-box strong {
 }
 
 body[data-neon-live="1"] .nc-battle-arena {
-    min-height: 380px;
-    padding: 22px 8px 8px;
+    min-height: 396px;
+    padding: 18px 8px 6px;
 }
 
 body[data-neon-live="1"] .nc-battle-lane {
@@ -1990,33 +2060,33 @@ body[data-neon-live="1"] .nc-battle-lane {
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-single-lane {
-    min-height: clamp(238px, 38dvh, 294px);
-    padding: 14px 8px 7px;
+    min-height: clamp(264px, 42dvh, 324px);
+    padding: 10px 8px 6px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-two-lane {
-    min-height: clamp(304px, 48dvh, 372px);
-    padding: 18px 8px 7px;
+    min-height: clamp(320px, 50dvh, 386px);
+    padding: 14px 8px 6px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-single-lane .nc-battle-lane {
-    min-height: 176px;
+    min-height: 194px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-two-lane .nc-battle-lane {
-    min-height: 132px;
+    min-height: 138px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-single-lane .nc-battle-track {
-    min-height: 128px;
+    min-height: 148px;
 }
 
 body[data-neon-live="1"] .nc-battle-arena.is-two-lane .nc-battle-track {
-    min-height: 96px;
+    min-height: 102px;
 }
 
 body[data-neon-live="1"] .nc-battle-command {
-    gap: 6px;
+    gap: 4px;
 }
 
 body[data-neon-live="1"] .nc-battle-lane-foot {
@@ -2501,7 +2571,7 @@ body[data-neon-live="1"] .nc-battle-event-strip {
 
     body[data-neon-live="1"] .nc-shell {
         padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 156px);
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 132px);
     }
 
     body[data-neon-live="1"] .nc-battle-hud {
@@ -2528,18 +2598,18 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-arena {
-        min-height: clamp(356px, 58dvh, 448px);
-        padding: 16px 8px 7px;
+        min-height: clamp(388px, 62dvh, 476px);
+        padding: 14px 8px 6px;
     }
 
     body[data-neon-live="1"] .nc-battle-arena.is-single-lane {
-        min-height: clamp(268px, 43dvh, 328px);
-        padding-top: 10px;
+        min-height: clamp(304px, 49dvh, 366px);
+        padding-top: 8px;
     }
 
     body[data-neon-live="1"] .nc-battle-arena.is-two-lane {
-        min-height: clamp(336px, 53dvh, 404px);
-        padding-top: 12px;
+        min-height: clamp(350px, 56dvh, 418px);
+        padding-top: 10px;
     }
 
     body[data-neon-live="1"] .nc-battle-notice {
@@ -2564,7 +2634,7 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-card--live {
-        gap: 5px;
+        gap: 4px;
     }
 
     body[data-neon-live="1"] .nc-battle-card--live .nc-card-head {
@@ -2603,7 +2673,7 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-command {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 66px);
         gap: 4px;
         padding: 6px 7px;
     }
@@ -2630,12 +2700,12 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-hand-row--battle-dock .nc-battle-hand {
-        flex-basis: min(116px, 34vw);
-        min-height: 72px;
+        flex-basis: min(96px, 30vw);
+        min-height: 64px;
     }
 
     body[data-neon-live="1"] .nc-battle-command--lanes-1 .nc-hand-row--battle-dock .nc-battle-hand {
-        flex-basis: min(122px, 36vw);
+        flex-basis: min(102px, 32vw);
     }
 
     body[data-neon-live="1"] .nc-battle-lane-quick {
@@ -2649,8 +2719,8 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-hand {
-        padding: 8px;
-        gap: 5px;
+        padding: 6px;
+        gap: 4px;
     }
 
     body[data-neon-live="1"] .nc-battle-hand strong {
@@ -2694,11 +2764,11 @@ body[data-neon-live="1"] .nc-battle-event-strip {
     }
 
     body[data-neon-live="1"] .nc-battle-arena.is-single-lane .nc-battle-track {
-        min-height: 140px;
+        min-height: 162px;
     }
 
     body[data-neon-live="1"] .nc-battle-arena.is-two-lane .nc-battle-track {
-        min-height: 104px;
+        min-height: 110px;
     }
 
     body[data-neon-live="1"] .nc-battle-core {
