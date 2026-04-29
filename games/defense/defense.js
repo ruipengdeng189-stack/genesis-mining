@@ -9,6 +9,7 @@
     const SAFE_CORE_Y = 910;
     const SKILL_READY_GLOW_MS = 240;
     const PAYMENT_API_BASE = '/api';
+    const PAYMENT_GAME_ID = 'defense';
     const PAYMENT_ORDER_STORAGE_KEY = 'genesis_defense_payment_order_v1';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
@@ -8002,7 +8003,7 @@
         const payload = await requestPaymentApi('/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId })
+            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
         });
         return buildClientPaymentOrder(payload?.order);
     }

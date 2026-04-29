@@ -7,6 +7,7 @@
     const POWER_PER_GEM_SCORE = 0.3;
     const POWER_PER_AWAKEN_SCORE = 0.95;
     const PAYMENT_API_BASE = '/api';
+    const PAYMENT_GAME_ID = 'gem-forge';
     const PAYMENT_ORDER_STORAGE_KEY = 'genesis_gem_forge_payment_order_v1';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
@@ -689,7 +690,7 @@
         const payload = await requestPaymentApi('/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId })
+            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
         });
         return buildClientPaymentOrder(payload?.order);
     }

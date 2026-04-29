@@ -19,6 +19,12 @@ const OFFER_CATALOGS = {
     seasonPass: { name: 'Season Pass', baseAmount: 18.0 },
     breakerVault: { name: 'Breaker Vault', baseAmount: 68.0 },
   },
+  'neon-cards': {
+    starter: { name: 'Starter Deck Pack', baseAmount: 6.0 },
+    tactical: { name: 'Tactical Supply Pack', baseAmount: 15.0 },
+    captain: { name: 'Captain Growth Pack', baseAmount: 30.0 },
+    champion: { name: 'Champion Deck Pack', baseAmount: 68.0 },
+  },
 };
 
 const ORDER_AMOUNT_DISPLAY_DECIMALS = 4;

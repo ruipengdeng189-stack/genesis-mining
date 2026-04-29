@@ -6,8 +6,9 @@
     const SEASON_ANCHOR_UTC = Date.UTC(2026, 3, 7, 0, 0, 0);
     const SEASON_LENGTH_MS = 14 * 24 * 60 * 60 * 1000;
     const PAYMENT_API_BASE = '/api';
+    const PAYMENT_GAME_ID = 'runner';
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
-    const PAYMENT_ORDER_DISPLAY_DECIMALS = 6;
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
     const NEWBIE_ASSIST_DISTANCE = 900;
     const NEWBIE_ASSIST_OBSTACLE_SPEED = 0.76;
@@ -1955,28 +1956,11 @@
             },
             body: JSON.stringify({
                 minerId: getPaymentMinerId(),
-                offerId
+                offerId,
+                gameId: PAYMENT_GAME_ID
             })
         });
         return buildClientPaymentOrder(payload?.order);
-    }
-
-    async function verifyBackendPayment(orderId, txid) {
-        const query = new URLSearchParams({
-            orderId: String(orderId || ''),
-            txid: String(txid || '')
-        });
-        return requestPaymentApi(`/verify-payment?${query.toString()}`);
-    }
-
-    async function claimBackendPayment(orderId, txid) {
-        return requestPaymentApi('/claim-payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ orderId, txid })
-        });
     }
 
     function formatPaymentUsdt(value) {

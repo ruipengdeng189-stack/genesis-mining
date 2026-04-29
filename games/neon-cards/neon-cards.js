@@ -2,10 +2,15 @@
     const HUB_LANG_KEY = 'genesis_arcade_hub_lang_v1';
     const SAVE_KEY = 'genesis_neon_cards_save_v1';
     const DAILY_SUPPLY_COOLDOWN_MS = 20 * 60 * 60 * 1000;
+    const PAYMENT_API_BASE = '/api';
+    const PAYMENT_GAME_ID = 'neon-cards';
     const PAYMENT_NETWORK = 'TRON (TRC20)';
-    const PAYMENT_WALLET = 'TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW';
+    const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_EXPIRY_MS = 15 * 60 * 1000;
+    const PAYMENT_MINER_ID_STORAGE_KEY = 'genesis_neon_cards_payment_miner_v1';
+    const PAYMENT_ADDRESS_FIELDS = ['payAddress', 'pay_address', 'walletAddress', 'wallet_address', 'recipientAddress', 'recipient_address', 'receiveAddress', 'receive_address', 'receivingAddress', 'receiving_address', 'toAddress', 'to_address', 'address'];
     const PAYMENT_TXID_RE = /^[a-fA-F0-9]{64}$/;
+    let paymentMinerIdCache = '';
 
     const config = window.GENESIS_NEON_CARDS_CONFIG;
     if (!config) return;
@@ -44,6 +49,7 @@
         bindEvents();
         resetFreeClashWindow();
         renderAll();
+        Promise.resolve().then(() => flushPendingPaymentClaims().catch(() => {}));
     }
 
     function cacheUi() {
@@ -209,7 +215,7 @@
                 cancelOfferOrder(value);
                 break;
             case 'copyOfferAddress':
-                copyOfferAddress();
+                copyOfferAddress(value);
                 break;
             case 'copyOfferAmount':
                 copyOfferAmount(value);
@@ -1171,9 +1177,11 @@
         const otherLiveOrder = activeOrder && activeOrder.offerId !== offerId && !isPaymentOrderExpired(activeOrder)
             ? activeOrder
             : null;
-        if (!owned && !otherLiveOrder && (!order || expired || !isPaymentOrderValid(order))) {
-            order = ensureOfferOrder(offerId, { forceNew: true, silent: true });
-            expired = !!(order && isPaymentOrderExpired(order));
+        if (order && !isPaymentOrderValid(order)) {
+            state.save.payment.pendingOrder = null;
+            saveProgress();
+            order = null;
+            expired = false;
         }
         openModal({
             eyebrow: text('支付中心', 'Payment Center'),
@@ -1208,10 +1216,10 @@
             <div class="nc-payment-panel">
                 <div class="nc-payment-address-block">
                     <span class="nc-stat-label">${escapeHtml(text('收款地址', 'Receiving Address'))}</span>
-                    <div class="nc-payment-address">${escapeHtml(liveOrder ? order.payAddress : PAYMENT_WALLET)}</div>
+                    <div class="nc-payment-address">${escapeHtml(liveOrder ? resolvePaymentAddress(order) : '--')}</div>
                 </div>
                 <div class="nc-action-row">
-                    <button class="ghost-btn" type="button" data-action="copyOfferAddress">${escapeHtml(text('复制地址', 'Copy Address'))}</button>
+                    <button class="ghost-btn" type="button" data-action="copyOfferAddress" data-value="${offer.id}" ${liveOrder && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('复制地址', 'Copy Address'))}</button>
                     <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${liveOrder && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('复制金额', 'Copy Amount'))}</button>
                 </div>
                 ${owned ? `
@@ -1482,7 +1490,7 @@
         renderAll();
     }
 
-    function createOfferOrder(offerId) {
+    async function createOfferOrder(offerId) {
         const offer = offerMap[offerId];
         if (!offer) return;
         if (isOfferOwned(offerId)) {
@@ -1501,10 +1509,15 @@
             showToast(text('当前还有 1 笔待处理订单，请先完成或取消。', 'Another payment order is still pending. Finish or cancel it first.'), 'warning');
             return;
         }
-        ensureOfferOrder(offerId, { forceNew: true, silent: true });
-        previewOffer(offerId);
-        showToast(text('Exact payment order created.', 'Exact payment order created.'), 'success');
-        renderAll();
+        try {
+            const order = await createBackendPaymentOrder(offerId);
+            setPendingPaymentOrder(order);
+            previewOffer(offerId);
+            showToast(text('Exact payment order created.', 'Exact payment order created.'), 'success');
+            renderAll();
+        } catch (error) {
+            showToast(error?.message || text('当前暂时无法创建订单，请稍后重试。', 'Unable to create an order right now. Please try again later.'), 'warning');
+        }
     }
 
     function cancelOfferOrder(offerId) {
@@ -1520,10 +1533,10 @@
         renderAll();
     }
 
-    function verifyOfferTxid(offerId) {
+    async function verifyOfferTxid(offerId) {
         const offer = offerMap[offerId];
         const order = getPendingPaymentOrder(offerId);
-        const txid = getOfferTxidInput();
+        const txid = normalizeTxid(getOfferTxidInput());
         if (!offer || !order) {
             showToast(text('Create an order first.', 'Create an order first.'), 'warning');
             previewOffer(offerId);
@@ -1553,64 +1566,87 @@
             return;
         }
 
-        const sponsorUnlockedBefore = isSeasonPassUnlocked();
-        const settledAmount = roundMoney(Number(order.exactAmount || offer.price || 0));
-        state.save.payment.totalSpent = roundMoney(Number(state.save.payment.totalSpent || 0) + settledAmount);
-        state.save.payment.sponsorPass = true;
-        state.save.payment.purchaseCount = (state.save.payment.purchaseCount || 0) + 1;
-        pushUniqueValue(state.save.payment.claimedOfferIds, offerId);
-        pushUniqueValue(state.save.payment.claimedOrderIds, order.id);
-        pushUniqueValue(state.save.payment.verifiedTxids, txid, 40);
-        state.save.payment.recentOrders = [
-            {
-                id: order.id,
+        try {
+            const verificationPayload = await verifyBackendPayment(order.id, txid);
+            const verifiedOrder = buildClientPaymentOrder({
+                ...order,
+                ...(verificationPayload?.order || {}),
+                txid
+            });
+            const alreadyGranted = !!verificationPayload?.order?.rewardGranted;
+            const sponsorUnlockedBefore = recordVerifiedPayment({
                 offerId,
+                order: verifiedOrder,
                 txid,
-                exactAmount: order.exactAmount,
-                basePrice: roundMoney(Number(offer.price || 0)),
-                payAddress: order.payAddress,
-                network: order.network,
-                verifiedAt: Date.now()
-            },
-            ...(Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).filter((item) => item?.id !== order.id)
-        ].slice(0, 8);
-        state.save.payment.pendingOrder = null;
-        grantReward(offer.reward);
-        saveProgress();
-        openModal({
-            eyebrow: text('Payment Verified', 'Payment Verified'),
-            title: localize(offer.name),
-            subtitle: `${formatPaymentAmount(order.exactAmount)} USDT • ${PAYMENT_NETWORK}`,
-            body: `
-                <div class="nc-payment-status is-good">${escapeHtml(text('The order was verified successfully and rewards have been granted to this account.', 'The order was verified successfully and rewards have been granted to this account.'))}</div>
-                <div class="nc-stat-grid">
-                    ${renderStatBox(text('Order ID', 'Order ID'), order.id)}
-                    ${renderStatBox(text('TXID', 'TXID'), shortenTxid(txid))}
-                    ${renderStatBox(text('Total Spent', 'Total Spent'), `${formatPaymentAmount(state.save.payment.totalSpent)} USDT`)}
-                    ${renderStatBox(text('Sponsor Pass', 'Sponsor Pass'), isSeasonPassUnlocked() ? text('Unlocked', 'Unlocked') : text('Locked', 'Locked'), sponsorUnlockedBefore ? text('Already active', 'Already active') : text('Unlocked now', 'Unlocked now'))}
-                </div>
-                ${renderRewardPills(offer.reward)}
-                <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
-            `,
-            actions: [
-                { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
-                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
-            ]
-        });
-        showToast(text('Payment verified. Rewards granted.', 'Payment verified. Rewards granted.'), 'success');
-        renderAll();
+                grantRewards: !alreadyGranted
+            });
+
+            if (!alreadyGranted) {
+                try {
+                    await claimBackendPayment(order.id, txid);
+                    if (state.save.payment.pendingClaims?.[order.id]) {
+                        delete state.save.payment.pendingClaims[order.id];
+                        saveProgress();
+                    }
+                } catch (error) {
+                    if (!state.save.payment.pendingClaims || typeof state.save.payment.pendingClaims !== 'object') {
+                        state.save.payment.pendingClaims = {};
+                    }
+                    state.save.payment.pendingClaims[order.id] = txid;
+                    saveProgress();
+                }
+            }
+
+            openModal({
+                eyebrow: text('Payment Verified', 'Payment Verified'),
+                title: localize(offer.name),
+                subtitle: `${formatPaymentAmount(verifiedOrder.exactAmount || order.exactAmount)} USDT • ${PAYMENT_NETWORK}`,
+                body: `
+                    <div class="nc-payment-status is-good">${escapeHtml(
+                        alreadyGranted
+                            ? text('这笔订单此前已校验通过，当前设备已恢复礼包归属状态。一次性奖励不会重复发放。', 'This order was already verified earlier. Pack ownership is restored on this device, and one-time rewards are not granted twice.')
+                            : text('The order was verified successfully and rewards have been granted to this account.', 'The order was verified successfully and rewards have been granted to this account.')
+                    )}</div>
+                    <div class="nc-stat-grid">
+                        ${renderStatBox(text('Order ID', 'Order ID'), verifiedOrder.id || order.id)}
+                        ${renderStatBox(text('TXID', 'TXID'), shortenTxid(txid))}
+                        ${renderStatBox(text('Total Spent', 'Total Spent'), `${formatPaymentAmount(state.save.payment.totalSpent)} USDT`)}
+                        ${renderStatBox(text('Sponsor Pass', 'Sponsor Pass'), isSeasonPassUnlocked() ? text('Unlocked', 'Unlocked') : text('Locked', 'Locked'), sponsorUnlockedBefore ? text('Already active', 'Already active') : text('Unlocked now', 'Unlocked now'))}
+                    </div>
+                    ${!alreadyGranted ? renderRewardPills(offer.reward) : ''}
+                    <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
+                `,
+                actions: [
+                    { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
+                    { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+                ]
+            });
+            showToast(
+                alreadyGranted
+                    ? text('Payment already verified for this account.', 'Payment already verified for this account.')
+                    : text('Payment verified. Rewards granted.', 'Payment verified. Rewards granted.'),
+                'success'
+            );
+            renderAll();
+        } catch (error) {
+            showToast(error?.message || text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again later.'), 'warning');
+        }
     }
 
-    async function copyOfferAddress() {
-        const copied = await copyTextToClipboard(PAYMENT_WALLET);
+    async function copyOfferAddress(offerId) {
+        const order = getPendingPaymentOrder(offerId);
+        const payAddress = resolvePaymentAddress(order);
+        if (!order || isPaymentOrderExpired(order) || !isPaymentOrderValid(order) || !payAddress) {
+            showToast(text('Create an order first.', 'Create an order first.'), 'warning');
+            return;
+        }
+        const copied = await copyTextToClipboard(payAddress);
         showToast(copied ? text('Receiving address copied.', 'Receiving address copied.') : text('Please copy the address manually.', 'Please copy the address manually.'), copied ? 'success' : 'warning');
     }
 
     async function copyOfferAmount(offerId) {
-        const offer = offerMap[offerId];
-        if (!offer) return;
-        const order = getPendingPaymentOrder(offerId) || ensureOfferOrder(offerId, { forceNew: true, silent: true });
-        if (!order) {
+        const order = getPendingPaymentOrder(offerId);
+        if (!order || isPaymentOrderExpired(order) || !isPaymentOrderValid(order)) {
             showToast(text('Create an order first.', 'Create an order first.'), 'warning');
             return;
         }
@@ -4375,80 +4411,166 @@
         return hasPaymentOffer(offerId);
     }
 
+    function normalizeTxid(txid) {
+        return String(txid || '').trim().toLowerCase();
+    }
+
+    function resolvePaymentAddress(order) {
+        if (!order || typeof order !== 'object') return '';
+        for (const field of PAYMENT_ADDRESS_FIELDS) {
+            const value = String(order?.[field] || '').trim();
+            if (value) return value;
+        }
+        return '';
+    }
+
+    function mapPaymentApiError(errorMessage) {
+        const raw = String(errorMessage || '').trim();
+        const lower = raw.toLowerCase();
+        if (!raw) return text('支付服务暂时不可用，请稍后再试。', 'The payment service is temporarily unavailable. Please try again later.');
+        if (lower.includes('txid not found')) return text('未查询到这笔链上交易，请确认支付已到账。', 'That on-chain transaction could not be found yet. Please confirm the payment was sent.');
+        if (lower.includes('not confirmed yet')) return text('这笔链上交易仍在确认中，请稍后再校验。', 'This transaction is still confirming. Please verify again shortly.');
+        if (lower.includes('execution failed')) return text('这笔链上交易执行失败，无法发放奖励。', 'This on-chain transaction failed, so rewards cannot be granted.');
+        if (lower.includes('not a trc20 contract transfer')) return text('这不是 TRC20 转账，请使用 TRC20-USDT 支付。', 'This is not a TRC20 transfer. Please pay with TRC20-USDT.');
+        if (lower.includes('not trc20 usdt')) return text('这笔支付不是 TRC20-USDT，请按当前订单重新支付。', 'This payment is not TRC20-USDT. Please pay again with the active order.');
+        if (lower.includes('recipient address')) return text('收款地址不匹配，请按当前订单显示的地址支付。', 'Recipient address mismatch. Please use the address shown in the active order.');
+        if (lower.includes('amount mismatch')) return text('支付金额与当前订单不一致，请按精确金额支付。', 'The payment amount does not match the active order. Please use the exact amount.');
+        if (lower.includes('before this order was created')) return text('这笔转账早于当前订单创建时间，不能用于本订单。', 'This transfer happened before the current order was created and cannot be used for it.');
+        if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单。', 'The current order expired. Please create a fresh order.');
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('这笔交易哈希已经绑定过其他订单。', 'This txid has already been used by another order.');
+        if (lower.includes('minerid does not match order')) return text('当前订单不属于本设备，请重新创建订单。', 'This order does not belong to the current device. Please create a new order.');
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) {
+            return text('订单信息无效，请重新打开礼包并创建订单。', 'This order is invalid. Please reopen the pack and create a new order.');
+        }
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) {
+            return text('支付服务暂时不可用，请稍后再试。', 'The payment service is temporarily unavailable. Please try again later.');
+        }
+        return raw;
+    }
+
+    async function requestPaymentApi(path, init = {}) {
+        let response;
+        try {
+            response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+        } catch (error) {
+            throw new Error(text('支付服务暂时不可用，请检查网络后重试。', 'The payment service is temporarily unavailable. Please check your network and try again.'));
+        }
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload?.ok === false) {
+            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+        }
+        return payload;
+    }
+
+    function generatePaymentMinerId() {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return `NEON_${crypto.randomUUID().replace(/-/g, '').slice(0, 14).toUpperCase()}`;
+        }
+        return `NEON_${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    }
+
+    function getPaymentMinerId() {
+        if (paymentMinerIdCache) return paymentMinerIdCache;
+        try {
+            const stored = String(localStorage.getItem(PAYMENT_MINER_ID_STORAGE_KEY) || '').trim();
+            if (stored) {
+                paymentMinerIdCache = stored;
+                return paymentMinerIdCache;
+            }
+        } catch (error) {}
+        paymentMinerIdCache = generatePaymentMinerId();
+        try {
+            localStorage.setItem(PAYMENT_MINER_ID_STORAGE_KEY, paymentMinerIdCache);
+        } catch (error) {}
+        return paymentMinerIdCache;
+    }
+
+    function buildClientPaymentOrder(order) {
+        const createdAtRaw = order?.createdAt ?? order?.created_at;
+        const expiresAtRaw = order?.expiresAt ?? order?.expires_at;
+        const parsedExpiresAt = typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || 0);
+        const parsedCreatedAt = typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || 0);
+        const createdAt = parsedCreatedAt || (parsedExpiresAt > 0 ? Math.max(0, parsedExpiresAt - PAYMENT_ORDER_EXPIRY_MS) : Date.now());
+        const expiresAt = parsedExpiresAt || (createdAt + PAYMENT_ORDER_EXPIRY_MS);
+        return {
+            id: String(order?.id || order?.orderId || order?.order_id || ''),
+            offerId: String(order?.offerId || order?.offer_id || ''),
+            offerName: String(order?.offerName || order?.offer_name || ''),
+            minerId: String(order?.minerId || order?.miner_id || ''),
+            exactAmount: roundMoney(Number(order?.exactAmount || order?.exact_amount || order?.baseAmount || order?.base_amount || 0)),
+            payAddress: resolvePaymentAddress(order),
+            network: String(order?.network || PAYMENT_NETWORK),
+            createdAt,
+            expiresAt,
+            status: String(order?.status || 'pending'),
+            txid: normalizeTxid(order?.txid || ''),
+            rewardGranted: !!(order?.rewardGranted ?? order?.reward_granted)
+        };
+    }
+
+    async function createBackendPaymentOrder(offerId) {
+        const payload = await requestPaymentApi('/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
+        });
+        return buildClientPaymentOrder(payload?.order);
+    }
+
+    async function verifyBackendPayment(orderId, txid) {
+        const query = new URLSearchParams({
+            orderId: String(orderId || ''),
+            txid: normalizeTxid(txid),
+            minerId: getPaymentMinerId()
+        });
+        return requestPaymentApi(`/verify-payment?${query.toString()}`);
+    }
+
+    async function claimBackendPayment(orderId, txid) {
+        return requestPaymentApi('/claim-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, txid: normalizeTxid(txid), minerId: getPaymentMinerId() })
+        });
+    }
+
     function getPendingPaymentOrder(offerId = '') {
         const order = state.save.payment.pendingOrder;
         if (!order || typeof order !== 'object') return null;
+        if (!offerMap[order.offerId] || !/^ORD_/i.test(String(order.id || ''))) return null;
         if (offerId && order.offerId !== offerId) return null;
         return order;
+    }
+
+    function setPendingPaymentOrder(order) {
+        const nextOrder = buildClientPaymentOrder(order);
+        if (!nextOrder.id || !nextOrder.offerId) return null;
+        state.save.payment.pendingOrder = nextOrder;
+        saveProgress();
+        return nextOrder;
     }
 
     function getRecentOfferOrder(offerId = '') {
         return (Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).find((item) => !offerId || item.offerId === offerId) || null;
     }
 
-    function buildPaymentOrderId(offerId) {
-        return `NC-${String(offerId || 'PACK').slice(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
-    }
-
-    function getOfferExactAmount(offer, excludeOrderId = '') {
-        const basePrice = roundMoney(Number(offer?.price || 0));
-        const reserved = new Set();
-        const pending = getPendingPaymentOrder();
-        if (pending && pending.id !== excludeOrderId && Number(pending.exactAmount || 0) > 0) {
-            reserved.add(formatPaymentAmount(pending.exactAmount));
-        }
-        (Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).forEach((item) => {
-            if (item?.id !== excludeOrderId && Number(item?.exactAmount || 0) > 0) {
-                reserved.add(formatPaymentAmount(item.exactAmount));
-            }
-        });
-        const seed = Date.now() % 89;
-        for (let index = 0; index < 89; index += 1) {
-            const suffix = ((seed + index) % 89) + 11;
-            const candidate = roundMoney(basePrice + (suffix / 1000));
-            if (!reserved.has(formatPaymentAmount(candidate))) return candidate;
-        }
-        return roundMoney(basePrice + 0.097);
-    }
-
     function isPaymentOrderValid(order) {
         if (!order || typeof order !== 'object') return false;
         if (!order.id || !offerMap[order.offerId]) return false;
+        if (!/^ORD_/i.test(String(order.id || ''))) return false;
         if (roundMoney(order.exactAmount) <= roundMoney(Number(offerMap[order.offerId]?.price || 0))) return false;
-        if (String(order.payAddress || '').trim() !== PAYMENT_WALLET) return false;
+        if (!resolvePaymentAddress(order)) return false;
         if (String(order.network || '').trim() !== PAYMENT_NETWORK) return false;
         if (!Number(order.createdAt) || !Number(order.expiresAt) || Number(order.expiresAt) <= Number(order.createdAt)) return false;
         return true;
     }
 
-    function ensureOfferOrder(offerId, { forceNew = false, silent = false } = {}) {
-        const offer = offerMap[offerId];
-        if (!offer || isOfferOwned(offerId)) return null;
-        const activeOrder = getPendingPaymentOrder();
-        if (activeOrder && activeOrder.offerId !== offerId && !isPaymentOrderExpired(activeOrder)) {
-            return null;
-        }
-        if (!forceNew && activeOrder?.offerId === offerId && !isPaymentOrderExpired(activeOrder) && isPaymentOrderValid(activeOrder)) {
-            return activeOrder;
-        }
-        const now = Date.now();
-        const nextOrder = {
-            id: buildPaymentOrderId(offerId),
-            offerId,
-            exactAmount: getOfferExactAmount(offer, activeOrder?.offerId === offerId ? activeOrder.id : ''),
-            payAddress: PAYMENT_WALLET,
-            network: PAYMENT_NETWORK,
-            createdAt: now,
-            expiresAt: now + PAYMENT_ORDER_EXPIRY_MS
-        };
-        state.save.payment.pendingOrder = nextOrder;
-        saveProgress();
-        if (!silent) showToast(text('Exact payment order created.', 'Exact payment order created.'), 'success');
-        return nextOrder;
-    }
-
     function isPaymentOrderExpired(order) {
-        return !order || Number(order.expiresAt || 0) <= Date.now();
+        if (!order) return true;
+        const status = String(order.status || 'pending');
+        if (status === 'granted' || status === 'expired' || status === 'cancelled') return true;
+        if (status === 'paid') return false;
+        return Number(order.expiresAt || 0) <= Date.now();
     }
 
     function formatPaymentCountdown(expiresAt) {
@@ -4465,15 +4587,16 @@
     }
 
     function formatPaymentAmount(value) {
-        return roundMoney(value).toFixed(3).replace(/\.?0+$/, (match) => match === '.000' ? '' : match.replace(/0+$/, '').replace(/\.$/, ''));
+        return roundMoney(value).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS);
     }
 
     function roundMoney(value) {
-        return Math.round((Number(value) || 0) * 1000) / 1000;
+        const scale = Math.pow(10, PAYMENT_ORDER_DISPLAY_DECIMALS);
+        return Math.round((Number(value) || 0) * scale) / scale;
     }
 
     function shortenTxid(txid) {
-        const value = String(txid || '').trim();
+        const value = normalizeTxid(txid);
         if (value.length <= 14) return value || '--';
         return `${value.slice(0, 8)}…${value.slice(-6)}`;
     }
@@ -4482,6 +4605,77 @@
         if (!Array.isArray(list) || !value) return;
         const next = [value, ...list.filter((item) => item !== value)];
         list.splice(0, list.length, ...next.slice(0, max));
+    }
+
+    function recordVerifiedPayment({ offerId, order, txid, grantRewards = true }) {
+        const offer = offerMap[offerId];
+        if (!offer) return isSeasonPassUnlocked();
+        const normalizedTxid = normalizeTxid(txid);
+        const settledOrder = buildClientPaymentOrder({
+            ...order,
+            offerId,
+            txid: normalizedTxid,
+            status: 'granted',
+            rewardGranted: true
+        });
+        const sponsorUnlockedBefore = isSeasonPassUnlocked();
+        const alreadyClaimed = state.save.payment.claimedOrderIds.includes(settledOrder.id);
+
+        if (!alreadyClaimed) {
+            state.save.payment.totalSpent = roundMoney(Number(state.save.payment.totalSpent || 0) + Number(settledOrder.exactAmount || offer.price || 0));
+        }
+        state.save.payment.sponsorPass = true;
+        pushUniqueValue(state.save.payment.claimedOfferIds, offerId, 12);
+        pushUniqueValue(state.save.payment.claimedOrderIds, settledOrder.id, 40);
+        pushUniqueValue(state.save.payment.verifiedTxids, normalizedTxid, 40);
+        state.save.payment.recentOrders = [
+            {
+                id: settledOrder.id,
+                offerId,
+                txid: normalizedTxid,
+                exactAmount: settledOrder.exactAmount,
+                basePrice: roundMoney(Number(offer.price || 0)),
+                payAddress: settledOrder.payAddress,
+                network: settledOrder.network,
+                verifiedAt: Date.now()
+            },
+            ...(Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).filter((item) => item?.id !== settledOrder.id)
+        ].slice(0, 8);
+        state.save.payment.pendingOrder = null;
+        if (state.save.payment.pendingClaims && typeof state.save.payment.pendingClaims === 'object') {
+            delete state.save.payment.pendingClaims[settledOrder.id];
+        }
+        state.save.payment.purchaseCount = Math.max(
+            Number(state.save.payment.purchaseCount || 0),
+            state.save.payment.claimedOrderIds.length,
+            state.save.payment.claimedOfferIds.length
+        );
+        if (grantRewards && !alreadyClaimed) {
+            grantReward(offer.reward);
+        }
+        saveProgress();
+        return sponsorUnlockedBefore;
+    }
+
+    async function flushPendingPaymentClaims() {
+        const pendingClaims = state.save.payment.pendingClaims;
+        if (!pendingClaims || typeof pendingClaims !== 'object') return 0;
+        let syncedCount = 0;
+        for (const [orderId, txid] of Object.entries(pendingClaims)) {
+            if (!orderId || !PAYMENT_TXID_RE.test(normalizeTxid(txid))) {
+                delete pendingClaims[orderId];
+                continue;
+            }
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete pendingClaims[orderId];
+                syncedCount += 1;
+            } catch (error) {}
+        }
+        if (syncedCount > 0) {
+            saveProgress();
+        }
+        return syncedCount;
     }
 
     async function copyTextToClipboard(text) {
@@ -4980,6 +5174,7 @@
                 claimedOrderIds: [],
                 verifiedTxids: [],
                 recentOrders: [],
+                pendingClaims: {},
                 pendingOrder: null
             },
             lastResult: null
@@ -5069,7 +5264,9 @@
         next.payment.purchaseCount = clampNumber(parsed?.payment?.purchaseCount, defaults.payment.purchaseCount, 0);
         next.payment.claimedOfferIds = Array.isArray(parsed?.payment?.claimedOfferIds) ? parsed.payment.claimedOfferIds.filter((id) => !!offerMap[id]) : [];
         next.payment.claimedOrderIds = Array.isArray(parsed?.payment?.claimedOrderIds) ? parsed.payment.claimedOrderIds.filter((id) => typeof id === 'string') : [];
-        next.payment.verifiedTxids = Array.isArray(parsed?.payment?.verifiedTxids) ? parsed.payment.verifiedTxids.filter((id) => typeof id === 'string').slice(0, 40) : [];
+        next.payment.verifiedTxids = Array.isArray(parsed?.payment?.verifiedTxids)
+            ? parsed.payment.verifiedTxids.map((id) => normalizeTxid(id)).filter((id) => PAYMENT_TXID_RE.test(id)).slice(0, 40)
+            : [];
         next.payment.recentOrders = Array.isArray(parsed?.payment?.recentOrders)
             ? parsed.payment.recentOrders
                 .filter((item) => item && typeof item === 'object' && typeof item.id === 'string')
@@ -5077,10 +5274,10 @@
                 .map((item) => ({
                     id: item.id,
                     offerId: offerMap[item.offerId] ? item.offerId : '',
-                    txid: typeof item.txid === 'string' ? item.txid : '',
+                    txid: normalizeTxid(item.txid),
                     exactAmount: clampNumber(item.exactAmount, 0, 0),
                     basePrice: clampNumber(item.basePrice, 0, 0),
-                    payAddress: typeof item.payAddress === 'string' ? item.payAddress : PAYMENT_WALLET,
+                    payAddress: resolvePaymentAddress(item),
                     network: typeof item.network === 'string' ? item.network : PAYMENT_NETWORK,
                     verifiedAt: clampNumber(item.verifiedAt, 0, 0)
                 }))
@@ -5095,16 +5292,16 @@
             if (!next.payment.claimedOfferIds.includes(offerId)) next.payment.claimedOfferIds.push(offerId);
         });
         next.payment.verifiedTxids = next.payment.verifiedTxids.slice(0, 40);
+        next.payment.pendingClaims = parsed?.payment?.pendingClaims && typeof parsed.payment.pendingClaims === 'object'
+            ? Object.fromEntries(
+                Object.entries(parsed.payment.pendingClaims)
+                    .map(([orderId, txid]) => [String(orderId || ''), normalizeTxid(txid)])
+                    .filter(([orderId, txid]) => !!orderId && PAYMENT_TXID_RE.test(txid))
+                    .slice(0, 16)
+            )
+            : {};
         next.payment.pendingOrder = parsed?.payment?.pendingOrder && typeof parsed.payment.pendingOrder === 'object'
-            ? {
-                id: typeof parsed.payment.pendingOrder.id === 'string' ? parsed.payment.pendingOrder.id : '',
-                offerId: offerMap[parsed.payment.pendingOrder.offerId] ? parsed.payment.pendingOrder.offerId : '',
-                exactAmount: clampNumber(parsed.payment.pendingOrder.exactAmount, 0, 0),
-                payAddress: typeof parsed.payment.pendingOrder.payAddress === 'string' ? parsed.payment.pendingOrder.payAddress : PAYMENT_WALLET,
-                network: typeof parsed.payment.pendingOrder.network === 'string' ? parsed.payment.pendingOrder.network : PAYMENT_NETWORK,
-                createdAt: clampNumber(parsed.payment.pendingOrder.createdAt, 0, 0),
-                expiresAt: clampNumber(parsed.payment.pendingOrder.expiresAt, 0, 0)
-            }
+            ? buildClientPaymentOrder(parsed.payment.pendingOrder)
             : null;
         if (!next.payment.pendingOrder?.id || !next.payment.pendingOrder?.offerId) next.payment.pendingOrder = null;
         if (next.payment.pendingOrder && !isPaymentOrderValid(next.payment.pendingOrder)) next.payment.pendingOrder = null;

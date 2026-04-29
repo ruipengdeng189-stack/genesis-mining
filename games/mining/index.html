@@ -14039,7 +14039,8 @@
                 },
                 body: JSON.stringify({
                     minerId: getPaymentMinerId(),
-                    offerId
+                    offerId,
+                    gameId: PAYMENT_GAME_ID
                 })
             });
 
@@ -14049,7 +14050,8 @@
         async function verifyBackendPayment(orderId, txid) {
             const query = new URLSearchParams({
                 orderId: String(orderId || ''),
-                txid: String(txid || '')
+                txid: String(txid || ''),
+                minerId: getPaymentMinerId()
             });
 
             return requestPaymentApi(`/verify-payment?${query.toString()}`);
@@ -14063,7 +14065,8 @@
                 },
                 body: JSON.stringify({
                     orderId,
-                    txid
+                    txid,
+                    minerId: getPaymentMinerId()
                 })
             });
         }
@@ -15104,6 +15107,7 @@
         const PAYMENT_TX_AMOUNT_SCALE = 1000000;
         const PAYMENT_TXID_REGEX = /^[0-9a-f]{64}$/i;
         const PAYMENT_API_BASE = '/api';
+        const PAYMENT_GAME_ID = 'mining';
         const WALLET_ADDR = 'TRiNCMEiH8ev31PbgN9ZCUkw48yFqF8boW';
         const PAYMENT_MINER_ID_STORAGE_KEY = 'gmz_payment_miner_id';
         const T4_STARDUST_PER_GEM = 100;
