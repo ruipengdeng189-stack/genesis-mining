@@ -909,7 +909,7 @@
                 <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
                 ${fitHint ? `<div class="nc-note-mini">${escapeHtml(fitHint)}</div>` : ''}
                 <div class="nc-action-row">
-                    <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(owned ? text('View Rewards', 'View Rewards') : hasLiveOrder ? text('Resume Order', 'Resume Order') : text('Create Order', 'Create Order'))}</button>
+                    <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(owned ? text('View Rewards', 'View Rewards') : hasLiveOrder ? text('Resume Order', 'Resume Order') : text('打开支付', 'Open Payment'))}</button>
                 </div>
             </article>
         `;
@@ -1165,12 +1165,16 @@
         const offer = offerMap[offerId];
         if (!offer) return;
         const owned = isOfferOwned(offerId);
-        const order = getPendingPaymentOrder(offerId);
-        const expired = !!(order && isPaymentOrderExpired(order));
+        let order = getPendingPaymentOrder(offerId);
+        let expired = !!(order && isPaymentOrderExpired(order));
         const activeOrder = getPendingPaymentOrder();
         const otherLiveOrder = activeOrder && activeOrder.offerId !== offerId && !isPaymentOrderExpired(activeOrder)
             ? activeOrder
             : null;
+        if (!owned && !otherLiveOrder && (!order || expired || !isPaymentOrderValid(order))) {
+            order = ensureOfferOrder(offerId, { forceNew: true, silent: true });
+            expired = !!(order && isPaymentOrderExpired(order));
+        }
         openModal({
             eyebrow: text('Payment Center', 'Payment Center'),
             title: localize(offer.name),
@@ -1181,11 +1185,12 @@
     }
 
     function renderOfferPaymentBody(offer, { owned, order, expired, otherLiveOrder }) {
+        const liveOrder = !!(order && !expired && isPaymentOrderValid(order));
         const statusText = owned
             ? text('This pack has already been verified and the rewards are permanently attached to your account.', 'This pack has already been verified and the rewards are permanently attached to your account.')
             : otherLiveOrder
                 ? text(`当前还有 1 笔 ${localize(offerMap[otherLiveOrder.offerId]?.name || otherLiveOrder.offerId)} 待处理订单，请先完成或取消。`, `Another ${localize(offerMap[otherLiveOrder.offerId]?.name || otherLiveOrder.offerId)} order is still pending. Finish or cancel it first.`)
-                : order && !expired
+                : liveOrder
                     ? text('Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.', 'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.')
                     : order && expired
                         ? text('The previous order expired. Create a fresh order to continue payment and reward verification.', 'The previous order expired. Create a fresh order to continue payment and reward verification.')
@@ -1195,19 +1200,19 @@
             <div class="nc-inline-note">${escapeHtml(statusText)}</div>
             <div class="nc-stat-grid">
                 ${renderStatBox(text('Pack Price', 'Pack Price'), `${offer.price} USDT`, text('Base display price', 'Base display price'))}
-                ${renderStatBox(text('Exact Amount', 'Exact Amount'), order ? `${formatPaymentAmount(order.exactAmount)} USDT` : '--', text('Use exact amount for verify', 'Use exact amount for verify'))}
-                ${renderStatBox(text('Order ID', 'Order ID'), order ? order.id : verifiedOrder?.id || '--', order ? formatPaymentCountdown(order.expiresAt) : owned ? text('Verified', 'Verified') : text('Create order first', 'Create order first'))}
+                ${renderStatBox(text('Exact Amount', 'Exact Amount'), liveOrder ? `${formatPaymentAmount(order.exactAmount)} USDT` : '--', text('Use exact amount for verify', 'Use exact amount for verify'))}
+                ${renderStatBox(text('Order ID', 'Order ID'), liveOrder ? order.id : verifiedOrder?.id || '--', liveOrder ? formatPaymentCountdown(order.expiresAt) : owned ? text('Verified', 'Verified') : text('Create order first', 'Create order first'))}
                 ${renderStatBox(text('Perk', 'Perk'), localize(offer.permanent), owned ? text('Active now', 'Active now') : text('Activates after verify', 'Activates after verify'))}
             </div>
             ${renderRewardPills(offer.reward)}
             <div class="nc-payment-panel">
                 <div class="nc-payment-address-block">
                     <span class="nc-stat-label">${escapeHtml(text('Receiving Address', 'Receiving Address'))}</span>
-                    <div class="nc-payment-address">${escapeHtml(order?.payAddress || PAYMENT_WALLET)}</div>
+                    <div class="nc-payment-address">${escapeHtml(liveOrder ? order.payAddress : PAYMENT_WALLET)}</div>
                 </div>
                 <div class="nc-action-row">
                     <button class="ghost-btn" type="button" data-action="copyOfferAddress">${escapeHtml(text('Copy Address', 'Copy Address'))}</button>
-                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${order && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('Copy Amount', 'Copy Amount'))}</button>
+                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${liveOrder && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('Copy Amount', 'Copy Amount'))}</button>
                 </div>
                 ${owned ? `
                     <div class="nc-payment-status is-good">${escapeHtml(text('Payment verified. Rewards were granted and the sponsor pass is active on this account.', 'Payment verified. Rewards were granted and the sponsor pass is active on this account.'))}</div>
@@ -1218,10 +1223,10 @@
                         <span class="nc-stat-label">${escapeHtml(text('Paste OKX Wallet txid', 'Paste OKX Wallet txid'))}</span>
                         <input class="nc-payment-input" id="ncPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(text('Paste the 64-character on-chain txid after payment.', 'Paste the 64-character on-chain txid after payment.'))}">
                     </label>
-                    <div class="nc-payment-status ${expired ? 'is-warning' : order ? '' : 'is-warning'}">${escapeHtml(
+                    <div class="nc-payment-status ${expired ? 'is-warning' : liveOrder ? '' : 'is-warning'}">${escapeHtml(
                         expired
                             ? text('This order expired. Create a new order before verifying the txid.', 'This order expired. Create a new order before verifying the txid.')
-                            : order
+                            : liveOrder
                                 ? text('Only txids that match the active order amount, address, and valid time window can pass verification.', 'Only txids that match the active order amount, address, and valid time window can pass verification.')
                                 : text('Create an order first, then complete payment in OKX Wallet and verify the txid.', 'Create an order first, then complete payment in OKX Wallet and verify the txid.')
                     )}</div>
@@ -1244,6 +1249,7 @@
     }
 
     function getOfferModalActions(offer, { owned, order, expired, otherLiveOrder }) {
+        const liveOrder = !!(order && !expired && isPaymentOrderValid(order));
         if (owned) {
             return [
                 { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
@@ -1256,7 +1262,7 @@
                 { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
             ];
         }
-        if (order && !expired) {
+        if (liveOrder) {
             return [
                 { label: text('Verify TXID', 'Verify TXID'), action: 'verifyOfferTxid', value: offer.id },
                 { label: text('Cancel Order', 'Cancel Order'), action: 'cancelOfferOrder', value: offer.id, tone: 'ghost' }
@@ -1495,17 +1501,7 @@
             showToast(text('当前还有 1 笔待处理订单，请先完成或取消。', 'Another payment order is still pending. Finish or cancel it first.'), 'warning');
             return;
         }
-
-        state.save.payment.pendingOrder = {
-            id: buildPaymentOrderId(offerId),
-            offerId,
-            exactAmount: getOfferExactAmount(offer),
-            payAddress: PAYMENT_WALLET,
-            network: PAYMENT_NETWORK,
-            createdAt: Date.now(),
-            expiresAt: Date.now() + PAYMENT_ORDER_EXPIRY_MS
-        };
-        saveProgress();
+        ensureOfferOrder(offerId, { forceNew: true, silent: true });
         previewOffer(offerId);
         showToast(text('Exact payment order created.', 'Exact payment order created.'), 'success');
         renderAll();
@@ -1551,9 +1547,15 @@
             showToast(text('Rewards for this pack were already granted.', 'Rewards for this pack were already granted.'), 'warning');
             return;
         }
+        if (!isPaymentOrderValid(order)) {
+            showToast(text('当前订单信息不完整，请先刷新支付订单。', 'This order is incomplete. Please refresh the payment order first.'), 'warning');
+            previewOffer(offerId);
+            return;
+        }
 
         const sponsorUnlockedBefore = isSeasonPassUnlocked();
-        state.save.payment.totalSpent = roundMoney(Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0));
+        const settledAmount = roundMoney(Number(order.exactAmount || offer.price || 0));
+        state.save.payment.totalSpent = roundMoney(Number(state.save.payment.totalSpent || 0) + settledAmount);
         state.save.payment.sponsorPass = true;
         state.save.payment.purchaseCount = (state.save.payment.purchaseCount || 0) + 1;
         pushUniqueValue(state.save.payment.claimedOfferIds, offerId);
@@ -1565,6 +1567,9 @@
                 offerId,
                 txid,
                 exactAmount: order.exactAmount,
+                basePrice: roundMoney(Number(offer.price || 0)),
+                payAddress: order.payAddress,
+                network: order.network,
                 verifiedAt: Date.now()
             },
             ...(Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).filter((item) => item?.id !== order.id)
@@ -1604,7 +1609,7 @@
     async function copyOfferAmount(offerId) {
         const offer = offerMap[offerId];
         if (!offer) return;
-        const order = getPendingPaymentOrder(offerId);
+        const order = getPendingPaymentOrder(offerId) || ensureOfferOrder(offerId, { forceNew: true, silent: true });
         if (!order) {
             showToast(text('Create an order first.', 'Create an order first.'), 'warning');
             return;
@@ -4385,9 +4390,61 @@
         return `NC-${String(offerId || 'PACK').slice(0, 3).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
     }
 
-    function getOfferExactAmount(offer) {
-        const seed = (Date.now() % 9) + 1;
-        return roundMoney(Number(offer?.price || 0) + (seed / 1000));
+    function getOfferExactAmount(offer, excludeOrderId = '') {
+        const basePrice = roundMoney(Number(offer?.price || 0));
+        const reserved = new Set();
+        const pending = getPendingPaymentOrder();
+        if (pending && pending.id !== excludeOrderId && Number(pending.exactAmount || 0) > 0) {
+            reserved.add(formatPaymentAmount(pending.exactAmount));
+        }
+        (Array.isArray(state.save.payment.recentOrders) ? state.save.payment.recentOrders : []).forEach((item) => {
+            if (item?.id !== excludeOrderId && Number(item?.exactAmount || 0) > 0) {
+                reserved.add(formatPaymentAmount(item.exactAmount));
+            }
+        });
+        const seed = Date.now() % 89;
+        for (let index = 0; index < 89; index += 1) {
+            const suffix = ((seed + index) % 89) + 11;
+            const candidate = roundMoney(basePrice + (suffix / 1000));
+            if (!reserved.has(formatPaymentAmount(candidate))) return candidate;
+        }
+        return roundMoney(basePrice + 0.097);
+    }
+
+    function isPaymentOrderValid(order) {
+        if (!order || typeof order !== 'object') return false;
+        if (!order.id || !offerMap[order.offerId]) return false;
+        if (roundMoney(order.exactAmount) <= roundMoney(Number(offerMap[order.offerId]?.price || 0))) return false;
+        if (String(order.payAddress || '').trim() !== PAYMENT_WALLET) return false;
+        if (String(order.network || '').trim() !== PAYMENT_NETWORK) return false;
+        if (!Number(order.createdAt) || !Number(order.expiresAt) || Number(order.expiresAt) <= Number(order.createdAt)) return false;
+        return true;
+    }
+
+    function ensureOfferOrder(offerId, { forceNew = false, silent = false } = {}) {
+        const offer = offerMap[offerId];
+        if (!offer || isOfferOwned(offerId)) return null;
+        const activeOrder = getPendingPaymentOrder();
+        if (activeOrder && activeOrder.offerId !== offerId && !isPaymentOrderExpired(activeOrder)) {
+            return null;
+        }
+        if (!forceNew && activeOrder?.offerId === offerId && !isPaymentOrderExpired(activeOrder) && isPaymentOrderValid(activeOrder)) {
+            return activeOrder;
+        }
+        const now = Date.now();
+        const nextOrder = {
+            id: buildPaymentOrderId(offerId),
+            offerId,
+            exactAmount: getOfferExactAmount(offer, activeOrder?.offerId === offerId ? activeOrder.id : ''),
+            payAddress: PAYMENT_WALLET,
+            network: PAYMENT_NETWORK,
+            createdAt: now,
+            expiresAt: now + PAYMENT_ORDER_EXPIRY_MS
+        };
+        state.save.payment.pendingOrder = nextOrder;
+        saveProgress();
+        if (!silent) showToast(text('Exact payment order created.', 'Exact payment order created.'), 'success');
+        return nextOrder;
     }
 
     function isPaymentOrderExpired(order) {
@@ -5022,6 +5079,9 @@
                     offerId: offerMap[item.offerId] ? item.offerId : '',
                     txid: typeof item.txid === 'string' ? item.txid : '',
                     exactAmount: clampNumber(item.exactAmount, 0, 0),
+                    basePrice: clampNumber(item.basePrice, 0, 0),
+                    payAddress: typeof item.payAddress === 'string' ? item.payAddress : PAYMENT_WALLET,
+                    network: typeof item.network === 'string' ? item.network : PAYMENT_NETWORK,
                     verifiedAt: clampNumber(item.verifiedAt, 0, 0)
                 }))
                 .filter((item) => !!item.offerId)
@@ -5047,6 +5107,7 @@
             }
             : null;
         if (!next.payment.pendingOrder?.id || !next.payment.pendingOrder?.offerId) next.payment.pendingOrder = null;
+        if (next.payment.pendingOrder && !isPaymentOrderValid(next.payment.pendingOrder)) next.payment.pendingOrder = null;
         if (next.payment.pendingOrder && (next.payment.claimedOrderIds.includes(next.payment.pendingOrder.id) || next.payment.claimedOfferIds.includes(next.payment.pendingOrder.offerId))) {
             next.payment.pendingOrder = null;
         }
