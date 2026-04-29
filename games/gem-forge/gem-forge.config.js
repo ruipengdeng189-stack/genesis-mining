@@ -304,7 +304,7 @@
             {
                 id: 'rush',
                 price: 3.99,
-                name: { zh: '卡点突围包', en: 'Wall Breaker' },
+                name: { zh: '进阶补给包', en: 'Progress Pack' },
                 reward: { gold: 15800, dust: 520, catalyst: 46 },
                 focusShards: 46,
                 permanent: { heatCap: 60, rareRate: 0.09, dustYield: 0.14, catalystYield: 0.05, contractStability: 300 }

@@ -891,7 +891,7 @@
                     <p>${text(`立即补入 ${formatCompact(offer.reward.gold)} 金币、${formatCompact(offer.reward.dust)} 熔尘、${formatCompact(offer.reward.catalyst)} 催化剂，并给当前合同焦点符印各 ${formatCompact(offer.focusShards || 0)} 碎片。`, `Instantly grants ${formatCompact(offer.reward.gold)} gold, ${formatCompact(offer.reward.dust)} dust, ${formatCompact(offer.reward.catalyst)} catalyst, and ${formatCompact(offer.focusShards || 0)} shards to each current-focus sigil.`)}</p>
                     <div class="gf-chip-row">
                         <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
-                        <span class="gf-chip">${text('卡点差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
+                        <span class="gf-chip">${text('当前差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
                         ${(offer.focusShards || 0) > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(offer.focusShards || 0)}</span>` : ''}
                         ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
                     </div>
@@ -1481,7 +1481,7 @@
                 <article class="gf-card">
                     <div class="gf-card-head">
                         <div>
-                            <div class="eyebrow">${text('当前卡点', 'Current Wall')}</div>
+                            <div class="eyebrow">${text('当前进度', 'Current Progress')}</div>
                             <div class="gf-card-title">${power.total >= contract.recommended ? text('可以继续冲合同', 'Ready to push') : text('仍需补强', 'Needs more power')}</div>
                         </div>
                         <div class="gf-card-number">${formatCompact(Math.max(0, contract.recommended - power.total))}</div>
@@ -1573,7 +1573,7 @@
                         </div>
                         <div class="gf-card-number">${formatCompact(getCurrentContract().reward.gold)}</div>
                     </div>
-                    <div class="gf-card-copy">${text('金币只覆盖一部分后续升级，熔尘和催化剂会越来越像真正卡点，付费价值也会更明确。', 'Gold covers only part of the next upgrades, while dust and catalyst become clearer walls over time and make top-up value easier to feel.')}</div>
+                    <div class="gf-card-copy">${text('金币只覆盖一部分后续升级，熔尘和催化剂会逐渐成为主要短板，付费价值也会更明确。', 'Gold covers only part of the next upgrades, while dust and catalyst gradually become the main bottlenecks and make top-up value easier to feel.')}</div>
                     <div class="gf-chip-row" style="margin-top:12px;">
                         ${renderRewardChips(getContractPreviewReward(getCurrentContract()), { limit: 4 })}
                     </div>
@@ -2027,7 +2027,7 @@
                     <article class="gf-compact-row ${item.claimable ? 'is-ready' : ''}">
                         <div class="gf-compact-main">
                             <div class="gf-compact-title">${text('里程碑', 'Milestone')} · $${item.threshold.toFixed(2)}</div>
-                            <div class="gf-compact-sub">${item.claimable ? text('本档已可领取，先收下再决定是否继续冲下一档。', 'This tier is ready. Claim it first, then decide whether to top up further.') : text('这里给的是额外资源和永久加成，适合在卡点时跨一档拿。', 'This tier adds extra resources and permanent stats, ideal for breaking a wall.')}</div>
+                            <div class="gf-compact-sub">${item.claimable ? text('本档已可领取，先收下再决定是否继续冲下一档。', 'This tier is ready. Claim it first, then decide whether to top up further.') : text('这里给的是额外资源和永久加成，适合在推进吃力时跨一档补强。', 'This tier adds extra resources and permanent stats, ideal when progression starts to feel tight.')}</div>
                             <div class="gf-chip-row">
                                 ${renderRewardChips(item.reward, { limit: 2 })}
                                 ${renderPermanentChips(item.permanent, { limit: 2 })}
@@ -5655,7 +5655,7 @@
                     <p>${summary}</p>
                     <div class="gf-chip-row">
                         <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
-                        <span class="gf-chip">${text('卡点差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
+                        <span class="gf-chip">${text('当前差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
                         ${(offer.focusShards || 0) > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(offer.focusShards || 0)}</span>` : ''}
                         ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
                         ${renderOfferActionDeltaChips(projected)}
@@ -5668,7 +5668,7 @@
     renderPaymentOffer = function renderPaymentOfferEnhancedV2(offer) {
         const projected = getProjectedOfferImpact(offer);
         const summary = projected.actionUnlocks > 0
-            ? text(`预计立刻打开 ${projected.actionUnlocks} 个可操作成长点，适合直接越过当前卡点。`, `Immediately opens ${projected.actionUnlocks} actionable growth steps, making it suitable for breaking the current wall.`)
+            ? text(`预计立刻打开 ${projected.actionUnlocks} 个可操作成长点，适合直接推进到下一步。`, `Immediately opens ${projected.actionUnlocks} actionable growth steps, making it ideal for moving straight to the next step.`)
             : projected.currentGap > projected.projectedGap
                 ? text(`预计缩小静态差距 ${formatCompact(projected.currentGap - projected.projectedGap)}，并立刻补一波资源。`, `Cuts the static gap by ${formatCompact(projected.currentGap - projected.projectedGap)} and instantly refills resources.`)
                 : text('直接补金币 / 熔尘 / 催化，并抬高常驻赞助属性。', 'Directly refills gold / dust / catalyst and raises permanent sponsor stats.');
@@ -6718,7 +6718,7 @@
                     <article class="gf-compact-row ${item.claimable ? 'is-ready' : ''}">
                         <div class="gf-compact-main">
                             <div class="gf-compact-title">${text('里程碑', 'Milestone')} · $${item.threshold.toFixed(2)}</div>
-                            <div class="gf-compact-sub">${item.claimable ? text('这档已可领取，先收下再决定是否继续充值。', 'This tier is ready. Claim it first, then decide whether to top up further.') : text('这一档会补资源并给永久加成，适合卡点时跨一档。', 'This tier adds resources and permanent stats, ideal when stuck.')}</div>
+                            <div class="gf-compact-sub">${item.claimable ? text('这档已可领取，先收下再决定是否继续充值。', 'This tier is ready. Claim it first, then decide whether to top up further.') : text('这一档会补资源并给永久加成，适合推进吃力时跨一档补强。', 'This tier adds resources and permanent stats, ideal when progression feels tight.')}</div>
                             <div class="gf-chip-row">
                                 ${renderRewardChips(item.reward, { limit: 2 })}
                                 ${renderPermanentChips(item.permanent, { limit: 1 })}
@@ -7047,8 +7047,8 @@
         const projected = getProjectedOfferImpact(offer);
         const offerSummary = projected.currentGap > projected.projectedGap
             ? text(
-                '预计缩小卡点差距 ' + formatCompact(projected.currentGap - projected.projectedGap) + '，并同步补当前焦点碎片。',
-                'Cuts the active wall by ' + formatCompact(projected.currentGap - projected.projectedGap) + ' and also refills current focus shards.'
+                '预计缩小当前差距 ' + formatCompact(projected.currentGap - projected.projectedGap) + '，并同步补当前焦点碎片。',
+                'Cuts the active gap by ' + formatCompact(projected.currentGap - projected.projectedGap) + ' and also refills current focus shards.'
             )
             : text(
                 '直接补金币 / 熔尘 / 催化剂，并抬高合同稳定与常驻成长。',

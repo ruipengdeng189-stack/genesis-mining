@@ -801,7 +801,7 @@
                 </div>
                 ${renderRewardPills(node.reward)}
                 <div class="nc-action-row">
-                    <button class="ghost-btn wide-btn" type="button" data-action="${action}" data-value="${actionValue}" ${disabled ? 'disabled' : ''}>${escapeHtml(locked ? text('Unlock Pass', 'Unlock Pass') : claimed ? text('Claimed', 'Claimed') : text('Claim', 'Claim'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="${action}" data-value="${actionValue}" ${disabled ? 'disabled' : ''}>${escapeHtml(locked ? text('解锁通行证', 'Unlock Pass') : claimed ? text('已领取', 'Claimed') : text('领取', 'Claim'))}</button>
                 </div>
             </article>
         `;
@@ -813,13 +813,13 @@
             <article class="nc-card-item nc-card-item--dense ${ready ? 'is-ready' : ''}">
                 <div class="nc-card-head">
                     <div>
-                        <h3>${renderIconLabel('&#9733;', text('Daily Free Supply', 'Daily Free Supply'))}</h3>
+                        <h3>${renderIconLabel('&#9733;', text('每日免费补给', 'Daily Free Supply'))}</h3>
                     </div>
-                    <span class="nc-tag ${ready ? 'is-good' : ''}">${escapeHtml(ready ? text('Ready', 'Ready') : getDailySupplyCooldownText())}</span>
+                    <span class="nc-tag ${ready ? 'is-good' : ''}">${escapeHtml(ready ? text('可领取', 'Ready') : getDailySupplyCooldownText())}</span>
                 </div>
                 ${renderRewardPills(shopMap.dailySupply.reward)}
                 <div class="nc-action-row">
-                    <button class="primary-btn wide-btn" type="button" data-action="claimDailySupply" ${ready ? '' : 'disabled'}>${escapeHtml(text('Claim Supply', 'Claim Supply'))}</button>
+                    <button class="primary-btn wide-btn" type="button" data-action="claimDailySupply" ${ready ? '' : 'disabled'}>${escapeHtml(text('领取补给', 'Claim Supply'))}</button>
                 </div>
             </article>
         `;
@@ -836,7 +836,7 @@
                 </div>
                 ${renderRewardPills(item.reward)}
                 <div class="nc-action-row">
-                    <button class="ghost-btn wide-btn" type="button" data-action="buyShopItem" data-value="${item.id}" ${state.save.credits >= item.price ? '' : 'disabled'}>${escapeHtml(text('Buy Now', 'Buy Now'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="buyShopItem" data-value="${item.id}" ${state.save.credits >= item.price ? '' : 'disabled'}>${escapeHtml(text('立即购买', 'Buy Now'))}</button>
                 </div>
             </article>
         `;
@@ -849,10 +849,10 @@
         const extraFree = getPaymentFreeClashBonus();
         return `
             <div class="nc-stat-grid">
-                ${renderStatBox(text('Spent', 'Spent'), `${formatPaymentAmount(state.save.payment.totalSpent)} USDT`, text('Lifetime verified', 'Lifetime verified'))}
-                ${renderStatBox(text('Orders', 'Orders'), String(state.save.payment.purchaseCount || 0), hasLivePending ? text('1 pending', '1 pending') : text('No pending order', 'No pending order'))}
-                ${renderStatBox(text('Sponsor Pass', 'Sponsor Pass'), pass ? text('Unlocked', 'Unlocked') : text('Locked', 'Locked'), pass ? text('Premium season ready', 'Premium season ready') : text('Unlocked on first top-up', 'Unlocked on first top-up'))}
-                ${renderStatBox(text('Daily Free', 'Daily Free'), String(getDailyFreeClashesLimit()), extraFree ? text(`+${extraFree} from Tactical Pack`, `+${extraFree} from Tactical Pack`) : text('Base quota only', 'Base quota only'))}
+                ${renderStatBox(text('累计充值', 'Spent'), `${formatPaymentAmount(state.save.payment.totalSpent)} USDT`, text('累计已校验', 'Lifetime verified'))}
+                ${renderStatBox(text('订单数', 'Orders'), String(state.save.payment.purchaseCount || 0), hasLivePending ? text('1 笔待处理', '1 pending') : text('暂无待处理订单', 'No pending order'))}
+                ${renderStatBox(text('赞助通行证', 'Sponsor Pass'), pass ? text('已解锁', 'Unlocked') : text('未解锁', 'Locked'), pass ? text('高级赛季已生效', 'Premium season ready') : text('首次充值后解锁', 'Unlocked on first top-up'))}
+                ${renderStatBox(text('每日免费', 'Daily Free'), String(getDailyFreeClashesLimit()), extraFree ? text(`战术包额外 +${extraFree}`, `+${extraFree} from Tactical Pack`) : text('仅基础额度', 'Base quota only'))}
             </div>
         `;
     }
@@ -869,14 +869,14 @@
                         <div>
                             <h3>${renderIconLabel('&#10022;', text('生效特权', 'Active Perks'))}</h3>
                         </div>
-                        <span class="nc-tag ${activePerks.length ? 'is-good' : ''}">${escapeHtml(activePerks.length ? `${activePerks.length}/${config.paymentOffers.length}` : text('None', 'None'))}</span>
+                        <span class="nc-tag ${activePerks.length ? 'is-good' : ''}">${escapeHtml(activePerks.length ? `${activePerks.length}/${config.paymentOffers.length}` : text('暂无', 'None'))}</span>
                     </div>
                     <div class="nc-inline-note">${escapeHtml(activePerks.length ? activePerks.join(' • ') : text('当前还没有永久充值特权生效。', 'No permanent top-up perks are active yet.'))}</div>
                 </article>
                 <article class="nc-card-item nc-card-item--dense">
                     <div class="nc-card-head">
                         <div>
-                            <h3>${renderIconLabel('&#9888;', text('当前卡点', 'Current Wall'))}</h3>
+                            <h3>${renderIconLabel('&#9888;', text('当前差距', 'Current Gap'))}</h3>
                         </div>
                         <span class="nc-tag ${paymentFit.urgent ? 'is-warning' : 'is-good'}">${escapeHtml(paymentFit.label)}</span>
                     </div>
@@ -893,9 +893,9 @@
         const hasLiveOrder = !!(pendingOrder && !isPaymentOrderExpired(pendingOrder));
         const fitHint = getOfferFitHint(offer.id);
         const badge = owned
-            ? text('Claimed', 'Claimed')
+            ? text('已领取', 'Claimed')
             : hasLiveOrder
-                ? text('Pending', 'Pending')
+                ? text('待处理', 'Pending')
                 : `${offer.price} USDT`;
         return `
             <article class="nc-card-item nc-card-item--dense is-premium ${owned ? 'is-ready' : ''}">
@@ -909,7 +909,7 @@
                 <div class="nc-inline-note">${escapeHtml(localize(offer.permanent))}</div>
                 ${fitHint ? `<div class="nc-note-mini">${escapeHtml(fitHint)}</div>` : ''}
                 <div class="nc-action-row">
-                    <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(owned ? text('View Rewards', 'View Rewards') : hasLiveOrder ? text('Resume Order', 'Resume Order') : text('打开支付', 'Open Payment'))}</button>
+                    <button class="primary-btn wide-btn" type="button" data-action="previewOffer" data-value="${offer.id}">${escapeHtml(owned ? text('查看奖励', 'View Rewards') : hasLiveOrder ? text('继续订单', 'Resume Order') : text('打开支付', 'Open Payment'))}</button>
                 </div>
             </article>
         `;
@@ -925,7 +925,7 @@
                     <div>
                         <div class="eyebrow">${escapeHtml(text('最近战报', 'Latest Report'))}</div>
                         <h3>${escapeHtml(`${result.chapterId} • ${localize(chapterMap[result.chapterId]?.name || result.chapterId)}`)}</h3>
-                        <div class="nc-card-copy">${escapeHtml(result.win ? text('本次推进已完成，下一步建议去卡组或研究补当前卡点。', 'This run is complete. Next, patch your current wall in Deck or Lab.') : text('本次未通关，但仍拿到了部分资源，优先补强关键卡位。', 'This run did not clear, but you still earned partial resources. Patch your key slots first.'))}</div>
+                        <div class="nc-card-copy">${escapeHtml(result.win ? text('本次推进已完成，下一步建议去卡组或研究补一下当前短板。', 'This run is complete. Next, shore up your current weak spot in Deck or Lab.') : text('本次未通关，但仍拿到了部分资源，优先补强关键卡位。', 'This run did not clear, but you still earned partial resources. Patch your key slots first.'))}</div>
                     </div>
                     <div class="nc-head-kpi">
                         <span class="nc-tag ${result.win ? 'is-good' : 'is-warning'}">${escapeHtml(result.win ? text('胜利', 'Win') : text('撤退', 'Retreat'))}</span>
@@ -970,7 +970,7 @@
             clash: [
                 { icon: '&#9655;', title: text('门票', 'Entry'), body: text(`今日免费 ${freeLeft}/${getDailyFreeClashesLimit()}，之后每局 ${getEntryCost(chapter)} 金币。`, `${freeLeft}/${getDailyFreeClashesLimit()} free today, then ${getEntryCost(chapter)} credits per run.`) },
                 { icon: '&#9671;', title: text('首通', 'First Clear'), body: text('首领首通额外给芯片和更高结算。', 'Boss first clears grant extra chips and higher rewards.') },
-                { icon: '&#9888;', title: text('卡点', 'Current Wall'), body: gap > 0 ? text(`当前还差 ${formatCompact(gap)} 战力。`, `${formatCompact(gap)} more power needed right now.`) : text('当前战力达标，可继续推进。', 'Your current power is on target. Keep pushing.') }
+                { icon: '&#9888;', title: text('差距', 'Current Gap'), body: gap > 0 ? text(`当前还差 ${formatCompact(gap)} 战力。`, `${formatCompact(gap)} more power needed right now.`) : text('当前战力达标，可继续推进。', 'Your current power is on target. Keep pushing.') }
             ]
         }[tabId] || [];
 
@@ -1146,7 +1146,7 @@
         ui.modalTitle.textContent = state.modal.title || '';
         ui.modalSubtitle.textContent = state.modal.subtitle || '';
         ui.modalBody.innerHTML = state.modal.body || '';
-        ui.modalActions.innerHTML = (state.modal.actions || [{ label: text('Got it', 'Got it'), action: 'closeModal' }]).map((item) => `
+        ui.modalActions.innerHTML = (state.modal.actions || [{ label: text('知道了', 'Got it'), action: 'closeModal' }]).map((item) => `
             <button class="${item.tone === 'ghost' ? 'ghost-btn' : 'primary-btn'}" type="button" data-action="${item.action}" ${item.value ? `data-value="${item.value}"` : ''} ${item.disabled ? 'disabled' : ''}>${escapeHtml(item.label)}</button>
         `).join('');
     }
@@ -1176,9 +1176,9 @@
             expired = !!(order && isPaymentOrderExpired(order));
         }
         openModal({
-            eyebrow: text('Payment Center', 'Payment Center'),
+            eyebrow: text('支付中心', 'Payment Center'),
             title: localize(offer.name),
-            subtitle: owned ? text('Verified and granted', 'Verified and granted') : `${offer.price} USDT • ${PAYMENT_NETWORK}`,
+            subtitle: owned ? text('已校验并发放', 'Verified and granted') : `${offer.price} USDT • ${PAYMENT_NETWORK}`,
             body: renderOfferPaymentBody(offer, { owned, order, expired, otherLiveOrder }),
             actions: getOfferModalActions(offer, { owned, order, expired, otherLiveOrder })
         });
@@ -1187,48 +1187,48 @@
     function renderOfferPaymentBody(offer, { owned, order, expired, otherLiveOrder }) {
         const liveOrder = !!(order && !expired && isPaymentOrderValid(order));
         const statusText = owned
-            ? text('This pack has already been verified and the rewards are permanently attached to your account.', 'This pack has already been verified and the rewards are permanently attached to your account.')
+            ? text('该礼包已完成校验，奖励已永久发放到当前账号。', 'This pack has already been verified and the rewards are permanently attached to your account.')
             : otherLiveOrder
                 ? text(`当前还有 1 笔 ${localize(offerMap[otherLiveOrder.offerId]?.name || otherLiveOrder.offerId)} 待处理订单，请先完成或取消。`, `Another ${localize(offerMap[otherLiveOrder.offerId]?.name || otherLiveOrder.offerId)} order is still pending. Finish or cancel it first.`)
                 : liveOrder
-                    ? text('Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.', 'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.')
+                    ? text('请在 OKX 钱包按下方精确金额支付，完成后粘贴交易哈希（TXID）进行校验并发奖。', 'Pay the exact amount below in OKX Wallet, then paste the txid to verify and grant rewards.')
                     : order && expired
-                        ? text('The previous order expired. Create a fresh order to continue payment and reward verification.', 'The previous order expired. Create a fresh order to continue payment and reward verification.')
-                        : text('Create an exact order first. The first successful top-up unlocks the sponsor season track.', 'Create an exact order first. The first successful top-up unlocks the sponsor season track.');
+                        ? text('上一笔订单已过期，请重新创建订单后继续支付与奖励校验。', 'The previous order expired. Create a fresh order to continue payment and reward verification.')
+                        : text('请先创建精确金额订单；首次成功充值会解锁赞助赛季轨道。', 'Create an exact order first. The first successful top-up unlocks the sponsor season track.');
         const verifiedOrder = getRecentOfferOrder(offer.id);
         return `
             <div class="nc-inline-note">${escapeHtml(statusText)}</div>
             <div class="nc-stat-grid">
-                ${renderStatBox(text('Pack Price', 'Pack Price'), `${offer.price} USDT`, text('Base display price', 'Base display price'))}
-                ${renderStatBox(text('Exact Amount', 'Exact Amount'), liveOrder ? `${formatPaymentAmount(order.exactAmount)} USDT` : '--', text('Use exact amount for verify', 'Use exact amount for verify'))}
-                ${renderStatBox(text('Order ID', 'Order ID'), liveOrder ? order.id : verifiedOrder?.id || '--', liveOrder ? formatPaymentCountdown(order.expiresAt) : owned ? text('Verified', 'Verified') : text('Create order first', 'Create order first'))}
-                ${renderStatBox(text('Perk', 'Perk'), localize(offer.permanent), owned ? text('Active now', 'Active now') : text('Activates after verify', 'Activates after verify'))}
+                ${renderStatBox(text('礼包价格', 'Pack Price'), `${offer.price} USDT`, text('展示价格', 'Base display price'))}
+                ${renderStatBox(text('精确金额', 'Exact Amount'), liveOrder ? `${formatPaymentAmount(order.exactAmount)} USDT` : '--', text('请按精确金额支付', 'Use exact amount for verify'))}
+                ${renderStatBox(text('订单号', 'Order ID'), liveOrder ? order.id : verifiedOrder?.id || '--', liveOrder ? formatPaymentCountdown(order.expiresAt) : owned ? text('已校验', 'Verified') : text('请先创建订单', 'Create order first'))}
+                ${renderStatBox(text('特权', 'Perk'), localize(offer.permanent), owned ? text('已生效', 'Active now') : text('校验后生效', 'Activates after verify'))}
             </div>
             ${renderRewardPills(offer.reward)}
             <div class="nc-payment-panel">
                 <div class="nc-payment-address-block">
-                    <span class="nc-stat-label">${escapeHtml(text('Receiving Address', 'Receiving Address'))}</span>
+                    <span class="nc-stat-label">${escapeHtml(text('收款地址', 'Receiving Address'))}</span>
                     <div class="nc-payment-address">${escapeHtml(liveOrder ? order.payAddress : PAYMENT_WALLET)}</div>
                 </div>
                 <div class="nc-action-row">
-                    <button class="ghost-btn" type="button" data-action="copyOfferAddress">${escapeHtml(text('Copy Address', 'Copy Address'))}</button>
-                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${liveOrder && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('Copy Amount', 'Copy Amount'))}</button>
+                    <button class="ghost-btn" type="button" data-action="copyOfferAddress">${escapeHtml(text('复制地址', 'Copy Address'))}</button>
+                    <button class="ghost-btn" type="button" data-action="copyOfferAmount" data-value="${offer.id}" ${liveOrder && !otherLiveOrder ? '' : 'disabled'}>${escapeHtml(text('复制金额', 'Copy Amount'))}</button>
                 </div>
                 ${owned ? `
-                    <div class="nc-payment-status is-good">${escapeHtml(text('Payment verified. Rewards were granted and the sponsor pass is active on this account.', 'Payment verified. Rewards were granted and the sponsor pass is active on this account.'))}</div>
+                    <div class="nc-payment-status is-good">${escapeHtml(text('支付已校验，奖励已发放，赞助通行证已在当前账号生效。', 'Payment verified. Rewards were granted and the sponsor pass is active on this account.'))}</div>
                 ` : otherLiveOrder ? `
                     <div class="nc-payment-status is-warning">${escapeHtml(text(`当前待处理订单：${otherLiveOrder.id}`, `Active pending order: ${otherLiveOrder.id}`))}</div>
                 ` : `
                     <label class="nc-payment-field">
-                        <span class="nc-stat-label">${escapeHtml(text('Paste OKX Wallet txid', 'Paste OKX Wallet txid'))}</span>
-                        <input class="nc-payment-input" id="ncPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(text('Paste the 64-character on-chain txid after payment.', 'Paste the 64-character on-chain txid after payment.'))}">
+                        <span class="nc-stat-label">${escapeHtml(text('粘贴 OKX 钱包交易哈希（TXID）', 'Paste OKX Wallet txid'))}</span>
+                        <input class="nc-payment-input" id="ncPaymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(text('支付完成后粘贴 64 位链上交易哈希。', 'Paste the 64-character on-chain txid after payment.'))}">
                     </label>
                     <div class="nc-payment-status ${expired ? 'is-warning' : liveOrder ? '' : 'is-warning'}">${escapeHtml(
                         expired
-                            ? text('This order expired. Create a new order before verifying the txid.', 'This order expired. Create a new order before verifying the txid.')
+                            ? text('该订单已过期，请先创建新订单再校验 TXID。', 'This order expired. Create a new order before verifying the txid.')
                             : liveOrder
-                                ? text('Only txids that match the active order amount, address, and valid time window can pass verification.', 'Only txids that match the active order amount, address, and valid time window can pass verification.')
-                                : text('Create an order first, then complete payment in OKX Wallet and verify the txid.', 'Create an order first, then complete payment in OKX Wallet and verify the txid.')
+                                ? text('只有与当前订单金额、地址和有效时间一致的 TXID 才能通过校验。', 'Only txids that match the active order amount, address, and valid time window can pass verification.')
+                                : text('请先创建订单，再去 OKX 钱包完成支付并校验 TXID。', 'Create an order first, then complete payment in OKX Wallet and verify the txid.')
                     )}</div>
                 `}
             </div>
@@ -1252,25 +1252,25 @@
         const liveOrder = !!(order && !expired && isPaymentOrderValid(order));
         if (owned) {
             return [
-                { label: text('Open Season', 'Open Season'), action: 'openTab', value: 'season' },
-                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+                { label: text('前往赛季', 'Open Season'), action: 'openTab', value: 'season' },
+                { label: text('关闭', 'Close'), action: 'closeModal', tone: 'ghost' }
             ];
         }
         if (otherLiveOrder) {
             return [
                 { label: text('继续待处理订单', 'Resume Pending Order'), action: 'previewOffer', value: otherLiveOrder.offerId },
-                { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+                { label: text('关闭', 'Close'), action: 'closeModal', tone: 'ghost' }
             ];
         }
         if (liveOrder) {
             return [
-                { label: text('Verify TXID', 'Verify TXID'), action: 'verifyOfferTxid', value: offer.id },
-                { label: text('Cancel Order', 'Cancel Order'), action: 'cancelOfferOrder', value: offer.id, tone: 'ghost' }
+                { label: text('校验 TXID', 'Verify TXID'), action: 'verifyOfferTxid', value: offer.id },
+                { label: text('取消订单', 'Cancel Order'), action: 'cancelOfferOrder', value: offer.id, tone: 'ghost' }
             ];
         }
         return [
-            { label: text('Create Order', 'Create Order'), action: 'createOfferOrder', value: offer.id },
-            { label: text('Close', 'Close'), action: 'closeModal', tone: 'ghost' }
+            { label: text('创建订单', 'Create Order'), action: 'createOfferOrder', value: offer.id },
+            { label: text('关闭', 'Close'), action: 'closeModal', tone: 'ghost' }
         ];
     }
 
@@ -1699,10 +1699,10 @@
         const freeLeft = getRemainingFreeClashes();
         ui.heroSummary.innerHTML = `
             <div class="nc-summary-grid">
-                ${renderSummaryItem('&#10022;', text('Current Stage', 'Current Stage'), `${chapter.id} • ${localize(chapter.name)}`)}
-                ${renderSummaryItem('&#9889;', text('Power', 'Power'), `${power} / ${chapter.recommended}`)}
-                ${renderSummaryItem('&#9888;', text('Gap', 'Gap'), gap > 0 ? `-${formatCompact(gap)}` : text('Ready', 'Ready'))}
-                ${renderSummaryItem('&#9655;', text('Free Clashes', 'Free Clashes'), `${freeLeft}/${getDailyFreeClashesLimit()}`)}
+                ${renderSummaryItem('&#10022;', text('当前关卡', 'Current Stage'), `${chapter.id} • ${localize(chapter.name)}`)}
+                ${renderSummaryItem('&#9889;', text('战力', 'Power'), `${power} / ${chapter.recommended}`)}
+                ${renderSummaryItem('&#9888;', text('差距', 'Gap'), gap > 0 ? `-${formatCompact(gap)}` : text('可开战', 'Ready'))}
+                ${renderSummaryItem('&#9655;', text('免费次数', 'Free Clashes'), `${freeLeft}/${getDailyFreeClashesLimit()}`)}
             </div>
         `;
     }
@@ -1762,7 +1762,7 @@
 
                     <div class="nc-action-row nc-action-row--setup">
                         <button class="primary-btn wide-btn" type="button" data-action="startClash">${escapeHtml(getStartClashLabel(chapter))}</button>
-                        <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('卡组', 'Deck'))}</button>
+                        <button class="ghost-btn wide-btn" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('前往卡组', 'Deck'))}</button>
                     </div>
 
                     <div class="nc-inline-note nc-inline-note--battle">${escapeHtml(getBattleFlowHint(chapter))}</div>
@@ -3883,7 +3883,7 @@
         const unlockedNext = result.win && !!result.nextChapterId;
         const ready = gap <= 0;
         const badgeText = unlockedNext
-            ? (ready ? text('可继续推进', 'Ready To Push') : text('战力墙', 'Power Wall'))
+            ? (ready ? text('可继续推进', 'Ready To Push') : text('仍需补强', 'Needs Power'))
             : (ready ? text('可立即重试', 'Retry Ready') : text('先补养成', 'Needs Build'));
         const note = unlockedNext
             ? (ready
@@ -3891,13 +3891,13 @@
                 : text(`${targetChapter.id} 已开放，但你当前还差 ${formatCompact(gap)} 战力，建议先补卡组或研究。`, `${targetChapter.id} has opened, but you are still ${formatCompact(gap)} power short. Patch Deck or Lab first.`))
             : (ready
                 ? text('你可以立即重试这一关，或继续刷它来稳定补资源。', 'You can retry this stage immediately or keep farming it for stable resources.')
-                : text(`当前卡点还差 ${formatCompact(gap)} 战力，建议下次重试前先补强卡组。`, `You are ${formatCompact(gap)} power short for this wall. Tune your deck before the next retry.`));
+                : text(`当前还差 ${formatCompact(gap)} 战力，建议下次重试前先补强卡组。`, `You are ${formatCompact(gap)} power short right now. Tune your deck before the next retry.`));
 
         return `
             <article class="nc-result-card ${compact ? 'nc-result-card--compact' : ''}">
                 <div class="nc-card-head">
                     <div>
-                        <h3>${renderIconLabel(unlockedNext ? '&#10022;' : '&#9888;', unlockedNext ? text('下一章节', 'Next Chapter') : text('当前卡点', 'Current Wall'), targetChapter.id)}</h3>
+                        <h3>${renderIconLabel(unlockedNext ? '&#10022;' : '&#9888;', unlockedNext ? text('下一章节', 'Next Chapter') : text('当前差距', 'Current Gap'), targetChapter.id)}</h3>
                         <div class="nc-card-copy">${escapeHtml(localize(targetChapter.name))}</div>
                     </div>
                     <span class="nc-tag ${ready ? 'is-good' : 'is-warning'}">${escapeHtml(badgeText)}</span>
@@ -4248,7 +4248,7 @@
         }
         if (chapterNumber === 1) {
             return {
-                focus: text('这里是首个软卡点：需要 1 张前排 Lv5、1 张主输出 Lv5 和第一张 2★。', 'First soft wall: aim for one frontline Lv5, one carry Lv5, and your first 2-star card.')
+                focus: text('这里是首个明显成长阶段：需要 1 张前排 Lv5、1 张主输出 Lv5 和第一张 2★。', 'This is your first major growth step: aim for one frontline Lv5, one carry Lv5, and your first 2-star card.')
             };
         }
         if (chapterNumber === 2) {
@@ -4272,7 +4272,7 @@
         if (gap <= 0) {
             return {
                 label: text('已达标', 'On Pace'),
-                detail: text('当前更适合先回卡组或研究补效率，不急着靠充值解卡点。', 'You are on pace now; Deck or Lab upgrades matter more than spending immediately.'),
+                detail: text('当前更适合先回卡组或研究补效率，暂时不用急着充值。', 'You are on pace now; Deck or Lab upgrades matter more than spending immediately.'),
                 urgent: false
             };
         }
@@ -4306,7 +4306,7 @@
         }
         return {
             label: text('先补构筑', 'Build First'),
-            detail: text('当前卡点更偏构筑或研究，不是单纯缺一个充值包。', 'This wall looks more like a build or lab issue than simply missing another pack.'),
+            detail: text('当前问题更偏构筑或研究，不是单纯缺一个充值包。', 'This looks more like a build or lab issue than simply missing another pack.'),
             urgent: false
         };
     }
@@ -4316,16 +4316,16 @@
         const chapterNumber = Math.max(1, Number(chapter?.chapter) || 1);
         if (isOfferOwned(offerId)) return text('已拥有，永久收益已生效。', 'Owned already. Permanent perk is active.');
         if (offerId === 'starter') return chapterNumber === 1
-            ? text('当前最适合前期开荒与首个软卡点。', 'Best fit right now for early push and the first soft wall.')
+            ? text('当前最适合前期开荒与首个成长阶段。', 'Best fit right now for early progression and the first major growth step.')
             : text('偏早期追赶包，后段主要是补资源。', 'Mostly an early catch-up pack; later it is mainly raw resources.');
         if (offerId === 'tactical') return chapterNumber === 2
             ? text('当前最适合第二章日常推进与资源续航。', 'Best fit right now for Chapter 2 daily progression and resource sustain.')
             : text('核心价值是长期多 1 次免费对战。', 'Its core value is the long-term extra daily free clash.');
         if (offerId === 'captain') return chapterNumber >= 2 && chapterNumber <= 3
-            ? text('当前最适合 2-3 ~ 3-3 的领袖技节奏卡点。', 'Best fit right now for the 2-3 to 3-3 leader-skill tempo wall.')
+            ? text('当前最适合 2-3 ~ 3-3 的领袖技成型阶段。', 'Best fit right now for the 2-3 to 3-3 leader-skill power phase.')
             : text('核心价值是队长碎片与领袖技充能。', 'Its core value is leader fragments plus faster leader charge.');
         if (offerId === 'champion') return chapterNumber >= 3
-            ? text('当前最适合后段 Boss 墙与终盘容错。', 'Best fit right now for late boss walls and endgame error margin.')
+            ? text('当前最适合后段 Boss 战与终盘容错。', 'Best fit right now for late boss fights and endgame survivability.')
             : text('更偏后段强度包，前中期容易溢出。', 'This is more of a late-strength pack and can overshoot early-mid game.');
         return '';
     }
@@ -4536,16 +4536,16 @@
 
     function getRewardPillEntries(reward) {
         const entries = [];
-        if (reward?.credits) entries.push({ icon: '&#9679;', label: text('Credits', 'Credits'), value: `+${formatCompact(reward.credits)}` });
-        if (reward?.tactCores) entries.push({ icon: '&#10022;', label: text('Cores', 'Cores'), value: `+${formatCompact(reward.tactCores)}` });
-        if (reward?.cipherChips) entries.push({ icon: '&#9671;', label: text('Chips', 'Chips'), value: `+${formatCompact(reward.cipherChips)}` });
-        if (reward?.seasonXp) entries.push({ icon: '&#10039;', label: text('Season XP', 'Season XP'), value: `+${formatCompact(reward.seasonXp)}` });
-        if (reward?.standardCrates) entries.push({ icon: '&#9638;', label: text('Standard', 'Standard'), value: `+${formatCompact(reward.standardCrates)}` });
-        if (reward?.eliteCrates) entries.push({ icon: '&#9670;', label: text('Elite', 'Elite'), value: `+${formatCompact(reward.eliteCrates)}` });
+        if (reward?.credits) entries.push({ icon: '&#9679;', label: text('金币', 'Credits'), value: `+${formatCompact(reward.credits)}` });
+        if (reward?.tactCores) entries.push({ icon: '&#10022;', label: text('战术核', 'Cores'), value: `+${formatCompact(reward.tactCores)}` });
+        if (reward?.cipherChips) entries.push({ icon: '&#9671;', label: text('芯片', 'Chips'), value: `+${formatCompact(reward.cipherChips)}` });
+        if (reward?.seasonXp) entries.push({ icon: '&#10039;', label: text('赛季经验', 'Season XP'), value: `+${formatCompact(reward.seasonXp)}` });
+        if (reward?.standardCrates) entries.push({ icon: '&#9638;', label: text('标准', 'Standard'), value: `+${formatCompact(reward.standardCrates)}` });
+        if (reward?.eliteCrates) entries.push({ icon: '&#9670;', label: text('精英', 'Elite'), value: `+${formatCompact(reward.eliteCrates)}` });
         const fragmentTotal = reward?.cardFragments && typeof reward.cardFragments === 'object'
             ? Object.values(reward.cardFragments).reduce((sum, amount) => sum + Math.max(0, Number(amount) || 0), 0)
             : 0;
-        if (fragmentTotal) entries.push({ icon: '&#10032;', label: text('Fragments', 'Fragments'), value: `+${formatCompact(fragmentTotal)}` });
+        if (fragmentTotal) entries.push({ icon: '&#10032;', label: text('碎片', 'Fragments'), value: `+${formatCompact(fragmentTotal)}` });
         return entries;
     }
 
@@ -4718,7 +4718,7 @@
             'View Rewards': '查看奖励',
             'Resume Order': '继续订单',
             'Create Order': '创建订单',
-            'Current Wall': '当前卡点',
+            'Current Wall': '当前差距',
             'Empty': '空位',
             'Choose a unit in Deck next.': '去卡组选择一个单位。',
             'INFO': '提示',

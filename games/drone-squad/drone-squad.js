@@ -305,15 +305,15 @@
 
     function getRewardPillEntries(reward) {
         const entries = [];
-        if (reward.credits) entries.push({ icon: '&#9679;', label: text('Credits', 'Credits'), value: `+${formatCompact(reward.credits)}` });
-        if (reward.alloy) entries.push({ icon: '&#10010;', label: text('Alloy', 'Alloy'), value: `+${formatCompact(reward.alloy)}` });
-        if (reward.coreChips) entries.push({ icon: '&#9671;', label: text('Core', 'Core'), value: `+${formatCompact(reward.coreChips)}` });
+        if (reward.credits) entries.push({ icon: '&#9679;', label: text('金币', 'Credits'), value: `+${formatCompact(reward.credits)}` });
+        if (reward.alloy) entries.push({ icon: '&#10010;', label: text('合金', 'Alloy'), value: `+${formatCompact(reward.alloy)}` });
+        if (reward.coreChips) entries.push({ icon: '&#9671;', label: text('核芯', 'Core'), value: `+${formatCompact(reward.coreChips)}` });
         if (reward.seasonXp) entries.push({ icon: '&#10039;', label: 'XP', value: `+${formatCompact(reward.seasonXp)}` });
-        if (reward.reviveChips) entries.push({ icon: '&#10057;', label: text('Revive', 'Revive'), value: `+${formatCompact(reward.reviveChips)}` });
-        if (reward.chassisShards) entries.push({ icon: '&#9992;', label: text('Chassis', 'Chassis'), value: `+${formatCompact(reward.chassisShards)}` });
-        if (reward.wingmanShards) entries.push({ icon: '&#9651;', label: text('Wing', 'Wing'), value: `+${formatCompact(reward.wingmanShards)}` });
-        if (reward.epicModuleCrates) entries.push({ icon: '&#9638;', label: text('Epic', 'Epic'), value: `+${formatCompact(reward.epicModuleCrates)}` });
-        if (reward.legendModuleCrates) entries.push({ icon: '&#9733;', label: text('Legend', 'Legend'), value: `+${formatCompact(reward.legendModuleCrates)}` });
+        if (reward.reviveChips) entries.push({ icon: '&#10057;', label: text('复活', 'Revive'), value: `+${formatCompact(reward.reviveChips)}` });
+        if (reward.chassisShards) entries.push({ icon: '&#9992;', label: text('主机', 'Chassis'), value: `+${formatCompact(reward.chassisShards)}` });
+        if (reward.wingmanShards) entries.push({ icon: '&#9651;', label: text('僚机', 'Wing'), value: `+${formatCompact(reward.wingmanShards)}` });
+        if (reward.epicModuleCrates) entries.push({ icon: '&#9638;', label: text('史诗', 'Epic'), value: `+${formatCompact(reward.epicModuleCrates)}` });
+        if (reward.legendModuleCrates) entries.push({ icon: '&#9733;', label: text('传说', 'Legend'), value: `+${formatCompact(reward.legendModuleCrates)}` });
         return entries;
     }
 
@@ -393,12 +393,12 @@
         const freeLeft = getRemainingFreeSorties();
         const sponsorTier = getSponsorTier();
         const items = [
-            { icon: '&#9679;', label: text('Credits', 'Credits'), value: formatCompact(state.save.credits), meta: text('Wallet', 'Wallet') },
-            { icon: '&#10010;', label: text('Alloy', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('Upgrade', 'Upgrade') },
-            { icon: '&#9671;', label: text('Core', 'Core'), value: formatCompact(state.save.coreChips), meta: text('Research', 'Research') },
-            { icon: '&#9655;', label: text('Free', 'Free'), value: `${freeLeft}/${getDailyFreeSortiesLimit()}`, meta: text('Sorties', 'Sorties') },
-            { icon: '&#10057;', label: text('Revive', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('Safety', 'Safety') },
-            { icon: '&#9733;', label: text('Sponsor', 'Sponsor'), value: localize(sponsorTier.title), meta: text('Tier', 'Tier') }
+            { icon: '&#9679;', label: text('金币', 'Credits'), value: formatCompact(state.save.credits), meta: text('持有', 'Wallet') },
+            { icon: '&#10010;', label: text('合金', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('升级', 'Upgrade') },
+            { icon: '&#9671;', label: text('核芯', 'Core'), value: formatCompact(state.save.coreChips), meta: text('研究', 'Research') },
+            { icon: '&#9655;', label: text('免费', 'Free'), value: `${freeLeft}/${getDailyFreeSortiesLimit()}`, meta: text('出击', 'Sorties') },
+            { icon: '&#10057;', label: text('复活', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('容错', 'Safety') },
+            { icon: '&#9733;', label: text('赞助', 'Sponsor'), value: localize(sponsorTier.title), meta: text('档位', 'Tier') }
         ];
         ui.resourceStrip.innerHTML = items.map((item) => renderResourcePill(item.icon, item.label, item.value, item.meta)).join('');
     }
@@ -430,34 +430,34 @@
         const seasonClaims = getClaimableSeasonCount();
         const itemsByTab = {
             sortie: [
-                { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
-                { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
-                { icon: '&#9655;', label: text('Free', 'Free'), value: `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`, tone: getRemainingFreeSorties() > 0 ? 'is-good' : '' },
-                { icon: '&#9679;', label: text('Credits', 'Credits'), value: formatCompact(state.save.credits), tone: '' }
+                { icon: '&#10022;', label: text('战力', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
+                { icon: '&#9651;', label: text('关卡', 'Stage'), value: chapter.id, tone: '' },
+                { icon: '&#9655;', label: text('免费', 'Free'), value: `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`, tone: getRemainingFreeSorties() > 0 ? 'is-good' : '' },
+                { icon: '&#9679;', label: text('金币', 'Credits'), value: formatCompact(state.save.credits), tone: '' }
             ],
             intel: [
-                { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
-                { icon: '&#9661;', label: text('Gap', 'Gap'), value: gap > 0 ? `-${gap}` : text('Ready', 'Ready'), tone: gap > 0 ? 'is-warning' : 'is-good' },
-                { icon: '&#9674;', label: text('Progress', 'Progress'), value: chapterProgress, tone: '' },
-                { icon: '&#9655;', label: text('Free', 'Free'), value: `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`, tone: getRemainingFreeSorties() > 0 ? 'is-good' : '' }
+                { icon: '&#9651;', label: text('关卡', 'Stage'), value: chapter.id, tone: '' },
+                { icon: '&#9661;', label: text('差距', 'Gap'), value: gap > 0 ? `-${gap}` : text('可开打', 'Ready'), tone: gap > 0 ? 'is-warning' : 'is-good' },
+                { icon: '&#9674;', label: text('进度', 'Progress'), value: chapterProgress, tone: '' },
+                { icon: '&#9655;', label: text('免费', 'Free'), value: `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`, tone: getRemainingFreeSorties() > 0 ? 'is-good' : '' }
             ],
             hangar: [
-                { icon: '&#10022;', label: text('Power', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
+                { icon: '&#10022;', label: text('战力', 'Power'), value: currentPower, tone: gap > 0 ? 'is-warning' : 'is-good' },
                 { icon: '&#9992;', label: text('Chassis', 'Chassis'), value: `${text('Lv', 'Lv')}.${getUnitLevel(state.save.chassisLevels, selectedChassis.id)}`, tone: '' },
                 { icon: '&#9651;', label: text('僚机', 'Wings'), value: `${state.save.selectedWingmen.filter(Boolean).length}/${unlockedWingSlots}`, tone: unlockedWingSlots >= 2 ? 'is-good' : '' },
-                { icon: '&#9638;', label: text('Modules', 'Modules'), value: `${equippedModules}/4`, tone: equippedModules >= 4 ? 'is-good' : '' }
+                { icon: '&#9638;', label: text('模组', 'Modules'), value: `${equippedModules}/4`, tone: equippedModules >= 4 ? 'is-good' : '' }
             ],
             blueprints: [
-                { icon: '&#9671;', label: text('Core', 'Core'), value: formatCompact(state.save.coreChips), tone: '' },
-                { icon: '&#10010;', label: text('Alloy', 'Alloy'), value: formatCompact(state.save.alloy), tone: '' },
-                { icon: '&#9638;', label: text('Modules', 'Modules'), value: state.save.moduleInventory.length, tone: '' },
-                { icon: '&#9734;', label: text('Epic Pity', 'Epic Pity'), value: `${state.save.crafting.epicPity}/${getEpicPityTarget()}`, tone: (state.save.crafting.epicPity + 3) >= getEpicPityTarget() ? 'is-warning' : '' }
+                { icon: '&#9671;', label: text('核芯', 'Core'), value: formatCompact(state.save.coreChips), tone: '' },
+                { icon: '&#10010;', label: text('合金', 'Alloy'), value: formatCompact(state.save.alloy), tone: '' },
+                { icon: '&#9638;', label: text('模组', 'Modules'), value: state.save.moduleInventory.length, tone: '' },
+                { icon: '&#9734;', label: text('史诗保底', 'Epic Pity'), value: `${state.save.crafting.epicPity}/${getEpicPityTarget()}`, tone: (state.save.crafting.epicPity + 3) >= getEpicPityTarget() ? 'is-warning' : '' }
             ],
             missions: [
-                { icon: '&#9636;', label: text('Ready', 'Ready'), value: readyMissions, tone: readyMissions > 0 ? 'is-good' : '' },
-                { icon: '&#10003;', label: text('Claimed', 'Claimed'), value: `${state.save.missionClaimed.length}/${config.missions.length}`, tone: '' },
-                { icon: '&#9651;', label: text('Stage', 'Stage'), value: chapter.id, tone: '' },
-                { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' }
+                { icon: '&#9636;', label: text('可领', 'Ready'), value: readyMissions, tone: readyMissions > 0 ? 'is-good' : '' },
+                { icon: '&#10003;', label: text('已领', 'Claimed'), value: `${state.save.missionClaimed.length}/${config.missions.length}`, tone: '' },
+                { icon: '&#9651;', label: text('关卡', 'Stage'), value: chapter.id, tone: '' },
+                { icon: '&#10039;', label: text('赛季', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' }
             ],
             season: [
                 { icon: '&#10039;', label: text('Season', 'Season'), value: formatCompact(state.save.seasonXp), tone: '' },
@@ -560,7 +560,7 @@
                         <div class="ds-card-copy">${escapeHtml(text('\u62d6\u52a8\u95ea\u907f\uff0c\u70b9\u5f00\u59cb\u540e\u7acb\u5373\u8fdb\u5165\u6218\u6597\u3002', 'Drag to dodge and jump into combat right away.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Recommended', 'Recommended'))} ${chapter.recommended}</span>
+                        <span class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('推荐战力', 'Recommended'))} ${chapter.recommended}</span>
                         <strong>${escapeHtml(String(chapterPower))}</strong>
                     </div>
                 </div>
@@ -573,16 +573,16 @@
 
                 <div class="ds-stage-hud">
                     <div class="ds-stage-hud-card">
-                        <span>${escapeHtml(text('Shield', 'Shield'))}</span>
-                        <strong id="battleHudShield">${escapeHtml(text('Standby', 'Standby'))}</strong>
+                        <span>${escapeHtml(text('护盾', 'Shield'))}</span>
+                        <strong id="battleHudShield">${escapeHtml(text('待命', 'Standby'))}</strong>
                     </div>
                     <div class="ds-stage-hud-card">
-                        <span>${escapeHtml(text('Skill', 'Skill'))}</span>
+                        <span>${escapeHtml(text('技能', 'Skill'))}</span>
                         <strong id="battleHudCharge">0%</strong>
                     </div>
                     <div class="ds-stage-hud-card">
-                        <span>${escapeHtml(text('Status', 'Status'))}</span>
-                        <strong id="battleHudStatus">${escapeHtml(text('Standby', 'Standby'))}</strong>
+                        <span>${escapeHtml(text('状态', 'Status'))}</span>
+                        <strong id="battleHudStatus">${escapeHtml(text('待命', 'Standby'))}</strong>
                     </div>
                 </div>
 
@@ -592,7 +592,7 @@
                 </div>
 
                 <div class="ds-action-row ds-sortie-action-row" style="margin-top: 8px;">
-                    <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('Cast Skill', 'Cast Skill'))}</button>
+                    <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('释放技能', 'Cast Skill'))}</button>
                     <button class="primary-btn wide-btn" type="button" data-action="startSortie" ${state.battle.active ? 'disabled' : ''}>${escapeHtml(getStartSortieButtonLabel(chapterIndex))}</button>
                 </div>
             </section>
@@ -610,10 +610,10 @@
             <section class="ds-card">
                 <div class="ds-panel-head">
                     <div>
-                        <h3>${renderIconLabel('&#9674;', text('Chapter Route', 'Chapter Route'), chapter.id)}</h3>
+                        <h3>${renderIconLabel('&#9674;', text('章节路线', 'Chapter Route'), chapter.id)}</h3>
                         <div class="ds-panel-copy">${escapeHtml(text('章节选择、奖励预览和阶段判断都放在这里。', 'Chapter picks, reward preview, and stage checks live here.'))}</div>
                     </div>
-                    <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
+                    <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('差距', 'Gap')} ${powerGap}` : text('可开打', 'Ready'))}</div>
                 </div>
                 ${renderTabFlowStrip('intel', { chapter, powerGap })}
                 <div class="ds-chip-grid ds-chip-grid--route">
@@ -625,33 +625,33 @@
                 <article class="ds-card">
                     <div class="ds-card-head">
                         <div>
-                            <h3>${renderIconLabel('&#9636;', text('Stage Intel', 'Stage Intel'))}</h3>
+                            <h3>${renderIconLabel('&#9636;', text('关卡情报', 'Stage Intel'))}</h3>
                             <div class="ds-card-copy">${escapeHtml(text('\u628a\u538b\u529b\u3001\u5956\u52b1\u548c\u9996\u901a\u60c5\u62a5\u7edf\u4e00\u770b\u5b8c\uff0c\u518d\u56de\u51fa\u51fb\u9875\u5f00\u6253\u3002', 'Review pressure, rewards, and first-clear info here, then return to Sortie.'))}</div>
                         </div>
                         <span class="ds-mini-badge ${pressureTone}">${escapeHtml(localize(chapter.pressure || { zh: '当前进度', en: 'Current Status' }))}</span>
                     </div>
                     <div class="ds-stage-guide-grid">
-                        ${renderStageGuideBox('&#9888;', text('Pressure', 'Pressure'), localize(chapter.pressure || chapter.name), pressureTone)}
-                        ${renderStageGuideBox('&#9638;', text('Prep', 'Prep'), localize(chapter.prep || chapter.name))}
-                        ${renderStageGuideBox('&#9679;', text('Focus', 'Focus'), localize(chapter.rewardFocus || chapter.name))}
-                        ${renderStageGuideBox('&#9655;', text('Free', 'Free'), `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`)}
-                        ${renderStageGuideBox('&#10010;', text('Extra', 'Extra'), String(getSortieCost(chapter)))}
-                        ${renderStageGuideBox('&#10039;', text('Boss', 'Boss'), `${config.battle.bossSpawnSecond}s`)}
+                        ${renderStageGuideBox('&#9888;', text('压力', 'Pressure'), localize(chapter.pressure || chapter.name), pressureTone)}
+                        ${renderStageGuideBox('&#9638;', text('备战', 'Prep'), localize(chapter.prep || chapter.name))}
+                        ${renderStageGuideBox('&#9679;', text('重点', 'Focus'), localize(chapter.rewardFocus || chapter.name))}
+                        ${renderStageGuideBox('&#9655;', text('免费', 'Free'), `${getRemainingFreeSorties()}/${getDailyFreeSortiesLimit()}`)}
+                        ${renderStageGuideBox('&#10010;', text('追加', 'Extra'), String(getSortieCost(chapter)))}
+                        ${renderStageGuideBox('&#10039;', text('首领', 'Boss'), `${config.battle.bossSpawnSecond}s`)}
                     </div>
                     <div class="ds-inline-note ds-inline-note-rich">
-                        ${renderIconLabel('&#9733;', text('First Clear Pack', 'First Clear Pack'), isChapterFirstClearPending(chapter) ? text('Pending', 'Pending') : text('Claimed', 'Claimed'))}
+                        ${renderIconLabel('&#9733;', text('首通奖励', 'First Clear Pack'), isChapterFirstClearPending(chapter) ? text('待领取', 'Pending') : text('已领取', 'Claimed'))}
                         ${isChapterFirstClearPending(chapter)
                             ? renderRewardPills(getFirstClearReward(chapter), 5)
-                            : `<div class="ds-note-mini">${escapeHtml(text('First clear reward already secured.', 'First clear reward already secured.'))}</div>`}
+                            : `<div class="ds-note-mini">${escapeHtml(text('首通奖励已领取。', 'First clear reward already secured.'))}</div>`}
                     </div>
                 </article>
 
                 <article class="ds-card">
                     <div class="ds-card-head">
-                        <h3>${renderIconLabel('&#9776;', text('Latest Report', 'Latest Report'))}</h3>
-                        <button class="ghost-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('Open Hangar', 'Open Hangar'))}</button>
+                        <h3>${renderIconLabel('&#9776;', text('最新战报', 'Latest Report'))}</h3>
+                        <button class="ghost-btn" type="button" data-action="openTab" data-value="hangar">${escapeHtml(text('前往机库', 'Open Hangar'))}</button>
                     </div>
-                    ${result ? renderLatestResult(result) : `<div class="ds-empty-state">${escapeHtml(text('No battle report yet. Launch your first sortie.', 'No battle report yet. Launch your first sortie.'))}</div>`}
+                    ${result ? renderLatestResult(result) : `<div class="ds-empty-state">${escapeHtml(text('还没有战报，先开始首次出击。', 'No battle report yet. Launch your first sortie.'))}</div>`}
                 </article>
             </section>
         `;
@@ -674,7 +674,7 @@
             <button class="ds-chip-btn ${isActive ? 'is-active' : ''} ${unlocked ? '' : 'is-locked'}" type="button" data-action="selectChapter" data-value="${chapter.id}" ${unlocked ? '' : 'disabled'}>
                 <span>${escapeHtml(chapter.id)}</span>
                 <strong>${escapeHtml(localize(chapter.name))}</strong>
-                <span>${escapeHtml(unlocked ? `${text('Power', 'Power')} ${chapter.recommended}` : text('Locked', 'Locked'))}</span>
+                <span>${escapeHtml(unlocked ? `${text('战力', 'Power')} ${chapter.recommended}` : text('未解锁', 'Locked'))}</span>
                 ${unlocked ? `<small class="ds-chip-note">${escapeHtml(localize(chapter.pressure || chapter.name))}</small>` : ''}
             </button>
         `;
@@ -736,10 +736,10 @@
 
     function renderHangarWalletStrip() {
         const items = [
-            { icon: '&#9679;', label: text('\u6301\u6709', 'Wallet'), value: formatCompact(state.save.credits), meta: text('Credits', 'Credits') },
+            { icon: '&#9679;', label: text('\u6301\u6709', 'Wallet'), value: formatCompact(state.save.credits), meta: text('金币', 'Credits') },
             { icon: '&#10010;', label: text('\u5408\u91d1', 'Alloy'), value: formatCompact(state.save.alloy), meta: text('蓝图', 'Blueprints') },
-            { icon: '&#9671;', label: text('\u6838\u82af', 'Core'), value: formatCompact(state.save.coreChips), meta: text('Research', 'Research') },
-            { icon: '&#10057;', label: text('\u590d\u6d3b', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('Safety', 'Safety') }
+            { icon: '&#9671;', label: text('\u6838\u82af', 'Core'), value: formatCompact(state.save.coreChips), meta: text('研究', 'Research') },
+            { icon: '&#10057;', label: text('\u590d\u6d3b', 'Revive'), value: formatCompact(state.save.reviveChips), meta: text('容错', 'Safety') }
         ];
         return `
             <div class="ds-resource-strip ds-resource-strip--inline">
@@ -759,7 +759,7 @@
                         <div class="ds-panel-copy">${escapeHtml(text('主机定底盘，僚机补短板，模组定玩法。', 'Chassis sets base, wingmen patch gaps, modules define the run.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag is-good">${escapeHtml(text('Power', 'Power'))}</span>
+                        <span class="ds-tag is-good">${escapeHtml(text('战力', 'Power'))}</span>
                         <strong>${escapeHtml(String(getCurrentPower()))}</strong>
                     </div>
                 </div>
@@ -775,7 +775,7 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${renderIconLabel('&#9881;', text('Chassis Fleet', 'Chassis Fleet'))}</h3>
+                        <h3>${renderIconLabel('&#9881;', text('主机编队', 'Chassis Fleet'))}</h3>
                         <div class="ds-card-copy">${escapeHtml(text('先养一台主机，再补双僚机。', 'Raise one chassis first, then fill both wingmen.'))}</div>
                     </div>
                 </div>
@@ -787,10 +787,10 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${renderIconLabel('&#9651;', text('Wingman Bay', 'Wingman Bay'))}</h3>
+                        <h3>${renderIconLabel('&#9651;', text('僚机库', 'Wingman Bay'))}</h3>
                         <div class="ds-card-copy">${escapeHtml(text('同一僚机不能同时上双翼。', 'The same wingman cannot fill both slots.'))}</div>
                     </div>
-                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Open Blueprints', 'Open Blueprints'))}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('前往蓝图', 'Open Blueprints'))}</button>
                 </div>
                 <div class="ds-unit-grid">
                     ${config.wingmen.map(renderWingmanCard).join('')}
@@ -800,10 +800,10 @@
             <section class="ds-card">
                 <div class="ds-card-head">
                     <div>
-                        <h3>${renderIconLabel('&#9638;', text('Equipped Modules', 'Equipped Modules'))}</h3>
+                        <h3>${renderIconLabel('&#9638;', text('已装配模组', 'Equipped Modules'))}</h3>
                         <div class="ds-card-copy">${escapeHtml(text('推进吃力时回蓝图补研究和模组。', 'If progress slows, return to Blueprints for research and modules.'))}</div>
                     </div>
-                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Manage Modules', 'Manage Modules'))}</button>
+                    <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('管理模组', 'Manage Modules'))}</button>
                 </div>
                 <div class="ds-module-grid">
                     ${['core', 'weapon', 'shield', 'boss'].map((slot) => renderEquippedModuleCard(slot, selectedModules[slot])).join('')}
@@ -829,7 +829,7 @@
         const unlocked = isWingSlotUnlocked(slotIndex);
         const wingId = state.save.selectedWingmen[slotIndex] || '';
         const wing = wingmanMap[wingId];
-        const title = slotIndex === 0 ? text('Left Wing', 'Left Wing') : text('Right Wing', 'Right Wing');
+        const title = slotIndex === 0 ? text('左僚机', 'Left Wing') : text('右僚机', 'Right Wing');
         const icon = slotIndex === 0 ? '&#9651;' : '&#9633;';
         if (!unlocked) {
             return `
@@ -838,7 +838,7 @@
                         <span class="ds-title-icon" aria-hidden="true">${icon}</span>
                         <span class="ds-mini-label">${escapeHtml(title)}</span>
                     </div>
-                    <strong>${escapeHtml(text('Locked', 'Locked'))}</strong>
+                    <strong>${escapeHtml(text('未解锁', 'Locked'))}</strong>
                     <div class="ds-panel-copy">${escapeHtml(text(`Unlocks after clearing ${WING_SLOT_UNLOCK_STAGES[slotIndex]}`, `Unlocks after clearing ${WING_SLOT_UNLOCK_STAGES[slotIndex]}`))}</div>
                 </div>
             `;

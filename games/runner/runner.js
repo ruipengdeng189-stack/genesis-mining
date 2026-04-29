@@ -2937,7 +2937,7 @@
         if (value >= 1500) return { grade: 'A', color: '#57e5ff', text: playerProfile.lang === 'en' ? 'Strong rhythm and clean routing. Very stable for repeat runs.' : '节奏稳定、路线干净，是很成熟的一次冲刺。' };
         if (value >= 900) return { grade: 'B', color: '#9fe9ff', text: playerProfile.lang === 'en' ? 'Solid growth run with room to push combo harder.' : '是一局不错的成长跑，但连击和躲避还能继续压榨。' };
         if (value >= 450) return { grade: 'C', color: '#ffb56b', text: playerProfile.lang === 'en' ? 'Warm-up level. Focus on lane reads and better timing.' : '热身局水平，先把读路和跳滑节奏再稳一点。' };
-        return { grade: 'D', color: '#ff7d9b', text: playerProfile.lang === 'en' ? 'Early break. Try safer lane changes and save revive value.' : '开局断档较早，建议先稳切道并保留复活容错。' };
+        return { grade: 'D', color: '#ff7d9b', text: playerProfile.lang === 'en' ? 'Early pace dropped fast. Try safer lane changes and save your revives.' : '前期节奏掉得太快，建议先稳住切道并保留复活次数。' };
     }
 
     function renderStatBars(runner) {

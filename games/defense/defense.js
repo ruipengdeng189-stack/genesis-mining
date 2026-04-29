@@ -733,7 +733,7 @@
             accent: '#ff8fe8',
             badge: { zh: '中期提速', en: 'Value' },
             name: { zh: '中继加速箱', en: 'Relay Booster' },
-            desc: { zh: '补强中期卡点，帮助把减速、爆裂和连锁一路抬起来。', en: 'A mid-loop spike that pushes slow, splash, and chain setups through common chapter walls.' },
+            desc: { zh: '补强中期推进，帮助把减速、爆裂和连锁一路抬起来。', en: 'A mid-run boost that helps slow, splash, and chain setups come online.' },
             reward: { gold: 15600, cores: 136, seasonXp: 480, fragments: { frost: 34, rocket: 34, chain: 20 } }
         },
         {
@@ -1929,7 +1929,7 @@
                     body: getLocalized({ zh: '先看结算里哪种碎片和资源回流最多，再决定是补研究还是继续冲关。', en: 'Check which fragments and resources came back strongest, then decide between research or another push.' })
                 }
                 : {
-                    title: getLocalized({ zh: '这次是被卡点打穿了', en: 'This run hit a wall.' }),
+                    title: getLocalized({ zh: '这次防线没守住', en: 'This defense did not hold.' }),
                     body: getLocalized({ zh: '回头补最薄弱的一路，或者先升研究与炮台等级，再回来挑战会更稳。', en: 'Patch the weakest lane or upgrade research and towers before retrying.' })
                 };
         }
@@ -2405,7 +2405,7 @@
             return `<span class="mini-chip">${getLocalized({ zh: '当前已达标', en: 'Already ready' })}</span>`;
         }
         if (impact?.breaksWall) {
-            return `<span class="mini-chip">${getLocalized({ zh: '可直接过当前卡点', en: 'Breaks the current wall' })}</span>`;
+            return `<span class="mini-chip">${getLocalized({ zh: '可直接补平当前缺口', en: 'Covers the current gap' })}</span>`;
         }
         return `<span class="mini-chip">${getLocalized({ zh: `剩余缺口 ${formatCompact(impact.remainingGap)}`, en: `${formatCompact(impact.remainingGap)} gap left` })}</span>`;
     }
@@ -2540,7 +2540,7 @@
         if (powerGap > 420) {
             nextAction = getLocalized({ zh: '先补装配和研究，再决定是否用商城或充值强行突破。', en: 'Fix loadout and research first, then decide whether shop or top-up is needed to force the wall.' });
         } else if (powerGap > 120) {
-            nextAction = getLocalized({ zh: '当前是轻卡点，优先补推荐塔等级和关键研究。', en: 'This is a soft wall, so upgrade the recommended tower and key research first.' });
+            nextAction = getLocalized({ zh: '当前压力不大，优先补推荐塔等级和关键研究。', en: 'Pressure is light, so upgrade the recommended tower and key research first.' });
         } else if (bandGap > 0) {
             nextAction = getLocalized({ zh: '已经接近本档毕业，可以提前准备下一档核心塔。', en: 'You are close to clearing this band, so start building the next core tower early.' });
         }
@@ -2572,32 +2572,32 @@
         if (roadmap?.wallSeverity === 'hard') {
             return {
                 id: 'hard',
-                label: getLocalized({ zh: '重卡点', en: 'Hard Wall' }),
-                shortLabel: getLocalized({ zh: '重卡点', en: 'Hard' }),
+                label: getLocalized({ zh: '高压阶段', en: 'High Pressure' }),
+                shortLabel: getLocalized({ zh: '高压', en: 'High' }),
                 copy: getLocalized({
-                    zh: '当前缺口偏大，先补部署和研究；想立刻突破，就直接走高档充值或累充追档。',
-                    en: 'The gap is large. Fix setup and research first; if you want an immediate break, use a stronger top-up or chase milestone tiers.'
+                    zh: '当前缺口偏大，先补部署和研究；想更快推进，可直接选择更高档位的成长补给。',
+                    en: 'The gap is large. Improve setup and research first; if you want to move faster, pick a stronger growth pack.'
                 })
             };
         }
         if (roadmap?.wallSeverity === 'mid') {
             return {
                 id: 'mid',
-                label: getLocalized({ zh: '中卡点', en: 'Mid Wall' }),
-                shortLabel: getLocalized({ zh: '中卡点', en: 'Mid' }),
+                label: getLocalized({ zh: '过渡阶段', en: 'Transition Phase' }),
+                shortLabel: getLocalized({ zh: '过渡', en: 'Mid' }),
                 copy: getLocalized({
-                    zh: '这是中段卡章，资源包还能继续抬线；想少磨几局，就用当前推荐档直接压低缺口。',
-                    en: 'This is a mid-wall. Resource packs still help, but the recommended top-up cuts the gap faster.'
+                    zh: '当前还在过渡阶段，资源包和常规养成都有效；想少磨几局，可用当前推荐补给提速。',
+                    en: 'You are in a transition phase. Resource packs and regular upgrades both help, while the recommended pack speeds things up.'
                 })
             };
         }
         return {
             id: 'light',
-            label: getLocalized({ zh: '轻卡点', en: 'Light Wall' }),
-            shortLabel: getLocalized({ zh: '轻卡点', en: 'Light' }),
+            label: getLocalized({ zh: '平稳阶段', en: 'Stable Phase' }),
+            shortLabel: getLocalized({ zh: '平稳', en: 'Light' }),
             copy: getLocalized({
-                zh: '当前更像轻卡点，优先走免费线和资源线；充值主要体现为省时间和提前拉高长期成长。',
-                en: 'This is a light wall. Free and resource routes come first, while top-up mainly saves time and raises long-term growth.'
+                zh: '当前推进比较平稳，优先走免费线和资源线；充值更多体现为省时间和提前拉高长期成长。',
+                en: 'Progress is stable right now. Free and resource routes come first, while top-up mainly saves time and raises long-term growth.'
             })
         };
     }
@@ -3250,8 +3250,8 @@
                 title: getLocalized({ zh: '免费线', en: 'Free Route' }),
                 summary: refillAction.label,
                 detail: getLocalized({
-                    zh: `当前可回收 ${economyPreview.claimableTotal} 个奖励，先把补给 / 任务 / 赛季奖励收掉，再继续补当前卡点。`,
-                    en: `${economyPreview.claimableTotal} rewards are ready. Claim supply, mission, and season rewards first, then continue fixing the current wall.`
+                    zh: `当前可回收 ${economyPreview.claimableTotal} 个奖励，先把补给 / 任务 / 赛季奖励收掉，再继续补当前缺口。`,
+                    en: `${economyPreview.claimableTotal} rewards are ready. Claim supply, mission, and season rewards first, then continue closing the current gap.`
                 }),
                 meta: getLocalized({
                     zh: `任务 ${economyPreview.missionReady} · 赛季 ${economyPreview.seasonReady + economyPreview.sponsorReady} · 日常 ${economyPreview.dailyReady ? '可领' : '冷却中'}`,
@@ -3313,8 +3313,8 @@
                 title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
                 summary: getLocalized({ zh: '当前暂无推荐', en: 'No current recommendation' }),
                 detail: getLocalized({
-                    zh: '等出现更明确卡点时，再结合商城和赞助路线做判断。',
-                    en: 'Wait for a clearer wall before using the shop and sponsor route for a stronger recommendation.'
+                    zh: '等缺口更明确时，再结合商城和赞助路线做判断。',
+                    en: 'Wait until the gap is clearer, then use the shop and sponsor route for a stronger recommendation.'
                 }),
                 meta: getLocalized({ zh: '先走免费线', en: 'Free route first' }),
                 action: 'openTab',
@@ -3359,8 +3359,8 @@
                             : getLocalized({ zh: `推荐 ${getLocalized(paymentRoute.offer.name)}`, en: `${getLocalized(paymentRoute.offer.name)} recommended` }),
                         detail: paymentImpact.breaksWall
                             ? getLocalized({
-                                zh: `按当前卡点估算，这档总补强约 +${formatCompact(paymentImpact.totalPowerGain)}，可直接抹平本章缺口。`,
-                                en: `At the current wall, this pack adds about +${formatCompact(paymentImpact.totalPowerGain)} total and can erase the chapter gap outright.`
+                                zh: `按当前缺口估算，这档总补强约 +${formatCompact(paymentImpact.totalPowerGain)}，可直接抹平本章缺口。`,
+                                en: `At the current gap, this pack adds about +${formatCompact(paymentImpact.totalPowerGain)} total and can erase the chapter deficit outright.`
                             })
                             : paymentRoute.reason,
                         meta: paymentImpact.breaksWall
@@ -3376,7 +3376,7 @@
             refillAction,
             wallMeta,
             gapStatus: {
-                label: getLocalized({ zh: '当前卡点', en: 'Current Wall' }),
+                label: getLocalized({ zh: '当前缺口', en: 'Current Gap' }),
                 value: roadmap.powerGap > 0 ? formatCompact(roadmap.powerGap) : getLocalized({ zh: '已达标', en: 'Ready' }),
                 detail: roadmap.powerGap > 0
                     ? getLocalized({ zh: `${wallMeta.label} · 推荐 ${formatCompact(chapter.recommended)} / 当前 ${formatCompact(roadmap.currentPower)}`, en: `${wallMeta.label} · target ${formatCompact(chapter.recommended)} / current ${formatCompact(roadmap.currentPower)}` })
@@ -4129,7 +4129,7 @@
             ? (prepOverview.ready
                 ? getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，当前已经够线，先看敌潮后可直接开打。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. You are already ready, so review the enemy mix and start.` })
                 : prepOverview.nearReady
-                    ? getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，当前只是轻卡点，可先试打，不稳再一键套推荐。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. This is only a light wall, so you can test first and apply the preset if needed.` })
+                    ? getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，当前压力不大，可先试打，不稳再一键套推荐。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. Pressure is still light here, so you can test first and apply the preset if needed.` })
                     : getLocalized({ zh: `已从 ${handoff.fromChapterId} 切到 ${handoff.toChapterId}，先看推荐战力与三路分工，再决定是套推荐还是回头补强。`, en: `Moved from ${handoff.fromChapterId} to ${handoff.toChapterId}. Check target power and lane roles first, then decide whether to apply the preset or power up more.` }))
             : '';
         const handoffStatusLabel = prepOverview.ready
@@ -4155,8 +4155,8 @@
             ${renderPanelHead(
                 t('prepPanelTitle'),
                 getLocalized({
-                    zh: '这里只保留本章卡点、推荐战力和一键开打入口。',
-                    en: 'This view keeps only the current wall, target power, and the one-tap battle entry.'
+                    zh: '这里只保留本章进度、推荐战力和一键开打入口。',
+                    en: 'This view keeps only the current chapter status, target power, and the one-tap battle entry.'
                 }),
                 `<div class="mini-chip">${current.id} · ${roadmap.currentBand.title}</div>`
             )}
@@ -4208,8 +4208,8 @@
                             <div class="card-title">${prepOverview.ready
                                 ? getLocalized({ zh: `${current.id} 已达标，可直接开打`, en: `${current.id} is ready to defend` })
                                 : prepOverview.nearReady
-                                    ? getLocalized({ zh: `${current.id} 轻卡点，可先试打`, en: `${current.id} is near-ready` })
-                                    : getLocalized({ zh: `${current.id} 还在卡点期`, en: `${current.id} is at a wall` })}</div>
+                                    ? getLocalized({ zh: `${current.id} 压力不大，可先试打`, en: `${current.id} is near-ready` })
+                                    : getLocalized({ zh: `${current.id} 还需继续补强`, en: `${current.id} still needs more power` })}</div>
                         </div>
                         <div class="card-number">${prepOverview.powerGap > 0
                             ? getLocalized({ zh: `差 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
@@ -5256,7 +5256,7 @@
                             en: 'Standard and sponsor nodes can be settled together, without paging through the full track.'
                         })
                         : getLocalized({
-                            zh: '继续打当前卡点章节即可。等节点达标后，这里会直接亮起。',
+                            zh: '继续打当前章节即可。等节点达标后，这里会直接亮起。',
                             en: 'Keep farming your current chapter. This card lights up as soon as the next node is ready.'
                         })}</div>
                     ${renderCompactKpiGrid([
@@ -5351,8 +5351,8 @@
             ${renderPanelHead(
                 t('shopPanelTitle'),
                 getLocalized({
-                    zh: '商城只留三块：补给、资源包、充值成长，所有推荐都直接围绕当前卡点。',
-                    en: 'The shop now keeps only three lanes: supply, resource packs, and top-up growth, all tuned to your current wall.'
+                    zh: '商城只留三块：补给、资源包、充值成长，所有推荐都直接围绕当前进度。',
+                    en: 'The shop now keeps only three lanes: supply, resource packs, and top-up growth, all tuned to your current progress.'
                 }),
                 `<div class="mini-chip">${sponsorUnlocked
                     ? getLocalized({ zh: `赞助轨道已解锁 · 待领 ${sponsorReady}`, en: `Sponsor track unlocked · ${sponsorReady} ready` })
@@ -5444,8 +5444,8 @@
                         : getLocalized({ zh: '快捷入口', en: 'Quick Access' })}</div>
                 </div>
                 <div class="card-copy">${getLocalized({
-                    zh: '当前卡点最相关的两项保留在上方，其余资源包改为快捷按钮，避免商城页继续拉长。',
-                    en: 'The two packs most relevant to your current wall stay above, while the rest move into shortcuts so the page stays shorter.'
+                    zh: '与当前进度最相关的两项保留在上方，其余资源包改为快捷按钮，避免商城页继续拉长。',
+                    en: 'The two packs most relevant to your current progress stay above, while the rest move into shortcuts so the page stays shorter.'
                 })}</div>
                 ${renderCompactKpiGrid([
                     { label: getLocalized({ zh: '金币包', en: 'Gold' }), value: String(goldCount) },
@@ -5973,8 +5973,8 @@
                     })
                     : bestImpact.breaksWall
                         ? getLocalized({
-                            zh: `按当前缺口估算，这档总补强约 +${formatCompact(bestImpact.totalPowerGain)}，足够直接抹平本章卡点。`,
-                            en: `At the current wall, this pack is worth about +${formatCompact(bestImpact.totalPowerGain)} total power and can break the chapter gap outright.`
+                            zh: `按当前缺口估算，这档总补强约 +${formatCompact(bestImpact.totalPowerGain)}，足够直接抹平本章缺口。`,
+                            en: `At the current gap, this pack is worth about +${formatCompact(bestImpact.totalPowerGain)} total power and can close the chapter deficit outright.`
                         })
                         : bestImpact.tierPromotion
                             ? getLocalized({
@@ -6192,7 +6192,7 @@
                 <div class="card-copy">${overviewCopy}</div>
                 ${renderCompactKpiGrid([
                     { label: getLocalized({ zh: '当前档位', en: 'Current Band' }), value: getLocalized(roadmap.currentBand.title) },
-                    { label: getLocalized({ zh: '卡点强度', en: 'Wall Severity' }), value: severityMeta.shortLabel },
+                    { label: getLocalized({ zh: '推进压力', en: 'Pressure' }), value: severityMeta.shortLabel },
                     {
                         label: getLocalized({ zh: '资源线', en: 'Resource Route' }),
                         value: preferredResourceRoute
@@ -6273,13 +6273,13 @@
                             })
                         : impact.breaksWall
                             ? getLocalized({
-                                zh: `这档资源 + 常驻加成合计约 +${formatCompact(impact.totalPowerGain)}，已经足够直接抹平当前卡点。`,
-                                en: `This pack is worth about +${formatCompact(impact.totalPowerGain)} total and is enough to break the current wall outright.`
+                                zh: `这档资源 + 常驻加成合计约 +${formatCompact(impact.totalPowerGain)}，已经足够直接抹平当前缺口。`,
+                                en: `This pack is worth about +${formatCompact(impact.totalPowerGain)} total and is enough to close the current gap outright.`
                             })
                         : currentTier.next
                             ? getLocalized({
-                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}；当前卡点估算还会剩 ${formatCompact(impact.remainingGap)}。`,
-                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}; it leaves about ${formatCompact(impact.remainingGap)} gap.`
+                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}；按当前缺口估算还会剩 ${formatCompact(impact.remainingGap)}。`,
+                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}; it still leaves about ${formatCompact(impact.remainingGap)} gap.`
                             })
                             : getLocalized({ zh: '你已经在最高赞助阶位，充值主要体现为资源直充和赛季加速。', en: 'You are already at the highest sponsor tier, so top-up now mainly translates into direct resources and faster season progress.' })}</div>
                 <div class="reward-row">
