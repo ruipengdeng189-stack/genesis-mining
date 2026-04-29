@@ -346,7 +346,7 @@
                 { icon: '&#10039;', title: text('同步推进', 'Also Pushes'), body: text('一局同时推进任务、赛季和 Boss 首通。', 'Each run also advances missions, season, and boss first clears.') }
             ],
             intel: [
-                { icon: '&#9888;', title: text('当前卡点', 'Current Wall'), body: powerGap > 0 ? text(`当前还差 ${formatCompact(powerGap)} 战力。`, `${formatCompact(powerGap)} more power needed right now.`) : text('当前战力已达线，可直接开打。', 'Power check passed; you can launch now.') },
+                { icon: '&#9888;', title: text('当前进度', 'Current Status'), body: powerGap > 0 ? text(`当前还差 ${formatCompact(powerGap)} 战力。`, `${formatCompact(powerGap)} more power needed right now.`) : text('当前战力已达线，可直接开打。', 'Power check passed; you can launch now.') },
                 { icon: '&#9671;', title: text('资源判断', 'Where To Go'), body: text('缺战力去机库，缺芯片/合金去蓝图，缺补给再去商店。', 'Need power: Hangar. Need chips/alloy: Blueprints. Need a gap fill: Shop.') },
                 { icon: '&#9733;', title: text('首通价值', 'First Clear Value'), body: text('Boss 关首通最值，芯片效率最高。', 'Boss first clears are the best chip-value runs.') }
             ],
@@ -611,7 +611,7 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#9674;', text('Chapter Route', 'Chapter Route'), chapter.id)}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('\u7ae0\u8282\u9009\u62e9\u3001\u5956\u52b1\u9884\u89c8\u548c\u5361\u70b9\u5224\u65ad\u90fd\u653e\u5728\u8fd9\u91cc\u3002', 'Chapter picks, reward preview, and wall checks live here.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('章节选择、奖励预览和阶段判断都放在这里。', 'Chapter picks, reward preview, and stage checks live here.'))}</div>
                     </div>
                     <div class="ds-tag ${powerGap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(powerGap > 0 ? `${text('Gap', 'Gap')} ${powerGap}` : text('Ready', 'Ready'))}</div>
                 </div>
@@ -628,7 +628,7 @@
                             <h3>${renderIconLabel('&#9636;', text('Stage Intel', 'Stage Intel'))}</h3>
                             <div class="ds-card-copy">${escapeHtml(text('\u628a\u538b\u529b\u3001\u5956\u52b1\u548c\u9996\u901a\u60c5\u62a5\u7edf\u4e00\u770b\u5b8c\uff0c\u518d\u56de\u51fa\u51fb\u9875\u5f00\u6253\u3002', 'Review pressure, rewards, and first-clear info here, then return to Sortie.'))}</div>
                         </div>
-                        <span class="ds-mini-badge ${pressureTone}">${escapeHtml(localize(chapter.pressure || { zh: 'Current Wall', en: 'Current Wall' }))}</span>
+                        <span class="ds-mini-badge ${pressureTone}">${escapeHtml(localize(chapter.pressure || { zh: '当前进度', en: 'Current Status' }))}</span>
                     </div>
                     <div class="ds-stage-guide-grid">
                         ${renderStageGuideBox('&#9888;', text('Pressure', 'Pressure'), localize(chapter.pressure || chapter.name), pressureTone)}
@@ -801,7 +801,7 @@
                 <div class="ds-card-head">
                     <div>
                         <h3>${renderIconLabel('&#9638;', text('Equipped Modules', 'Equipped Modules'))}</h3>
-                        <div class="ds-card-copy">${escapeHtml(text('卡关时回蓝图补研究和模组。', 'Hit a wall? Return to Blueprints for research and modules.'))}</div>
+                        <div class="ds-card-copy">${escapeHtml(text('推进吃力时回蓝图补研究和模组。', 'If progress slows, return to Blueprints for research and modules.'))}</div>
                     </div>
                     <button class="ghost-btn" type="button" data-action="openTab" data-value="blueprints">${escapeHtml(text('Manage Modules', 'Manage Modules'))}</button>
                 </div>
@@ -991,7 +991,7 @@
                 <div class="ds-panel-head">
                     <div>
                         <h3>${renderIconLabel('&#10070;', text('Permanent Blueprints', 'Permanent Blueprints'))}</h3>
-                        <div class="ds-panel-copy">${escapeHtml(text('研究是永久成长，会持续消耗金币、芯片、合金；优先补当前卡点。', 'Research is permanent growth and steadily drains credits, chips, and alloy; prioritize the current wall.'))}</div>
+                        <div class="ds-panel-copy">${escapeHtml(text('研究是永久成长，会持续消耗金币、芯片、合金；优先补当前阶段短板。', 'Research is permanent growth and steadily drains credits, chips, and alloy; prioritize your current shortfalls.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
                         <span class="ds-tag">${escapeHtml(text('币 / 芯 / 合', 'Cr / Chip / Alloy'))}</span>
@@ -1101,7 +1101,7 @@
             {
                 icon: '&#9679;',
                 title: text('金币去向', 'Credit Sinks'),
-                body: text('研究、升星、模块制造都会长期吃金币，后期卡点先补关键研究。', 'Research, star-ups, and module crafting all consume credits long-term; break walls by funding key research first.')
+                body: text('研究、升星、模块制造都会长期吃金币，后期推进吃力时先补关键研究。', 'Research, star-ups, and module crafting all consume credits long-term; when progress slows late, fund key research first.')
             }
         ];
         return `
@@ -1125,14 +1125,14 @@
             '1-2': { primaryResearch: 'weaponSync', primaryTarget: 2, secondaryResearch: 'magnetField', secondaryTarget: 1, wingmanId: 'interceptorWing', moduleId: 'burstCore', note: text('1-2 补基础伤害，优先武器同步。', '1-2: add base damage and prioritize Weapon Sync.') },
             '1-3': { primaryResearch: 'weaponSync', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 1, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('1-3 补穿透与爆发，再进第 2 章。', '1-3: add pierce and burst before Chapter 2.') },
             '2-1': { primaryResearch: 'bountyProtocol', primaryTarget: 2, secondaryResearch: 'shieldVolume', secondaryTarget: 2, wingmanId: 'magnetWing', moduleId: 'aegisShell', note: text('2-1 先补合金收入，保证后续养成。', '2-1: fix alloy income for later growth.') },
-            '2-2': { primaryResearch: 'shieldVolume', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 2, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('2-2 是生存墙，优先护盾与星级。', '2-2: survival wall, prioritize shield and stars.') },
+            '2-2': { primaryResearch: 'shieldVolume', primaryTarget: 3, secondaryResearch: 'energyLoop', secondaryTarget: 2, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('2-2 更看重生存，优先护盾与星级。', '2-2 leans on survival, so prioritize shield and stars.') },
             '2-3': { primaryResearch: 'weaponSync', primaryTarget: 4, secondaryResearch: 'bountyProtocol', secondaryTarget: 3, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('2-3 开始追稀有武器模组。', '2-3: start chasing rare weapon modules.') },
-            '3-1': { primaryResearch: 'energyLoop', primaryTarget: 3, secondaryResearch: 'weaponSync', secondaryTarget: 5, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('3-1 是 Boss 墙，补爆发和 Boss 增伤。', '3-1: boss wall, add burst and boss damage.') },
-            '3-2': { primaryResearch: 'shieldVolume', primaryTarget: 5, secondaryResearch: 'bountyProtocol', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('3-2 是续航墙，护盾和收益一起拉。', '3-2: sustain wall, lift shield and income together.') },
+            '3-1': { primaryResearch: 'energyLoop', primaryTarget: 3, secondaryResearch: 'weaponSync', secondaryTarget: 5, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('3-1 更看重 Boss 爆发，补输出和 Boss 增伤。', '3-1 focuses more on boss burst, so add damage and boss bonuses.') },
+            '3-2': { primaryResearch: 'shieldVolume', primaryTarget: 5, secondaryResearch: 'bountyProtocol', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('3-2 更看重续航，护盾和收益一起拉。', '3-2 leans on sustain, so raise shield and income together.') },
             '3-3': { primaryResearch: 'weaponSync', primaryTarget: 6, secondaryResearch: 'shieldVolume', secondaryTarget: 6, wingmanId: 'interceptorWing', moduleId: 'hunterNode', note: text('3-3 爆发与生存并重，史诗模组起效。', '3-3: balance burst and survival; epic modules matter.') },
             '4-1': { primaryResearch: 'shieldVolume', primaryTarget: 7, secondaryResearch: 'energyLoop', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('4-1 是后期生存关，优先星级与护盾。', '4-1: late survival check, prioritize stars and shield.') },
             '4-2': { primaryResearch: 'weaponSync', primaryTarget: 8, secondaryResearch: 'magnetField', secondaryTarget: 4, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('4-2 精英密集，穿透和收取都要补。', '4-2: elites are dense, add pierce and pickup support.') },
-            '4-3': { primaryResearch: 'weaponSync', primaryTarget: 9, secondaryResearch: 'shieldVolume', secondaryTarget: 8, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('4-3 是终局 Boss 墙，高星主机和 Boss 模组最关键。', '4-3: endgame boss wall, high-star chassis and boss modules are key.') }
+            '4-3': { primaryResearch: 'weaponSync', primaryTarget: 9, secondaryResearch: 'shieldVolume', secondaryTarget: 8, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('4-3 是终局 Boss 挑战，高星主机和 Boss 模组最关键。', '4-3 is an endgame boss challenge, so high-star chassis and boss modules matter most.') }
         };
         return plans[chapter?.id] || plans['1-1'];
     }
@@ -1156,7 +1156,7 @@
                         <div class="ds-panel-copy">${escapeHtml(text('Research feeds directly back into sortie damage, shield, skill charge, and farming.', 'Research feeds directly back into sortie damage, shield, skill charge, and farming.'))}</div>
                     </div>
                     <div class="ds-head-kpi">
-                        <span class="ds-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('Current Wall', 'Current Wall'))}</span>
+                        <span class="ds-tag ${gap > 0 ? 'is-warning' : 'is-good'}">${escapeHtml(text('当前进度', 'Current Status'))}</span>
                         <strong>${escapeHtml(gap > 0 ? `-${gap}` : text('Ready', 'Ready'))}</strong>
                     </div>
                 </div>
@@ -3969,18 +3969,18 @@
             case 'm1': return text('Use your first three free sorties to learn the drag-dodge rhythm.', 'Use your first three free sorties to learn the drag-dodge rhythm.');
             case 'm2': return text('Elites arrive three times during a run.', 'Elites arrive three times during a run.');
             case 'm3': return text('Clearing 1-2 unlocks the second wing slot.', 'Clearing 1-2 unlocks the second wing slot.');
-            case 'm4': return text('After 1-3, the first real power wall starts forming.', 'After 1-3, the first real power wall starts forming.');
+            case 'm4': return text('After 1-3, the next stage starts checking your main upgrades more closely.', 'After 1-3, the next stage starts checking your main upgrades more closely.');
             case 'm5': return text('Chassis levels are always your most direct power gain.', 'Chassis levels are always your most direct power gain.');
             case 'm6': return text('Use the free craft, then craft a few more to start seeing rare modules.', 'Use the free craft, then craft a few more to start seeing rare modules.');
-            case 'm7': return text('2-2 is the first real alloy pressure wall.', '2-2 is the first real alloy pressure wall.');
+            case 'm7': return text('2-2 is the first stage where alloy spending ramps up clearly.', '2-2 is the first stage where alloy spending ramps up clearly.');
             case 'm8': return text('Push the chassis and both wingmen to 3 stars.', 'Push the chassis and both wingmen to 3 stars.');
             case 'm9': return text('The first boss is the key test for your early hangar.', 'The first boss is the key test for your early hangar.');
             case 'm10': return text('3-3 is the first full-version finish line before late-game chapters begin.', '3-3 is the first full-version finish line before late-game chapters begin.');
             case 'm11': return text('4-1 starts checking shield, levels, and whether your daily investment kept up.', '4-1 starts checking shield, levels, and whether your daily investment kept up.');
             case 'm12': return text('Epic modules mostly come from pity cycles, higher season rewards, and premium packs.', 'Epic modules mostly come from pity cycles, higher season rewards, and premium packs.');
             case 'm13': return text('Research is permanent growth that directly improves combat stats and farming efficiency.', 'Research is permanent growth that directly improves combat stats and farming efficiency.');
-            case 'm14': return text('Chassis levels are the most stable late-game power source and the cheapest wall breaker.', 'Chassis levels are the most stable late-game power source and the cheapest wall breaker.');
-            case 'm15': return text('4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.', '4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.');
+            case 'm14': return text('Chassis levels are the most stable late-game power source and one of the cheapest ways to keep progressing.', 'Chassis levels are the most stable late-game power source and one of the cheapest ways to keep progressing.');
+            case 'm15': return text('4-3 is the current endgame challenge and favors a high-star chassis, boss damage, and epic modules.', '4-3 is the current endgame challenge and favors a high-star chassis, boss damage, and epic modules.');
             default: return text('Keep pushing.', 'Keep pushing.');
         }
     }
@@ -4051,11 +4051,11 @@
     }
 
     function getOfferImpactText(offer) {
-        if (offer.id === 'starter') return text('Best for unlocking dual-wing tempo, clearing 1-3, and opening sponsor season value.', 'Best for unlocking dual-wing tempo, clearing 1-3, and opening sponsor season value.');
-        if (offer.id === 'accelerator') return text('Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.', 'Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.');
-        if (offer.id === 'rush') return text('Best for breaking the 2-3 to 3-1 pierce wall and stabilizing midgame modules fast.', 'Best for breaking the 2-3 to 3-1 pierce wall and stabilizing midgame modules fast.');
-        if (offer.id === 'sovereign') return text('Best for Chapter 3 boss walls and the survival pressure before 4-1, with better sustain and boss damage.', 'Best for Chapter 3 boss walls and the survival pressure before 4-1, with better sustain and boss damage.');
-        return text('Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.', 'Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.');
+        if (offer.id === 'starter') return text('最适合前期快速成型双翼阵容，顺利推进到 1-3，并提前开启赞助赛季收益。', 'Best for getting your dual-wing setup online early, clearing 1-3 smoothly, and opening sponsor season value.');
+        if (offer.id === 'accelerator') return text('最适合在第 2 章前期补足合金和研究资源，让每日养成更顺畅。', 'Best for refilling early Chapter 2 alloy and research so daily growth stays smooth.');
+        if (offer.id === 'rush') return text('最适合在 2-3 到 3-1 这一段补足穿透和输出，尽快稳住中期模组强度。', 'Best for boosting pierce and damage across 2-3 to 3-1 and locking in your midgame module strength.');
+        if (offer.id === 'sovereign') return text('最适合第 3 章到 4-1 前提升续航与 Boss 伤害，让推进更稳。', 'Best for stronger sustain and boss damage through Chapter 3 and the push into 4-1.');
+        return text('最适合第 4 章后期补主力模组和高阶碎片，并缩短后期养成周期。', 'Best for Chapter 4 progression, module catch-up, and a shorter late-game growth cycle.');
     }
 
     function getRecommendedOfferId() {
@@ -4321,21 +4321,21 @@
     }
 
     const DRONE_SQUAD_ZH_TEXT_FALLBACKS = {
-        '2-2 is the first real alloy pressure wall.': '2-2 是第一个真正吃合金的卡点。',
+        '2-2 is the first real alloy pressure wall.': '2-2 是第一个明显吃合金的阶段。',
         '3-3 is the first full-version finish line before late-game chapters begin.': '3-3 是前中期完整内容的第一条终点线，之后进入后期章节。',
         '4-1 starts checking shield, levels, and whether your daily investment kept up.': '4-1 开始同时检查护盾、等级和每日投入是否跟上。',
-        '4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.': '4-3 是当前终局卡点，需要高星主机、首领增伤和史诗模组。',
-        'After 1-3, the first real power wall starts forming.': '通关 1-3 后，第一道真正的战力墙开始形成。',
+        '4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.': '4-3 是当前终局挑战，推荐高星主机、首领增伤和史诗模组。',
+        'After 1-3, the first real power wall starts forming.': '通关 1-3 后，下一阶段会更看重主力养成。',
         'Alloy': '合金',
         'Alloy Yield': '合金收益',
         'Attack': '攻击',
         'Available to every player.': '所有玩家都可领取。',
         'Back To Hangar': '返回机库',
         'Backup': '备补',
-        'Best for breaking the 2-3 to 3-1 pierce wall and stabilizing midgame modules fast.': '最适合突破 2-3 到 3-1 的穿透卡点，并快速稳住中期模组强度。',
-        'Best for Chapter 3 boss walls and the survival pressure before 4-1, with better sustain and boss damage.': '最适合第 3 章 Boss 卡点与 4-1 前的生存压力，续航和 Boss 伤害提升更明显。',
-        'Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.': '最适合第 4 章终局卡点、史诗模组追赶，以及缩短后期保底周期。',
-        'Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.': '最适合解决第 2 章前期的合金与研究短缺，让日常成长不断档。',
+        'Best for breaking the 2-3 to 3-1 pierce wall and stabilizing midgame modules fast.': '最适合在 2-3 到 3-1 这一段补足穿透和输出，并尽快稳住中期模组强度。',
+        'Best for Chapter 3 boss walls and the survival pressure before 4-1, with better sustain and boss damage.': '最适合第 3 章到 4-1 前提升续航与 Boss 伤害，让推进更稳。',
+        'Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.': '最适合第 4 章后期补主力模组和高阶碎片，并缩短后期养成周期。',
+        'Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.': '最适合在第 2 章前期补足合金和研究资源，让日常养成更顺畅。',
         'Best for unlocking dual-wing tempo, clearing 1-3, and opening sponsor season value.': '最适合解锁双翼节奏、通关 1-3，并开启赞助赛季收益。',
         'Boss': '首领',
         'Boss Dmg': '首领增伤',
@@ -4346,7 +4346,7 @@
         'Chassis': '主机',
         'Chassis Fleet': '主机编队',
         'Chassis levels are always your most direct power gain.': '主机等级始终是最直接的战力提升。',
-        'Chassis levels are the most stable late-game power source and the cheapest wall breaker.': '主机等级是后期最稳定、也最便宜的破墙战力来源。',
+        'Chassis levels are the most stable late-game power source and the cheapest wall breaker.': '主机等级是后期最稳定、也最省资源的战力提升来源。',
         'Chips / Alloy': '芯片 / 合金',
         'Claim': '领取',
         'Claim Reward': '领取奖励',
@@ -4359,7 +4359,7 @@
         'Credits': '金币',
         'Current': '当前',
         'Current Cost': '当前消耗',
-        'Current Wall': '当前卡点',
+        'Current Wall': '当前进度',
         'Daily Free Supply': '每日免费补给',
         'Elites arrive three times during a run.': '一局内会出现三次精英敌人。',
         'Empty Slot': '空槽位',
