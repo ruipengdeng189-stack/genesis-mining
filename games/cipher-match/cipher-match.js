@@ -230,7 +230,7 @@
                 copyText(PAYMENT_WALLET, text('地址已复制。', 'Address copied.'));
                 break;
             case 'copyOfferAmount':
-                copyText(value, text('金额已复制。', 'Amount copied.'));
+                copyOfferAmount(value);
                 break;
             case 'closeModal':
                 closeModal();
@@ -273,7 +273,7 @@
         const metaDescription = document.querySelector('meta[name="description"]');
         if (metaDescription) {
             metaDescription.setAttribute('content', text(
-                '密码消除 - 6x6 解码消除、局外构筑、研究成长、赛季与商店闭环。',
+                '密码消除 - 6x6 解码消除、局外构筑、研究成长、赛季与商店养成。',
                 'Cipher Match - 6x6 decode puzzle runs, deck growth, research, season, and shop loop.'
             ));
         }
@@ -1325,9 +1325,9 @@
         const targetSummary = getOfferTargetSummary(item.id);
         const recommendedNow = isOfferRecommendedNow(item.id);
         const fitLabel = owned && recommendedNow
-            ? text('当前卡点已覆盖', 'Current gate covered')
+            ? text('当前阶段已覆盖', 'Current stage covered')
             : recommendedNow
-                ? text('当前卡点推荐', 'Recommended now')
+                ? text('当前阶段推荐', 'Recommended now')
                 : '';
         const badge = owned
             ? text('已拥有', 'Owned')
@@ -1354,7 +1354,7 @@
                 </div>
                 <div class="cm-reward-row">${renderRewardChips(item.reward)}</div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('适配卡点', 'Best For'))} · ${escapeHtml(targetSummary)}</span>
+                    <span class="cm-chip">${escapeHtml(text('适用阶段', 'Best For'))} · ${escapeHtml(targetSummary)}</span>
                     ${fitLabel ? `<span class="cm-chip">${escapeHtml(fitLabel)}</span>` : ''}
                 </div>
                 <button class="cm-btn" type="button" data-action="previewOffer" data-value="${item.id}" ${metaLocked ? 'disabled' : ''}>${escapeHtml(
@@ -1378,7 +1378,7 @@
                     <div>
                         <div class="eyebrow">${escapeHtml(text('\u652f\u4ed8\u72b6\u6001', 'Payment Status'))}</div>
                         <strong>${escapeHtml(text('\u8ba2\u5355\u3001\u7279\u6743\u4e0e\u5230\u8d26\u8bb0\u5f55', 'Orders, perks, and delivery log'))}</strong>
-                        <div class="cm-copy">${escapeHtml(text('\u672c\u5730\u95ed\u73af\u7248\uff1a\u521b\u5efa\u8ba2\u5355 → \u8f6c\u8d26 → \u7c98\u8d34 TxID → \u9a8c\u8bc1 → \u5956\u52b1\u7acb\u5373\u53d1\u653e\u3002', 'Local loop: create order → transfer → paste TxID → verify → rewards arrive instantly.'))}</div>
+                        <div class="cm-copy">${escapeHtml(text('支付步骤：创建订单 → 按精确金额转账 → 粘贴 TxID → 验证 → 奖励发放。', 'Payment flow: create order → send the exact amount → paste TxID → verify → rewards granted.'))}</div>
                     </div>
                 </div>
                 <div class="cm-chip-row">
@@ -1415,8 +1415,8 @@
         const recommendationLabel = gatePlan.owned
             ? text('\u5bf9\u5e94\u793c\u5305\u5df2\u6301\u6709', 'Recommended pack owned')
             : gatePlan.recommendedNow
-                ? text('\u5f53\u524d\u5361\u70b9\u63a8\u8350', 'Recommended now')
-                : text('\u4e0b\u4e00\u5361\u70b9\u9884\u544a', 'Next gate prep');
+                ? text('当前阶段推荐', 'Recommended now')
+                : text('下一阶段预告', 'Next stage prep');
         const gapLabel = gatePlan.gap > 0
             ? text(`\u5dee\u503c ${formatCompact(gatePlan.gap)}`, `Gap ${formatCompact(gatePlan.gap)}`)
             : text('\u5df2\u5230\u7ebf', 'On Line');
@@ -1463,13 +1463,13 @@
         const recommendationLabel = gatePlan.owned
             ? text('\u5bf9\u5e94\u793c\u5305\u5df2\u6301\u6709', 'Recommended pack already owned')
             : gatePlan.recommendedNow
-                ? text('\u5f53\u524d\u5361\u70b9\u63a8\u8350', 'Recommended now')
-                : text('\u4e0b\u4e00\u5361\u70b9\u9884\u544a', 'Next gate prep');
+                ? text('当前阶段推荐', 'Recommended now')
+                : text('下一阶段预告', 'Next stage prep');
         const recommendationCopy = gatePlan.owned
-            ? text('\u5f53\u524d\u5361\u70b9\u5bf9\u5e94\u7684\u6c38\u4e45\u589e\u5f3a\u5df2\u7ecf\u5177\u5907\uff0c\u5546\u5e97\u91cc\u4f18\u5148\u62ff\u6bcf\u65e5\u514d\u8d39\u548c\u529f\u80fd\u8865\u7ed9\u5373\u53ef\u3002', 'You already have the permanent perk for this gate, so the daily free supply and utility packs should be the priority here.')
+            ? text('当前阶段对应的永久增益已经具备，商店里优先补每日免费和功能补给即可。', 'You already have the permanent perk for this stage, so daily free supply and utility packs should be the priority here.')
             : gatePlan.recommendedNow
-                ? text('\u8fd9\u6863\u4ed8\u8d39\u6b63\u5bf9\u5e94\u4f60\u5f53\u524d\u7684\u5361\u70b9\u4e0e\u589e\u5f3a\u7f3a\u53e3\uff0c\u4e70\u5230\u540e\u4f1a\u76f4\u63a5\u4f5c\u7528\u5728\u95ef\u5173\u4f53\u9a8c\u4e0a\u3002', 'This offer matches your current gate and missing power, so the boost applies directly to your run experience.')
-                : text('\u8fd9\u6863\u4ed8\u8d39\u4e3b\u8981\u670d\u52a1\u4f60\u4e0b\u4e00\u6bb5\u6210\u957f\u5361\u70b9\uff0c\u4e0d\u7528\u6025\u7740\u73b0\u5728\u8d2d\u4e70\u3002', 'This offer mainly serves your next growth gate, so there is no need to rush the purchase.');
+                ? text('这档付费正对应你当前的强化缺口，买到后会直接作用在闯关体验上。', 'This offer matches your current missing power, so the boost applies directly to your run experience.')
+                : text('这档付费主要服务你下一段成长，不用急着现在购买。', 'This offer mainly serves your next growth stage, so there is no need to rush the purchase.');
         const gapLabel = gatePlan.gap > 0
             ? text(`\u5dee\u503c ${formatCompact(gatePlan.gap)}`, `Gap ${formatCompact(gatePlan.gap)}`)
             : text('\u5df2\u5230\u7ebf', 'On Line');
@@ -1477,7 +1477,7 @@
             <div class="cm-card cm-card--shop-gate">
                 <div class="cm-card-head">
                     <div>
-                        <div class="eyebrow">${escapeHtml(text('\u5f53\u524d\u5361\u70b9\u6307\u5f15', 'Current Gate Guide'))}</div>
+                        <div class="eyebrow">${escapeHtml(text('当前阶段指引', 'Current Stage Guide'))}</div>
                         <strong>${escapeHtml(gatePlan.title)}</strong>
                         <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
                     </div>
@@ -1500,8 +1500,8 @@
         if (chapter.id === '1-1' || chapter.id === '1-2') {
             plan = {
                 title: text('新手热身段', 'Rookie Ramp'),
-                tag: text('下一墙：1-3', 'Next wall: 1-3'),
-                summary: text('这段先学交换、三连和拆盾，真正的早期卡点会在 1-3 出现。', 'Use this stretch to learn swaps, 3-matches, and shield breaking before the first real gate at 1-3.'),
+                tag: text('下一阶段：1-3', 'Next stage: 1-3'),
+                summary: text('这段先学交换、三连和拆盾，1-3 会迎来首次明显的强度提升。', 'Use this stretch to learn swaps, 3-matches, and shield breaking before the first notable difficulty spike at 1-3.'),
                 freePath: text('补到 2 轮核心构筑，或 1 轮核心构筑加稳定网格 2~3 级。', 'Reach 2 core build rounds, or 1 core round plus Stability Mesh level 2 to 3.'),
                 lightPath: text('想更顺地进到 2-1，可提前用新手破译包补开局节奏。', 'If you want a smoother route into 2-1, the Starter Decode Pack is the early tempo shortcut.'),
                 midPath: text('中氪先别在这里出手，把预算留给 2-2 / 2-3 更值。', 'Mid spend is better saved for 2-2 / 2-3 instead of being used here.'),
@@ -1510,7 +1510,7 @@
             };
         } else if (chapter.id === '1-3' || chapter.id === '2-1') {
             plan = {
-                title: text('早期软卡点', 'Early Soft Gate'),
+                title: text('早期进阶段', 'Early Progression'),
                 tag: text('节奏与拆盾', 'Tempo and shield break'),
                 summary: text('这里开始要求主力构筑成型，同时学会先拆盾再收尾。', 'This is where the main build needs to come together and boss shield timing starts to matter.'),
                 freePath: text('建议补到 2 轮核心构筑，或 1 轮核心构筑加稳定网格 2~3 级。', 'Aim for 2 core build rounds, or 1 core round plus Stability Mesh level 2 to 3.'),
@@ -1521,7 +1521,7 @@
             };
         } else if (chapter.id === '2-2' || chapter.id === '2-3' || chapter.id === '3-1') {
             plan = {
-                title: text('中期研究卡点', 'Mid Research Gate'),
+                title: text('中期研究段', 'Mid Research Stage'),
                 tag: text('卡牌转研究', 'Cards into research'),
                 summary: text('只升卡会开始吃力，这段需要把研究、每日补给和免费赛季也拉进成长链。', 'Card upgrades alone start to stall here, so research, daily supplies, and the free season track must join the growth loop.'),
                 freePath: text('目标是 4~5 轮核心构筑，并把稳定网格补到 4~5 级、脉冲电池补到 2 级。', 'Target 4 to 5 core build rounds, Stability Mesh 4 to 5, and Pulse Battery 2.'),
@@ -1532,31 +1532,31 @@
             };
         } else if (chapter.id === '3-2') {
             plan = {
-                title: text('首领墙预热段', 'Boss Wall Prep'),
-                tag: text('下一墙：3-3', 'Next wall: 3-3'),
-                summary: text('这关本身是过渡，但它要求你提前把后段 Boss 构筑切好。', 'This stage is a transition, but it asks you to prepare the late boss build before the real wall at 3-3.'),
+                title: text('首领战准备段', 'Boss Prep'),
+                tag: text('下一阶段：3-3', 'Next stage: 3-3'),
+                summary: text('这关本身是过渡，但它要求你提前把后段 Boss 构筑切好。', 'This stage is a transition, but it asks you to prepare the late boss build before the bigger boss check at 3-3.'),
                 freePath: text('建议补到 7 轮核心构筑，并把稳定网格补到 5~6 级、脉冲电池补到 3~4 级。', 'Aim for 7 core build rounds, Stability Mesh 5 to 6, and Pulse Battery 3 to 4.'),
                 lightPath: text('小氪更适合保持新手包和赛季通行证的成长红利，同时开始切 Boss 构筑。', 'Light spend works best by keeping the Starter Pack plus Season Pass value online while switching into a boss build.'),
-                midPath: text('如果想让下一道 Boss 墙从硬拖变成可控，破关金库会在这里开始对位。', 'If you want the next boss wall to feel controllable instead of dragged out, Breaker Vault starts to line up here.'),
+                midPath: text('如果想让下一场 Boss 战更可控，破关金库会在这里开始对位。', 'If you want the next boss fight to feel more controllable, Breaker Vault starts to line up here.'),
                 offerId: 'breakerVault',
                 packFit: '3-2 / 3-3 / 4-x'
             };
         } else if (chapter.id === '3-3' || chapter.id === '4-1') {
             plan = {
-                title: text('后段首领墙', 'Late Boss Wall'),
+                title: text('后段首领战', 'Late Boss Stage'),
                 tag: text('Boss 反制压力', 'Boss counter pressure'),
                 summary: text('这里开始同时考验数值、首领对策和资源滚动速度。', 'This is where raw numbers, boss counterplay, and long-run resource pacing are all tested together.'),
                 freePath: text('目标是 7~8 轮核心构筑、稳定网格 5~6 级、脉冲电池 3~4 级，并完成 Boss 构筑切换。', 'Target 7 to 8 core build rounds, Stability Mesh 5 to 6, Pulse Battery 3 to 4, and a proper boss build swap.'),
                 lightPath: text('小氪路线仍以新手包加赛季通行为主，但必须配合 Boss 构筑而不是无脑平推。', 'Light spend still leans on Starter Pack plus Season Pass, but the boss build still matters more than brute forcing.'),
-                midPath: text('破关金库是这一墙的专门解：减轻反制，同时让后段收益更像一次正反馈。', 'Breaker Vault is the dedicated answer here: it softens counters and makes late rewards feel like a meaningful payoff.'),
+                midPath: text('破关金库是这一段的专门强化：减轻反制，同时让后段收益更像一次正反馈。', 'Breaker Vault is the dedicated boost here: it softens counters and makes late rewards feel like a meaningful payoff.'),
                 offerId: 'breakerVault',
                 packFit: '3-2 / 3-3 / 4-x'
             };
         } else {
             plan = {
-                title: text('终盘成长墙', 'Endgame Growth Wall'),
+                title: text('终盘成长段', 'Endgame Growth'),
                 tag: text('长线资源经营', 'Long-term resource loop'),
-                summary: text('终盘不是单次补强，而是构筑、研究、Boss 增益和每日经营一起闭环。', 'The endgame is not about one upgrade spike; it is about closing the loop between build, research, boss perks, and daily income.'),
+                summary: text('终盘不是单次补强，而是构筑、研究、Boss 增益和每日经营一起形成稳定成长。', 'The endgame is not about one upgrade spike; it is about build, research, boss perks, and daily income working together into steady growth.'),
                 freePath: text('白嫖也能过，但要把 9~10 轮核心构筑、中高等级研究、免费赛季和每日都尽量吃满。', 'Free players can still clear it, but it asks for 9 to 10 core build rounds, high lab levels, and strong daily plus season collection.'),
                 lightPath: text('小氪更像买时间，把 4-2 / 4-3 当成 1~2 周的终盘目标更合理。', 'Light spend mainly buys time here, so treating 4-2 / 4-3 as a 1 to 2 week endgame target is healthier.'),
                 midPath: text('中氪路线需要三档都到位，其中破关金库负责把后段 Boss 战从高波动拉回可控。', 'Mid spend wants the full stack, and Breaker Vault is what pulls late boss fights back from high variance into controllable runs.'),
@@ -1610,7 +1610,7 @@
                     <span class="cm-tag is-warning">${escapeHtml(text('待验证', 'Pending'))}</span>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">USDT ${offer.price}</span>
+                    <span class="cm-chip">USDT ${formatPaymentAmount(order.exactAmount || offer.price)}</span>
                     <span class="cm-chip">${escapeHtml(text('剩余', 'Time Left'))} · ${escapeHtml(getPendingOrderEta(order))}</span>
                     <span class="cm-chip">${escapeHtml(text('创建于', 'Created'))} · ${escapeHtml(formatTimeLabel(order.createdAt))}</span>
                 </div>
@@ -1631,7 +1631,7 @@
                     <span class="cm-tag is-good">${escapeHtml(text('已到账', 'Delivered'))}</span>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">USDT ${entry.amount}</span>
+                    <span class="cm-chip">USDT ${formatPaymentAmount(entry.amount)}</span>
                     <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(entry.orderId || '--')}</span>
                     <span class="cm-chip">${escapeHtml(text('验证时间', 'Verified'))} · ${escapeHtml(formatTimeLabel(entry.verifiedAt))}</span>
                 </div>
@@ -2301,10 +2301,10 @@
     function previewOffer(offerId) {
         const offer = offerMap[offerId];
         if (!offer) return;
-        const order = getPendingOrder(offerId);
         const owned = isOfferOwned(offerId);
-        const lastVerified = getLastVerifiedPayment(offerId);
         const lockedByOwnership = !!(owned && offer.oneTime);
+        const order = lockedByOwnership ? null : ensurePendingOrder(offerId, { silent: true });
+        const lastVerified = getLastVerifiedPayment(offerId);
         const orderEta = order ? getPendingOrderEta(order) : '';
         const primaryAction = lockedByOwnership ? 'closeModal' : order ? 'verifyOfferTxid' : 'createOfferOrder';
         const primaryLabel = lockedByOwnership
@@ -2315,7 +2315,7 @@
         openModal({
             eyebrow: text('支付弹窗', 'Payment'),
             title: localize(offer.name),
-            subtitle: lockedByOwnership ? text('永久特权已激活', 'Permanent perk already active') : `${PAYMENT_NETWORK} · USDT ${offer.price}`,
+            subtitle: lockedByOwnership ? text('永久特权已激活', 'Permanent perk already active') : `${PAYMENT_NETWORK} · USDT ${formatPaymentAmount(order?.exactAmount || offer.price)}`,
             body: `
                 <div class="cm-card">
                     <div class="cm-card-head">
@@ -2343,11 +2343,12 @@
                         <div class="cm-card-head">
                             <div>
                                 <strong>${escapeHtml(text('当前订单', 'Current Order'))}</strong>
-                                <div class="cm-copy">${escapeHtml(text('订单会保留 15 分钟，到期后可重新创建。', 'Orders remain for 15 minutes and can be recreated after expiry.'))}</div>
+                                <div class="cm-copy">${escapeHtml(text('订单保留 15 分钟；刷新后会生成新的精确金额。', 'Orders stay live for 15 minutes, and refreshing creates a new exact amount.'))}</div>
                             </div>
                         </div>
                         <div class="cm-chip-row">
                             <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(order.id || createOrderId(order.offerId, order.createdAt))}</span>
+                            <span class="cm-chip">USDT ${formatPaymentAmount(order.exactAmount || offer.price)}</span>
                             <span class="cm-chip">${escapeHtml(text('状态', 'Status'))} · ${escapeHtml(text('待验证', 'Pending'))}</span>
                             <span class="cm-chip">${escapeHtml(text('剩余', 'Time Left'))} · ${escapeHtml(orderEta)}</span>
                         </div>
@@ -2359,11 +2360,12 @@
                         <div class="cm-card-head">
                             <div>
                                 <strong>${escapeHtml(text('最近到账记录', 'Latest Delivery'))}</strong>
-                                <div class="cm-copy">${escapeHtml(text('用于确认这份礼包最近一次已完成的到账闭环。', 'Confirms the most recent completed delivery for this pack.'))}</div>
+                                <div class="cm-copy">${escapeHtml(text('用于确认这份礼包最近一次已完成的到账记录。', 'Confirms the most recent completed delivery for this pack.'))}</div>
                             </div>
                         </div>
                         <div class="cm-chip-row">
                             <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(lastVerified.orderId || '--')}</span>
+                            <span class="cm-chip">USDT ${formatPaymentAmount(lastVerified.amount || offer.price)}</span>
                             <span class="cm-chip">${escapeHtml(text('验证时间', 'Verified'))} · ${escapeHtml(formatTimeLabel(lastVerified.verifiedAt))}</span>
                             <span class="cm-chip">${escapeHtml(shortenTxid(lastVerified.txid))}</span>
                         </div>
@@ -2374,25 +2376,25 @@
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('收款地址', 'Wallet Address'))}</strong>
                         <input value="${escapeHtml(PAYMENT_WALLET)}" readonly>
-                        <small>${escapeHtml(text('请按上方地址转入对应的 USDT 金额。', 'Send the exact USDT amount to the address above.'))}</small>
+                        <small>${escapeHtml(text('请按上方地址转入本单对应的 USDT 金额。', 'Send the USDT amount for this order to the address above.'))}</small>
                     </div>
 
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('转账金额', 'Amount'))}</strong>
-                        <input value="USDT ${offer.price}" readonly>
-                        <small>${escapeHtml(text('复制金额可避免支付时输错。', 'Copying the amount helps avoid mistakes.'))}</small>
+                        <input value="USDT ${formatPaymentAmount(order?.exactAmount || offer.price)}" readonly>
+                        <small>${escapeHtml(text('请按本单精确金额转入，便于核对这笔订单。', 'Send the exact amount shown for this order so it can be checked quickly.'))}</small>
                     </div>
 
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('交易哈希', 'Transaction Hash'))}</strong>
                         <input id="offerTxidInput" placeholder="${escapeHtml(text('请输入 64 位交易哈希', 'Enter the 64-character TxID'))}" value="${order ? escapeHtml(order.txid || '') : ''}">
-                        <small>${escapeHtml(text('当前为本地校验版：填入合法且未使用过的交易哈希即可完成到账验证。', 'Local validation build: any valid unused transaction hash completes delivery verification.'))}</small>
+                        <small>${escapeHtml(text('请粘贴这笔转账且未重复使用的 TxID，用于完成发放校验。', 'Paste the unused TxID for this transfer to finish reward verification.'))}</small>
                     </div>
                 `}
             `,
             actions: `
                 ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAddress">${escapeHtml(text('复制地址', 'Copy Address'))}</button>`}
-                ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAmount" data-value="USDT ${offer.price}">${escapeHtml(text('复制金额', 'Copy Amount'))}</button>`}
+                ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAmount" data-value="${offer.id}">${escapeHtml(text('复制金额', 'Copy Amount'))}</button>`}
                 ${lockedByOwnership || !order ? '' : `<button class="cm-btn-soft" type="button" data-action="cancelOfferOrder" data-value="${offer.id}">${escapeHtml(text('关闭订单', 'Cancel Order'))}</button>`}
                 <button class="cm-btn" type="button" data-action="${primaryAction}" data-value="${offer.id}">${escapeHtml(primaryLabel)}</button>
             `
@@ -2407,20 +2409,9 @@
             showToast(text('该礼包已拥有，无需重复购买。', 'This pack is already owned.'), 'warn');
             return;
         }
-        state.save.pendingOrders = state.save.pendingOrders.filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS);
-        const existing = getPendingOrder(offerId);
-        if (!existing) {
-            const createdAt = Date.now();
-            state.save.pendingOrders.push({
-                id: createOrderId(offerId, createdAt),
-                offerId,
-                createdAt,
-                txid: ''
-            });
-            saveProgress();
-        }
+        ensurePendingOrder(offerId, { forceNew: true, silent: true });
         previewOffer(offerId);
-        showToast(text('订单已创建。', 'Order created.'), 'good');
+        showToast(text('精确金额订单已更新。', 'Exact payment order updated.'), 'good');
     }
 
     function verifyOfferTxid(offerId) {
@@ -2428,7 +2419,25 @@
         const order = getPendingOrder(offerId);
         const input = document.getElementById('offerTxidInput');
         const txid = input instanceof HTMLInputElement ? input.value.trim() : '';
-        if (!offer || !order) return;
+        if (!offer) return;
+        if (offer.oneTime && isOfferOwned(offerId)) {
+            showToast(text('该礼包已拥有，无需再次验证。', 'This pack is already owned.'), 'warn');
+            return;
+        }
+        if (!order || isPendingOrderExpired(order)) {
+            state.save.pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
+            saveProgress();
+            showToast(text('订单已过期，请重新生成精确金额。', 'This order expired. Please refresh the exact amount.'), 'warn');
+            previewOffer(offerId);
+            return;
+        }
+        if (!isPendingOrderValid(order)) {
+            state.save.pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
+            saveProgress();
+            showToast(text('订单信息不完整，请重新生成。', 'This order is incomplete. Please refresh it first.'), 'warn');
+            previewOffer(offerId);
+            return;
+        }
         if (!PAYMENT_TXID_RE.test(txid)) {
             showToast(text('交易哈希格式不正确。', 'Invalid TxID format.'), 'warn');
             return;
@@ -2438,7 +2447,7 @@
             showToast(text('该交易哈希已验证过，请勿重复使用。', 'This transaction hash has already been used.'), 'warn');
             return;
         }
-        order.txid = normalizedTxid;
+        const settledAmount = Number(order.exactAmount || offer.price || 0);
         applyReward(offer.reward);
         state.save.verifiedTxids.push(normalizedTxid);
         state.save.paymentHistory = [
@@ -2446,17 +2455,20 @@
                 orderId: order.id || createOrderId(offerId, order.createdAt),
                 offerId,
                 txid: normalizedTxid,
-                amount: offer.price,
+                amount: settledAmount,
+                basePrice: Number(offer.price || 0),
+                payAddress: order.payAddress || PAYMENT_WALLET,
+                network: order.network || PAYMENT_NETWORK,
                 verifiedAt: Date.now()
             },
             ...state.save.paymentHistory.filter((item) => item.txid !== normalizedTxid)
         ].slice(0, 12);
-        state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.offerId !== offerId);
+        state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== order.id);
         saveProgress();
         openModal({
             eyebrow: text('支付成功', 'Payment Verified'),
             title: localize(offer.name),
-            subtitle: text('奖励已发放到账。', 'Rewards have been delivered.'),
+            subtitle: `USDT ${formatPaymentAmount(settledAmount)} · ${PAYMENT_NETWORK}`,
             body: `<div class="cm-card"><div class="cm-reward-row">${renderRewardChips(offer.reward)}</div></div>`,
             actions: `<button class="cm-btn" type="button" data-action="closeModal">${escapeHtml(text('完成', 'Done'))}</button>`
         });
@@ -2519,13 +2531,11 @@
     }
 
     function getPendingOrderCount() {
-        return state.save.pendingOrders.filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS).length;
+        return getPendingOrders().length;
     }
 
     function getPendingOrders() {
-        return [...state.save.pendingOrders]
-            .filter((item) => (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS)
-            .sort((left, right) => right.createdAt - left.createdAt);
+        return sanitizePendingOrders(state.save.pendingOrders);
     }
 
     function getRecentPaymentHistory(limit = 3) {
@@ -3182,7 +3192,7 @@
                 progressBonus: 1,
                 bossGrace: isBoss ? 1 : 0,
                 drainReduction: isBoss ? 3 : 0,
-                note: text('第三章追赶保护：仍会给一次轻量扶梯，避免断层卡关。', 'Chapter 3 catch-up assist: a light safety ramp remains to avoid a hard wall.')
+                note: text('第三章追赶保护：仍会给一次轻量扶梯，避免成长断层。', 'Chapter 3 catch-up assist: a light safety ramp remains to avoid a sharp progression drop.')
             };
         }
         return {
@@ -3605,7 +3615,11 @@
     }
 
     function getPendingOrder(offerId) {
-        return state.save.pendingOrders.find((item) => item.offerId === offerId && (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS) || null;
+        return getPendingOrders().find((item) => item.offerId === offerId) || null;
+    }
+
+    function isPendingOrderExpired(order) {
+        return !order || ((Number(order.createdAt) || 0) + PAYMENT_ORDER_EXPIRY_MS) <= Date.now();
     }
 
     function getPendingOrderEta(order) {
@@ -3619,6 +3633,11 @@
         return String(txid || '').trim().toLowerCase();
     }
 
+    function formatPaymentAmount(value) {
+        const amount = Math.round((Number(value) || 0) * 1000) / 1000;
+        return amount.toFixed(3).replace(/\.?0+$/, (match) => match === '.000' ? '' : match.replace(/0+$/, '').replace(/\.$/, ''));
+    }
+
     function shortenTxid(txid) {
         const normalized = normalizeTxid(txid);
         if (normalized.length <= 12) return normalized || '--';
@@ -3630,6 +3649,78 @@
         const stamp = Number(createdAt || Date.now()).toString(36).slice(-6).toUpperCase();
         const salt = Math.random().toString(36).slice(2, 5).toUpperCase();
         return `${offerCode}-${stamp}-${salt}`;
+    }
+
+    function getOfferExactAmount(offer, excludeOrderId = '') {
+        const basePrice = Math.round((Number(offer?.price || 0)) * 1000) / 1000;
+        const reserved = new Set();
+        sanitizePendingOrders(state.save.pendingOrders).forEach((item) => {
+            if (item.id !== excludeOrderId && Number(item.exactAmount || 0) > 0) {
+                reserved.add(formatPaymentAmount(item.exactAmount));
+            }
+        });
+        sanitizePaymentHistory(state.save.paymentHistory).forEach((item) => {
+            if (item.orderId !== excludeOrderId && Number(item.amount || 0) > 0) {
+                reserved.add(formatPaymentAmount(item.amount));
+            }
+        });
+        const seed = Date.now() % 89;
+        for (let index = 0; index < 89; index += 1) {
+            const suffix = ((seed + index) % 89) + 11;
+            const candidate = Math.round((basePrice + (suffix / 1000)) * 1000) / 1000;
+            if (!reserved.has(formatPaymentAmount(candidate))) return candidate;
+        }
+        return Math.round((basePrice + 0.097) * 1000) / 1000;
+    }
+
+    function isPendingOrderValid(order) {
+        if (!order || typeof order !== 'object') return false;
+        const offer = offerMap[order.offerId];
+        if (!offer) return false;
+        const basePrice = Math.round((Number(offer.price || 0)) * 1000) / 1000;
+        const exactAmount = Number(order.exactAmount || 0);
+        if (!(exactAmount > basePrice)) return false;
+        if (String(order.payAddress || '').trim() !== PAYMENT_WALLET) return false;
+        if (String(order.network || '').trim() !== PAYMENT_NETWORK) return false;
+        if ((Number(order.createdAt) || 0) <= 0) return false;
+        return true;
+    }
+
+    function ensurePendingOrder(offerId, { forceNew = false, silent = false } = {}) {
+        const offer = offerMap[offerId];
+        if (!offer) return null;
+        if (offer.oneTime && isOfferOwned(offerId)) return null;
+        state.save.pendingOrders = sanitizePendingOrders(state.save.pendingOrders);
+        const existing = state.save.pendingOrders.find((item) => item.offerId === offerId) || null;
+        if (!forceNew && existing) return existing;
+        state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.offerId !== offerId);
+        const createdAt = Date.now();
+        const order = {
+            id: createOrderId(offerId, createdAt),
+            offerId,
+            exactAmount: getOfferExactAmount(offer, existing?.id || ''),
+            payAddress: PAYMENT_WALLET,
+            network: PAYMENT_NETWORK,
+            createdAt,
+            txid: ''
+        };
+        state.save.pendingOrders = sanitizePendingOrders([order, ...state.save.pendingOrders]);
+        saveProgress();
+        if (!silent) {
+            showToast(text('精确金额订单已更新。', 'Exact payment order updated.'), 'good');
+        }
+        return state.save.pendingOrders.find((item) => item.offerId === offerId) || null;
+    }
+
+    async function copyOfferAmount(offerId) {
+        const offer = offerMap[offerId];
+        if (!offer) return;
+        const order = getPendingOrder(offerId) || ensurePendingOrder(offerId, { forceNew: true, silent: true });
+        if (!order) {
+            showToast(text('请先创建订单。', 'Create an order first.'), 'warn');
+            return;
+        }
+        await copyText(String(formatPaymentAmount(order.exactAmount)), text('精确金额已复制。', 'Exact amount copied.'));
     }
 
     function formatTimeLabel(value) {
@@ -3711,11 +3802,14 @@
                 return {
                     id: String(item?.id || createOrderId(item?.offerId, createdAt)),
                     offerId: String(item?.offerId || ''),
+                    exactAmount: Math.round((Number(item?.exactAmount || 0)) * 1000) / 1000,
+                    payAddress: String(item?.payAddress || ''),
+                    network: String(item?.network || ''),
                     createdAt,
                     txid: normalizeTxid(item?.txid || '')
                 };
             })
-            .filter((item) => offerMap[item.offerId] && item.createdAt > 0 && (Date.now() - item.createdAt) < PAYMENT_ORDER_EXPIRY_MS)
+            .filter((item) => offerMap[item.offerId] && !isPendingOrderExpired(item) && isPendingOrderValid(item))
             .sort((left, right) => right.createdAt - left.createdAt)
             .filter((item) => {
                 if (seenOffers.has(item.offerId)) return false;
@@ -3729,14 +3823,21 @@
         if (!Array.isArray(list)) return [];
         const seenTxids = new Set();
         return list
-            .map((item) => ({
-                orderId: String(item?.orderId || '--'),
-                offerId: String(item?.offerId || ''),
-                txid: normalizeTxid(item?.txid || ''),
-                amount: Number(item?.amount) || 0,
-                verifiedAt: Number(item?.verifiedAt) || 0
-            }))
-            .filter((item) => offerMap[item.offerId] && PAYMENT_TXID_RE.test(item.txid) && item.verifiedAt > 0)
+            .map((item) => {
+                const offerId = String(item?.offerId || '');
+                const basePrice = Math.round((Number(item?.basePrice || offerMap[offerId]?.price || 0)) * 1000) / 1000;
+                return {
+                    orderId: String(item?.orderId || '--'),
+                    offerId,
+                    txid: normalizeTxid(item?.txid || ''),
+                    amount: Math.round((Number(item?.amount || item?.exactAmount || basePrice || 0)) * 1000) / 1000,
+                    basePrice,
+                    payAddress: String(item?.payAddress || PAYMENT_WALLET),
+                    network: String(item?.network || PAYMENT_NETWORK),
+                    verifiedAt: Number(item?.verifiedAt) || 0
+                };
+            })
+            .filter((item) => offerMap[item.offerId] && PAYMENT_TXID_RE.test(item.txid) && item.verifiedAt > 0 && item.amount > 0)
             .sort((left, right) => right.verifiedAt - left.verifiedAt)
             .filter((item) => {
                 if (seenTxids.has(item.txid)) return false;
@@ -3989,9 +4090,9 @@
         const targetSummary = getOfferTargetSummary(item.id);
         const recommendedNow = isOfferRecommendedNow(item.id);
         const fitLabel = owned && recommendedNow
-            ? text('当前卡点已覆盖', 'Current gate covered')
+            ? text('当前阶段已覆盖', 'Current stage covered')
             : recommendedNow
-                ? text('当前卡点推荐', 'Recommended now')
+                ? text('当前阶段推荐', 'Recommended now')
                 : '';
         const badge = !unlocked && !owned
             ? text('未开放', 'Locked')
@@ -4022,7 +4123,7 @@
                 </div>
                 <div class="cm-reward-row">${renderRewardChips(item.reward)}</div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('适配卡点', 'Best For'))} · ${escapeHtml(targetSummary)}</span>
+                    <span class="cm-chip">${escapeHtml(text('适用阶段', 'Best For'))} · ${escapeHtml(targetSummary)}</span>
                     ${unlockLabel ? `<span class="cm-chip">${escapeHtml(unlockLabel)}</span>` : ''}
                     ${fitLabel ? `<span class="cm-chip">${escapeHtml(fitLabel)}</span>` : ''}
                 </div>

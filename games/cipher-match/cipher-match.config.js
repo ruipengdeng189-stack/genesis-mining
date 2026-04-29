@@ -173,7 +173,7 @@
                     { type: 'omega', amount: 11 },
                     { type: 'shield', amount: 7 }
                 ],
-                pressure: { zh: '首个软卡点', en: 'First soft gate' },
+                pressure: { zh: '首次强化', en: 'First power spike' },
                 rewardFocus: { zh: '首领破盾材料', en: 'Boss break dust' },
                 reward: { credits: 420, keyBits: 54, cipherDust: 20, seasonXp: 46 }
             },
@@ -201,7 +201,7 @@
                     { type: 'beta', amount: 17 },
                     { type: 'gamma', amount: 16 }
                 ],
-                pressure: { zh: '研究卡点', en: 'Research gate' },
+                pressure: { zh: '研究进阶', en: 'Research progression' },
                 rewardFocus: { zh: '研究材料补强', en: 'Research dust' },
                 reward: { credits: 760, keyBits: 96, cipherDust: 32, seasonXp: 76 }
             },
@@ -215,7 +215,7 @@
                     { type: 'omega', amount: 14 },
                     { type: 'shield', amount: 12 }
                 ],
-                pressure: { zh: '中期首领卡点', en: 'Mid boss gate' },
+                pressure: { zh: '中期首领战', en: 'Mid boss stage' },
                 rewardFocus: { zh: '中期成长跳板', en: 'Mid-growth springboard' },
                 reward: { credits: 920, keyBits: 116, cipherDust: 38, seasonXp: 88 }
             },
@@ -244,7 +244,7 @@
                     { type: 'gamma', amount: 18 },
                     { type: 'omega', amount: 10 }
                 ],
-                pressure: { zh: '三目标成长墙', en: 'Triple-goal wall' },
+                pressure: { zh: '三目标挑战', en: 'Triple-goal challenge' },
                 rewardFocus: { zh: '密钥位冲刺', en: 'Bit spike' },
                 reward: { credits: 1460, keyBits: 182, cipherDust: 56, seasonXp: 116 }
             },
@@ -258,7 +258,7 @@
                     { type: 'omega', amount: 16 },
                     { type: 'shield', amount: 14 }
                 ],
-                pressure: { zh: '后段首领卡点', en: 'Late boss gate' },
+                pressure: { zh: '后段首领战', en: 'Late boss stage' },
                 rewardFocus: { zh: '后段资源爆发', en: 'Late burst rewards' },
                 reward: { credits: 1940, keyBits: 246, cipherDust: 82, seasonXp: 148 }
             },
@@ -287,7 +287,7 @@
                     { type: 'gamma', amount: 20 },
                     { type: 'omega', amount: 14 }
                 ],
-                pressure: { zh: '终盘成长墙', en: 'Endgame wall' },
+                pressure: { zh: '终盘进阶', en: 'Endgame progression' },
                 rewardFocus: { zh: '密钥位高峰', en: 'Bit peak' },
                 reward: { credits: 2940, keyBits: 368, cipherDust: 118, seasonXp: 194 }
             },
@@ -418,7 +418,7 @@
                 id: 'starterPack',
                 price: 6,
                 name: { zh: '新手破译包', en: 'Starter Decode Pack' },
-                permanent: { zh: '适合 1-3 / 2-1 首次卡点：永久 +1 每日免费局，每局开局更稳。', en: 'Built for the 1-3 / 2-1 soft gate: +1 daily free run and stronger starts every run.' },
+                permanent: { zh: '推荐在 1-3 / 2-1 阶段启用：永久 +1 每日免费局，每局开局更稳。', en: 'Recommended around 1-3 / 2-1: +1 daily free run and stronger starts every run.' },
                 oneTime: true,
                 unlockStage: '1-1',
                 reward: { starterBoost: true, credits: 2600, keyBits: 220, cipherDust: 72 }
@@ -427,7 +427,7 @@
                 id: 'seasonPass',
                 price: 18,
                 name: { zh: '赛季通行证', en: 'Season Pass' },
-                permanent: { zh: '适合 2-2 / 2-3 研究卡点：解锁高级轨道，研究更便宜，中后段开局与收益也更稳。', en: 'Built for the 2-2 / 2-3 research gate: unlocks the premium track, lowers research cost, and steadies late-run openers and payouts.' },
+                permanent: { zh: '推荐在 2-2 / 2-3 研究阶段启用：解锁高级轨道，研究更便宜，中后段开局与收益也更稳。', en: 'Recommended around the 2-2 / 2-3 research stage: unlocks the premium track, lowers research cost, and steadies late-run openers and payouts.' },
                 oneTime: true,
                 unlockStage: '1-3',
                 reward: { premiumSeason: true, credits: 3600, keyBits: 280, cipherDust: 140, seasonXp: 160 }
@@ -436,7 +436,7 @@
                 id: 'breakerVault',
                 price: 68,
                 name: { zh: '破关金库', en: 'Breaker Vault' },
-                permanent: { zh: '适合 3-3 / 4-x 首领卡点：永久减轻首领反制，让后段 Boss 战更可控，并提高后段结算收益。', en: 'Built for the 3-3 / 4-x boss gate: permanently softens boss counters, makes late boss fights more controllable, and boosts late-stage payouts.' },
+                permanent: { zh: '推荐在 3-3 / 4-x 首领阶段启用：永久减轻首领反制，让后段 Boss 战更可控，并提高后段结算收益。', en: 'Recommended around the 3-3 / 4-x boss stage: permanently softens boss counters, makes late boss fights more controllable, and boosts late-stage payouts.' },
                 oneTime: true,
                 unlockStage: '3-1',
                 reward: { vaultRelay: true, credits: 16500, keyBits: 1180, cipherDust: 500 }
