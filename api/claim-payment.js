@@ -1,6 +1,14 @@
 const PAYMENT_NETWORK = 'TRON (TRC20)';
 const DEFAULT_GAME_ID = 'default';
 
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = Number(status || 500);
+  }
+}
+
 function getEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -45,7 +53,7 @@ function buildOrderResponse(order) {
 function normalizeTxid(txid) {
   const value = String(txid || '').trim().toLowerCase();
   if (!/^[a-f0-9]{64}$/i.test(value)) {
-    throw new Error('txid format is invalid, it must be 64 hex chars');
+    throw new HttpError(400, 'txid format is invalid, it must be 64 hex chars');
   }
   return value;
 }
@@ -169,12 +177,13 @@ export async function POST(request) {
       order: buildOrderResponse(updatedOrder),
     });
   } catch (error) {
+    const status = Number(error?.status || 500);
     return Response.json(
       {
         ok: false,
         error: error.message || 'claim payment failed',
       },
-      { status: 500 }
+      { status }
     );
   }
 }

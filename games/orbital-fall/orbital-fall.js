@@ -607,7 +607,7 @@
                     <div class="of-section-head">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('赛季轨道', 'Season'))}</div>
-                            <h2>${escapeHtml(text('免费线 + 高级线，保持低文字高信息密度', 'Free + premium tracks with compact, info-dense layout'))}</h2>
+                            <h2>${escapeHtml(text('免费线与高级线奖励总览', 'Free and Premium Reward Tracks'))}</h2>
                         </div>
                         <span class="of-chip ${premiumActive ? 'is-good' : 'is-warning'}">${escapeHtml(premiumActive ? text('高级线已启用', 'Premium Active') : text('高级线未启用', 'Premium Locked'))}</span>
                     </div>
@@ -652,7 +652,7 @@
                             <div class="eyebrow">${escapeHtml(text('商店', 'Shop'))}</div>
                             <h2>${escapeHtml(text('补给 + 礼包', 'Supply + Packs'))}</h2>
                         </div>
-                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(suggestedOffer?.id || 'starter')}">${escapeHtml(text('打开支付', 'Open Payment'))}</button>
+                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(suggestedOffer?.id || 'starter')}">${escapeHtml(text('打开礼包', 'Open Packs'))}</button>
                     </div>
                     <div class="of-inline-grid" style="margin-top:12px;">
                         <div class="of-inline-card">
@@ -670,7 +670,7 @@
                                 <span class="of-badge-icon">◆</span>
                                 <strong>${escapeHtml(text('礼包区', 'Packs'))}</strong>
                             </div>
-                            <div class="of-copy is-tight">${escapeHtml(text('按当前进度优先展示；每个礼包只保留价格、核心收益和快捷入口。', 'Sorted for your current progress with price, one core benefit, and a quick entry.'))}</div>
+                            <div class="of-copy is-tight">${escapeHtml(text('会优先推荐更适合你当前进度的礼包，并突出显示价格与核心收益。', 'Packs are prioritized for your current progress, with price and core benefit shown first.'))}</div>
                             ${pendingOrder ? `
                                 <div class="of-order-brief">
                                     <div class="of-card-head">
@@ -682,7 +682,7 @@
                                         <span class="of-chip">${escapeHtml(getPaymentExpiryLabel(pendingOrder))}</span>
                                     </div>
                                     <div class="of-copy is-tight">${escapeHtml(`${pendingOrder.orderId || pendingOrder.id || '--'} · ${formatPaymentAmount(pendingOrder.exactAmount)} USDT`)}</div>
-                                    <button class="ghost-btn" type="button" data-action="openPayment" data-value="${escapeHtml(pendingOrder.offerId || suggestedOffer?.id || 'starter')}">${escapeHtml(text('继续处理', 'Continue'))}</button>
+                                    <button class="ghost-btn" type="button" data-action="openPayment" data-value="${escapeHtml(pendingOrder.offerId || suggestedOffer?.id || 'starter')}">${escapeHtml(text('继续支付', 'Continue Payment'))}</button>
                                 </div>
                             ` : ''}
                             <div class="of-card-grid">
@@ -2098,7 +2098,7 @@
         if (!state.battle.result || state.battle.result.type !== 'defeat') return;
         const continueMeta = getBattleContinueMeta();
         if (!continueMeta.canContinue) {
-            showToast(text('继续资源不足，先回去补强一下。', 'Not enough recovery resources. Upgrade and try again.'), 'warning');
+            showToast(text('继续所需资源不足，先回整备升级一下。', 'Not enough resources to continue. Upgrade first and try again.'), 'warning');
             return;
         }
         if (state.battle.continueUsed >= (config.economy?.continueCosts || []).length) {
@@ -2175,11 +2175,11 @@
         state.battle.result = {
             type: 'defeat',
             title: isRetreat ? text('已撤离', 'Retreated') : text('失败', 'Defeat'),
-            subtitle: isRetreat ? text('已保留部分结算，回去补强后再来。', 'Partial rewards secured. Tune up and come back.') : text('还能继续一次，或先回整备补强。', 'You can continue once more or return to upgrade.'),
+            subtitle: isRetreat ? text('已保留部分结算，回整备升级后再来。', 'Partial rewards secured. Upgrade and come back stronger.') : text('还能继续一次，或先回整备升级。', 'You can continue once more or return to upgrade.'),
             reward,
             retreat: isRetreat
         };
-        showToast(isRetreat ? text('已撤离并保留部分结算。', 'Retreated with partial rewards.') : text('战机损毁，考虑补强后再挑战。', 'Ship destroyed. Upgrade and try again.'), 'warning');
+        showToast(isRetreat ? text('已撤离并保留部分结算。', 'Retreated with partial rewards.') : text('战机损毁，先升级后再来挑战。', 'Ship destroyed. Upgrade and try again.'), 'warning');
     }
 
     function closeBattleResult(action) {
@@ -3864,7 +3864,7 @@
         const currentIndex = chapterIndexMap[chapter.id] ?? 0;
         const pointIndex = chapterIndexMap[pressurePoint.stageId] ?? currentIndex;
         if (currentIndex + 1 < pointIndex) return getPrepGuidance(chapter);
-        return localize(pressurePoint.playerHint || pressurePoint.cause || { zh: '先补强主输出和生存，再回来开打会更稳。', en: 'Upgrade damage and survivability for a smoother run.' });
+        return localize(pressurePoint.playerHint || pressurePoint.cause || { zh: '先把主输出和生存升上来，再回来开打会更稳。', en: 'Upgrade damage and survivability for a smoother run.' });
     }
 
     function renderRunFocusGoal(chapter, pressurePoint) {
@@ -4356,10 +4356,33 @@
         return state.lang === 'en' ? en : zh;
     }
 
+    function looksCorruptedLocalizedText(value) {
+        if (typeof value !== 'string' || !value) return false;
+        if (value.includes('\uFFFD')) return true;
+        const suspiciousFragments = [
+            '闂', '鍟', '杞', '璧', '鐮', '鍗', '鏁', '浠', '閲', '鈻', '鈼', '鈽', '鉁', '陇',
+            '缁', '銆', '€', '鏈', '轰', '綋', '鏂', '墜', '浣', '儸', '濮', '娑', '閸', '閿',
+            '閺', '閹', '顒', '鍫', '鍨', '鎮', '鍚', '鐞', '缍', '鏀', '绔', '绱', '淇', '鍘',
+            '纰', '幆', '澶栨部', '鎺', '繘', '缃', '牸', '鍩', '鍥', '炴', '敹', '閾',
+            '捐', '矾', '姣', '忔', '棩', '琛', 'ョ', '粰', '纰庣幆', '澶栨部', '鎺ㄨ繘',
+            '缃戞牸', '鍩虹', '姣忔棩', '琛ョ粰', '鏂版墜', '鏈轰綋', '绔栧睆', '鐢熷瓨', '鍏绘垚', '闂叧'
+        ];
+        let score = 0;
+        suspiciousFragments.forEach((fragment) => {
+            if (value.includes(fragment)) score += fragment.length > 1 ? 2 : 1;
+        });
+        return score >= 1;
+    }
+
     function localize(value) {
         if (!value) return '';
         if (typeof value === 'string') return value;
-        if (typeof value === 'object') return value[state.lang] || value.zh || value.en || '';
+        if (typeof value === 'object') {
+            if (state.lang === 'en') return value.en || value.zh || '';
+            const zhValue = value.zh || '';
+            if (zhValue && !looksCorruptedLocalizedText(zhValue)) return zhValue;
+            return value.en || zhValue || '';
+        }
         return String(value);
     }
 

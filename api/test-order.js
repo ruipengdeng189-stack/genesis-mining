@@ -4,6 +4,10 @@ const OFFERS = {
   summit: { name: 'Summit Pack', baseAmount: 6.0 },
 };
 
+function isTestOrderApiEnabled() {
+  return String(process.env.ENABLE_TEST_ORDER_API || '').trim().toLowerCase() === 'true';
+}
+
 function getEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -44,6 +48,16 @@ async function insertOrder(row) {
 
 export async function GET() {
   try {
+    if (!isTestOrderApiEnabled()) {
+      return Response.json(
+        {
+          ok: false,
+          error: 'not found',
+        },
+        { status: 404 }
+      );
+    }
+
     const offer = OFFERS.starter;
     const orderId = `ORD_${crypto.randomUUID().replace(/-/g, '').slice(0, 18).toUpperCase()}`;
     const exactAmount = buildExactAmount(offer.baseAmount);

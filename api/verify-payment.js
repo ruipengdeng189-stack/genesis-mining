@@ -5,6 +5,14 @@ const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvw
 const PAYMENT_NETWORK = 'TRON (TRC20)';
 const DEFAULT_GAME_ID = 'default';
 
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = Number(status || 500);
+  }
+}
+
 function getEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -16,7 +24,7 @@ function getEnv(name) {
 function normalizeTxid(txid) {
   const value = String(txid || '').trim();
   if (!/^[a-fA-F0-9]{64}$/.test(value)) {
-    throw new Error('txid format is invalid, it must be 64 hex chars');
+    throw new HttpError(400, 'txid format is invalid, it must be 64 hex chars');
   }
   return value.toLowerCase();
 }
@@ -399,12 +407,13 @@ export async function GET(request) {
       note: 'On-chain verification is complete. The game client can now claim rewards and mark the order as granted.',
     });
   } catch (error) {
+    const status = Number(error?.status || 500);
     return Response.json(
       {
         ok: false,
         error: error.message || 'verify payment failed',
       },
-      { status: 500 }
+      { status }
     );
   }
 }
