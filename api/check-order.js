@@ -1,9 +1,45 @@
+const PAYMENT_NETWORK = 'TRON (TRC20)';
+const DEFAULT_GAME_ID = 'default';
+
 function getEnv(name) {
   const value = process.env[name];
   if (!value) {
     throw new Error(`Missing environment variable: ${name}`);
   }
   return value;
+}
+
+function normalizeGameId(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveGameId(value) {
+  return normalizeGameId(value) || DEFAULT_GAME_ID;
+}
+
+function getOrderGameId(order) {
+  const meta = order?.meta && typeof order.meta === 'object' ? order.meta : {};
+  return resolveGameId(meta.gameId || order?.game_id || order?.gameId);
+}
+
+function buildOrderResponse(order) {
+  return {
+    orderId: order.order_id,
+    minerId: order.miner_id,
+    offerId: order.offer_id,
+    offerName: order.offer_name,
+    gameId: getOrderGameId(order),
+    baseAmount: order.base_amount,
+    exactAmount: Number(order.exact_amount).toFixed(4),
+    payAddress: getEnv('TRON_RECEIVE_ADDRESS'),
+    network: PAYMENT_NETWORK,
+    status: order.status,
+    txid: order.txid,
+    rewardGranted: Boolean(order.reward_granted),
+    createdAt: order.created_at,
+    expiresAt: order.expires_at,
+    paidAt: order.paid_at,
+  };
 }
 
 async function getOrder(orderId) {
@@ -14,7 +50,7 @@ async function getOrder(orderId) {
   url.searchParams.set('order_id', `eq.${orderId}`);
   url.searchParams.set(
     'select',
-    'order_id,miner_id,offer_id,offer_name,base_amount,exact_amount,status,txid,reward_granted,created_at,expires_at,paid_at'
+    'order_id,miner_id,offer_id,offer_name,base_amount,exact_amount,status,txid,reward_granted,created_at,expires_at,paid_at,meta'
   );
 
   const response = await fetch(url.toString(), {
@@ -99,25 +135,12 @@ export async function GET(request) {
       order.expires_at &&
       new Date(order.expires_at).getTime() < Date.now()
     ) {
-      order = await markExpired(orderId);
+      order = (await markExpired(orderId)) || { ...order, status: 'expired' };
     }
 
     return Response.json({
       ok: true,
-      order: {
-        orderId: order.order_id,
-        minerId: order.miner_id,
-        offerId: order.offer_id,
-        offerName: order.offer_name,
-        baseAmount: order.base_amount,
-        exactAmount: Number(order.exact_amount).toFixed(4),
-        status: order.status,
-        txid: order.txid,
-        rewardGranted: order.reward_granted,
-        createdAt: order.created_at,
-        expiresAt: order.expires_at,
-        paidAt: order.paid_at,
-      },
+      order: buildOrderResponse(order),
     });
   } catch (error) {
     return Response.json(

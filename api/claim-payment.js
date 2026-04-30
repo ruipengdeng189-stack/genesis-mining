@@ -1,9 +1,45 @@
+const PAYMENT_NETWORK = 'TRON (TRC20)';
+const DEFAULT_GAME_ID = 'default';
+
 function getEnv(name) {
   const value = process.env[name];
   if (!value) {
     throw new Error(`Missing environment variable: ${name}`);
   }
   return value;
+}
+
+function normalizeGameId(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveGameId(value) {
+  return normalizeGameId(value) || DEFAULT_GAME_ID;
+}
+
+function getOrderGameId(order) {
+  const meta = order?.meta && typeof order.meta === 'object' ? order.meta : {};
+  return resolveGameId(meta.gameId || order?.game_id || order?.gameId);
+}
+
+function buildOrderResponse(order) {
+  return {
+    orderId: order.order_id,
+    minerId: order.miner_id,
+    offerId: order.offer_id,
+    offerName: order.offer_name,
+    gameId: getOrderGameId(order),
+    baseAmount: order.base_amount,
+    exactAmount: Number(order.exact_amount).toFixed(4),
+    payAddress: getEnv('TRON_RECEIVE_ADDRESS'),
+    network: PAYMENT_NETWORK,
+    status: order.status,
+    txid: order.txid,
+    paidAt: order.paid_at,
+    rewardGranted: Boolean(order.reward_granted),
+    createdAt: order.created_at,
+    expiresAt: order.expires_at,
+  };
 }
 
 function normalizeTxid(txid) {
@@ -40,7 +76,7 @@ async function getOrder(orderId) {
   url.searchParams.set('order_id', `eq.${orderId}`);
   url.searchParams.set(
     'select',
-    'order_id,miner_id,offer_id,offer_name,status,txid,reward_granted,paid_at,expires_at'
+    'order_id,miner_id,offer_id,offer_name,base_amount,exact_amount,status,txid,reward_granted,created_at,paid_at,expires_at,meta'
   );
 
   const rows = await supabaseRequest(url.toString(), { method: 'GET' });
@@ -110,16 +146,7 @@ export async function POST(request) {
       return Response.json({
         ok: true,
         message: 'reward already marked as granted',
-        order: {
-          orderId: order.order_id,
-          minerId: order.miner_id,
-          offerId: order.offer_id,
-          offerName: order.offer_name,
-          status: order.status,
-          txid: order.txid,
-          paidAt: order.paid_at,
-          rewardGranted: true,
-        },
+        order: buildOrderResponse({ ...order, reward_granted: true }),
       });
     }
 
@@ -139,16 +166,7 @@ export async function POST(request) {
     return Response.json({
       ok: true,
       message: 'reward marked as granted',
-      order: {
-        orderId: updatedOrder.order_id,
-        minerId: updatedOrder.miner_id,
-        offerId: updatedOrder.offer_id,
-        offerName: updatedOrder.offer_name,
-        status: updatedOrder.status,
-        txid: updatedOrder.txid,
-        paidAt: updatedOrder.paid_at,
-        rewardGranted: updatedOrder.reward_granted,
-      },
+      order: buildOrderResponse(updatedOrder),
     });
   } catch (error) {
     return Response.json(

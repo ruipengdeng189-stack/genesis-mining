@@ -2,6 +2,8 @@ const TRON_API_BASE = 'https://api.trongrid.io';
 const TRANSFER_SELECTOR = 'a9059cbb';
 const USDT_DECIMALS = 6;
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const PAYMENT_NETWORK = 'TRON (TRC20)';
+const DEFAULT_GAME_ID = 'default';
 
 function getEnv(name) {
   const value = process.env[name];
@@ -17,6 +19,39 @@ function normalizeTxid(txid) {
     throw new Error('txid format is invalid, it must be 64 hex chars');
   }
   return value.toLowerCase();
+}
+
+function normalizeGameId(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function resolveGameId(value) {
+  return normalizeGameId(value) || DEFAULT_GAME_ID;
+}
+
+function getOrderGameId(order) {
+  const meta = order?.meta && typeof order.meta === 'object' ? order.meta : {};
+  return resolveGameId(meta.gameId || order?.game_id || order?.gameId);
+}
+
+function buildOrderResponse(order) {
+  return {
+    orderId: order.order_id,
+    minerId: order.miner_id,
+    offerId: order.offer_id,
+    offerName: order.offer_name,
+    gameId: getOrderGameId(order),
+    baseAmount: order.base_amount,
+    exactAmount: Number(order.exact_amount).toFixed(4),
+    payAddress: getEnv('TRON_RECEIVE_ADDRESS'),
+    network: PAYMENT_NETWORK,
+    status: order.status,
+    txid: order.txid,
+    paidAt: order.paid_at,
+    rewardGranted: Boolean(order.reward_granted),
+    createdAt: order.created_at,
+    expiresAt: order.expires_at,
+  };
 }
 
 function decimalToBaseUnits(amount, decimals = USDT_DECIMALS) {
@@ -141,7 +176,7 @@ async function getOrder(orderId) {
   url.searchParams.set('order_id', `eq.${orderId}`);
   url.searchParams.set(
     'select',
-    'order_id,miner_id,offer_id,offer_name,base_amount,exact_amount,status,txid,reward_granted,created_at,expires_at,paid_at'
+    'order_id,miner_id,offer_id,offer_name,base_amount,exact_amount,status,txid,reward_granted,created_at,expires_at,paid_at,meta'
   );
 
   const rows = await supabaseRequest(url.toString(), { method: 'GET' });
@@ -246,17 +281,7 @@ export async function GET(request) {
       return Response.json({
         ok: true,
         message: 'payment already verified for this order',
-        order: {
-          orderId: order.order_id,
-          minerId: order.miner_id,
-          offerId: order.offer_id,
-          offerName: order.offer_name,
-          exactAmount: Number(order.exact_amount).toFixed(4),
-          status: order.status,
-          txid: order.txid,
-          paidAt: order.paid_at,
-          rewardGranted: order.reward_granted,
-        },
+        order: buildOrderResponse(order),
       });
     }
 
@@ -370,18 +395,8 @@ export async function GET(request) {
     return Response.json({
       ok: true,
       message: 'payment verified successfully',
-      order: {
-        orderId: updatedOrder.order_id,
-        minerId: updatedOrder.miner_id,
-        offerId: updatedOrder.offer_id,
-        offerName: updatedOrder.offer_name,
-        exactAmount: Number(updatedOrder.exact_amount).toFixed(4),
-        status: updatedOrder.status,
-        txid: updatedOrder.txid,
-        paidAt: updatedOrder.paid_at,
-        rewardGranted: updatedOrder.reward_granted,
-      },
-      note: '订单已完成链上校验。前端会在本地发放奖励，并回写 granted 状态。',
+      order: buildOrderResponse(updatedOrder),
+      note: 'On-chain verification is complete. The game client can now claim rewards and mark the order as granted.',
     });
   } catch (error) {
     return Response.json(
