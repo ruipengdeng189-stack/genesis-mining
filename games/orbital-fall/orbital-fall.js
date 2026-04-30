@@ -2797,7 +2797,7 @@
         ui.paymentAddressLabel.textContent = text('地址', 'Address');
         ui.paymentWallet.textContent = getPaymentAddress(order) || text('建单后显示地址', 'Address appears after create');
         ui.paymentCreateBtn.textContent = orderStatus === 'paid'
-            ? text('补发', 'Recover')
+            ? text('恢复奖励', 'Restore Rewards')
             : order
                 ? text('查单', 'Check')
                 : text('建单', 'Create');
@@ -2817,7 +2817,7 @@
             : owned
             ? text('该礼包已生效。', 'This pack is active.')
             : orderStatus === 'paid'
-                ? text('这笔支付已确认，点补发即可恢复奖励。', 'This payment is confirmed. Tap recover to restore rewards.')
+                ? text('这笔支付已确认，点击恢复奖励即可到账。', 'This payment is confirmed. Tap Restore Rewards to apply it.')
             : order
                 ? text('订单已生成，支付后粘贴 TXID。', 'Order ready. Paste TXID after payment.')
                 : text('先建单，再支付并校验。', 'Create order, then pay and verify.');
@@ -2947,10 +2947,10 @@
             signal: Math.max(0, shortfall.signal - reward.signal)
         };
         if (isCostBucketEmpty(remaining)) {
-            return text('这档可直接补齐当前补强差额。', 'This tier can directly close the current upgrade gap.');
+            return text('这档基本能补上你现在这一步的资源缺口。', 'This tier can almost fully cover the resource gap for your next upgrade step.');
         }
         const ratio = Math.round((covered / totalShortfall) * 100);
-        return text(`大约可覆盖当前补强差额的 ${ratio}% 。`, `It covers about ${ratio}% of the current upgrade gap.`);
+        return text(`大约可覆盖你当前资源缺口的 ${ratio}% 。`, `It covers about ${ratio}% of your current resource gap.`);
     }
 
     function renderStaticChip(label, tone = '') {

@@ -392,20 +392,20 @@
                      }
                  ],
         "subtitle":  {
-                         "zh":  "\u751f\u5b58\u8089\u9e3d\u95ef\u5173",
-                         "en":  "Survival Roguelike Runs"
+                         "zh":  "\u5355\u624b\u751f\u5b58\u5c04\u51fb",
+                         "en":  "One-Hand Survival Shooter"
                      },
         "description":  {
-                            "zh":  "\u9002\u5408\u505a\u53ef\u91cd\u590d\u6e38\u73a9\u7684\u8089\u9e3d\u5411\u73a9\u6cd5\uff0c\u4ee5\u201c\u518d\u6253\u4e00\u5c40\u201d\u63d0\u5347\u65e5\u5e38\u6d3b\u8dc3\u3002",
-                            "en":  "A replayable roguelike survival game that boosts daily activity through one-more-run loops."
+                            "zh":  "\u5355\u624b\u751f\u5b58\u5c04\u51fb\u73a9\u6cd5\u5df2\u5f00\u653e\uff0c\u4ee5 6 \u5206\u949f\u5185\u77ed\u5c40\u3001\u5c40\u5185 3 \u9009 1 \u5347\u7ea7\uff0c\u642d\u914d\u6b66\u5668\uff0c\u65e0\u4eba\u673a\u548c\u7814\u7a76\u6210\u957f\u7ec4\u6210\u53ef\u91cd\u590d\u6311\u6218\u7684\u6218\u6597\u5faa\u73af\u3002",
+                            "en":  "Now live: a one-hand survival shooter built around sub-6-minute runs, in-run 3-choice upgrades, and replayable growth through weapons, drones, and research."
                         },
         "icon":  "OF",
-        "href":  "/games/coming-soon/?id=orbital-fall",
+        "href":  "/games/orbital-fall/",
         "badge":  {
-                      "zh":  "\u5373\u5c06\u5f00\u653e",
-                      "en":  "Coming Soon"
+                      "zh":  "\u5df2\u4e0a\u7ebf",
+                      "en":  "Live"
                   },
-        "status":  "soon",
+        "status":  "live",
         "title":  {
                       "zh":  "\u8f68\u9053\u5760\u843d",
                       "en":  "Orbital Fall"
