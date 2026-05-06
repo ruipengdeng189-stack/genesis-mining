@@ -605,6 +605,10 @@ canvas {
     pointer-events: none;
 }
 
+.of-battle-overlay.is-interactive {
+    pointer-events: auto;
+}
+
 .of-overlay-card,
 .of-choice-card,
 .of-result-card {

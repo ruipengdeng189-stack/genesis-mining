@@ -2286,11 +2286,22 @@
         `).join('');
     }
 
+    function setBattleOverlayMarkup(markup, key) {
+        const overlay = state.battle.ui.overlay;
+        if (!overlay) return;
+        const safeMarkup = markup || '';
+        const safeKey = key || '';
+        if ((overlay.dataset.renderKey || '') === safeKey && overlay.innerHTML === safeMarkup) return;
+        overlay.dataset.renderKey = safeKey;
+        overlay.innerHTML = safeMarkup;
+    }
+
     function renderBattleOverlay() {
         if (!state.battle.active || !state.battle.ui.overlay) return;
         const battle = state.battle;
         if (battle.choiceOpen) {
-            battle.ui.overlay.innerHTML = `
+            battle.ui.overlay.classList.add('is-interactive');
+            const choiceMarkup = `
                 <div class="of-choice-card">
                     <div>
                         <div class="eyebrow">${escapeHtml(text('局内升级', 'In-Run Upgrade'))}</div>
@@ -2306,6 +2317,7 @@
                     </div>
                 </div>
             `;
+            setBattleOverlayMarkup(choiceMarkup, `choice:${state.lang}:${battle.choiceOptions.join(',')}`);
             return;
         }
 
@@ -2314,7 +2326,8 @@
             const canContinue = battle.result.type === 'defeat'
                 && !battle.result.retreat
                 && continueMeta.canContinue;
-            battle.ui.overlay.innerHTML = `
+            battle.ui.overlay.classList.add('is-interactive');
+            const resultMarkup = `
                 <div class="of-result-card">
                     <div>
                         <div class="eyebrow">${escapeHtml(battle.result.type === 'victory' ? text('战斗结算', 'Battle Result') : text('战斗结束', 'Run Ended'))}</div>
@@ -2344,11 +2357,16 @@
                     </div>
                 </div>
             `;
+            setBattleOverlayMarkup(
+                resultMarkup,
+                `result:${state.lang}:${battle.result.type}:${battle.result.retreat ? 'retreat' : 'normal'}:${canContinue ? continueMeta.label : 'no-continue'}`
+            );
             return;
         }
 
         if (battle.paused || battle.pausedByVisibility) {
-            battle.ui.overlay.innerHTML = `
+            battle.ui.overlay.classList.add('is-interactive');
+            const pauseMarkup = `
                 <div class="of-overlay-card">
                     <div>
                         <div class="eyebrow">${escapeHtml(text('战斗暂停', 'Battle Paused'))}</div>
@@ -2361,10 +2379,12 @@
                     </div>
                 </div>
             `;
+            setBattleOverlayMarkup(pauseMarkup, `pause:${state.lang}:${battle.pausedByVisibility ? 'hidden' : 'manual'}`);
             return;
         }
 
-        battle.ui.overlay.innerHTML = '';
+        battle.ui.overlay.classList.remove('is-interactive');
+        setBattleOverlayMarkup('', '');
     }
 
     function drawBattle() {
