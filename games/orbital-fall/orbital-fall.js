@@ -299,6 +299,7 @@
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN';
         document.title = state.lang === 'en' ? 'Orbital Fall' : '轨道坠落';
         document.body.setAttribute('data-of-battle', state.battle.active ? 'active' : 'idle');
+        document.body.setAttribute('data-of-tab', state.battle.active ? 'battle' : state.tab);
 
         const backToHubLink = document.getElementById('backToHubLink');
         if (backToHubLink) backToHubLink.textContent = text('← 返回大厅', '← Back To Hub');
@@ -356,13 +357,14 @@
         const unlockedStage = config.chapters[Math.min(state.save.unlockedChapterIndex || 0, config.chapters.length - 1)] || config.chapters[0];
         const bonusRunInfo = getDailyBonusRunInfo();
         const ownedCount = getOwnedOfferIds().length;
+        const compactTop = ['run', 'arsenal', 'lab', 'missions', 'season', 'shop'].includes(state.tab);
 
         ui.heroSummary.innerHTML = `
             <div class="of-summary-grid">
-                ${renderSummaryItem(text('当前战力', 'Power'), formatCompact(getTotalPower()), '⚔')}
-                ${renderSummaryItem(text('推进位置', 'Progress'), escapeHtml(unlockedStage?.id || '1-1'), '◎')}
-                ${renderSummaryItem(text('本日加成局', 'Bonus Runs'), `${bonusRunInfo.left}/${bonusRunInfo.total}`, '✦')}
-                ${renderSummaryItem(text('已生效礼包', 'Active Packs'), String(ownedCount), '◆')}
+                ${renderSummaryItem(compactTop ? text('战力', 'PWR') : text('当前战力', 'Power'), formatCompact(getTotalPower()), '⚔')}
+                ${renderSummaryItem(compactTop ? text('进度', 'STG') : text('推进位置', 'Progress'), escapeHtml(unlockedStage?.id || '1-1'), '◎')}
+                ${renderSummaryItem(compactTop ? text('加成', 'BNS') : text('本日加成局', 'Bonus Runs'), `${bonusRunInfo.left}/${bonusRunInfo.total}`, '✦')}
+                ${renderSummaryItem(compactTop ? text('礼包', 'PACK') : text('已生效礼包', 'Active Packs'), String(ownedCount), '◆')}
             </div>
             <div class="of-copy is-tight" style="margin-top:10px;">
                 ${escapeHtml(getPrepGuidance(selectedChapter))}
@@ -435,28 +437,41 @@
         const pressurePoint = getRelevantPressurePoint(selectedChapter.id);
         const powerRatio = clamp(power / Math.max(1, Number(selectedChapter.recommended || 1)), 0, 2.5);
         const powerMeterWidth = Math.round(clamp(powerRatio, 0, 1) * 100);
+        const stageKindLabel = selectedChapter.kind === 'boss'
+            ? text('首领', 'Boss')
+            : selectedChapter.kind === 'elite'
+                ? text('精英', 'Elite')
+                : text('普通', 'Normal');
+        const visibleStages = getVisibleRunStages(selectedChapter.id);
 
         return `
-            <div class="of-panel-stack">
-                <section class="of-card">
-                    <div class="of-section-head">
+            <div class="of-panel-stack is-run-panel">
+                <section class="of-card of-run-launch-card">
+                    <div class="of-section-head of-section-head--run">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('出击准备', 'Run Prep'))}</div>
-                            <h2>${escapeHtml(localize(selectedChapter.name))}</h2>
+                            <div class="of-stage-inline-head">
+                                <h2>${escapeHtml(localize(selectedChapter.name))}</h2>
+                                <span class="of-chip is-accent">${escapeHtml(selectedChapter.id)}</span>
+                                <span class="of-tag ${selectedChapter.kind === 'boss' ? 'is-warning' : selectedChapter.kind === 'elite' ? 'is-accent' : ''}">${escapeHtml(stageKindLabel)}</span>
+                            </div>
                         </div>
-                        <button class="primary-btn" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
+                        <button class="primary-btn of-start-run-btn" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
                     </div>
-                    <div class="of-inline-grid" style="margin-top:12px;">
-                        <div class="of-inline-card">
+                    <div class="of-inline-grid of-inline-grid--run" style="margin-top:10px;">
+                        <div class="of-inline-card is-compact">
                             <div class="of-inline-head">
                                 <span class="of-badge-icon">⚔</span>
                                 <strong>${escapeHtml(text('推荐战力', 'Recommended'))}</strong>
                             </div>
-                            <div class="of-amount-strong">${escapeHtml(formatCompact(selectedChapter.recommended))}</div>
+                            <div class="of-action-row">
+                                <div class="of-amount-strong">${escapeHtml(formatCompact(selectedChapter.recommended))}</div>
+                                <span class="of-chip ${powerRatio >= 1 ? 'is-good' : powerRatio >= 0.85 ? 'is-warning' : ''}">${escapeHtml(text(`你 ${formatCompact(power)}`, `You ${formatCompact(power)}`))}</span>
+                            </div>
                             <div class="of-meter"><span class="of-meter-fill is-blue" style="width:${powerMeterWidth}%"></span></div>
-                            <div class="of-note-mini">${escapeHtml(text('你的当前战力会直接影响清怪速度与容错。', 'Your power directly affects clear speed and survivability.'))}</div>
+                            <div class="of-note-mini">${escapeHtml(text('战力越贴近推荐，推进越稳。', 'Closer power means a smoother run.'))}</div>
                         </div>
-                        <div class="of-inline-card">
+                        <div class="of-inline-card is-compact">
                             <div class="of-inline-head">
                                 <span class="of-badge-icon">✦</span>
                                 <strong>${escapeHtml(text('当前建议', 'Current Focus'))}</strong>
@@ -464,50 +479,42 @@
                             <div class="of-copy is-tight">${escapeHtml(getRunFocusCopy(selectedChapter, pressurePoint))}</div>
                             ${renderRunFocusGoal(selectedChapter, pressurePoint)}
                             ${renderRecoveryKeyHint()}
-                            <div class="of-action-row">
-                                <button class="ghost-btn" type="button" data-action="openTab" data-value="arsenal">${escapeHtml(text('去整备', 'Open Arsenal'))}</button>
-                                <button class="ghost-btn" type="button" data-action="openTab" data-value="lab">${escapeHtml(text('去研究', 'Open Lab'))}</button>
-                            </div>
                         </div>
+                    </div>
+                    <div class="of-action-row of-action-row--run-shortcuts" style="margin-top:10px;">
+                        <button class="ghost-btn of-btn-compact" type="button" data-action="openTab" data-value="arsenal">${escapeHtml(text('整备', 'Arsenal'))}</button>
+                        <button class="ghost-btn of-btn-compact" type="button" data-action="openTab" data-value="lab">${escapeHtml(text('研究', 'Lab'))}</button>
+                        <button class="ghost-btn of-btn-compact" type="button" data-action="openTab" data-value="shop">${escapeHtml(text('商店', 'Shop'))}</button>
                     </div>
                 </section>
 
-                <section class="of-card">
-                    <div class="of-section-head">
+                <section class="of-card of-run-stage-window">
+                    <div class="of-section-head of-section-head--compact">
+                        <div>
+                            <div class="eyebrow">${escapeHtml(text('附近关卡', 'Nearby Stages'))}</div>
+                            <h3>${escapeHtml(text('轻点切关，确认后直接开打', 'Tap a stage and launch fast'))}</h3>
+                        </div>
+                        <span class="of-chip">${escapeHtml(text(`${visibleStages.length} 关`, `${visibleStages.length} Stages`))}</span>
+                    </div>
+                    <div class="of-stage-grid of-stage-grid--run" style="margin-top:10px;">
+                        ${visibleStages.map((chapter) => renderStageCard(chapter, { compact: true })).join('')}
+                    </div>
+                </section>
+
+                <section class="of-card of-run-loadout-panel">
+                    <div class="of-section-head of-section-head--compact">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('当前出战', 'Current Loadout'))}</div>
-                            <h3>${escapeHtml(text('一屏确认后直接开打', 'Confirm and launch in one screen'))}</h3>
+                            <h3>${escapeHtml(text('轻量查看，详细升级去整备', 'Quick view here, upgrade in Arsenal'))}</h3>
                         </div>
+                        <button class="ghost-btn of-btn-compact" type="button" data-action="openTab" data-value="arsenal">${escapeHtml(text('去整备', 'Open Arsenal'))}</button>
                     </div>
-                    <div class="of-slot-grid" style="margin-top:12px;">
-                        ${renderLoadoutSummaryCard('hull', getSelectedHull(), getHullLevel(state.save.selectedHullId))}
-                        ${renderLoadoutSummaryCard('weapon', weaponMap[state.save.selectedWeaponIds[0]], getWeaponLevel(state.save.selectedWeaponIds[0]))}
-                        ${renderLoadoutSummaryCard('weapon', weaponMap[state.save.selectedWeaponIds[1]], getWeaponLevel(state.save.selectedWeaponIds[1]))}
-                        ${renderLoadoutSummaryCard('drone', getSelectedDrone(), getDroneLevel(state.save.selectedDroneId))}
-                        ${renderLoadoutSummaryCard('ultimate', getSelectedUltimate(), getUltimateLevel(state.save.selectedUltimateId))}
-                        <div class="of-slot-card">
-                            <div class="of-card-head">
-                                <span class="of-badge-icon">◎</span>
-                                <strong>${escapeHtml(text('快速入口', 'Quick Actions'))}</strong>
-                            </div>
-                            <div class="of-copy is-tight">${escapeHtml(text('先补装备，再看研究，随时回来开打。', 'Tune gear, check research, and come right back.'))}</div>
-                            <div class="of-action-row">
-                                <button class="ghost-btn" type="button" data-action="openTab" data-value="arsenal">${escapeHtml(text('整备', 'Arsenal'))}</button>
-                                <button class="ghost-btn" type="button" data-action="openTab" data-value="shop">${escapeHtml(text('商店', 'Shop'))}</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="of-card">
-                    <div class="of-section-head">
-                        <div>
-                            <div class="eyebrow">${escapeHtml(text('关卡窗口', 'Stage Window'))}</div>
-                            <h3>${escapeHtml(text('只显示当前附近关卡，减少滚动，确认后直接开打', 'Nearby stages only for faster browsing and instant launch'))}</h3>
-                        </div>
-                    </div>
-                    <div class="of-stage-grid" style="margin-top:12px;">
-                        ${getVisibleRunStages(selectedChapter.id).map((chapter) => renderStageCard(chapter)).join('')}
+                    <div class="of-slot-grid of-slot-grid--run" style="margin-top:10px;">
+                        ${renderLoadoutSummaryCard('hull', getSelectedHull(), getHullLevel(state.save.selectedHullId), { compact: true })}
+                        ${renderLoadoutSummaryCard('weapon', weaponMap[state.save.selectedWeaponIds[0]], getWeaponLevel(state.save.selectedWeaponIds[0]), { compact: true })}
+                        ${renderLoadoutSummaryCard('weapon', weaponMap[state.save.selectedWeaponIds[1]], getWeaponLevel(state.save.selectedWeaponIds[1]), { compact: true })}
+                        ${renderLoadoutSummaryCard('drone', getSelectedDrone(), getDroneLevel(state.save.selectedDroneId), { compact: true })}
+                        ${renderLoadoutSummaryCard('ultimate', getSelectedUltimate(), getUltimateLevel(state.save.selectedUltimateId), { compact: true })}
                     </div>
                 </section>
             </div>
@@ -516,14 +523,14 @@
 
     function renderArsenalPanel() {
         return `
-            <div class="of-panel-stack">
-                <section class="of-card">
-                    <div class="of-section-head">
+            <div class="of-panel-stack is-arsenal-panel">
+                <section class="of-card of-card--compact-head">
+                    <div class="of-section-head of-section-head--compact">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('整备中心', 'Arsenal'))}</div>
-                            <h2>${escapeHtml(text('装备、等级、战力一屏看完', 'Loadout, levels, and power in one view'))}</h2>
+                            <h2>${escapeHtml(text('装备、等级、战力集中查看', 'See loadout, levels, and power at a glance'))}</h2>
                         </div>
-                        <button class="primary-btn" type="button" data-action="openTab" data-value="run">${escapeHtml(text('返回开打', 'Back To Run'))}</button>
+                        <button class="primary-btn of-btn-compact" type="button" data-action="openTab" data-value="run">${escapeHtml(text('回闯关', 'Back To Run'))}</button>
                     </div>
                 </section>
                 ${renderUnitSection('hull', config.hulls || [], {
@@ -563,16 +570,18 @@
     }
 
     function renderLabPanel() {
+        const researchCount = Array.isArray(config.research) ? config.research.length : 0;
         return `
-            <div class="of-panel-stack">
-                <section class="of-card">
-                    <div class="of-section-head">
+            <div class="of-panel-stack is-lab-panel">
+                <section class="of-card is-dense-panel-card">
+                    <div class="of-section-head of-section-head--compact">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('研究中心', 'Lab'))}</div>
-                            <h2>${escapeHtml(text('永久成长，优先补你当前最缺的一条线', 'Permanent growth, focus on the line you need most'))}</h2>
+                            <h2>${escapeHtml(text('永久成长模块', 'Permanent Growth Modules'))}</h2>
                         </div>
+                        <span class="of-chip">${escapeHtml(text(`${researchCount} 项`, `${researchCount} Lines`))}</span>
                     </div>
-                    <div class="of-card-grid" style="margin-top:12px;">
+                    <div class="of-card-grid of-card-grid--dense of-card-grid--lab" style="margin-top:8px;">
                         ${(config.research || []).map((entry) => renderResearchCard(entry)).join('')}
                     </div>
                 </section>
@@ -581,17 +590,22 @@
     }
 
     function renderMissionPanel() {
+        const readyCount = (config.missions || []).filter((mission) => {
+            const claimed = state.save.missionClaimed.includes(mission.id);
+            return getMissionProgress(mission) >= Number(mission.target || 0) && !claimed;
+        }).length;
         return `
-            <div class="of-panel-stack">
-                <section class="of-card">
-                    <div class="of-section-head">
+            <div class="of-panel-stack is-mission-panel">
+                <section class="of-card is-dense-panel-card">
+                    <div class="of-section-head of-section-head--compact">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('任务', 'Missions'))}</div>
-                            <h2>${escapeHtml(text('每日目标 + 日回收', 'Daily goals + recovery loop'))}</h2>
+                            <h2>${escapeHtml(text('每日目标与回收', 'Daily Goals and Loop'))}</h2>
                         </div>
+                        <span class="of-chip ${readyCount > 0 ? 'is-good' : ''}">${escapeHtml(readyCount > 0 ? text(`可领 ${readyCount}`, `${readyCount} Ready`) : text('进行中', 'In Progress'))}</span>
                     </div>
                     ${renderMissionLoopCard()}
-                    <div class="of-card-grid" style="margin-top:12px;">
+                    <div class="of-card-grid of-card-grid--dense of-card-grid--missions" style="margin-top:8px;">
                         ${(config.missions || []).map((mission) => renderMissionCard(mission)).join('')}
                     </div>
                 </section>
@@ -602,35 +616,35 @@
     function renderSeasonPanel() {
         const premiumActive = !!state.save.payment.premiumSeason;
         return `
-            <div class="of-panel-stack">
-                <section class="of-card">
-                    <div class="of-section-head">
+            <div class="of-panel-stack is-season-panel">
+                <section class="of-card is-dense-panel-card">
+                    <div class="of-section-head of-section-head--compact">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('赛季轨道', 'Season'))}</div>
-                            <h2>${escapeHtml(text('免费线与高级线奖励总览', 'Free and Premium Reward Tracks'))}</h2>
+                            <h2>${escapeHtml(text('免费线 / 高级线', 'Free / Premium Tracks'))}</h2>
                         </div>
                         <span class="of-chip ${premiumActive ? 'is-good' : 'is-warning'}">${escapeHtml(premiumActive ? text('高级线已启用', 'Premium Active') : text('高级线未启用', 'Premium Locked'))}</span>
                     </div>
                     ${renderSeasonPaceCard()}
-                    <div class="of-inline-grid" style="margin-top:12px;">
-                        <div class="of-inline-card">
+                    <div class="of-inline-grid of-inline-grid--dense" style="margin-top:10px;">
+                        <div class="of-inline-card is-track-column">
                             <div class="of-inline-head">
                                 <span class="of-badge-icon">★</span>
                                 <strong>${escapeHtml(text('免费线', 'Free Track'))}</strong>
                             </div>
-                            <div class="of-card-grid">
+                            <div class="of-card-grid of-card-grid--dense of-card-grid--season">
                                 ${(config.seasonFreeTrack || []).map((node) => renderSeasonNode('free', node)).join('')}
                             </div>
                         </div>
-                        <div class="of-inline-card">
+                        <div class="of-inline-card is-track-column">
                             <div class="of-inline-head">
                                 <span class="of-badge-icon">✦</span>
                                 <strong>${escapeHtml(text('高级线', 'Premium Track'))}</strong>
                             </div>
-                            <div class="of-card-grid">
+                            <div class="of-card-grid of-card-grid--dense of-card-grid--season">
                                 ${(config.seasonPremiumTrack || []).map((node) => renderSeasonNode('premium', node)).join('')}
                             </div>
-                            ${premiumActive ? '' : `<button class="primary-btn" type="button" data-action="openPayment" data-value="accelerator">${escapeHtml(text('开启高级线', 'Unlock Premium'))}</button>`}
+                            ${premiumActive ? '' : `<button class="primary-btn of-btn-compact" type="button" data-action="openPayment" data-value="accelerator">${escapeHtml(text('开启高级线', 'Unlock Premium'))}</button>`}
                         </div>
                     </div>
                 </section>
@@ -645,32 +659,34 @@
         const pendingOffer = pendingOrder ? offerMap[pendingOrder.offerId] : null;
 
         return `
-            <div class="of-panel-stack">
-                <section class="of-card">
-                    <div class="of-section-head">
+            <div class="of-panel-stack is-shop-panel">
+                <section class="of-card is-dense-panel-card">
+                    <div class="of-section-head of-section-head--compact">
                         <div>
                             <div class="eyebrow">${escapeHtml(text('商店', 'Shop'))}</div>
-                            <h2>${escapeHtml(text('补给 + 礼包', 'Supply + Packs'))}</h2>
+                            <h2>${escapeHtml(text('补给 / 礼包', 'Supply / Packs'))}</h2>
                         </div>
-                        <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(suggestedOffer?.id || 'starter')}">${escapeHtml(text('打开礼包', 'Open Packs'))}</button>
+                        <button class="primary-btn of-btn-compact" type="button" data-action="openPayment" data-value="${escapeHtml(suggestedOffer?.id || 'starter')}">${escapeHtml(text('打开礼包', 'Open Packs'))}</button>
                     </div>
-                    <div class="of-inline-grid" style="margin-top:12px;">
-                        <div class="of-inline-card">
+                    <div class="of-inline-grid of-inline-grid--dense" style="margin-top:8px;">
+                        <div class="of-inline-card is-shop-column">
                             <div class="of-inline-head">
                                 <span class="of-badge-icon">◎</span>
                                 <strong>${escapeHtml(text('补给区', 'Supply'))}</strong>
                             </div>
                             ${renderShopRouteCard(pressurePoint)}
-                            <div class="of-card-grid">
+                            <div class="of-card-grid of-card-grid--dense of-card-grid--shop">
                                 ${(config.shopItems || []).map((item) => renderShopItem(item)).join('')}
                             </div>
                         </div>
-                        <div class="of-inline-card">
+                        <div class="of-inline-card is-shop-column">
                             <div class="of-inline-head">
                                 <span class="of-badge-icon">◆</span>
                                 <strong>${escapeHtml(text('礼包区', 'Packs'))}</strong>
                             </div>
-                            <div class="of-copy is-tight">${escapeHtml(text('会优先推荐更适合你当前进度的礼包，并突出显示价格与核心收益。', 'Packs are prioritized for your current progress, with price and core benefit shown first.'))}</div>
+                            <div class="of-chip-row">
+                                <span class="of-chip is-accent">${escapeHtml(text('当前进度优先推荐', 'Progress-fit first'))}</span>
+                            </div>
                             ${pendingOrder ? `
                                 <div class="of-order-brief">
                                     <div class="of-card-head">
@@ -682,10 +698,10 @@
                                         <span class="of-chip">${escapeHtml(getPaymentExpiryLabel(pendingOrder))}</span>
                                     </div>
                                     <div class="of-copy is-tight">${escapeHtml(`${pendingOrder.orderId || pendingOrder.id || '--'} · ${formatPaymentAmount(pendingOrder.exactAmount)} USDT`)}</div>
-                                    <button class="ghost-btn" type="button" data-action="openPayment" data-value="${escapeHtml(pendingOrder.offerId || suggestedOffer?.id || 'starter')}">${escapeHtml(text('继续支付', 'Continue Payment'))}</button>
+                                    <button class="ghost-btn of-btn-compact" type="button" data-action="openPayment" data-value="${escapeHtml(pendingOrder.offerId || suggestedOffer?.id || 'starter')}">${escapeHtml(text('继续支付', 'Continue Payment'))}</button>
                                 </div>
                             ` : ''}
-                            <div class="of-card-grid">
+                            <div class="of-card-grid of-card-grid--dense of-card-grid--offers">
                                 ${(config.paymentOffers || []).map((offer) => renderOfferPreview(offer)).join('')}
                             </div>
                         </div>
@@ -700,7 +716,7 @@
         const loop = estimateDailyLoopReward(route);
         if (!route || !loop) return '';
         return `
-            <div class="of-inline-card" style="margin-top:12px;">
+            <div class="of-inline-card is-compact is-brief-card" style="margin-top:8px;">
                 <div class="of-inline-head">
                     <span class="of-badge-icon">✓</span>
                     <strong>${escapeHtml(text('今日回收', 'Daily Loop'))}</strong>
@@ -725,7 +741,7 @@
         const freeRemain = nextFree ? Math.max(0, Number(nextFree.xp || 0) - Number(state.save.seasonXp || 0)) : 0;
         const premiumRemain = nextPremium ? Math.max(0, Number(nextPremium.xp || 0) - Number(state.save.seasonXp || 0)) : 0;
         return `
-            <div class="of-inline-card" style="margin-top:12px;">
+            <div class="of-inline-card is-compact is-brief-card" style="margin-top:8px;">
                 <div class="of-inline-head">
                     <span class="of-badge-icon">★</span>
                     <strong>${escapeHtml(text('赛季速率', 'Season Pace'))}</strong>
@@ -749,7 +765,7 @@
         if (!route || !loop) return '';
         const dailyItem = shopMap[route.shopDailyId || 'dailySupply'];
         return `
-            <div class="of-inline-card is-compact">
+            <div class="of-inline-card is-compact is-brief-card">
                 <div class="of-inline-head">
                     <span class="of-badge-icon">⟳</span>
                     <strong>${escapeHtml(text('补给节奏', 'Supply Rhythm'))}</strong>
@@ -765,15 +781,16 @@
         `;
     }
 
-    function renderLoadoutSummaryCard(type, entry, level) {
+    function renderLoadoutSummaryCard(type, entry, level, options = {}) {
         if (!entry) return '';
+        const compact = !!options.compact;
         return `
-            <div class="of-slot-card">
+            <div class="of-slot-card ${compact ? 'is-run-loadout-card' : ''}">
                 <div class="of-card-head">
                     <span class="of-badge-icon">${escapeHtml(typeIcon(type))}</span>
                     <strong>${escapeHtml(localize(entry.name))}</strong>
                 </div>
-                <div class="of-copy is-tight">${escapeHtml(localize(entry.role || entry.perk || { zh: '基础配置', en: 'Base setup' }))}</div>
+                <div class="of-copy is-tight ${compact ? 'is-2line' : ''}">${escapeHtml(localize(entry.role || entry.perk || { zh: '基础配置', en: 'Base setup' }))}</div>
                 <div class="of-action-row">
                     <span class="of-chip">${escapeHtml(text(`Lv.${level}`, `Lv.${level}`))}</span>
                     <span class="of-chip is-good">${escapeHtml(text(`战力 ${formatCompact(getEntryPower(type, entry.id))}`, `Power ${formatCompact(getEntryPower(type, entry.id))}`))}</span>
@@ -782,21 +799,24 @@
         `;
     }
 
-    function renderStageCard(chapter) {
+    function renderStageCard(chapter, options = {}) {
+        const compact = !!options.compact;
         const active = chapter.id === state.save.selectedChapterId;
         const unlocked = isStageUnlocked(chapter.id);
         const currentPower = getTotalPower();
         const ratio = clamp(currentPower / Math.max(1, Number(chapter.recommended || 1)), 0, 2);
-        const rewardText = renderRewardInline(chapter.reward);
+        const rewardText = compact ? renderRewardChips(chapter.reward) : renderRewardInline(chapter.reward);
         return `
-            <button class="of-stage-card ${active ? 'is-active' : ''} ${!unlocked ? 'is-locked' : ''}" type="button" data-action="selectChapter" data-value="${escapeHtml(chapter.id)}" ${unlocked ? '' : 'disabled'}>
+            <button class="of-stage-card ${compact ? 'is-compact-stage' : ''} ${active ? 'is-active' : ''} ${!unlocked ? 'is-locked' : ''}" type="button" data-action="selectChapter" data-value="${escapeHtml(chapter.id)}" ${unlocked ? '' : 'disabled'}>
                 <div class="of-stage-top">
                     <span class="of-chip ${chapter.kind === 'boss' ? 'is-warning' : chapter.kind === 'elite' ? 'is-accent' : ''}">${escapeHtml(chapter.id)}</span>
                     <span class="of-tag">${escapeHtml(chapter.kind === 'boss' ? text('首领', 'Boss') : chapter.kind === 'elite' ? text('精英', 'Elite') : text('普通', 'Normal'))}</span>
                 </div>
                 <div>
                     <div class="of-stage-name">${escapeHtml(localize(chapter.name))}</div>
-                    <div class="of-copy is-tight is-2line">${escapeHtml(unlocked ? text('单手拖动走位，自动开火，局内升级三选一。', 'Drag to move, auto-fire, and choose upgrades during the run.') : getUnlockText(chapter.id))}</div>
+                    ${compact
+                        ? (!unlocked ? `<div class="of-copy is-tight is-2line">${escapeHtml(getUnlockText(chapter.id))}</div>` : '')
+                        : `<div class="of-copy is-tight is-2line">${escapeHtml(unlocked ? text('单手拖动走位，自动开火，局内升级三选一。', 'Drag to move, auto-fire, and choose upgrades during the run.') : getUnlockText(chapter.id))}</div>`}
                 </div>
                 <div class="of-stage-bottom">
                     <span class="of-chip">${escapeHtml(text(`推 ${formatCompact(chapter.recommended)}`, `Rec ${formatCompact(chapter.recommended)}`))}</span>
@@ -810,13 +830,13 @@
     function renderUnitSection(type, entries, options) {
         return `
             <section class="of-card">
-                <div class="of-section-head">
+                <div class="of-section-head of-section-head--compact">
                     <div>
                         <div class="eyebrow">${escapeHtml(state.lang === 'en' ? options.titleEn : options.titleZh)}</div>
                         <h3>${escapeHtml(getUnitSectionHint(type))}</h3>
                     </div>
                 </div>
-                <div class="of-card-grid" style="margin-top:12px;">
+                <div class="of-card-grid of-card-grid--arsenal" style="margin-top:10px;">
                     ${entries.map((entry) => renderUnitCard(type, entry, options)).join('')}
                 </div>
             </section>
@@ -831,22 +851,22 @@
         const level = options.levelGetter(entry.id);
         const nextCost = getUnitNextCost(type, level);
         return `
-            <div class="of-slot-card ${selected ? 'is-selected' : ''}">
+            <div class="of-slot-card is-unit-card ${selected ? 'is-selected' : ''}">
                 <div class="of-card-head">
                     <span class="of-badge-icon">${escapeHtml(typeIcon(type))}</span>
                     <strong>${escapeHtml(localize(entry.name))}</strong>
                 </div>
-                <div class="of-copy is-tight">${escapeHtml(localize(entry.role || entry.perk || { zh: '核心模块', en: 'Core module' }))}</div>
+                <div class="of-copy is-tight is-2line">${escapeHtml(localize(entry.role || entry.perk || { zh: '核心模块', en: 'Core module' }))}</div>
                 <div class="of-action-row">
                     <span class="of-chip">${escapeHtml(text(`Lv.${level}`, `Lv.${level}`))}</span>
                     <span class="of-chip is-good">${escapeHtml(text(`战力 ${formatCompact(getEntryPower(type, entry.id))}`, `Power ${formatCompact(getEntryPower(type, entry.id))}`))}</span>
                 </div>
-                <div class="of-copy is-tight">${escapeHtml(unlocked ? getUpgradeCostLabel(nextCost) : getUnlockRequirementText(entry.unlockStage || '1-1'))}</div>
-                <div class="of-action-row">
-                    <button class="ghost-btn" type="button" data-action="${escapeHtml(options.selectAction)}" data-value="${escapeHtml(entry.id)}" ${unlocked ? '' : 'disabled'}>
+                <div class="of-copy is-tight is-2line">${escapeHtml(unlocked ? getUpgradeCostLabel(nextCost) : getUnlockRequirementText(entry.unlockStage || '1-1'))}</div>
+                <div class="of-action-row of-action-row--split">
+                    <button class="ghost-btn of-btn-compact" type="button" data-action="${escapeHtml(options.selectAction)}" data-value="${escapeHtml(entry.id)}" ${unlocked ? '' : 'disabled'}>
                         ${escapeHtml(selected ? text('已上阵', 'Selected') : text('选择', 'Select'))}
                     </button>
-                    <button class="primary-btn" type="button" data-action="${escapeHtml(options.upgradeAction)}" data-value="${escapeHtml(entry.id)}" ${(unlocked && nextCost) ? '' : 'disabled'}>
+                    <button class="primary-btn of-btn-compact" type="button" data-action="${escapeHtml(options.upgradeAction)}" data-value="${escapeHtml(entry.id)}" ${(unlocked && nextCost) ? '' : 'disabled'}>
                         ${escapeHtml(nextCost ? text('升级', 'Upgrade') : text('满级', 'Max'))}
                     </button>
                 </div>
@@ -859,18 +879,20 @@
         const nextLevel = entry.levels?.[level] || null;
         const currentLevel = entry.levels?.[Math.max(0, level - 1)] || null;
         return `
-            <div class="of-slot-card">
+            <div class="of-slot-card is-dense-tile is-research-card">
                 <div class="of-card-head">
                     <span class="of-badge-icon">◎</span>
                     <strong>${escapeHtml(localize(entry.name))}</strong>
                 </div>
-                <div class="of-copy is-tight">${escapeHtml(localize(entry.focus || { zh: '永久成长', en: 'Permanent growth' }))}</div>
+                <div class="of-copy is-tight is-2line">${escapeHtml(localize(entry.focus || { zh: '永久成长', en: 'Permanent growth' }))}</div>
                 <div class="of-action-row">
                     <span class="of-chip">${escapeHtml(text(`Lv.${level}/${entry.maxLevel}`, `Lv.${level}/${entry.maxLevel}`))}</span>
                     <span class="of-chip is-good">${escapeHtml(getResearchEffectLabel(entry, currentLevel))}</span>
                 </div>
-                <div class="of-copy is-tight">${escapeHtml(nextLevel ? getResearchCostLabel(nextLevel) : text('当前已满级。', 'Already maxed.'))}</div>
-                <button class="primary-btn" type="button" data-action="upgradeResearch" data-value="${escapeHtml(entry.id)}" ${nextLevel ? '' : 'disabled'}>${escapeHtml(nextLevel ? text('升级研究', 'Upgrade Research') : text('已满级', 'Maxed'))}</button>
+                <div class="of-chip-row">
+                    <span class="of-chip ${nextLevel ? '' : 'is-good'}">${escapeHtml(nextLevel ? getResearchCostLabel(nextLevel) : text('已满级', 'Maxed'))}</span>
+                </div>
+                <button class="primary-btn of-btn-compact" type="button" data-action="upgradeResearch" data-value="${escapeHtml(entry.id)}" ${nextLevel ? '' : 'disabled'}>${escapeHtml(nextLevel ? text('升级研究', 'Upgrade Research') : text('已满级', 'Maxed'))}</button>
             </div>
         `;
     }
@@ -880,7 +902,7 @@
         const claimed = state.save.missionClaimed.includes(mission.id);
         const ready = progress >= mission.target && !claimed;
         return `
-            <div class="of-slot-card">
+            <div class="of-slot-card is-dense-tile is-mission-card ${ready ? 'is-selected' : ''}">
                 <div class="of-card-head">
                     <span class="of-badge-icon">✓</span>
                     <strong>${escapeHtml(localize(mission.title))}</strong>
@@ -888,9 +910,10 @@
                 <div class="of-meter"><span class="of-meter-fill is-green" style="width:${Math.min(100, Math.round(progress / mission.target * 100))}%"></span></div>
                 <div class="of-action-row">
                     <span class="of-chip">${escapeHtml(`${formatCompact(progress)} / ${formatCompact(mission.target)}`)}</span>
-                    <span class="of-chip is-good">${renderRewardInline(mission.reward)}</span>
+                    <span class="of-chip ${claimed ? 'is-good' : ready ? 'is-accent' : ''}">${escapeHtml(claimed ? text('已领取', 'Claimed') : ready ? text('可领取', 'Ready') : text('进行中', 'In Progress'))}</span>
                 </div>
-                <button class="primary-btn" type="button" data-action="claimMission" data-value="${escapeHtml(mission.id)}" ${ready ? '' : 'disabled'}>
+                <div class="of-chip-row">${renderRewardChips(mission.reward)}</div>
+                <button class="primary-btn of-btn-compact" type="button" data-action="claimMission" data-value="${escapeHtml(mission.id)}" ${ready ? '' : 'disabled'}>
                     ${escapeHtml(claimed ? text('已领取', 'Claimed') : ready ? text('领取', 'Claim') : text('进行中', 'In Progress'))}
                 </button>
             </div>
@@ -903,16 +926,17 @@
         const unlocked = state.save.seasonXp >= Number(node.xp || 0);
         const premiumLocked = track === 'premium' && !state.save.payment.premiumSeason;
         return `
-            <div class="of-slot-card">
+            <div class="of-slot-card is-dense-tile is-season-node ${claimed ? 'is-claimed' : unlocked && !premiumLocked ? 'is-selected' : ''}">
                 <div class="of-card-head">
                     <span class="of-badge-icon">${track === 'premium' ? '✦' : '★'}</span>
                     <strong>${escapeHtml(text(`赛季 ${node.id.toUpperCase()}`, `${track === 'premium' ? 'P' : 'F'}-${node.id.toUpperCase()}`))}</strong>
                 </div>
                 <div class="of-action-row">
                     <span class="of-chip">${escapeHtml(text(`需 ${formatCompact(node.xp)} XP`, `Need ${formatCompact(node.xp)} XP`))}</span>
-                    <span class="of-chip is-good">${renderRewardInline(node.reward)}</span>
+                    <span class="of-chip ${premiumLocked ? 'is-warning' : claimed ? 'is-good' : unlocked ? 'is-accent' : ''}">${escapeHtml(premiumLocked ? text('未开启', 'Locked') : claimed ? text('已领', 'Claimed') : unlocked ? text('可领', 'Ready') : text('未解锁', 'Locked'))}</span>
                 </div>
-                <button class="primary-btn" type="button" data-action="${track === 'premium' ? 'claimSeasonPremium' : 'claimSeasonFree'}" data-value="${escapeHtml(node.id)}" ${(unlocked && !claimed && !premiumLocked) ? '' : 'disabled'}>
+                <div class="of-chip-row">${renderRewardChips(node.reward)}</div>
+                <button class="primary-btn of-btn-compact" type="button" data-action="${track === 'premium' ? 'claimSeasonPremium' : 'claimSeasonFree'}" data-value="${escapeHtml(node.id)}" ${(unlocked && !claimed && !premiumLocked) ? '' : 'disabled'}>
                     ${escapeHtml(premiumLocked ? text('未开启', 'Locked') : claimed ? text('已领取', 'Claimed') : unlocked ? text('领取', 'Claim') : text('未解锁', 'Locked'))}
                 </button>
             </div>
@@ -922,16 +946,17 @@
     function renderShopItem(item) {
         const ready = item.daily ? canClaimDailySupply() : Number(state.save.credits || 0) >= Number(item.price || 0);
         return `
-            <div class="of-slot-card">
+            <div class="of-slot-card is-dense-tile is-shop-item ${ready ? '' : 'is-low-energy'}">
                 <div class="of-card-head">
                     <span class="of-badge-icon">◎</span>
                     <strong>${escapeHtml(localize(item.title))}</strong>
                 </div>
                 <div class="of-action-row">
                     <span class="of-chip ${item.price <= 0 ? 'is-good' : ''}">${escapeHtml(item.price <= 0 ? text('免费', 'Free') : formatResourceUnitAmount('credits', item.price))}</span>
-                    <span class="of-chip is-good">${renderRewardInline(item.reward)}</span>
+                    <span class="of-chip ${ready ? 'is-good' : 'is-warning'}">${escapeHtml(item.daily ? (ready ? text('今日可领', 'Ready Today') : text('冷却中', 'Cooling')) : (ready ? text('可购买', 'Affordable') : text('余额不足', 'Need More')))}</span>
                 </div>
-                <button class="primary-btn" type="button" data-action="${item.daily ? 'claimDailySupply' : 'buyShop'}" data-value="${escapeHtml(item.id)}" ${ready ? '' : 'disabled'}>
+                <div class="of-chip-row">${renderRewardChips(item.reward)}</div>
+                <button class="primary-btn of-btn-compact" type="button" data-action="${item.daily ? 'claimDailySupply' : 'buyShop'}" data-value="${escapeHtml(item.id)}" ${ready ? '' : 'disabled'}>
                     ${escapeHtml(item.daily ? (ready ? text('领取', 'Claim') : text('冷却中', 'Cooling')) : text('购买', 'Buy'))}
                 </button>
             </div>
@@ -943,22 +968,22 @@
         const recommended = getRelevantPressurePoint(getSelectedChapter().id)?.recommendedOffer === offer.id;
         const pendingOrder = getPendingOrderForOffer(offer.id);
         return `
-            <div class="of-slot-card ${recommended ? 'is-selected' : ''}">
+            <div class="of-slot-card is-dense-tile is-offer-preview ${recommended ? 'is-selected' : ''}">
                 <div class="of-card-head">
                     <span class="of-badge-icon">◆</span>
                     <strong>${escapeHtml(localize(offer.name))}</strong>
                 </div>
                 <div class="of-action-row">
                     <span class="of-chip is-accent">${escapeHtml(`${Number(offer.price || 0).toFixed(0)} USDT`)}</span>
-                    ${recommended ? `<span class="of-chip is-good">${escapeHtml(text('更适合当前进度', 'Fits current progress'))}</span>` : ''}
+                    <span class="of-chip ${pendingOrder ? 'is-accent' : owned ? 'is-good' : recommended ? 'is-good' : ''}">${escapeHtml(pendingOrder ? text('待处理', 'Pending') : owned ? text('已生效', 'Active') : recommended ? text('推荐', 'Recommended') : text('可查看', 'Viewable'))}</span>
                 </div>
-                <div class="of-action-row">
+                <div class="of-chip-row">
                     ${offer.unlocksPremiumSeason ? `<span class="of-chip">${escapeHtml(text('含高级线', 'Premium Line'))}</span>` : ''}
-                    ${pendingOrder ? `<span class="of-chip is-accent">${escapeHtml(text('待处理', 'Pending'))}</span>` : owned ? `<span class="of-chip is-good">${escapeHtml(text('已生效', 'Active'))}</span>` : ''}
+                    ${renderRewardChips(offer.reward)}
                 </div>
-                <div class="of-copy is-tight">${escapeHtml(localize(offer.permanentText || offer.permanent || { zh: '一条长期收益', en: 'One long-term benefit' }))}</div>
+                <div class="of-copy is-tight is-2line">${escapeHtml(localize(offer.permanentText || offer.permanent || { zh: '一条长期收益', en: 'One long-term benefit' }))}</div>
                 <div class="of-copy is-tight is-2line">${escapeHtml(getOfferFitHint(offer))}</div>
-                <button class="primary-btn" type="button" data-action="openPayment" data-value="${escapeHtml(offer.id)}">
+                <button class="primary-btn of-btn-compact" type="button" data-action="openPayment" data-value="${escapeHtml(offer.id)}">
                     ${escapeHtml(owned ? text('已拥有', 'Owned') : pendingOrder ? text('继续订单', 'Continue') : text('查看', 'View'))}
                 </button>
             </div>
@@ -3914,20 +3939,17 @@
                     ${focusTags.map((tag) => `<span class="of-chip is-good">${escapeHtml(tag)}</span>`).join('')}
                 </div>
             ` : ''}
-            ${goalCost ? `<div class="of-copy is-tight">${escapeHtml(text('近期补齐', 'Next spend'))} ${escapeHtml(formatCostInline(goalCost))}</div>` : ''}
+            ${goalCost ? `<div class="of-chip-row"><span class="of-chip is-warning">${escapeHtml(text('近期补齐', 'Next spend'))} ${escapeHtml(formatCostInline(goalCost))}</span></div>` : ''}
         `;
     }
 
     function renderRecoveryKeyHint() {
         const keyCount = Number(state.save.eliteKeys || 0);
         const firstContinueCost = Number((config.economy?.continueCosts || [])[0] || 0);
-        const tip = keyCount > 0
-            ? text('失败时会优先消耗钥匙续关。', 'A recovery key is used first when you continue after defeat.')
-            : text(`没有钥匙时，首次续关需 ${firstContinueCost} 币；任务和赛季都能拿钥匙。`, `Without a key, the first continue costs ${firstContinueCost} credits. Missions and season rewards can grant keys.`);
         return `
             <div class="of-chip-row">
                 <span class="of-chip ${keyCount > 0 ? 'is-good' : ''}">${escapeHtml(text(`续航钥匙 ${keyCount}`, `Keys ${keyCount}`))}</span>
-                <span class="of-chip">${escapeHtml(tip)}</span>
+                <span class="of-chip">${escapeHtml(keyCount > 0 ? text('失败优先消耗', 'Used before credits') : text(`首续 ${firstContinueCost} 币`, `1st continue ${firstContinueCost}`))}</span>
             </div>
         `;
     }

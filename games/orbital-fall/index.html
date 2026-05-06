@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>轨道坠落</title>
-    <meta name="description" content="轨道坠落 - 单手生存射击、局内成长、局外整备与研究推进。">
+    <title>Orbital Fall</title>
+    <meta name="description" content="Orbital Fall - one-hand survival shooter with out-of-run growth.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -16,9 +16,9 @@
     <div class="of-shell">
         <header class="of-topbar">
             <div class="of-topline">
-                <a class="back-link" href="/" id="backToHubLink">&larr; 返回大厅</a>
-                <div class="lang-toggle" role="group" aria-label="语言切换">
-                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">中</button>
+                <a class="back-link" href="/" id="backToHubLink">&larr; Back To Hub</a>
+                <div class="lang-toggle" role="group" aria-label="Language">
+                    <button class="lang-btn is-active" type="button" data-lang-switch="zh" aria-pressed="true">ZH</button>
                     <button class="lang-btn" type="button" data-lang-switch="en" aria-pressed="false">EN</button>
                 </div>
             </div>
@@ -26,8 +26,8 @@
             <section class="of-hero-card">
                 <div class="of-hero-copy">
                     <div class="eyebrow" id="heroEyebrow">GENESIS ORBITAL FALL</div>
-                    <h1 id="heroTitle">轨道坠落</h1>
-                    <p id="heroSubtitle">单手生存射击 · 轻肉鸽成长</p>
+                    <h1 id="heroTitle">Orbital Fall</h1>
+                    <p id="heroSubtitle">One-hand survival shooter · growth loop</p>
                 </div>
                 <div class="of-resource-strip" id="resourceStrip"></div>
             </section>
@@ -40,17 +40,17 @@
             </section>
         </main>
 
-        <nav class="of-tabbar" id="tabBar" aria-label="轨道坠落页签"></nav>
+        <nav class="of-tabbar" id="tabBar" aria-label="Orbital Fall tabs"></nav>
 
         <div class="of-modal is-hidden" id="paymentModal">
             <div class="of-payment-card">
                 <div class="of-payment-head">
                     <div>
-                        <div class="eyebrow" id="paymentEyebrow">链上支付</div>
-                        <h2 id="paymentTitle">支付中心</h2>
-                        <p id="paymentDesc">建单 → 精确支付 → 粘贴 TXID 领取。</p>
+                        <div class="eyebrow" id="paymentEyebrow">On-Chain Payment</div>
+                        <h2 id="paymentTitle">Payment Hub</h2>
+                        <p id="paymentDesc">Create order -> exact pay -> paste TXID.</p>
                     </div>
-                    <button class="ghost-btn icon-btn" id="paymentCloseBtn" type="button" aria-label="关闭支付">&times;</button>
+                    <button class="ghost-btn icon-btn" id="paymentCloseBtn" type="button" aria-label="Close payment">&times;</button>
                 </div>
 
                 <div class="of-payment-offers" id="paymentOfferGrid"></div>
@@ -63,43 +63,43 @@
                             <div class="of-payment-meta" id="paymentMeta">TRON (TRC20) · OKX Wallet</div>
                         </div>
                         <div class="of-order-inline">
-                            <span id="paymentOrderLabel">订单</span>
+                            <span id="paymentOrderLabel">Order</span>
                             <strong id="paymentOrderId">--</strong>
                         </div>
                     </div>
 
                     <div class="of-payment-stat-grid">
                         <div class="of-payment-stat">
-                            <span id="paymentExactLabel">金额</span>
+                            <span id="paymentExactLabel">Amount</span>
                             <strong id="paymentExactAmount">--</strong>
                         </div>
                         <div class="of-payment-stat">
-                            <span id="paymentExpiryLabel">时效</span>
+                            <span id="paymentExpiryLabel">Time Left</span>
                             <strong id="paymentExpiry">--:--</strong>
                         </div>
                     </div>
 
                     <div class="of-payment-field">
-                        <span class="of-mini-label" id="paymentAddressLabel">地址</span>
+                        <span class="of-mini-label" id="paymentAddressLabel">Address</span>
                         <div class="of-payment-address" id="paymentWallet">--</div>
                     </div>
 
                     <div class="of-payment-copy-row">
-                        <button class="ghost-btn wide-btn" id="paymentCreateBtn" type="button">建单</button>
-                        <button class="ghost-btn wide-btn" id="paymentCopyAddressBtn" type="button">复制地址</button>
-                        <button class="ghost-btn wide-btn" id="paymentCopyAmountBtn" type="button">复制金额</button>
+                        <button class="ghost-btn wide-btn" id="paymentCreateBtn" type="button">Create Order</button>
+                        <button class="ghost-btn wide-btn" id="paymentCopyAddressBtn" type="button">Copy Address</button>
+                        <button class="ghost-btn wide-btn" id="paymentCopyAmountBtn" type="button">Copy Amount</button>
                     </div>
 
                     <div class="of-payment-field">
-                        <label class="of-mini-label" id="paymentTxidLabel" for="paymentTxidInput">粘贴 TXID</label>
-                        <input class="of-payment-input" id="paymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="输入或粘贴交易哈希">
-                        <p class="of-payment-hint" id="paymentTxidHint">订单、地址、金额和时效需完全一致。</p>
+                        <label class="of-mini-label" id="paymentTxidLabel" for="paymentTxidInput">Paste TXID</label>
+                        <input class="of-payment-input" id="paymentTxidInput" type="text" autocomplete="off" spellcheck="false" placeholder="Paste transaction hash">
+                        <p class="of-payment-hint" id="paymentTxidHint">Order, address, amount, and time must match.</p>
                     </div>
 
-                    <div class="of-payment-status" id="paymentStatus">先建单，再支付并校验。</div>
+                    <div class="of-payment-status" id="paymentStatus">Create an order, then verify the payment.</div>
 
                     <div class="of-payment-actions">
-                        <button class="primary-btn wide-btn" id="paymentVerifyBtn" type="button">校验并领取</button>
+                        <button class="primary-btn wide-btn" id="paymentVerifyBtn" type="button">Verify &amp; Claim</button>
                     </div>
                 </div>
             </div>
