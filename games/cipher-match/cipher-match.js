@@ -72,7 +72,10 @@
         bindEvents();
         syncSoundToggle();
         renderAll();
-        Promise.resolve().then(() => flushPendingPaymentClaims().catch(() => {}));
+        Promise.resolve().then(async () => {
+            await syncPendingOfferOrders().catch(() => {});
+            await flushPendingPaymentClaims().catch(() => {});
+        });
     }
 
     function cacheUi() {
@@ -240,6 +243,14 @@
             case 'cancelOfferOrder':
                 cancelOfferOrder(value);
                 break;
+            case 'refreshOfferOrder':
+                if (guardMetaActionDuringRun()) return;
+                refreshOfferOrder(value);
+                break;
+            case 'claimOfferReward':
+                if (guardMetaActionDuringRun()) return;
+                claimOfferReward(value);
+                break;
             case 'copyOfferAddress':
                 copyOfferAddress(value);
                 break;
@@ -296,12 +307,14 @@
         if (langToggle) langToggle.setAttribute('aria-label', text('语言切换', 'Language'));
         if (ui.tabBar) ui.tabBar.setAttribute('aria-label', text('密码消除页签', 'Cipher Match tabs'));
         if (ui.modalCloseBtn) ui.modalCloseBtn.setAttribute('aria-label', text('关闭弹窗', 'Close modal'));
+        if (ui.soundToggle) ui.soundToggle.setAttribute('aria-label', text('切换音效', 'Toggle sound effects'));
 
         ui.langButtons.forEach((button) => {
             const active = (button.dataset.langSwitch === 'en' ? 'en' : 'zh') === state.lang;
             button.classList.toggle('is-active', active);
             button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
+        syncSoundToggle();
     }
 
     function renderResourceStrip() {
@@ -487,33 +500,11 @@
             isCurrentRun && run.fx?.shieldHit ? 'is-shield-hit' : '',
             isCurrentRun && run.fx?.kind === 'boss' ? 'is-boss-pulse' : ''
         ].filter(Boolean).join(' ');
-        const skillButtonLabel = !isCurrentRun
-            ? text('放技', 'Skill')
-            : skillReady
-                ? text('放技', 'Cast Skill')
-                : text(`充能 ${run.energy}/${skill.energyCost}`, `Charge ${run.energy}/${skill.energyCost}`);
-        const secondaryButtonHtml = isCurrentRun
-            ? `
-                <button class="cm-btn" type="button" data-action="${run.failed ? 'buyMoves' : 'abandonRun'}" ${run.inputLocked ? 'disabled' : ''}>
-                    ${escapeHtml(run.failed ? text('+5 步', '+5 Moves') : text('退出', 'Retreat'))}
-                </button>
-            `
-            : `
-                <button class="cm-btn ${assist.rookie.active ? 'is-cta' : ''}" type="button" data-action="startRun">${escapeHtml(text('开打', 'Start'))}</button>
-            `;
-        const controlRowHtml = `
-            <div class="cm-control-row">
-                <button class="cm-btn-soft" type="button" data-action="useSkill" ${!isCurrentRun || run.failed || run.inputLocked || !skillReady ? 'disabled' : ''}>
-                    ${escapeHtml(skillButtonLabel)}
-                </button>
-                ${secondaryButtonHtml}
-            </div>
-        `;
         const stageHeaderHtml = isCurrentRun
             ? `
                 <div class="cm-chip-row cm-run-compact-head">
                     <span class="cm-chip cm-run-compact-id">${escapeHtml(chapter.id)}</span>
-                    ${isBoss ? `<span class="cm-chip is-danger-text">${escapeHtml(text('Boss', 'Boss'))}</span>` : ''}
+                    ${isBoss ? `<span class="cm-chip is-danger-text">${escapeHtml(text('首领', 'Boss'))}</span>` : ''}
                     <span class="cm-chip ${displayPower >= chapter.recommended ? 'is-good' : 'is-warn'}">${escapeHtml(text('战', 'Pow'))} ${displayPower}/${chapter.recommended}</span>
                 </div>
             `
@@ -533,7 +524,7 @@
                     <div class="cm-tag-row">
                         <span class="cm-tag">${escapeHtml(text('推', 'Rec'))} ${chapter.recommended}</span>
                         <span class="cm-tag ${displayPower >= chapter.recommended ? 'is-good' : 'is-warn'}">${escapeHtml(text('战', 'Pow'))} ${displayPower}</span>
-                        ${isBoss ? `<span class="cm-tag is-danger-text">${escapeHtml(text('Boss', 'Boss'))}</span>` : ''}
+                        ${isBoss ? `<span class="cm-tag is-danger-text">${escapeHtml(text('首领', 'Boss'))}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -578,7 +569,6 @@
                                 })).join('')}
                             </div>
 
-                            ${!isCurrentRun ? controlRowHtml : ''}
                             ${battleLegendHtml}
                             ${!isCurrentRun ? renderRunCoachBanner({ isCurrentRun, run, assist, skillReady, skill, suggestedMove, tutorialEntryFree }) : ''}
                             ${!isCurrentRun ? renderRunStepRow(isCurrentRun, run, assist) : ''}
@@ -593,9 +583,13 @@
                             ${!isCurrentRun || run.failed ? `<div class="cm-run-tip">${escapeHtml(boardHintCopy)}</div>` : ''}
 
                             <div class="cm-control-row">
-                                <button class="cm-btn-soft" type="button" data-action="useSkill" ${!isCurrentRun || run.failed || run.inputLocked || !skillReady ? 'disabled' : ''}>
-                                    ${escapeHtml(!isCurrentRun ? text('放技', 'Skill') : skillReady ? text('放技', 'Cast Skill') : text(`充能 ${run.energy}/${skill.energyCost}`, `Charge ${run.energy}/${skill.energyCost}`))}
-                                </button>
+                                ${isCurrentRun ? `
+                                    <button class="cm-btn-soft" type="button" data-action="useSkill" ${run.failed || run.inputLocked || !skillReady ? 'disabled' : ''}>
+                                        ${escapeHtml(skillReady ? text('放技', 'Cast Skill') : text(`充能 ${run.energy}/${skill.energyCost}`, `Charge ${run.energy}/${skill.energyCost}`))}
+                                    </button>
+                                ` : `
+                                    <button class="cm-btn-soft" type="button" data-action="openTab" data-value="deck">${escapeHtml(text('整备', 'Deck'))}</button>
+                                `}
                                 ${isCurrentRun ? `
                                     <button class="cm-btn" type="button" data-action="${run.failed ? 'buyMoves' : 'abandonRun'}" ${run.inputLocked ? 'disabled' : ''}>
                                         ${escapeHtml(run.failed ? text('+5 步', '+5 Moves') : text('退出', 'Retreat'))}
@@ -885,9 +879,10 @@
         const adjacentHints = rookieActive && selectedIndex >= 0 ? getAdjacentIndices(selectedIndex, config.board.size) : [];
         const noticeCopy = selectedTile
             ? text(`已选 ${localize(selectedTile.name)}，再点发光的相邻格完成交换。`, `Selected ${localize(selectedTile.name)}. Tap a glowing adjacent tile to swap.`)
-            : rookieActive && suggestedMove
-                ? text('试试交换发光的两格，先做出第一组 3 连。', 'Try the glowing pair for your first 3-match.')
-                : '';
+            : run.notice
+                || (rookieActive && suggestedMove
+                    ? text('试试交换发光的两格，先做出第一组 3 连。', 'Try the glowing pair for your first 3-match.')
+                    : getRunOpeningHint(chapter, run.assist || getRunAssistState(chapter)));
         const overlayCopy = run.energy >= run.maxEnergy
             ? rookieActive
                 ? text('能量已满，点“放技”试一次技能。', 'Energy is full. Tap Cast Skill to try it.')
@@ -1217,7 +1212,7 @@
                         <strong>${escapeHtml(localize(item.name))}</strong>
                         <div class="cm-copy">${escapeHtml(localize(item.role))}</div>
                     </div>
-                    <span class="cm-tag ${selected ? 'is-good' : ''}">${escapeHtml(stateLabel)} 路 ${escapeHtml(text('\u7b49\u7ea7', 'Lv'))} ${level}/${maxLevel}</span>
+                    <span class="cm-tag ${selected ? 'is-good' : ''}">${escapeHtml(stateLabel)} · ${escapeHtml(text('\u7b49\u7ea7', 'Lv'))} ${level}/${maxLevel}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(localize(item.effect || item.skill))}</div>
                 <div class="cm-chip-row">
@@ -1364,7 +1359,7 @@
                         <strong>${escapeHtml(localize(item.name))}</strong>
                         <div class="cm-copy">${escapeHtml(copy)}</div>
                     </div>
-                    <span class="cm-tag ${owned ? 'is-good' : order ? 'is-warning' : ''}">${escapeHtml(badge)}</span>
+                    <span class="cm-tag ${owned ? 'is-good' : order ? 'is-warn' : ''}">${escapeHtml(badge)}</span>
                 </div>
                 <div class="cm-reward-row">${renderRewardChips(item.reward)}</div>
                 <div class="cm-chip-row">
@@ -1383,7 +1378,8 @@
     }
 
     function renderPaymentStatusCard() {
-        const pendingOrders = getPendingOrders().slice(0, 2);
+        const allPendingOrders = getPendingOrders();
+        const pendingOrders = allPendingOrders.slice(0, 2);
         const paymentHistory = getRecentPaymentHistory(3);
         const ownedOffers = config.paymentOffers.filter((item) => isOfferOwned(item.id));
         return `
@@ -1392,13 +1388,13 @@
                     <div>
                         <div class="eyebrow">${escapeHtml(text('\u652f\u4ed8\u72b6\u6001', 'Payment Status'))}</div>
                         <strong>${escapeHtml(text('\u8ba2\u5355\u3001\u7279\u6743\u4e0e\u5230\u8d26\u8bb0\u5f55', 'Orders, perks, and delivery log'))}</strong>
-                        <div class="cm-copy">${escapeHtml(text('支付步骤：创建订单 → 按精确金额转账 → 粘贴 TxID → 验证 → 奖励发放。', 'Payment flow: create order → send the exact amount → paste TxID → verify → rewards granted.'))}</div>
+                        <div class="cm-copy">${escapeHtml(text('支付步骤：创建订单 → 按精确金额转账 → 粘贴 TxID → 验证 / 恢复 → 奖励发放。', 'Payment flow: create order → send the exact amount → paste TxID → verify / restore → rewards granted.'))}</div>
                     </div>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('\u5f85\u9a8c\u8bc1', 'Pending'))} 路 ${pendingOrders.length}</span>
-                    <span class="cm-chip">${escapeHtml(text('\u5df2\u751f\u6548\u7279\u6743', 'Perks'))} 路 ${ownedOffers.length}</span>
-                    <span class="cm-chip">${escapeHtml(text('\u6700\u8fd1\u5230\u8d26', 'Recent'))} 路 ${paymentHistory.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('待处理订单', 'Open Orders'))} · ${allPendingOrders.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u5df2\u751f\u6548\u7279\u6743', 'Perks'))} · ${ownedOffers.length}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u6700\u8fd1\u5230\u8d26', 'Recent'))} · ${paymentHistory.length}</span>
                 </div>
                 ${pendingOrders.length ? `
                     <div class="cm-stack">
@@ -1406,7 +1402,7 @@
                     </div>
                 ` : `
                     <div class="cm-chip-row cm-payment-empty-row">
-                        <span class="cm-chip">${escapeHtml(text('\u65e0\u5f85\u9a8c\u8bc1', 'No Pending'))}</span>
+                        <span class="cm-chip">${escapeHtml(text('无待处理订单', 'No Open Orders'))}</span>
                         <span class="cm-chip">${escapeHtml(text('\u6253\u5f00\u793c\u5305', 'Open Pack'))}</span>
                     </div>
                 `}
@@ -1439,7 +1435,7 @@
                 <strong>${escapeHtml(gatePlan.title)}</strong>
                 <div class="cm-chip-row">
                     <span class="cm-chip">${escapeHtml(gatePlan.tag)}</span>
-                    ${offer ? `<span class="cm-chip">${escapeHtml(recommendationLabel)} 路 ${escapeHtml(localize(offer.name))}</span>` : ''}
+                    ${offer ? `<span class="cm-chip">${escapeHtml(recommendationLabel)} · ${escapeHtml(localize(offer.name))}</span>` : ''}
                     <span class="cm-chip ${gatePlan.gap > 0 ? 'is-warn' : 'is-good'}">${escapeHtml(gapLabel)}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
@@ -1495,15 +1491,14 @@
                         <strong>${escapeHtml(gatePlan.title)}</strong>
                         <div class="cm-copy">${escapeHtml(gatePlan.summary)}</div>
                     </div>
-                    <span class="cm-tag ${gatePlan.owned ? 'is-good' : gatePlan.recommendedNow ? 'is-warning' : ''}">${escapeHtml(recommendationLabel)}</span>
+                    <span class="cm-tag ${gatePlan.owned ? 'is-good' : gatePlan.recommendedNow ? 'is-warn' : ''}">${escapeHtml(recommendationLabel)}</span>
                 </div>
                 <div class="cm-chip-row">
-                    <span class="cm-chip">${escapeHtml(text('\u9002\u914d\u533a\u95f4', 'Best For'))} 路 ${escapeHtml(gatePlan.packFit)}</span>
-                    <span class="cm-chip">${escapeHtml(text('\u63a8\u8350\u793c\u5305', 'Pack'))} 路 ${escapeHtml(localize(offer.name))}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u9002\u914d\u533a\u95f4', 'Best For'))} · ${escapeHtml(gatePlan.packFit)}</span>
+                    <span class="cm-chip">${escapeHtml(text('\u63a8\u8350\u793c\u5305', 'Pack'))} · ${escapeHtml(localize(offer.name))}</span>
                     <span class="cm-chip ${gatePlan.gap > 0 ? 'is-warn' : 'is-good'}">${escapeHtml(gapLabel)}</span>
                 </div>
                 <div class="cm-copy">${escapeHtml(gatePlan.statusCopy)}</div>
-                <div class="cm-copy">${escapeHtml(recommendationCopy)}</div>
                 ${renderGatePathChips(gatePlan, 'shop')}
             </div>
         `;
@@ -1614,6 +1609,10 @@
     function renderPendingOrderStatus(order) {
         const offer = offerMap[order.offerId];
         if (!offer) return '';
+        const orderState = getOfferOrderState(order.offerId, order);
+        const etaLabel = orderState.kind === 'pending'
+            ? text('剩余', 'Time Left')
+            : text('状态', 'Status');
         return `
             <div class="cm-mini-card">
                 <div class="cm-card-head">
@@ -1621,13 +1620,15 @@
                         <strong>${escapeHtml(localize(offer.name))}</strong>
                         <div class="cm-copy">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(order.id || createOrderId(order.offerId, order.createdAt))}</div>
                     </div>
-                    <span class="cm-tag is-warning">${escapeHtml(text('待验证', 'Pending'))}</span>
+                    <span class="cm-tag ${orderState.tagClass || ''}">${escapeHtml(orderState.statusLabel)}</span>
                 </div>
                 <div class="cm-chip-row">
                     <span class="cm-chip">USDT ${formatPaymentAmount(order.exactAmount || offer.price)}</span>
-                    <span class="cm-chip">${escapeHtml(text('剩余', 'Time Left'))} · ${escapeHtml(getPendingOrderEta(order))}</span>
+                    <span class="cm-chip">${escapeHtml(etaLabel)} · ${escapeHtml(getPendingOrderEta(order))}</span>
                     <span class="cm-chip">${escapeHtml(text('创建于', 'Created'))} · ${escapeHtml(formatTimeLabel(order.createdAt))}</span>
+                    ${order.txid ? `<span class="cm-chip">${escapeHtml(shortenTxid(order.txid))}</span>` : ''}
                 </div>
+                <div class="cm-copy">${escapeHtml(orderState.statusDetail)}</div>
             </div>
         `;
     }
@@ -2338,12 +2339,14 @@
         const order = lockedByOwnership ? null : getPendingOrder(offerId);
         const lastVerified = getLastVerifiedPayment(offerId);
         const orderEta = order ? getPendingOrderEta(order) : '';
-        const primaryAction = lockedByOwnership ? 'closeModal' : order ? 'verifyOfferTxid' : 'createOfferOrder';
+        const orderState = lockedByOwnership ? null : getOfferOrderState(offerId, order);
+        const orderEtaLabel = !orderState || orderState.kind === 'pending'
+            ? text('剩余', 'Time Left')
+            : text('状态', 'Status');
+        const primaryAction = lockedByOwnership ? 'closeModal' : orderState.primaryAction;
         const primaryLabel = lockedByOwnership
             ? text('已拥有', 'Owned')
-            : order
-                ? text('验证支付', 'Verify Payment')
-                : text('创建订单', 'Create Order');
+            : orderState.primaryLabel;
         openModal({
             eyebrow: text('支付弹窗', 'Payment'),
             title: localize(offer.name),
@@ -2394,14 +2397,30 @@
                         <div class="cm-card-head">
                             <div>
                                 <strong>${escapeHtml(text('当前订单', 'Current Order'))}</strong>
-                                <div class="cm-copy">${escapeHtml(text('订单保留 15 分钟；刷新后会生成新的精确金额。', 'Orders stay live for 15 minutes, and refreshing creates a new exact amount.'))}</div>
+                                <div class="cm-copy">${escapeHtml(orderState.statusDetail)}</div>
                             </div>
                         </div>
                         <div class="cm-chip-row">
                             <span class="cm-chip">${escapeHtml(text('订单号', 'Order ID'))} · ${escapeHtml(order.id || createOrderId(order.offerId, order.createdAt))}</span>
                             <span class="cm-chip">USDT ${formatPaymentAmount(order.exactAmount || offer.price)}</span>
-                            <span class="cm-chip">${escapeHtml(text('状态', 'Status'))} · ${escapeHtml(text('待验证', 'Pending'))}</span>
-                            <span class="cm-chip">${escapeHtml(text('剩余', 'Time Left'))} · ${escapeHtml(orderEta)}</span>
+                            <span class="cm-chip">${escapeHtml(text('状态', 'Status'))} · ${escapeHtml(orderState.statusLabel)}</span>
+                            <span class="cm-chip">${escapeHtml(orderEtaLabel)} · ${escapeHtml(orderEta)}</span>
+                            ${order.txid ? `<span class="cm-chip">${escapeHtml(shortenTxid(order.txid))}</span>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${order && !lockedByOwnership && orderState.kind !== 'pending' ? `
+                    <div class="cm-card">
+                        <div class="cm-card-head">
+                            <div>
+                                <strong>${escapeHtml(text('当前进度', 'Current Progress'))}</strong>
+                                <div class="cm-copy">${escapeHtml(orderState.statusDetail)}</div>
+                            </div>
+                        </div>
+                        <div class="cm-chip-row">
+                            <span class="cm-chip">${escapeHtml(text('网络', 'Network'))} · ${escapeHtml(order.network || PAYMENT_NETWORK)}</span>
+                            ${order.paidAt ? `<span class="cm-chip">${escapeHtml(text('支付时间', 'Paid At'))} · ${escapeHtml(formatTimeLabel(order.paidAt))}</span>` : ''}
                         </div>
                     </div>
                 ` : ''}
@@ -2423,7 +2442,7 @@
                     </div>
                 ` : ''}
 
-                ${lockedByOwnership ? '' : `
+                ${lockedByOwnership || orderState.kind !== 'pending' ? '' : `
                     <div class="cm-input-wrap">
                         <strong>${escapeHtml(text('收款地址', 'Wallet Address'))}</strong>
                         <input value="${escapeHtml(resolvePaymentAddress(order) || '--')}" readonly>
@@ -2448,9 +2467,10 @@
                 `}
             `,
             actions: `
-                ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAddress" data-value="${offer.id}">${escapeHtml(text('复制地址', 'Copy Address'))}</button>`}
-                ${lockedByOwnership ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAmount" data-value="${offer.id}">${escapeHtml(text('复制金额', 'Copy Amount'))}</button>`}
-                ${lockedByOwnership || !order ? '' : `<button class="cm-btn-soft" type="button" data-action="cancelOfferOrder" data-value="${offer.id}">${escapeHtml(text('关闭订单', 'Cancel Order'))}</button>`}
+                ${lockedByOwnership || !orderState.showCopyActions ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAddress" data-value="${offer.id}">${escapeHtml(text('复制地址', 'Copy Address'))}</button>`}
+                ${lockedByOwnership || !orderState.showCopyActions ? '' : `<button class="cm-btn-soft" type="button" data-action="copyOfferAmount" data-value="${offer.id}">${escapeHtml(text('复制金额', 'Copy Amount'))}</button>`}
+                ${lockedByOwnership || !orderState.canRefresh ? '' : `<button class="cm-btn-soft" type="button" data-action="refreshOfferOrder" data-value="${offer.id}">${escapeHtml(text('刷新订单', 'Refresh Order'))}</button>`}
+                ${lockedByOwnership || !orderState.canCancel ? '' : `<button class="cm-btn-soft" type="button" data-action="cancelOfferOrder" data-value="${offer.id}">${escapeHtml(text('关闭订单', 'Cancel Order'))}</button>`}
                 <button class="cm-btn" type="button" data-action="${primaryAction}" data-value="${offer.id}">${escapeHtml(primaryLabel)}</button>
             `
         });
@@ -2472,7 +2492,13 @@
             }
             upsertPendingOrder(order);
             previewOffer(offerId);
-            showToast(text('精确金额订单已创建。', 'Exact payment order created.'), 'good');
+            const orderState = getOfferOrderState(offerId, order);
+            showToast(
+                orderState.kind === 'claimable' || orderState.kind === 'syncing'
+                    ? text('已恢复到这笔已支付订单，可继续同步或恢复奖励。', 'Recovered an already-paid order. You can now sync it or restore rewards.')
+                    : text('精确金额订单已创建。', 'Exact payment order created.'),
+                'good'
+            );
         } catch (error) {
             showToast(error?.message || text('订单创建失败，请稍后重试。', 'Failed to create the order. Please try again later.'), 'warn');
         }
@@ -2517,66 +2543,44 @@
         }
         try {
             const verificationResult = await verifyBackendPayment(order.id, normalizedTxid);
-            const resolvedOrder = buildClientPaymentOrder({
+            await finalizeOfferOrderDelivery(offerId, buildClientPaymentOrder({
                 ...order,
                 ...(verificationResult?.order || {}),
                 txid: verificationResult?.order?.txid || normalizedTxid
-            });
-            const alreadyClaimedLocally = !!state.save.payment.claimedOrders[resolvedOrder.id];
-            const backendGranted = !!(resolvedOrder.rewardGranted || resolvedOrder.status === 'granted');
-
-            upsertPendingOrder(resolvedOrder);
-
-            if (!alreadyClaimedLocally) {
-                applyReward(offer.reward);
-                state.save.payment.claimedOrders[resolvedOrder.id] = true;
-                pushVerifiedTxid(normalizedTxid);
-                pushPaymentHistoryEntry({
-                    orderId: resolvedOrder.id,
-                    offerId,
-                    txid: normalizedTxid,
-                    amount: Number(resolvedOrder.exactAmount || offer.price || 0),
-                    basePrice: Number(offer.price || 0),
-                    payAddress: resolvePaymentAddress(resolvedOrder, { allowLastKnown: false }),
-                    network: resolvedOrder.network || PAYMENT_NETWORK,
-                    verifiedAt: Date.now()
-                });
-            }
-
-            let successCopy = backendGranted
-                ? text('订单已完成校验，奖励已到账。', 'This order was already verified and the rewards are now available.')
-                : text('链上校验成功，奖励已到账。', 'On-chain verification succeeded and rewards were granted.');
-
-            if (!backendGranted) {
-                state.save.payment.pendingClaims[resolvedOrder.id] = normalizedTxid;
-                try {
-                    await claimBackendPayment(resolvedOrder.id, normalizedTxid);
-                    delete state.save.payment.pendingClaims[resolvedOrder.id];
-                } catch (claimError) {
-                    successCopy = text('链上校验成功，奖励已到账；后台发奖记录会继续自动同步。', 'On-chain verification succeeded and rewards were granted. Backend grant sync will continue automatically.');
-                }
-            } else {
-                delete state.save.payment.pendingClaims[resolvedOrder.id];
-            }
-
-            state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== resolvedOrder.id);
-            saveProgress();
-            openModal({
-                eyebrow: text('支付成功', 'Payment Verified'),
-                title: localize(offer.name),
-                subtitle: `USDT ${formatPaymentAmount(resolvedOrder.exactAmount || offer.price)} · ${escapeHtml(resolvedOrder.network || PAYMENT_NETWORK)}`,
-                body: `
-                    <div class="cm-card">
-                        <div class="cm-copy">${escapeHtml(successCopy)}</div>
-                        <div class="cm-reward-row">${renderRewardChips(offer.reward)}</div>
-                    </div>
-                `,
-                actions: `<button class="cm-btn" type="button" data-action="closeModal">${escapeHtml(text('完成', 'Done'))}</button>`
-            });
-            renderAll();
-            showToast(successCopy, 'good');
+            }), normalizedTxid, { source: 'verify' });
         } catch (error) {
             showToast(error?.message || text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.'), 'warn');
+        }
+    }
+
+    async function claimOfferReward(offerId) {
+        const offer = offerMap[offerId];
+        const localOrder = getPendingOrder(offerId);
+        if (!offer) return;
+        if (!localOrder) {
+            showToast(text('当前没有可恢复的订单，请先创建订单。', 'There is no order to restore right now. Create one first.'), 'warn');
+            return;
+        }
+
+        try {
+            const refreshedOrder = await refreshOfferOrder(offerId, { showToast: false, reopenModal: false }) || localOrder;
+            const resolvedOrder = buildClientPaymentOrder({ ...localOrder, ...(refreshedOrder || {}) });
+            const normalizedTxid = normalizeTxid(resolvedOrder.txid || '');
+            if (!PAYMENT_TXID_RE.test(normalizedTxid)) {
+                showToast(text('当前订单还没有可用的交易哈希，请先刷新订单状态或重新校验。', 'This order does not have a usable TxID yet. Refresh it or verify it again first.'), 'warn');
+                previewOffer(offerId);
+                return;
+            }
+
+            if (resolvedOrder.status !== 'paid' && resolvedOrder.status !== 'granted' && !resolvedOrder.rewardGranted) {
+                showToast(text('当前订单还未完成链上校验，请先填写 TxID 验证。', 'This order has not passed on-chain verification yet. Verify it with the TxID first.'), 'warn');
+                previewOffer(offerId);
+                return;
+            }
+
+            await finalizeOfferOrderDelivery(offerId, resolvedOrder, normalizedTxid, { source: 'restore' });
+        } catch (error) {
+            showToast(error?.message || text('奖励恢复失败，请稍后重试。', 'Failed to restore rewards. Please try again later.'), 'warn');
         }
     }
 
@@ -2652,6 +2656,131 @@
         return state.save.paymentHistory
             .filter((item) => item.offerId === offerId)
             .sort((left, right) => right.verifiedAt - left.verifiedAt)[0] || null;
+    }
+
+    function getOfferOrderState(offerId, order = getPendingOrder(offerId)) {
+        if (!order) {
+            return {
+                kind: 'none',
+                tagClass: 'is-idle',
+                statusLabel: text('待创建', 'Create Order'),
+                statusDetail: text('先创建订单，再按精确金额付款并粘贴 TxID 完成校验。', 'Create an order first, then pay the exact amount and paste the TxID for verification.'),
+                primaryAction: 'createOfferOrder',
+                primaryLabel: text('创建订单', 'Create Order'),
+                canCancel: false,
+                canRefresh: false,
+                editableTxid: false,
+                showCopyActions: true
+            };
+        }
+
+        if (isPendingOrderExpired(order)) {
+            return {
+                kind: 'expired',
+                tagClass: 'is-warn',
+                statusLabel: text('已过期', 'Expired'),
+                statusDetail: text('当前订单已过期，请重新生成本次专属精确金额。', 'This order has expired. Generate a fresh exact amount for this purchase.'),
+                primaryAction: 'createOfferOrder',
+                primaryLabel: text('重新建单', 'Refresh Order'),
+                canCancel: false,
+                canRefresh: false,
+                editableTxid: false,
+                showCopyActions: false
+            };
+        }
+
+        const orderId = String(order.id || '');
+        const claimedLocally = !!(orderId && state.save.payment.claimedOrders?.[orderId]);
+        const syncingClaim = !!(orderId && state.save.payment.pendingClaims?.[orderId]);
+        const status = String(order.status || 'pending');
+
+        if (status === 'paid' || status === 'granted' || order.rewardGranted) {
+            if (!order.txid) {
+                return {
+                    kind: 'paid-missing-txid',
+                    tagClass: 'is-warn',
+                    statusLabel: text('已支付', 'Paid'),
+                    statusDetail: text('订单已检测到支付完成，但本地还没同步到交易哈希，请先刷新订单状态。', 'Payment is confirmed, but the TxID has not synced locally yet. Refresh this order first.'),
+                    primaryAction: 'refreshOfferOrder',
+                    primaryLabel: text('刷新订单', 'Refresh Order'),
+                    canCancel: false,
+                    canRefresh: true,
+                    editableTxid: false,
+                    showCopyActions: false
+                };
+            }
+
+            if ((status === 'granted' || order.rewardGranted) && !claimedLocally) {
+                return {
+                    kind: 'grant-synced',
+                    tagClass: 'is-good',
+                    statusLabel: text('待同步', 'Sync Perks'),
+                    statusDetail: text('后台已记录这笔订单完成发放。当前存档可同步永久权益，已发放过的资源不会重复补发。', 'The backend already recorded this order as granted. This save can sync the permanent perks, but consumable rewards will not be granted again.'),
+                    primaryAction: 'claimOfferReward',
+                    primaryLabel: text('同步权益', 'Sync Perks'),
+                    canCancel: false,
+                    canRefresh: true,
+                    editableTxid: false,
+                    showCopyActions: false
+                };
+            }
+
+            if (claimedLocally && syncingClaim) {
+                return {
+                    kind: 'syncing',
+                    tagClass: 'is-warn',
+                    statusLabel: text('同步中', 'Syncing'),
+                    statusDetail: text('奖励已发到当前存档，后台到账记录仍在同步中。', 'Rewards are already in this save. The backend delivery record is still syncing.'),
+                    primaryAction: 'claimOfferReward',
+                    primaryLabel: text('继续同步', 'Sync Claim'),
+                    canCancel: false,
+                    canRefresh: true,
+                    editableTxid: false,
+                    showCopyActions: false
+                };
+            }
+
+            if (claimedLocally) {
+                return {
+                    kind: 'delivered',
+                    tagClass: 'is-good',
+                    statusLabel: text('已到账', 'Delivered'),
+                    statusDetail: text('这笔订单的奖励已经发放到当前存档。', 'Rewards for this order have already been delivered to this save.'),
+                    primaryAction: 'closeModal',
+                    primaryLabel: text('完成', 'Done'),
+                    canCancel: false,
+                    canRefresh: false,
+                    editableTxid: false,
+                    showCopyActions: false
+                };
+            }
+
+            return {
+                kind: 'claimable',
+                tagClass: 'is-good',
+                statusLabel: text('待恢复', 'Restore'),
+                statusDetail: text('已检测到这笔订单完成链上校验，点击下方按钮即可恢复礼包奖励。', 'This order has already passed on-chain verification. Tap below to restore the pack rewards.'),
+                primaryAction: 'claimOfferReward',
+                primaryLabel: text('恢复奖励', 'Restore Rewards'),
+                canCancel: false,
+                canRefresh: true,
+                editableTxid: false,
+                showCopyActions: false
+            };
+        }
+
+        return {
+            kind: 'pending',
+            tagClass: 'is-warn',
+            statusLabel: text('待验证', 'Pending'),
+            statusDetail: text('订单已创建，按本单精确金额付款后粘贴 TxID 完成校验。', 'Your order is ready. Pay the exact amount, then paste the TxID to verify it.'),
+            primaryAction: 'verifyOfferTxid',
+            primaryLabel: text('验证支付', 'Verify Payment'),
+            canCancel: true,
+            canRefresh: true,
+            editableTxid: true,
+            showCopyActions: true
+        };
     }
 
     function getResearchImpactLabel(researchId, level = getResearchLevel(researchId)) {
@@ -2753,9 +2882,9 @@
                 ? (key === 'premiumSeason'
                     ? text('高级轨', 'Pass')
                     : key === 'starterBoost'
-                        ? text('开局稳', 'Boost')
+                        ? text('开局加成', 'Start+')
                         : key === 'vaultRelay'
-                            ? text('Boss稳', 'Boss')
+                            ? text('首领增益', 'Boss+')
                             : key)
                 : formatCompact(value);
             return `<span class="cm-chip">${escapeHtml(getRewardIcon(key))} ${escapeHtml(String(label))}</span>`;
@@ -3105,9 +3234,9 @@
             case 'premiumSeason':
                 return { icon: getRewardIcon(key), label: text('高级轨', 'Pass'), value: text('解锁', 'Unlock') };
             case 'starterBoost':
-                return { icon: getRewardIcon(key), label: text('起步稳', 'Boost'), value: text('+1 免费', '+1 Free') };
+                return { icon: getRewardIcon(key), label: text('开局加成', 'Start+'), value: text('+1 免费', '+1 Free') };
             case 'vaultRelay':
-                return { icon: getRewardIcon(key), label: text('Boss稳', 'Boss'), value: text('后段+', 'Late+') };
+                return { icon: getRewardIcon(key), label: text('首领增益', 'Boss+'), value: text('后段+', 'Late+') };
             default:
                 return { icon: getRewardIcon(key), label: key, value: `+${value}` };
         }
@@ -3188,9 +3317,7 @@
         state.save.keyBits += reward.keyBits || 0;
         state.save.cipherDust += reward.cipherDust || 0;
         state.save.seasonXp += reward.seasonXp || 0;
-        if (reward.premiumSeason) state.save.premiumSeason = true;
-        if (reward.starterBoost) state.save.starterBoost = true;
-        if (reward.vaultRelay) state.save.vaultRelay = true;
+        applyOfferOwnership(reward);
     }
 
     function getContinueCost() {
@@ -3314,10 +3441,10 @@
         if (chapter.id === '1-1') return text('热身关', 'Warm-up');
         if (isBossChapter(chapter)) {
             return assist.rookie.active
-                ? text('首领练手', 'Boss Practice')
+                ? text('首领演练', 'Boss Practice')
                 : assist.gap > 0
-                    ? text('首领警戒', 'Boss Alert')
-                    : text('首领压制', 'Boss Pressure');
+                    ? text('首领备战', 'Boss Prep')
+                    : text('首领冲刺', 'Boss Push');
         }
         if (assist.gap > 260) return text('建议补强', 'Upgrade Needed');
         if (assist.gap > 0) return text('可尝试推进', 'Try Push');
@@ -3755,6 +3882,9 @@
         if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单。', 'This order has expired. Please create a new order.');
         if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('该交易哈希已被其他订单使用。', 'This txid has already been used by another order.');
         if (lower.includes('minerid does not match order')) return text('当前订单与本地账号不匹配，请重新创建订单。', 'This order does not belong to the current player. Please create a new order.');
+        if (lower.includes('waiting for reward claim')) return text('你还有一笔已支付订单待恢复，请先完成那笔订单的到账同步。', 'You already have a paid order waiting to be restored. Finish that recovery first.');
+        if (lower.includes('pending order')) return text('你已有一笔未完成订单，请先继续处理或等待它过期。', 'You already have an unfinished order. Resume it or wait for it to expire first.');
+        if (lower.includes('already active on this miner')) return text('该礼包已在当前账号生效，无需重复购买。', 'This pack is already active on the current account.');
         if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
         if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后重试。', 'The payment service is temporarily unavailable. Please try again later.');
         return raw;
@@ -3769,7 +3899,10 @@
         }
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload?.ok === false) {
-            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+            const error = new Error(mapPaymentApiError(payload?.error || payload?.message));
+            error.payload = payload;
+            error.status = response.status;
+            throw error;
         }
         return payload;
     }
@@ -3816,10 +3949,23 @@
     function isPendingOrderExpired(order) {
         if (!order) return true;
         const status = String(order.status || 'pending');
-        if (status === 'expired' || status === 'cancelled' || status === 'granted') return true;
-        if (status === 'paid') return false;
+        if (status === 'expired' || status === 'cancelled') return true;
+        if (status === 'paid' || status === 'granted') return false;
         const expiresAt = Number(order.expiresAt || 0) || ((Number(order.createdAt) || 0) + PAYMENT_ORDER_WINDOW_MS);
         return expiresAt <= Date.now();
+    }
+
+    function shouldKeepPendingOrder(order) {
+        if (!order || typeof order !== 'object') return false;
+        const status = String(order.status || 'pending');
+        if (status === 'expired' || status === 'cancelled') return false;
+        const orderId = String(order.id || '');
+        const claimedLocally = !!(orderId && state.save?.payment?.claimedOrders?.[orderId]);
+        const syncingClaim = !!(orderId && state.save?.payment?.pendingClaims?.[orderId]);
+        if ((status === 'granted' || order.rewardGranted) && claimedLocally && !syncingClaim) {
+            return false;
+        }
+        return true;
     }
 
     function getPendingOrderEta(order) {
@@ -3855,12 +4001,21 @@
     }
 
     async function createBackendPaymentOrder(offerId) {
-        const payload = await requestPaymentApi('/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
-        });
-        return buildClientPaymentOrder(payload?.order);
+        try {
+            const payload = await requestPaymentApi('/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
+            });
+            return buildClientPaymentOrder(payload?.order);
+        } catch (error) {
+            const code = String(error?.payload?.code || '');
+            const payloadOfferId = String(error?.payload?.order?.offerId || error?.payload?.order?.offer_id || '');
+            if ((code === 'CLAIM_REQUIRED' || code === 'PENDING_ORDER_EXISTS') && error?.payload?.order && payloadOfferId === offerId) {
+                return buildClientPaymentOrder(error.payload.order);
+            }
+            throw error;
+        }
     }
 
     async function verifyBackendPayment(orderId, txid) {
@@ -3874,6 +4029,11 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId, txid, minerId: getPaymentMinerId() })
         });
+    }
+
+    async function checkBackendPaymentOrder(orderId) {
+        const query = new URLSearchParams({ orderId: String(orderId || ''), minerId: getPaymentMinerId() });
+        return requestPaymentApi(`/check-order?${query.toString()}`);
     }
 
     function pushVerifiedTxid(txid) {
@@ -3941,6 +4101,173 @@
         await copyText(String(Number(order.exactAmount || 0).toFixed(PAYMENT_ORDER_DISPLAY_DECIMALS)), text('精确金额已复制。', 'Exact amount copied.'));
     }
 
+    async function refreshOfferOrder(offerId, { showToast: shouldToast = true, reopenModal = true } = {}) {
+        const offer = offerMap[offerId];
+        const order = getPendingOrder(offerId);
+        if (!offer || !order) {
+            if (shouldToast) {
+                showToast(text('当前没有可刷新的订单。', 'There is no order to refresh right now.'), 'warn');
+            }
+            return null;
+        }
+
+        try {
+            const payload = await checkBackendPaymentOrder(order.id);
+            const resolvedOrder = buildClientPaymentOrder({
+                ...order,
+                ...(payload?.order || {})
+            });
+            const status = String(resolvedOrder.status || 'pending');
+
+            if (!shouldKeepPendingOrder(resolvedOrder)) {
+                state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== order.id);
+            } else {
+                upsertPendingOrder(resolvedOrder);
+            }
+
+            saveProgress();
+
+            if (shouldToast) {
+                const statusState = getOfferOrderState(offerId, resolvedOrder);
+                showToast(
+                    status === 'expired'
+                        ? text('订单状态已刷新：这笔订单已过期。', 'Order refreshed: this order has expired.')
+                        : status === 'granted'
+                            ? text('订单状态已刷新：后台已记录发放完成。', 'Order refreshed: the backend already marked this delivery as complete.')
+                            : `${text('订单状态已刷新', 'Order refreshed')} · ${statusState.statusLabel}`,
+                    status === 'expired' ? 'warn' : 'good'
+                );
+            }
+
+            if (reopenModal && state.modal) {
+                previewOffer(offerId);
+            } else {
+                renderAll();
+            }
+
+            return resolvedOrder;
+        } catch (error) {
+            if (shouldToast) {
+                showToast(error?.message || text('订单刷新失败，请稍后重试。', 'Failed to refresh the order. Please try again later.'), 'warn');
+            }
+            return null;
+        }
+    }
+
+    async function syncPendingOfferOrders() {
+        const orders = getPendingOrders();
+        for (const order of orders) {
+            await refreshOfferOrder(order.offerId, { showToast: false, reopenModal: false });
+        }
+        return getPendingOrders().length;
+    }
+
+    function applyOfferOwnership(reward = {}) {
+        if (reward.premiumSeason) state.save.premiumSeason = true;
+        if (reward.starterBoost) state.save.starterBoost = true;
+        if (reward.vaultRelay) state.save.vaultRelay = true;
+    }
+
+    async function finalizeOfferOrderDelivery(offerId, order, txid, { source = 'verify' } = {}) {
+        const offer = offerMap[offerId];
+        const resolvedOrder = buildClientPaymentOrder({
+            ...order,
+            txid: order?.txid || txid
+        });
+        if (!offer || !resolvedOrder?.id || resolvedOrder.id === '--') return;
+
+        const normalizedTxid = normalizeTxid(txid || resolvedOrder.txid || '');
+        const alreadyClaimedLocally = !!state.save.payment.claimedOrders[resolvedOrder.id];
+        const backendGranted = !!(resolvedOrder.rewardGranted || resolvedOrder.status === 'granted');
+        const grantConsumables = !alreadyClaimedLocally && !backendGranted;
+        const syncPerksOnly = !alreadyClaimedLocally && backendGranted;
+
+        upsertPendingOrder(resolvedOrder);
+
+        if (grantConsumables) {
+            applyReward(offer.reward);
+            state.save.payment.claimedOrders[resolvedOrder.id] = true;
+            if (PAYMENT_TXID_RE.test(normalizedTxid)) {
+                pushVerifiedTxid(normalizedTxid);
+                pushPaymentHistoryEntry({
+                    orderId: resolvedOrder.id,
+                    offerId,
+                    txid: normalizedTxid,
+                    amount: Number(resolvedOrder.exactAmount || offer.price || 0),
+                    basePrice: Number(offer.price || 0),
+                    payAddress: resolvePaymentAddress(resolvedOrder, { allowLastKnown: false }),
+                    network: resolvedOrder.network || PAYMENT_NETWORK,
+                    verifiedAt: Date.now()
+                });
+            }
+        } else if (syncPerksOnly) {
+            applyOfferOwnership(offer.reward);
+            state.save.payment.claimedOrders[resolvedOrder.id] = true;
+            if (PAYMENT_TXID_RE.test(normalizedTxid)) {
+                pushVerifiedTxid(normalizedTxid);
+                pushPaymentHistoryEntry({
+                    orderId: resolvedOrder.id,
+                    offerId,
+                    txid: normalizedTxid,
+                    amount: Number(resolvedOrder.exactAmount || offer.price || 0),
+                    basePrice: Number(offer.price || 0),
+                    payAddress: resolvePaymentAddress(resolvedOrder, { allowLastKnown: false }),
+                    network: resolvedOrder.network || PAYMENT_NETWORK,
+                    verifiedAt: Date.now()
+                });
+            }
+        }
+
+        let successCopy = syncPerksOnly
+            ? text('这笔订单的永久权益已同步到当前存档；资源部分不会重复发放。', 'Permanent entitlements from this order were synced to this save. Consumable rewards were not granted again.')
+            : source === 'restore'
+                ? (backendGranted
+                    ? text('订单已恢复，奖励已到账。', 'The order was restored and rewards are now available.')
+                    : text('奖励已恢复，后台到账记录会继续自动同步。', 'Rewards were restored. The backend delivery record will keep syncing automatically.'))
+                : (backendGranted
+                    ? text('订单已完成校验，奖励已到账。', 'This order was already verified and the rewards are now available.')
+                    : text('链上校验成功，奖励已到账。', 'On-chain verification succeeded and rewards were granted.'));
+
+        if (!backendGranted && PAYMENT_TXID_RE.test(normalizedTxid)) {
+            state.save.payment.pendingClaims[resolvedOrder.id] = normalizedTxid;
+            try {
+                await claimBackendPayment(resolvedOrder.id, normalizedTxid);
+                delete state.save.payment.pendingClaims[resolvedOrder.id];
+                successCopy = source === 'restore'
+                    ? text('奖励已恢复并完成到账同步。', 'Rewards were restored and the delivery record is now synced.')
+                    : text('链上校验成功，奖励已到账。', 'On-chain verification succeeded and rewards were granted.');
+            } catch (claimError) {}
+        } else {
+            delete state.save.payment.pendingClaims[resolvedOrder.id];
+        }
+
+        if (state.save.payment.pendingClaims[resolvedOrder.id]) {
+            upsertPendingOrder({
+                ...resolvedOrder,
+                txid: normalizedTxid || resolvedOrder.txid,
+                rewardGranted: backendGranted || resolvedOrder.rewardGranted,
+                status: backendGranted ? 'granted' : (resolvedOrder.status || 'paid')
+            });
+        } else {
+            state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== resolvedOrder.id);
+        }
+        saveProgress();
+        openModal({
+            eyebrow: source === 'restore' ? text('奖励恢复', 'Reward Restored') : text('支付成功', 'Payment Verified'),
+            title: localize(offer.name),
+            subtitle: `USDT ${formatPaymentAmount(resolvedOrder.exactAmount || offer.price)} · ${escapeHtml(resolvedOrder.network || PAYMENT_NETWORK)}`,
+            body: `
+                <div class="cm-card">
+                    <div class="cm-copy">${escapeHtml(successCopy)}</div>
+                    <div class="cm-reward-row">${renderRewardChips(offer.reward)}</div>
+                </div>
+            `,
+            actions: `<button class="cm-btn" type="button" data-action="closeModal">${escapeHtml(text('完成', 'Done'))}</button>`
+        });
+        renderAll();
+        showToast(successCopy, 'good');
+    }
+
     async function flushPendingPaymentClaims({ silent = true } = {}) {
         const pendingClaims = state.save.payment.pendingClaims || {};
         const entries = Object.entries(pendingClaims);
@@ -3954,6 +4281,7 @@
             try {
                 await claimBackendPayment(orderId, txid);
                 delete pendingClaims[orderId];
+                state.save.pendingOrders = state.save.pendingOrders.filter((item) => item.id !== orderId);
                 syncedCount += 1;
             } catch (error) {
                 if (!silent) {
@@ -4040,7 +4368,7 @@
         const seenOffers = new Set();
         return list
             .map((item) => buildClientPaymentOrder(item))
-            .filter((item) => offerMap[item.offerId] && !isPendingOrderExpired(item) && isPendingOrderValid(item))
+            .filter((item) => offerMap[item.offerId] && !isPendingOrderExpired(item) && isPendingOrderValid(item) && shouldKeepPendingOrder(item))
             .sort((left, right) => right.createdAt - left.createdAt)
             .filter((item) => {
                 if (seenOffers.has(item.offerId)) return false;
@@ -4244,6 +4572,18 @@
         state.save.pendingOrders = pendingOrders;
         state.save.paymentHistory = paymentHistory;
         state.save.verifiedTxids = verifiedTxids;
+        if (!state.save.starterBoost && paymentHistory.some((item) => item.offerId === 'starterPack')) {
+            state.save.starterBoost = true;
+            changed = true;
+        }
+        if (!state.save.premiumSeason && paymentHistory.some((item) => item.offerId === 'seasonPass')) {
+            state.save.premiumSeason = true;
+            changed = true;
+        }
+        if (!state.save.vaultRelay && paymentHistory.some((item) => item.offerId === 'breakerVault')) {
+            state.save.vaultRelay = true;
+            changed = true;
+        }
         if (changed) saveProgress();
     }
 
@@ -4286,7 +4626,10 @@
     }
 
     function syncSoundToggle() {
-        sfx?.syncToggle(ui.soundToggle);
+        sfx?.syncToggle(ui.soundToggle, {
+            on: text('音效开', 'SFX ON'),
+            off: text('音效关', 'SFX OFF')
+        });
     }
 
     async function copyText(value, successText) {
@@ -4345,6 +4688,7 @@
     function renderOfferItem(item) {
         const owned = isOfferOwned(item.id);
         const order = getPendingOrder(item.id);
+        const orderState = order ? getOfferOrderState(item.id, order) : null;
         const lastVerified = getLastVerifiedPayment(item.id);
         const metaLocked = isMetaActionLocked();
         const unlocked = isOfferUnlocked(item.id);
@@ -4361,7 +4705,7 @@
             : owned
                 ? text('已拥有', 'Owned')
                 : order
-                    ? text('待验证', 'Pending')
+                    ? orderState.statusLabel
                     : `USDT ${item.price}`;
         const copy = !unlocked
             ? unlockLabel
@@ -4370,7 +4714,7 @@
                     ? text(`最近到账：${formatTimeLabel(lastVerified.verifiedAt)}`, `Last verified: ${formatTimeLabel(lastVerified.verifiedAt)}`)
                     : localize(item.permanent))
                 : order
-                    ? text('订单已创建，继续粘贴交易哈希即可完成验证。', 'Order created. Resume by pasting the TxID.')
+                    ? orderState.statusDetail
                     : item.permanent
                         ? localize(item.permanent)
                         : text('支付验证通过后立刻发放。', 'Delivered right after payment.');
@@ -4381,7 +4725,7 @@
                         <strong>${escapeHtml(localize(item.name))}</strong>
                         <div class="cm-copy">${escapeHtml(copy)}</div>
                     </div>
-                    <span class="cm-tag ${owned ? 'is-good' : order ? 'is-warning' : !unlocked ? 'is-idle' : ''}">${escapeHtml(badge)}</span>
+                    <span class="cm-tag ${owned ? 'is-good' : order ? (orderState.tagClass || 'is-warn') : !unlocked ? 'is-idle' : ''}">${escapeHtml(badge)}</span>
                 </div>
                 <div class="cm-reward-row">${renderRewardChips(item.reward)}</div>
                 <div class="cm-chip-row">
@@ -4395,7 +4739,11 @@
                         : owned
                             ? text('查看内容', 'View Pack')
                             : order
-                                ? text('继续支付', 'Resume Payment')
+                                ? orderState.kind === 'claimable'
+                                    ? text('恢复奖励', 'Restore Rewards')
+                                    : orderState.kind === 'syncing'
+                                        ? text('继续同步', 'Sync Claim')
+                                        : text('继续处理', 'Resume Order')
                                 : text('打开支付', 'Open Payment')
                 )}</button>
             </div>

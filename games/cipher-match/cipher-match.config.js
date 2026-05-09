@@ -65,9 +65,9 @@
             {
                 id: 'novaEcho',
                 name: { zh: '新星回声', en: 'Nova Echo' },
-                role: { zh: '首领压制', en: 'Boss break' },
+                role: { zh: '首领压制', en: 'Shield pressure' },
                 skill: { zh: '对全部目标造成额外压制，护盾目标额外 -4。', en: 'Pressures all goals and deals an extra -4 to shield targets.' },
-                effect: { zh: '破盾推进', en: 'Boss pressure' },
+                effect: { zh: '破盾推进', en: 'Shield pressure' },
                 basePower: 102
             }
         ],
@@ -174,7 +174,7 @@
                     { type: 'shield', amount: 7 }
                 ],
                 pressure: { zh: '首次强化', en: 'First power spike' },
-                rewardFocus: { zh: '首领破盾材料', en: 'Boss break dust' },
+                rewardFocus: { zh: '首领破盾材料', en: 'Shield dust' },
                 reward: { credits: 420, keyBits: 54, cipherDust: 20, seasonXp: 46 }
             },
             {
@@ -229,7 +229,7 @@
                     { type: 'alpha', amount: 18 },
                     { type: 'delta', amount: 18 }
                 ],
-                pressure: { zh: '长连锁检测', en: 'Long combo gate' },
+                pressure: { zh: '长连锁检测', en: 'Long combo test' },
                 rewardFocus: { zh: '高额金币', en: 'High credits' },
                 reward: { credits: 1120, keyBits: 138, cipherDust: 44, seasonXp: 98 }
             },
