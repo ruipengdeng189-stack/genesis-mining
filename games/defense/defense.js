@@ -14,6 +14,7 @@
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const PAYMENT_ADDRESS_FIELDS = ['payAddress', 'pay_address', 'walletAddress', 'wallet_address', 'recipientAddress', 'recipient_address', 'receiveAddress', 'receive_address', 'receivingAddress', 'receiving_address', 'toAddress', 'to_address', 'address'];
     const DEFENSE_DEBUG_ENABLED = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 
     const TEXT = {
@@ -64,6 +65,11 @@
             tabMissions: '任务',
             tabSeason: '赛季',
             tabShop: '商店',
+            battlefieldAria: '创世防线战场',
+            tabsAria: '创世防线页签',
+            closePaymentAria: '关闭支付弹窗',
+            paymentKicker: '链上校验支付',
+            rerollUpgradeIdle: '重抽强化',
             skillEmp: 'EMP 脉冲',
             skillOverclock: '超频回路',
             skillShield: '守护立场',
@@ -277,6 +283,11 @@
             tabMissions: 'Missions',
             tabSeason: 'Season',
             tabShop: 'Shop',
+            battlefieldAria: 'Genesis Defense battlefield',
+            tabsAria: 'Defense tabs',
+            closePaymentAria: 'Close payment modal',
+            paymentKicker: 'VERIFIED TOP-UP',
+            rerollUpgradeIdle: 'Reroll upgrades',
             skillEmp: 'EMP Pulse',
             skillOverclock: 'Overclock Loop',
             skillShield: 'Guardian Field',
@@ -485,7 +496,7 @@
         },
         {
             id: '2-1',
-            recommended: 660,
+            recommended: 620,
             baseHp: 104,
             baseSpeed: 79,
             goldReward: 880,
@@ -497,7 +508,7 @@
         },
         {
             id: '2-2',
-            recommended: 910,
+            recommended: 860,
             baseHp: 134,
             baseSpeed: 84,
             goldReward: 1120,
@@ -509,7 +520,7 @@
         },
         {
             id: '2-3',
-            recommended: 1240,
+            recommended: 1180,
             baseHp: 168,
             baseSpeed: 88,
             goldReward: 1440,
@@ -563,8 +574,8 @@
         frost: { id: 'frost', tier: 'rare', baseDamage: 13, cooldown: 0.6, range: 500, upgradeGold: 380, unlockFragments: 48, color: '#8ad6ff', power: 88, splash: 0, slow: 0.3 },
         rocket: { id: 'rocket', tier: 'rare', baseDamage: 28, cooldown: 1.04, range: 520, upgradeGold: 460, unlockFragments: 52, color: '#ffd26b', power: 108, splash: 0.44, slow: 0 },
         harvest: { id: 'harvest', tier: 'common', baseDamage: 8, cooldown: 0.82, range: 420, upgradeGold: 250, unlockFragments: 0, color: '#65ffb2', power: 50, splash: 0, slow: 0, goldBonus: 0.72 },
-        chain: { id: 'chain', tier: 'rare', baseDamage: 18, cooldown: 0.6, range: 500, upgradeGold: 620, unlockFragments: 74, color: '#b58cff', power: 136, splash: 0, slow: 0, chain: 0.46 },
-        rail: { id: 'rail', tier: 'epic', baseDamage: 52, cooldown: 1.18, range: 620, upgradeGold: 980, unlockFragments: 128, color: '#ff6b89', power: 198, splash: 0, slow: 0, pierce: true }
+        chain: { id: 'chain', tier: 'rare', baseDamage: 18, cooldown: 0.6, range: 500, upgradeGold: 620, unlockFragments: 68, color: '#b58cff', power: 136, splash: 0, slow: 0, chain: 0.46 },
+        rail: { id: 'rail', tier: 'epic', baseDamage: 52, cooldown: 1.18, range: 620, upgradeGold: 980, unlockFragments: 116, color: '#ff6b89', power: 198, splash: 0, slow: 0, pierce: true }
     };
 
     const DEPLOY_PERMIT_RULES = {
@@ -573,11 +584,11 @@
             3: { minLevel: 5, gold: 3980, cores: 34, fragments: 44 }
         },
         rare: {
-            2: { minLevel: 3, gold: 2980, cores: 26, fragments: 32 },
-            3: { minLevel: 5, gold: 7680, cores: 62, fragments: 78 }
+            2: { minLevel: 3, gold: 2680, cores: 22, fragments: 28 },
+            3: { minLevel: 5, gold: 6980, cores: 54, fragments: 68 }
         },
         epic: {
-            2: { minLevel: 4, gold: 5680, cores: 48, fragments: 58 },
+            2: { minLevel: 4, gold: 5120, cores: 40, fragments: 50 },
             3: { minLevel: 6, gold: 14800, cores: 118, fragments: 136 }
         }
     };
@@ -672,7 +683,7 @@
             kicker: { zh: '3360 G', en: '3360 G' },
             slot: { zh: '推进军械', en: 'Push Arsenal' },
             title: { zh: '前线军械箱', en: 'Frontline Arsenal' },
-            desc: { zh: '为卡章节准备的高阶金币箱，会补充能核、赛季经验和高压章节常用碎片。', en: 'A heavier gold sink for chapter walls with cores, Season XP, and higher-tier fragments.' }
+            desc: { zh: '适合章节推进期补足金币、能核与赛季经验，也会顺带补一些中后期常用碎片。', en: 'A heavier gold sink for chapter progression with extra cores, Season XP, and late-mid fragments.' }
         },
         {
             id: 'coreCrate',
@@ -743,7 +754,7 @@
             accent: '#ffb168',
             badge: { zh: '冲关实装', en: 'Rush' },
             name: { zh: '压制突围包', en: 'Pressure Breaker' },
-            desc: { zh: '专为卡章节点准备，兼顾金币、能核和高压章节需要的高阶碎片。', en: 'Designed for hard chapter walls with extra economy and higher-tier fragments.' },
+            desc: { zh: '适合章节推进时快速补资源，兼顾金币、能核和高阶碎片。', en: 'A stronger progression pack with extra economy and higher-tier fragments.' },
             reward: { gold: 24800, cores: 210, seasonXp: 720, fragments: { rocket: 42, chain: 30, rail: 20 } }
         },
         {
@@ -913,6 +924,7 @@
         ui.paymentModal = document.getElementById('defensePaymentModal');
         ui.paymentOfferGrid = document.getElementById('defensePaymentOfferGrid');
         ui.paymentCloseBtn = document.getElementById('defensePaymentCloseBtn');
+        ui.paymentKicker = document.getElementById('defensePaymentKicker');
         ui.paymentTitle = document.getElementById('defensePaymentTitle');
         ui.paymentDesc = document.getElementById('defensePaymentDesc');
         ui.paymentAmount = document.getElementById('defensePaymentAmount');
@@ -1668,10 +1680,17 @@
         document.title = t('pageTitle');
         document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
         ui.langToggle.textContent = state.lang === 'zh' ? 'EN' : 'ZH';
+        ui.canvas?.setAttribute('aria-label', t('battlefieldAria'));
+        ui.tabBar?.setAttribute('aria-label', t('tabsAria'));
+        ui.paymentCloseBtn?.setAttribute('aria-label', t('closePaymentAria'));
+        if (ui.paymentKicker) ui.paymentKicker.textContent = t('paymentKicker');
         document.querySelectorAll('[data-i18n]').forEach((node) => {
             const key = node.getAttribute('data-i18n');
             node.textContent = t(key);
         });
+        if (ui.upgradeRerollBtn && !state.battle.awaitingUpgrade) {
+            ui.upgradeRerollBtn.textContent = t('rerollUpgradeIdle');
+        }
         refreshUpgradeOverlayActions();
     }
 
@@ -2441,12 +2460,12 @@
 
     function renderPaymentGapChip(impact) {
         if ((impact?.currentGap || 0) <= 0) {
-            return `<span class="mini-chip">${getLocalized({ zh: '当前已达标', en: 'Already ready' })}</span>`;
+            return `<span class="mini-chip">${getLocalized({ zh: '当前已够用', en: 'Already ready' })}</span>`;
         }
         if (impact?.breaksWall) {
-            return `<span class="mini-chip">${getLocalized({ zh: '可直接补平当前缺口', en: 'Covers the current gap' })}</span>`;
+            return `<span class="mini-chip">${getLocalized({ zh: '当前补给已足够', en: 'Covers current needs' })}</span>`;
         }
-        return `<span class="mini-chip">${getLocalized({ zh: `剩余缺口 ${formatCompact(impact.remainingGap)}`, en: `${formatCompact(impact.remainingGap)} gap left` })}</span>`;
+        return `<span class="mini-chip">${getLocalized({ zh: `还需提升 ${formatCompact(impact.remainingGap)}`, en: `${formatCompact(impact.remainingGap)} more needed` })}</span>`;
     }
 
     function renderPaymentUpgradeChip(tier) {
@@ -2551,7 +2570,7 @@
                 end: 5,
                 range: '2-1 ~ 2-3',
                 targetPower: 1320,
-                title: getLocalized({ zh: '卡章突破', en: 'Wall Break' }),
+                title: getLocalized({ zh: '章节提速', en: 'Chapter Boost' }),
                 copy: getLocalized({ zh: '火箭 / 连锁 / 霜冻开始主导通关，研究也要同步抬。', en: 'Rocket, Chain, and Frost start to carry, and research must rise with them.' })
             },
             {
@@ -2577,7 +2596,7 @@
         const wallSeverity = powerGap > 480 ? 'hard' : powerGap > 180 ? 'mid' : 'light';
         let nextAction = getLocalized({ zh: '继续推图，优先补当前最弱的一条路。', en: 'Keep pushing and reinforce the weakest lane first.' });
         if (powerGap > 420) {
-            nextAction = getLocalized({ zh: '先补装配和研究，再决定是否用商城或充值强行突破。', en: 'Fix loadout and research first, then decide whether shop or top-up is needed to force the wall.' });
+            nextAction = getLocalized({ zh: '先补装配和研究，再看是否需要用商城或成长补给提速。', en: 'Fix loadout and research first, then decide whether shop or a growth pack should speed things up.' });
         } else if (powerGap > 120) {
             nextAction = getLocalized({ zh: '当前压力不大，优先补推荐塔等级和关键研究。', en: 'Pressure is light, so upgrade the recommended tower and key research first.' });
         } else if (bandGap > 0) {
@@ -2614,7 +2633,7 @@
                 label: getLocalized({ zh: '高压阶段', en: 'High Pressure' }),
                 shortLabel: getLocalized({ zh: '高压', en: 'High' }),
                 copy: getLocalized({
-                    zh: '当前缺口偏大，先补部署和研究；想更快推进，可直接选择更高档位的成长补给。',
+                    zh: '当前还有明显提升空间，先补部署和研究；想更快推进，可以考虑更高档位的成长补给。',
                     en: 'The gap is large. Improve setup and research first; if you want to move faster, pick a stronger growth pack.'
                 })
             };
@@ -3289,8 +3308,8 @@
                 title: getLocalized({ zh: '免费线', en: 'Free Route' }),
                 summary: refillAction.label,
                 detail: getLocalized({
-                    zh: `当前可回收 ${economyPreview.claimableTotal} 个奖励，先把补给 / 任务 / 赛季奖励收掉，再继续补当前缺口。`,
-                    en: `${economyPreview.claimableTotal} rewards are ready. Claim supply, mission, and season rewards first, then continue closing the current gap.`
+                    zh: `当前可回收 ${economyPreview.claimableTotal} 个奖励，先把补给 / 任务 / 赛季奖励收掉，再继续补当前所需提升。`,
+                    en: `${economyPreview.claimableTotal} rewards are ready. Claim supply, mission, and season rewards first, then continue building what you still need.`
                 }),
                 meta: getLocalized({
                     zh: `任务 ${economyPreview.missionReady} · 赛季 ${economyPreview.seasonReady + economyPreview.sponsorReady} · 日常 ${economyPreview.dailyReady ? '可领' : '冷却中'}`,
@@ -3349,11 +3368,11 @@
                         };
         const paidRoute = !paymentRoute || !paymentImpact
             ? {
-                title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                title: getLocalized({ zh: '成长补给', en: 'Growth Packs' }),
                 summary: getLocalized({ zh: '当前暂无推荐', en: 'No current recommendation' }),
                 detail: getLocalized({
-                    zh: '等缺口更明确时，再结合商城和赞助路线做判断。',
-                    en: 'Wait until the gap is clearer, then use the shop and sponsor route for a stronger recommendation.'
+                    zh: '等当前所需提升更明确时，再结合商城和赞助路线做判断。',
+                    en: 'Wait until your current needs are clearer, then check shop and Sponsor options again.'
                 }),
                 meta: getLocalized({ zh: '先走免费线', en: 'Free route first' }),
                 action: 'openTab',
@@ -3362,12 +3381,12 @@
             }
             : paymentImpact.currentGap <= 0
                 ? {
-                    title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                    title: getLocalized({ zh: '成长补给', en: 'Growth Packs' }),
                     summary: getLocalized({ zh: '当前无需充值', en: 'No top-up needed' }),
                     detail: paymentRoute.sponsorUnlocked
                         ? getLocalized({
-                            zh: `当前已经达标，充值更偏向赞助常驻成长；若要继续拉长期收益，可看 ${getLocalized(paymentRoute.offer.name)}。`,
-                            en: `You are already ready, so top-up now is mainly about long-term Sponsor growth; ${getLocalized(paymentRoute.offer.name)} is the next optional lane.`
+                            zh: `当前已经达标，补给更偏向赞助常驻成长；若想继续拉长期收益，可看 ${getLocalized(paymentRoute.offer.name)}。`,
+                            en: `You are already ready, so packs now mainly support long-term Sponsor growth; ${getLocalized(paymentRoute.offer.name)} is the next optional lane.`
                         })
                         : getLocalized({
                             zh: '当前已经达标，首充的主要价值转为解锁赞助轨道和后续赛季额外奖励。',
@@ -3380,7 +3399,7 @@
                 }
                 : paymentRoute.sponsorUnlocked && paymentRoute.sponsorReady > 0
                     ? {
-                        title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                    title: getLocalized({ zh: '成长补给', en: 'Growth Packs' }),
                         summary: getLocalized({ zh: '先领赞助奖励', en: 'Claim sponsor rewards first' }),
                         detail: getLocalized({
                             zh: `赛季页已有 ${paymentRoute.sponsorReady} 个赞助奖励可领，先回收再判断要不要继续追 ${getLocalized(paymentRoute.offer.name)}。`,
@@ -3392,19 +3411,19 @@
                         tone: 'ready'
                     }
                     : {
-                        title: getLocalized({ zh: '充值线', en: 'Top-up Route' }),
+                        title: getLocalized({ zh: '成长补给', en: 'Growth Packs' }),
                         summary: paymentImpact.breaksWall
-                            ? getLocalized({ zh: `${getLocalized(paymentRoute.offer.name)} 可直过`, en: `${getLocalized(paymentRoute.offer.name)} breaks the wall` })
+                            ? getLocalized({ zh: `${getLocalized(paymentRoute.offer.name)} 当前足够`, en: `${getLocalized(paymentRoute.offer.name)} is enough now` })
                             : getLocalized({ zh: `推荐 ${getLocalized(paymentRoute.offer.name)}`, en: `${getLocalized(paymentRoute.offer.name)} recommended` }),
                         detail: paymentImpact.breaksWall
                             ? getLocalized({
-                                zh: `按当前缺口估算，这档总补强约 +${formatCompact(paymentImpact.totalPowerGain)}，可直接抹平本章缺口。`,
-                                en: `At the current gap, this pack adds about +${formatCompact(paymentImpact.totalPowerGain)} total and can erase the chapter deficit outright.`
+                                zh: `按当前进度估算，这档总补强约 +${formatCompact(paymentImpact.totalPowerGain)}，足够覆盖本章所需提升。`,
+                                en: `At your current progress, this pack adds about +${formatCompact(paymentImpact.totalPowerGain)} total and can cover this chapter's needs.`
                             })
                             : paymentRoute.reason,
                         meta: paymentImpact.breaksWall
                             ? getLocalized({ zh: `总补强 +${formatCompact(paymentImpact.totalPowerGain)}`, en: `+${formatCompact(paymentImpact.totalPowerGain)} total` })
-                            : getLocalized({ zh: `还剩 ${formatCompact(paymentImpact.remainingGap)} 缺口`, en: `${formatCompact(paymentImpact.remainingGap)} gap left` }),
+                            : getLocalized({ zh: `还需提升 ${formatCompact(paymentImpact.remainingGap)}`, en: `${formatCompact(paymentImpact.remainingGap)} more needed` }),
                         action: 'openPayment',
                         value: paymentRoute.offer.id,
                         tone: paymentImpact.breaksWall ? 'ready' : 'warn'
@@ -3415,7 +3434,7 @@
             refillAction,
             wallMeta,
             gapStatus: {
-                label: getLocalized({ zh: '当前缺口', en: 'Current Gap' }),
+                label: getLocalized({ zh: '当前待补', en: 'Current Need' }),
                 value: roadmap.powerGap > 0 ? formatCompact(roadmap.powerGap) : getLocalized({ zh: '已达标', en: 'Ready' }),
                 detail: roadmap.powerGap > 0
                     ? getLocalized({ zh: `${wallMeta.label} · 推荐 ${formatCompact(chapter.recommended)} / 当前 ${formatCompact(roadmap.currentPower)}`, en: `${wallMeta.label} · target ${formatCompact(chapter.recommended)} / current ${formatCompact(roadmap.currentPower)}` })
@@ -3430,8 +3449,8 @@
                     : getLocalized({ zh: '可以回防线开打', en: 'Ready to defend' }),
             summaryCopy: primaryStep === 'loadout'
                 ? getLocalized({
-                    zh: '先把单塔碎片和三路对位补齐，再去研究压低战力缺口，最后回防线开打。',
-                    en: 'Finish tower fragments and lane alignment first, then use research to lower the power gap before defending.'
+                    zh: '先把单塔碎片和三路对位补齐，再用研究抬高当前战力，最后回防线开打。',
+                    en: 'Finish tower fragments and lane alignment first, then use research to raise current power before defending.'
                 })
                 : primaryStep === 'research'
                     ? getLocalized({
@@ -3668,7 +3687,7 @@
                                 <small>${growthFlow.freeRoute.meta}</small>
                             </div>
                             <div class="growth-route-kpi">
-                                <span>${getLocalized({ zh: '充值刺激', en: 'Top-up Push' })}</span>
+                                <span>${getLocalized({ zh: '补给建议', en: 'Pack Suggestion' })}</span>
                                 <strong>${growthFlow.paidRoute.summary}</strong>
                                 <small>${growthFlow.paidRoute.meta}</small>
                             </div>
@@ -4431,7 +4450,7 @@
                         { label: getLocalized({ zh: '本章焦点', en: 'Chapter Focus' }), value: formatCompact(fragmentInventory.focusTotal) },
                         { label: getLocalized({ zh: '可解锁', en: 'Unlock Ready' }), value: String(fragmentInventory.unlockableCount) },
                         {
-                            label: getLocalized({ zh: '最近缺口', en: 'Closest Gap' }),
+                            label: getLocalized({ zh: '最近待补', en: 'Closest Need' }),
                             value: fragmentInventory.nextUnlockEntry
                                 ? formatCompact(fragmentInventory.nextUnlockEntry.shortage)
                                 : getLocalized({ zh: '无', en: 'None' })
@@ -4816,7 +4835,7 @@
             : getLocalized({ zh: '研究已毕业', en: 'Research maxed' });
         const topResearchCopy = topResearch
             ? `${topResearch.reason}${researchPlan.powerGap > 0
-                ? getLocalized({ zh: ' 当前优先把章节缺口补平。', en: ' Patch the chapter gap first.' })
+                ? getLocalized({ zh: ' 当前优先补足本章所需提升。', en: ' Focus on this chapter’s needs first.' })
                 : getLocalized({ zh: ' 现在更偏向稳线和容错。', en: ' Focus more on stability now.' })}`
             : getLocalized({ zh: '研究已经成型，资源可以更多转去装配、赛季和冲关。', en: 'Research is already built out, so shift more resources into loadout, season, and chapter pushes.' });
         ui.panelContent.innerHTML = `
@@ -4845,7 +4864,7 @@
                     ${renderCompactKpiGrid([
                         { label: getLocalized({ zh: '可升分支', en: 'Ready Upgrades' }), value: String(researchReadyCount) },
                         { label: getLocalized({ zh: '已满分支', en: 'Maxed Branches' }), value: String(researchMaxedCount) },
-                        { label: getLocalized({ zh: '战力缺口', en: 'Power Gap' }), value: researchPlan.powerGap > 0 ? formatCompact(researchPlan.powerGap) : getLocalized({ zh: '达标', en: 'Ready' }) },
+                        { label: getLocalized({ zh: '所需提升', en: 'Power Need' }), value: researchPlan.powerGap > 0 ? formatCompact(researchPlan.powerGap) : getLocalized({ zh: '达标', en: 'Ready' }) },
                         { label: getLocalized({ zh: '当前金币', en: 'Current Gold' }), value: `${formatCompact(state.save.gold)}G` }
                     ])}
                     ${prioritizedResearch.length ? `<div class="reward-row compact">
@@ -5584,7 +5603,7 @@
                 ? { action: 'claimPaymentMilestone', value: focusMilestone.id, label: getLocalized({ zh: '领取达标礼包', en: 'Claim Milestone' }) }
                 : { action: 'openPayment', value: strategyPlan.paymentRoute.offer.id, label: getLocalized({ zh: '继续追档', en: 'Keep Pushing' }) };
         const secondaryAction = nextMilestone
-            ? { action: 'openPayment', value: strategyPlan.paymentRoute.offer.id, label: getLocalized({ zh: '去充值线', en: 'Top-up Route' }) }
+            ? { action: 'openPayment', value: strategyPlan.paymentRoute.offer.id, label: getLocalized({ zh: '查看补给', en: 'View Packs' }) }
             : { action: 'openTab', value: 'season', label: getLocalized({ zh: '赞助轨道', en: 'Sponsor Track' }) };
         return `
             <article class="shop-card premium compact-overview-card">
@@ -5615,8 +5634,8 @@
                         })
                         : nextMilestone
                             ? getLocalized({
-                                zh: `当前累计 $${totalSpent.toFixed(2)}，距 ${getLocalized(nextMilestone.title)} 还差 $${remaining.toFixed(2)}。这条线专门用来补“再充一点就再拿一包”的冲档刺激。`,
-                                en: `You have spent $${totalSpent.toFixed(2)} and are $${remaining.toFixed(2)} away from ${getLocalized(nextMilestone.title)}. This lane is built for one-more-pack milestone pressure.`
+                                zh: `当前累计 $${totalSpent.toFixed(2)}，距 ${getLocalized(nextMilestone.title)} 还差 $${remaining.toFixed(2)}。如果你准备继续补给，可以顺手把这一档里程奖励一起点亮。`,
+                                en: `You have spent $${totalSpent.toFixed(2)} and are $${remaining.toFixed(2)} away from ${getLocalized(nextMilestone.title)}. If you plan to keep progressing with packs, this milestone can unlock along the way.`
                             })
                             : getLocalized({
                                 zh: '所有累充礼包都已领取完，后续充值会更聚焦在赞助常驻强度和即时资源补强。',
@@ -5676,38 +5695,44 @@
     }
 
     function renderGoldShopCard() {
+        const offer = getShopOfferById('goldCrate');
+        const cost = getShopOfferCost('goldCrate');
+        const canAfford = canAffordShopOffer(offer);
         return `
             <article class="shop-card compact-list-card">
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">920 G</div>
-                        <div class="card-title">${t('shopGoldTitle')}</div>
+                        <div class="card-kicker">${formatCompact(cost)} G</div>
+                        <div class="card-title">${getLocalized(offer.title)}</div>
                     </div>
-                    <div class="card-number">${t('fragmentLabel')}</div>
+                    <div class="card-number">${getLocalized(offer.slot)}</div>
                 </div>
-                <div class="card-copy">${t('shopGoldDesc')}</div>
+                <div class="card-copy">${getLocalized(offer.desc)}</div>
                 <div class="reward-row compact">${renderRewardChips({ fragments: { frost: 10, rocket: 10, chain: 6 }, gold: 120 }, { limit: 3 })}</div>
                 <div class="card-actions compact">
-                    <button class="primary-btn" type="button" data-action="buyShop" data-value="goldCrate" ${state.save.gold >= 920 ? '' : 'disabled'}>${t('shopBuy')}</button>
+                    <button class="primary-btn" type="button" data-action="buyShop" data-value="goldCrate" ${canAfford ? '' : 'disabled'}>${t('shopBuy')}</button>
                 </div>
             </article>
         `;
     }
 
     function renderCoreShopCard() {
+        const offer = getShopOfferById('coreCrate');
+        const cost = getShopOfferCost('coreCrate');
+        const canAfford = canAffordShopOffer(offer);
         return `
             <article class="shop-card compact-list-card">
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">34 C</div>
-                        <div class="card-title">${t('shopCoreTitle')}</div>
+                        <div class="card-kicker">${formatCompact(cost)} C</div>
+                        <div class="card-title">${getLocalized(offer.title)}</div>
                     </div>
-                    <div class="card-number">${state.lang === 'zh' ? '稀有箱' : 'Rare Box'}</div>
+                    <div class="card-number">${getLocalized(offer.slot)}</div>
                 </div>
-                <div class="card-copy">${t('shopCoreDesc')}</div>
+                <div class="card-copy">${getLocalized(offer.desc)}</div>
                 <div class="reward-row compact">${renderRewardChips({ gold: 280, fragments: { chain: 12, rail: 8 } }, { limit: 3 })}</div>
                 <div class="card-actions compact">
-                    <button class="primary-btn" type="button" data-action="buyShop" data-value="coreCrate" ${state.save.cores >= 34 ? '' : 'disabled'}>${t('shopBuy')}</button>
+                    <button class="primary-btn" type="button" data-action="buyShop" data-value="coreCrate" ${canAfford ? '' : 'disabled'}>${t('shopBuy')}</button>
                 </div>
             </article>
         `;
@@ -5904,8 +5929,8 @@
                         })
                         : offer.id === 'forgeCrate'
                             ? getLocalized({
-                                zh: '更适合卡章节时补能核、赛季经验和高压章节常用碎片。',
-                                en: 'Better when you are stuck on chapter pressure and need cores, Season XP, and higher-tier fragments.'
+                                zh: '更适合章节推进期补能核、赛季经验和中后期常用碎片。',
+                                en: 'Better for chapter progression when you need cores, Season XP, and higher-tier fragments.'
                             })
                             : getLocalized({
                                 zh: '更适合稳定补中期常用碎片，持续抬高三路基础战力。',
@@ -6012,13 +6037,13 @@
                     })
                     : bestImpact.breaksWall
                         ? getLocalized({
-                            zh: `按当前缺口估算，这档总补强约 +${formatCompact(bestImpact.totalPowerGain)}，足够直接抹平本章缺口。`,
-                            en: `At the current gap, this pack is worth about +${formatCompact(bestImpact.totalPowerGain)} total power and can close the chapter deficit outright.`
+                            zh: `按当前进度估算，这档总补强约 +${formatCompact(bestImpact.totalPowerGain)}，足够覆盖本章所需提升。`,
+                            en: `At your current progress, this pack is worth about +${formatCompact(bestImpact.totalPowerGain)} total and can cover this chapter's needs.`
                         })
                         : bestImpact.tierPromotion
                             ? getLocalized({
-                                zh: `这档会把你升到 ${getLocalized(bestImpact.projectedTier.title)}，同时把当前缺口压到只剩 ${formatCompact(bestImpact.remainingGap)} 左右。`,
-                                en: `This pack promotes you to ${getLocalized(bestImpact.projectedTier.title)} and cuts the current gap to about ${formatCompact(bestImpact.remainingGap)}.`
+                                zh: `这档会把你升到 ${getLocalized(bestImpact.projectedTier.title)}，同时把当前待补压到只剩 ${formatCompact(bestImpact.remainingGap)} 左右。`,
+                                en: `This pack promotes you to ${getLocalized(bestImpact.projectedTier.title)} and leaves only about ${formatCompact(bestImpact.remainingGap)} more to build.`
                             })
                     : getLocalized({
                         zh: `当前推荐礼包预计可补强 +${formatCompact(bestImpact.totalPowerGain)}，并继续抬高赞助轨道的回收价值。`,
@@ -6152,8 +6177,8 @@
             goldRoute ? getLocalized({ zh: `金币线：${getLocalized(goldRoute.offer.title)}`, en: `Gold: ${getLocalized(goldRoute.offer.title)}` }) : '',
             coreRoute ? getLocalized({ zh: `能核线：${getLocalized(coreRoute.offer.title)}`, en: `Core: ${getLocalized(coreRoute.offer.title)}` }) : '',
             getLocalized({
-                zh: `充值线：${getLocalized(paymentRoute.offer.name)}${paymentImpact.breaksWall ? ' · 可直过' : ''}`,
-                en: `Top-up: ${getLocalized(paymentRoute.offer.name)}${paymentImpact.breaksWall ? ' · breaks wall' : ''}`
+                zh: `补给：${getLocalized(paymentRoute.offer.name)}${paymentImpact.breaksWall ? ' · 当前足够' : ''}`,
+                en: `Pack: ${getLocalized(paymentRoute.offer.name)}${paymentImpact.breaksWall ? ' · enough now' : ''}`
             })
         ];
         const insightChips = [
@@ -6225,7 +6250,7 @@
                             : `${getLocalized(roadmap.currentBand.title)} · ${severityMeta.label}`}</div>
                     </div>
                     <div class="card-number">${prepOverview.powerGap > 0
-                        ? getLocalized({ zh: `缺口 ${formatCompact(prepOverview.powerGap)}`, en: `Gap ${formatCompact(prepOverview.powerGap)}` })
+                        ? getLocalized({ zh: `待补 ${formatCompact(prepOverview.powerGap)}`, en: `Need ${formatCompact(prepOverview.powerGap)}` })
                         : getLocalized({ zh: '战力达标', en: 'Power ready' })}</div>
                 </div>
                 <div class="card-copy">${overviewCopy}</div>
@@ -6248,8 +6273,8 @@
                         value: paymentImpact.currentGap <= 0
                             ? getLocalized({ zh: '备战下章', en: 'Prep Next' })
                             : paymentImpact.breaksWall
-                                ? getLocalized({ zh: '直过本章', en: 'Break Wall' })
-                                : getLocalized({ zh: `剩 ${formatCompact(paymentImpact.remainingGap)}`, en: `Left ${formatCompact(paymentImpact.remainingGap)}` })
+                                ? getLocalized({ zh: '本章可开打', en: 'Ready Now' })
+                                : getLocalized({ zh: `还需 ${formatCompact(paymentImpact.remainingGap)}`, en: `Need ${formatCompact(paymentImpact.remainingGap)} more` })
                     }
                 ])}
                 <div class="reward-row">
@@ -6288,8 +6313,8 @@
             <article class="shop-card premium topup-overview-card compact-overview-card">
                 <div class="card-top">
                     <div>
-                        <div class="card-kicker">VERIFIED TOP-UP</div>
-                        <div class="card-title">${getLocalized({ zh: '充值 = 永久成长', en: 'Top-up = Permanent Growth' })}</div>
+                        <div class="card-kicker">${t('paymentKicker')}</div>
+                        <div class="card-title">${getLocalized({ zh: '补给 = 常驻成长', en: 'Pack = Permanent Growth' })}</div>
                     </div>
                     <div class="card-number">${sponsorUnlocked
                         ? getLocalized(currentTier.title)
@@ -6312,13 +6337,13 @@
                             })
                         : impact.breaksWall
                             ? getLocalized({
-                                zh: `这档资源 + 常驻加成合计约 +${formatCompact(impact.totalPowerGain)}，已经足够直接抹平当前缺口。`,
-                                en: `This pack is worth about +${formatCompact(impact.totalPowerGain)} total and is enough to close the current gap outright.`
+                                zh: `这档资源 + 常驻加成合计约 +${formatCompact(impact.totalPowerGain)}，已经足够覆盖当前所需提升。`,
+                                en: `This pack is worth about +${formatCompact(impact.totalPowerGain)} total and is enough to cover your current needs.`
                             })
                         : currentTier.next
                             ? getLocalized({
-                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}；按当前缺口估算还会剩 ${formatCompact(impact.remainingGap)}。`,
-                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}; it still leaves about ${formatCompact(impact.remainingGap)} gap.`
+                                zh: `当前推荐档主要补资源，并把你继续推进到下一阶 ${getLocalized(currentTier.next.title)}；按当前进度估算还需补约 ${formatCompact(impact.remainingGap)}。`,
+                                en: `The recommended pack mostly boosts resources while moving you closer to the next tier ${getLocalized(currentTier.next.title)}; you still need about ${formatCompact(impact.remainingGap)} more after that.`
                             })
                             : getLocalized({ zh: '你已经在最高赞助阶位，充值主要体现为资源直充和赛季加速。', en: 'You are already at the highest sponsor tier, so top-up now mainly translates into direct resources and faster season progress.' })}</div>
                 <div class="reward-row">
@@ -7938,6 +7963,41 @@
         return DEFENSE_PAYMENT_OFFERS.find((offer) => offer.id === selectedPaymentOfferId) || DEFENSE_PAYMENT_OFFERS[0];
     }
 
+    function hasPaymentOffer(offerId) {
+        return DEFENSE_PAYMENT_OFFERS.some((offer) => offer.id === offerId);
+    }
+
+    function doesPaymentOrderMatchOffer(order, offer = getSelectedPaymentOffer()) {
+        if (!order || !offer) return false;
+        if (String(order.offerId || '') !== String(offer.id || '')) return false;
+        const expectedBaseAmount = Number(offer.price || 0);
+        if (!(expectedBaseAmount > 0)) return true;
+        const orderBaseAmount = Number(order.baseAmount || 0);
+        if (orderBaseAmount > 0) {
+            return Math.abs(orderBaseAmount - expectedBaseAmount) < 0.0001;
+        }
+        const exactAmount = Number(order.exactAmount || 0);
+        return exactAmount >= expectedBaseAmount && exactAmount < (expectedBaseAmount + 0.01);
+    }
+
+    function getActivePaymentOrderForSelectedOffer() {
+        const offer = getSelectedPaymentOffer();
+        return doesPaymentOrderMatchOffer(currentPaymentOrder, offer) ? currentPaymentOrder : null;
+    }
+
+    function resolvePaymentAddress(order = null) {
+        const sources = [];
+        if (order && typeof order === 'object') sources.push(order);
+        if (currentPaymentOrder && currentPaymentOrder !== order) sources.push(currentPaymentOrder);
+        for (const source of sources) {
+            for (const field of PAYMENT_ADDRESS_FIELDS) {
+                const value = String(source[field] ?? '').trim();
+                if (value && value !== '--') return value;
+            }
+        }
+        return '';
+    }
+
     function getPaymentMinerId() {
         if (state.save.payment.minerId) {
             return state.save.payment.minerId;
@@ -7969,10 +8029,21 @@
     }
 
     async function requestPaymentApi(path, init = {}) {
-        const response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+        let response;
+        try {
+            response = await fetch(`${PAYMENT_API_BASE}${path}`, init);
+        } catch (error) {
+            throw new Error(getLocalized({
+                zh: '支付服务暂时不可用，请检查网络后重试。',
+                en: 'The payment service is temporarily unavailable. Please check your network and try again.'
+            }));
+        }
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload?.ok === false) {
-            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+            const error = new Error(mapPaymentApiError(payload?.error || payload?.message));
+            error.payload = payload;
+            error.status = response.status;
+            throw error;
         }
         return payload;
     }
@@ -7987,8 +8058,9 @@
             minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
             createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
             expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
-            exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
-            payAddress: String(order?.payAddress || ''),
+            baseAmount: Number(order?.baseAmount ?? order?.base_amount ?? 0),
+            exactAmount: Number(order?.exactAmount ?? order?.exact_amount ?? order?.baseAmount ?? order?.base_amount ?? 0),
+            payAddress: resolvePaymentAddress(order),
             network: String(order?.network || 'TRON (TRC20)'),
             status: String(order?.status || 'pending'),
             txid: String(order?.txid || ''),
@@ -8124,6 +8196,7 @@
                     orderId: syncedOrder.id,
                     txid: syncedOrder.txid,
                     offerId: syncedOrder.offerId,
+                    baseAmount: syncedOrder.baseAmount,
                     queueClaim: !(syncedOrder.rewardGranted || syncedOrder.status === 'granted')
                 });
 
@@ -8288,7 +8361,7 @@
 
     function renderPaymentOrderUI() {
         const offer = getSelectedPaymentOffer();
-        const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
+        const order = getActivePaymentOrderForSelectedOffer();
 
         if (ui.paymentTitle) ui.paymentTitle.textContent = getLocalized({ zh: '防线充值中心', en: 'Defense Top-Up Center' });
         if (ui.paymentDesc) ui.paymentDesc.textContent = getLocalized({ zh: '创建链上订单后，使用 OKX Wallet 支付精确金额，再粘贴 txid 校验并发放防线奖励。', en: 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant Defense rewards.' });
@@ -8307,7 +8380,7 @@
         if (ui.paymentOrderId) ui.paymentOrderId.textContent = order ? order.id : '--';
         if (ui.paymentExactAmount) ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
         if (ui.paymentExpiry) ui.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
-        if (ui.paymentWallet) ui.paymentWallet.textContent = order?.payAddress || '--';
+        if (ui.paymentWallet) ui.paymentWallet.textContent = resolvePaymentAddress(order) || '--';
     }
 
     function getNormalizedPaymentTxid() {
@@ -8318,8 +8391,9 @@
         if (!ui.paymentStatus || !ui.paymentVerifyBtn || !ui.paymentCopyAddressBtn || !ui.paymentCopyAmountBtn) return;
         const txid = getNormalizedPaymentTxid();
         const txidValid = PAYMENT_TXID_REGEX.test(txid);
-        const hasOrder = !!currentPaymentOrder;
-        const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        const hasOrder = !!activeOrder;
+        const orderExpired = isPaymentOrderExpired(activeOrder);
 
         ui.paymentStatus.classList.remove('is-error', 'is-success');
 
@@ -8393,8 +8467,9 @@
     }
 
     function updatePaymentExpiryUI() {
-        if (ui.paymentExpiry && currentPaymentOrder) {
-            ui.paymentExpiry.textContent = getPaymentOrderCountdown(currentPaymentOrder);
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        if (ui.paymentExpiry && activeOrder) {
+            ui.paymentExpiry.textContent = getPaymentOrderCountdown(activeOrder);
         }
         if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
             refreshPaymentVerificationState();
@@ -8403,7 +8478,7 @@
 
     async function syncPaymentOrderForSelectedOffer(force = false, clearInput = false) {
         const offer = getSelectedPaymentOffer();
-        if (!force && currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !isPaymentOrderExpired(currentPaymentOrder)) {
+        if (!force && doesPaymentOrderMatchOffer(currentPaymentOrder, offer) && !isPaymentOrderExpired(currentPaymentOrder)) {
             renderPaymentOrderUI();
             refreshPaymentVerificationState();
             return currentPaymentOrder;
@@ -8432,6 +8507,23 @@
             })
             .catch((error) => {
                 if (requestId === paymentOrderNonce) {
+                    const code = String(error?.payload?.code || '');
+                    const recoveredOrder = error?.payload?.order;
+                    const recoveredOfferId = String(recoveredOrder?.offerId || recoveredOrder?.offer_id || '');
+                    if ((code === 'CLAIM_REQUIRED' || code === 'PENDING_ORDER_EXISTS') && recoveredOrder && hasPaymentOffer(recoveredOfferId)) {
+                        selectedPaymentOfferId = recoveredOfferId;
+                        setCurrentPaymentOrder(recoveredOrder);
+                        paymentVerificationState = 'idle';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = getLocalized({
+                            zh: '已恢复你尚未完成的订单，请先完成这笔礼包的支付校验。',
+                            en: 'Your unfinished order was restored. Please finish this pack first.'
+                        });
+                        renderPaymentOfferGrid();
+                        renderPaymentOrderUI();
+                        refreshPaymentVerificationState();
+                        return currentPaymentOrder;
+                    }
                     setCurrentPaymentOrder(null);
                     paymentVerificationState = 'idle';
                     paymentVerificationNotice = '';
@@ -8452,7 +8544,28 @@
     function selectPaymentOffer(offerId, { refreshOrder = true } = {}) {
         const offer = DEFENSE_PAYMENT_OFFERS.find((item) => item.id === offerId);
         if (!offer) return;
+        if (
+            currentPaymentOrder
+            && !isPaymentOrderSettledLocally(currentPaymentOrder)
+            && !isPaymentOrderExpired(currentPaymentOrder)
+            && String(currentPaymentOrder.offerId || '') !== offer.id
+        ) {
+            paymentVerificationError = '';
+            paymentVerificationNotice = getLocalized({
+                zh: '当前有一笔未完成的订单，请先完成这笔礼包的支付校验。',
+                en: 'There is an unfinished order. Please finish this pack first.'
+            });
+            refreshPaymentVerificationState();
+            showToast(getLocalized({
+                zh: '请先完成当前订单，再切换其他礼包。',
+                en: 'Finish the current order before switching packs.'
+            }));
+            return;
+        }
         selectedPaymentOfferId = offer.id;
+        if (currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !doesPaymentOrderMatchOffer(currentPaymentOrder, offer)) {
+            setCurrentPaymentOrder(null);
+        }
         renderPaymentOfferGrid();
         renderPaymentOrderUI();
         if (refreshOrder && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
@@ -8463,18 +8576,26 @@
 
     async function openPaymentModal(offerId = null) {
         if (!ui.paymentModal) return;
+        const previousSelectedOfferId = selectedPaymentOfferId;
         if (!currentPaymentOrder) restoreStoredPaymentOrder();
         const hasRecoverableOrder = !!currentPaymentOrder && !isPaymentOrderSettledLocally(currentPaymentOrder);
 
-        if (hasRecoverableOrder) {
+        if (hasRecoverableOrder && hasPaymentOffer(currentPaymentOrder.offerId)) {
             selectedPaymentOfferId = currentPaymentOrder.offerId;
-        } else if (offerId) {
+        } else if (offerId && hasPaymentOffer(offerId)) {
             selectedPaymentOfferId = offerId;
+        } else if (hasPaymentOffer(previousSelectedOfferId)) {
+            selectedPaymentOfferId = previousSelectedOfferId;
+        } else if (currentPaymentOrder?.offerId && hasPaymentOffer(currentPaymentOrder.offerId)) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
         } else {
             syncRecommendedPaymentOfferSelection({ force: true });
         }
 
         flushPendingPaymentClaims().catch(() => {});
+        if (currentPaymentOrder && currentPaymentOrder.offerId === getSelectedPaymentOffer().id && !doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer())) {
+            setCurrentPaymentOrder(null);
+        }
         renderPaymentOfferGrid();
         resetPaymentVerificationState(true);
         renderPaymentOrderUI();
@@ -8489,7 +8610,7 @@
                 paymentVerificationState !== 'verified' && (
                 !currentPaymentOrder
                 || isPaymentOrderSettledLocally(currentPaymentOrder)
-                || currentPaymentOrder.offerId !== selectedPaymentOfferId
+                || !doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer())
                 || isPaymentOrderExpired(currentPaymentOrder)
                 )
             ) {
@@ -8506,7 +8627,15 @@
     }
 
     async function copyPaymentAddress() {
-        const wallet = String(ui.paymentWallet?.textContent || '').trim();
+        let order = getActivePaymentOrderForSelectedOffer();
+        if (!order) {
+            try {
+                order = await syncPaymentOrderForSelectedOffer(true, false);
+            } catch (error) {
+                return;
+            }
+        }
+        const wallet = resolvePaymentAddress(order);
         const copied = await copyTextToClipboard(wallet);
         paymentVerificationError = '';
         paymentVerificationNotice = copied
@@ -8517,7 +8646,7 @@
     }
 
     async function copyPaymentAmount() {
-        let order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder) ? currentPaymentOrder : null;
+        let order = getActivePaymentOrderForSelectedOffer();
         if (!order) {
             try {
                 order = await syncPaymentOrderForSelectedOffer(true, false);
@@ -8534,15 +8663,16 @@
         refreshPaymentVerificationState();
     }
 
-    function grantPaymentRewards({ orderId, txid, offerId, queueClaim = true }) {
+    function grantPaymentRewards({ orderId, txid, offerId, baseAmount = null, queueClaim = true }) {
         const offer = DEFENSE_PAYMENT_OFFERS.find((item) => item.id === offerId) || getSelectedPaymentOffer();
         if (!offer || !orderId || state.save.payment.claimedOrders[orderId]) return false;
         const beforeTier = getSponsorTierSummary();
         const normalizedTxid = PAYMENT_TXID_REGEX.test(String(txid || '').trim()) ? String(txid).trim().toLowerCase() : '';
+        const settledBaseAmount = Math.max(0, Number(baseAmount ?? currentPaymentOrder?.baseAmount ?? offer.price) || 0);
 
         grantReward(offer.reward);
         state.save.payment.purchaseCount += 1;
-        state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
+        state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + settledBaseAmount) * 100) / 100;
         state.save.payment.passUnlocked = true;
         state.save.payment.claimedOrders[orderId] = true;
         if (queueClaim && normalizedTxid) {
@@ -8591,21 +8721,22 @@
             return;
         }
 
-        if (!currentPaymentOrder) {
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        if (!activeOrder) {
             paymentVerificationError = getLocalized({ zh: '当前没有可校验的订单，请先创建订单。', en: 'There is no active order to verify. Please create one first.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
-        if (currentPaymentOrder.status === 'expired' || currentPaymentOrder.status === 'cancelled') {
+        if (activeOrder.status === 'expired' || activeOrder.status === 'cancelled') {
             paymentVerificationError = getLocalized({ zh: '当前订单已失效，请重新创建订单。', en: 'This order is no longer valid. Please create a new one.' });
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
-        const orderId = currentPaymentOrder.id;
+        const orderId = activeOrder.id;
         paymentVerificationState = 'verifying';
         paymentVerificationError = '';
         paymentVerificationNotice = '';
@@ -8615,17 +8746,23 @@
             const verificationResult = await verifyBackendPayment(orderId, txid);
             const orderPayload = verificationResult?.order || {};
             const resolvedOrder = buildClientPaymentOrder({
-                ...currentPaymentOrder,
+                ...activeOrder,
                 ...orderPayload,
                 txid: orderPayload?.txid || txid
             });
-            const resolvedOfferId = String(resolvedOrder.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+            const resolvedOfferId = String(resolvedOrder.offerId || activeOrder.offerId || selectedPaymentOfferId);
             const hadLocalReward = !!state.save.payment.claimedOrders[orderId];
             setCurrentPaymentOrder(resolvedOrder);
 
             if (resolvedOrder.rewardGranted || hadLocalReward) {
                 if (resolvedOrder.rewardGranted && !hadLocalReward) {
-                    grantPaymentRewards({ orderId, txid: resolvedOrder.txid || txid, offerId: resolvedOfferId, queueClaim: false });
+                    grantPaymentRewards({
+                        orderId,
+                        txid: resolvedOrder.txid || txid,
+                        offerId: resolvedOfferId,
+                        baseAmount: resolvedOrder.baseAmount,
+                        queueClaim: false
+                    });
                 }
                 if (resolvedOrder.rewardGranted && state.save.payment.pendingClaims[orderId]) {
                     delete state.save.payment.pendingClaims[orderId];
@@ -8639,7 +8776,7 @@
                 return;
             }
 
-            grantPaymentRewards({ orderId, txid, offerId: resolvedOfferId });
+            grantPaymentRewards({ orderId, txid, offerId: resolvedOfferId, baseAmount: resolvedOrder.baseAmount });
 
             paymentVerificationState = 'verified';
             try {

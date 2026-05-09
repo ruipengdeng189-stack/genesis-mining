@@ -7,6 +7,14 @@ const OFFER_CATALOGS = {
     nexus: { name: 'T4 Nexus Pack', baseAmount: 9.99 },
     throne: { name: 'Throne Protocol', baseAmount: 12.99 },
   },
+  defense: {
+    starter: { name: 'Frontline Cache', baseAmount: 1.0 },
+    accelerator: { name: 'Relay Booster', baseAmount: 2.99 },
+    rush: { name: 'Pressure Breaker', baseAmount: 3.99 },
+    sovereign: { name: 'Command Relay', baseAmount: 5.99 },
+    nexus: { name: 'Citadel Core', baseAmount: 9.99 },
+    throne: { name: 'Genesis Arsenal', baseAmount: 12.99 },
+  },
   'drone-squad': {
     starter: { name: 'Starter Flight Pack', baseAmount: 6.0 },
     accelerator: { name: 'Accelerator Pack', baseAmount: 15.0 },
