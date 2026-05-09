@@ -83,7 +83,7 @@
         syncSoundToggle();
         renderAll();
         Promise.resolve().then(async () => {
-            await syncCurrentPaymentOrderStatus({ silent: true }).catch(() => {});
+            await syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true }).catch(() => {});
             await flushPendingPaymentClaims({ silent: true }).catch(() => {});
             renderPaymentOrderUI();
             refreshPaymentVerificationState();
@@ -251,12 +251,15 @@
             case 'battleGiveUp': skipBattleRevive(); break;
             case 'closeBattleResult': closeBattleResult(value); break;
             case 'openTab':
-                if (tabMap[value] && !(state.battle.active && value !== 'sortie')) {
-                    state.tab = value;
-                    state.save.tab = value;
-                    saveProgress();
-                    renderAll();
+                if (!tabMap[value]) break;
+                if (state.battle.active && value !== 'sortie') {
+                    showToast(text('当前正在出击，请先完成本局。', 'A sortie is in progress. Finish the current run first.'), 'warning');
+                    break;
                 }
+                state.tab = value;
+                state.save.tab = value;
+                saveProgress();
+                renderAll();
                 break;
             case 'selectChassis': selectChassis(value); break;
             case 'upgradeUnit': upgradeUnit(type, value); break;
@@ -1691,7 +1694,7 @@
         state.save.payment.verifiedTxids = [normalized, ...(state.save.payment.verifiedTxids || []).filter((item) => item !== normalized)].slice(0, 100);
     }
 
-    function mapPaymentApiError(errorMessage) {
+    function legacyMapPaymentApiError(errorMessage) {
         const raw = String(errorMessage || '').trim();
         const lower = raw.toLowerCase();
         if (!raw) return text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
@@ -1756,7 +1759,7 @@
             const shouldPersist = !!order
                 && !!order.id
                 && order.id !== '--'
-                && !state.save.payment.claimedOrders?.[order.id]
+                && !isPaymentOrderSettledLocally(order)
                 && String(order.status || 'pending') !== 'expired'
                 && String(order.status || 'pending') !== 'cancelled';
             if (shouldPersist) {
@@ -1813,6 +1816,10 @@
     function getPaymentOrderCountdown(order = currentPaymentOrder) {
         if (!order) return '--:--';
         return formatCountdown(Math.max(0, Number(order.expiresAt || 0) - Date.now()));
+    }
+
+    function isPaymentOrderSettledLocally(order = currentPaymentOrder) {
+        return !!order?.id && !!state.save.payment.claimedOrders?.[order.id];
     }
 
     async function createBackendPaymentOrder(offerId) {
@@ -1887,7 +1894,7 @@
         `).join('');
     }
 
-    function renderPaymentOrderUI() {
+    function legacyRenderPaymentOrderUI() {
         if (!ui.paymentAmount || !ui.paymentOrderId || !ui.paymentExactAmount || !ui.paymentExpiry || !ui.paymentWallet) return;
         renderPaymentModalChrome();
         const offer = getSelectedPaymentOffer();
@@ -1903,7 +1910,7 @@
         return String(ui.paymentTxidInput?.value || '').trim().toLowerCase();
     }
 
-    function refreshPaymentVerificationState() {
+    function legacyRefreshPaymentVerificationState() {
         if (!ui.paymentStatus || !ui.paymentVerifyBtn || !ui.paymentCopyAddressBtn || !ui.paymentCopyAmountBtn) return;
         const txid = getNormalizedPaymentTxid();
         const txidValid = PAYMENT_TXID_REGEX.test(txid);
@@ -1974,15 +1981,16 @@
     }
 
     function updatePaymentExpiryUI() {
-        if (ui.paymentExpiry && currentPaymentOrder) {
-            ui.paymentExpiry.textContent = getPaymentOrderCountdown(currentPaymentOrder);
+        if (ui.paymentExpiry) {
+            const activeOrder = getActivePaymentOrderForSelectedOffer();
+            ui.paymentExpiry.textContent = activeOrder ? getPaymentOrderCountdown(activeOrder) : '--:--';
         }
         if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
             refreshPaymentVerificationState();
         }
     }
 
-    async function syncCurrentPaymentOrderStatus({ silent = true } = {}) {
+    async function legacySyncCurrentPaymentOrderStatus({ silent = true } = {}) {
         if (!currentPaymentOrder?.id || currentPaymentOrder.id === '--') return null;
         try {
             const payload = await checkBackendPaymentOrder(currentPaymentOrder.id);
@@ -2052,6 +2060,20 @@
             })
             .catch((error) => {
                 if (requestId === paymentOrderNonce) {
+                    const code = String(error?.payload?.code || '');
+                    const recoveredOrder = error?.payload?.order;
+                    const recoveredOfferId = String(recoveredOrder?.offerId || recoveredOrder?.offer_id || '');
+                    if ((code === 'CLAIM_REQUIRED' || code === 'PENDING_ORDER_EXISTS') && recoveredOrder && hasPaymentOffer(recoveredOfferId)) {
+                        selectedPaymentOfferId = recoveredOfferId;
+                        setCurrentPaymentOrder(recoveredOrder);
+                        paymentVerificationState = 'idle';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = text('已恢复你尚未完成的订单，请先完成这笔礼包的支付校验。', 'Your unfinished order was restored. Finish this pack first.');
+                        renderPaymentOfferGrid();
+                        renderPaymentOrderUI();
+                        refreshPaymentVerificationState();
+                        return currentPaymentOrder;
+                    }
                     setCurrentPaymentOrder(null);
                     paymentVerificationState = 'idle';
                     paymentVerificationNotice = '';
@@ -2072,6 +2094,18 @@
     function selectPaymentOffer(offerId, { refreshOrder = true } = {}) {
         const offer = config.paymentOffers.find((item) => item.id === offerId);
         if (!offer) return;
+        if (
+            currentPaymentOrder
+            && !isPaymentOrderSettledLocally(currentPaymentOrder)
+            && !isPaymentOrderExpired(currentPaymentOrder)
+            && String(currentPaymentOrder.offerId || '') !== offer.id
+        ) {
+            paymentVerificationError = '';
+            paymentVerificationNotice = text('当前有一笔未完成的订单，请先完成这笔礼包的支付校验。', 'There is an unfinished order. Please finish this pack first.');
+            refreshPaymentVerificationState();
+            showToast(text('请先完成当前订单，再切换其他礼包。', 'Finish the current order before switching packs.'), 'warning');
+            return;
+        }
         selectedPaymentOfferId = offer.id;
         if (currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !doesPaymentOrderMatchOffer(currentPaymentOrder, offer)) {
             setCurrentPaymentOrder(null);
@@ -2089,7 +2123,10 @@
         closeModal();
         const previousSelectedOfferId = selectedPaymentOfferId;
         if (!currentPaymentOrder) restoreStoredPaymentOrder();
-        if (offerId && hasPaymentOffer(offerId)) {
+        const hasRecoverableOrder = !!currentPaymentOrder && !isPaymentOrderSettledLocally(currentPaymentOrder);
+        if (hasRecoverableOrder && hasPaymentOffer(currentPaymentOrder.offerId)) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
+        } else if (offerId && hasPaymentOffer(offerId)) {
             selectedPaymentOfferId = offerId;
         } else if (hasPaymentOffer(previousSelectedOfferId)) {
             selectedPaymentOfferId = previousSelectedOfferId;
@@ -2112,9 +2149,17 @@
 
         try {
             if (currentPaymentOrder) {
-                await syncCurrentPaymentOrderStatus({ silent: true });
+                await syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true });
             }
-            if (!doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer()) || isPaymentOrderExpired(currentPaymentOrder)) {
+            if (
+                paymentVerificationState !== 'verified'
+                && (
+                    !currentPaymentOrder
+                    || isPaymentOrderSettledLocally(currentPaymentOrder)
+                    || !doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer())
+                    || isPaymentOrderExpired(currentPaymentOrder)
+                )
+            ) {
                 await syncPaymentOrderForSelectedOffer(true, true);
             }
         } catch (error) {}
@@ -3001,7 +3046,7 @@
         let legendModuleCrates = 0;
         const shardReward = {};
         shardReward[state.save.selectedChassisId] = win ? 6 : 2;
-        state.save.selectedWingmen.filter(Boolean).forEach((wingId) => {
+        getWingmanRewardTargets().forEach((wingId) => {
             shardReward[wingId] = (shardReward[wingId] || 0) + (win ? 4 : 1);
         });
 
@@ -3050,6 +3095,14 @@
     }
 
     function closeBattleResult(nextChapterId = '') {
+        if (nextChapterId === 'hangar') {
+            state.battle = createBattleState();
+            state.tab = 'hangar';
+            state.save.tab = 'hangar';
+            saveProgress();
+            renderAll();
+            return;
+        }
         if (nextChapterId && chapterMap[nextChapterId]) {
             state.save.selectedChapterId = nextChapterId;
         }
@@ -3431,7 +3484,7 @@
                     <div class="ds-inline-note">${escapeHtml(getShardSummaryText(reward.shards))}</div>
                     ${reward.firstClear ? `<div class="ds-inline-note">${escapeHtml(`${text('\u9996\u901a\u5956\u52b1', 'First Clear Pack')} \u00b7 ${getRewardText(reward.firstClear)}`)}</div>` : ''}
                     <div class="ds-stage-overlay-actions">
-                        <button class="ghost-btn" type="button" data-action="closeBattleResult">${escapeHtml(text('\u6574\u7406\u673a\u5e93', 'Back to Hangar'))}</button>
+                        <button class="ghost-btn" type="button" data-action="closeBattleResult" data-value="hangar">${escapeHtml(text('\u8fd4\u56de\u673a\u5e93', 'Back to Hangar'))}</button>
                         ${state.battle.result.win && nextChapter ? `<button class="primary-btn" type="button" data-action="closeBattleResult" data-value="${nextChapter}">${escapeHtml(text('\u63a8\u8fdb\u4e0b\u4e00\u7ae0', 'Next Chapter'))}</button>` : `<button class="primary-btn" type="button" data-action="closeBattleResult">${escapeHtml(text('\u7ee7\u7eed\u51fa\u51fb', 'Continue'))}</button>`}
                     </div>
                 </div>
@@ -3608,7 +3661,7 @@
             `,
             actions: [
                 { label: text('继续制造', 'Keep Crafting'), action: 'closeModal', tone: 'ghost' },
-                { label: text('装备到机库', 'Equip in Hangar'), action: 'openTab', value: 'blueprints', tone: 'primary' }
+                { label: text('前往蓝图', 'Open Blueprints'), action: 'openTab', value: 'blueprints', tone: 'primary' }
             ]
         };
         renderModal();
@@ -3733,9 +3786,7 @@
         state.save.seasonXp += Number(reward.seasonXp || 0);
         state.save.reviveChips += Number(reward.reviveChips || 0);
         if (reward.chassisShards) addShards(state.save.selectedChassisId, reward.chassisShards);
-        if (reward.wingmanShards) {
-            state.save.selectedWingmen.filter(Boolean).forEach((wingId) => addShards(wingId, Math.ceil(reward.wingmanShards / Math.max(1, state.save.selectedWingmen.filter(Boolean).length))));
-        }
+        if (reward.wingmanShards) grantWingmanShards(reward.wingmanShards);
         grantRewardModuleCrates(reward);
     }
 
@@ -3763,7 +3814,7 @@
         }
     }
 
-    async function flushPendingPaymentClaims() {
+    async function legacyFlushPendingPaymentClaims() {
         const pendingEntries = Object.entries(state.save.payment.pendingClaims || {});
         if (!pendingEntries.length) return;
         for (const [orderId, txid] of pendingEntries) {
@@ -3776,7 +3827,7 @@
         saveProgress();
     }
 
-    function grantPaymentRewards({ orderId, txid, offerId, queueClaim = true }) {
+    function legacyGrantPaymentRewards({ orderId, txid, offerId, queueClaim = true }) {
         const offer = offerMap[offerId] || getSelectedPaymentOffer();
         if (!offer || !orderId || state.save.payment.claimedOrders[orderId]) return false;
 
@@ -3814,7 +3865,7 @@
         return true;
     }
 
-    async function handlePaymentConfirm() {
+    async function legacyHandlePaymentConfirm() {
         if (paymentVerificationState === 'creating' || paymentVerificationState === 'verifying') return;
 
         const txid = getNormalizedPaymentTxid();
@@ -3910,7 +3961,7 @@
         if (!ui.paymentAmount || !ui.paymentOrderId || !ui.paymentExactAmount || !ui.paymentExpiry || !ui.paymentWallet) return;
         renderPaymentModalChrome();
         const offer = getSelectedPaymentOffer();
-        const order = doesPaymentOrderMatchOffer(currentPaymentOrder, offer) ? currentPaymentOrder : null;
+        const order = getActivePaymentOrderForSelectedOffer();
         const orderStatus = getPaymentOrderStatus(order);
         ui.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `${offer.price} USDT`;
         ui.paymentOrderId.textContent = order?.id || '--';
@@ -4020,7 +4071,7 @@
         ui.paymentVerifyBtn.disabled = !canVerifyCurrentOrder;
     }
 
-    async function syncCurrentPaymentOrderStatus({ silent = true } = {}) {
+    async function syncCurrentPaymentOrderStatus({ recoverRewards = false, silent = true } = {}) {
         if (!currentPaymentOrder?.id || currentPaymentOrder.id === '--') return null;
         try {
             const payload = await checkBackendPaymentOrder(currentPaymentOrder.id);
@@ -4056,7 +4107,48 @@
 
             setCurrentPaymentOrder(syncedOrder);
 
-            if (!silent) {
+            const needsRecovery = recoverRewards
+                && !isPaymentOrderSettledLocally(syncedOrder)
+                && !!syncedOrder.txid
+                && (syncedStatus === 'paid' || syncedStatus === 'granted' || !!syncedOrder.rewardGranted);
+
+            if (needsRecovery) {
+                grantPaymentRewards({
+                    orderId: syncedOrder.id,
+                    txid: syncedOrder.txid,
+                    offerId: syncedOrder.offerId,
+                    queueClaim: !(syncedOrder.rewardGranted || syncedStatus === 'granted'),
+                    silent: true,
+                    render: false
+                });
+
+                if (syncedOrder.rewardGranted || syncedStatus === 'granted') {
+                    delete state.save.payment.pendingClaims[syncedOrder.id];
+                    saveProgress();
+                    paymentVerificationState = 'verified';
+                    paymentVerificationError = '';
+                    paymentVerificationNotice = text('检测到已支付订单，奖励已自动恢复。', 'A paid order was found and rewards were restored automatically.');
+                    setCurrentPaymentOrder({ ...syncedOrder, status: 'granted', rewardGranted: true });
+                } else {
+                    try {
+                        await claimBackendPayment(syncedOrder.id, syncedOrder.txid);
+                        delete state.save.payment.pendingClaims[syncedOrder.id];
+                        saveProgress();
+                        paymentVerificationState = 'verified';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = text('检测到已支付订单，奖励已恢复并完成到账同步。', 'A paid order was found. Rewards were restored and synced automatically.');
+                        setCurrentPaymentOrder({ ...syncedOrder, status: 'granted', rewardGranted: true });
+                    } catch (claimError) {
+                        paymentVerificationState = 'verified';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = text('检测到已支付订单，奖励已恢复；到账记录会继续自动同步。', 'A paid order was found. Rewards were restored and backend sync will retry automatically.');
+                        console.warn('Drone Squad payment recovery claim sync queued.', { orderId: syncedOrder.id, claimError });
+                        setCurrentPaymentOrder({ ...syncedOrder, status: 'paid', rewardGranted: false });
+                    }
+                }
+            }
+
+            if (!silent && paymentVerificationState !== 'verified') {
                 paymentVerificationState = syncedStatus === 'granted' ? 'verified' : 'idle';
                 paymentVerificationError = '';
                 paymentVerificationNotice = syncedStatus === 'paid'
@@ -4531,6 +4623,30 @@
         state.save.shardInventory[unitId] = Math.max(0, getShardCount(unitId) + Math.round(Number(amount) || 0));
     }
 
+    function getWingmanRewardTargets() {
+        const equippedTargets = Array.from(new Set(state.save.selectedWingmen.filter((wingId) => wingId && wingmanMap[wingId])));
+        if (equippedTargets.length) return equippedTargets;
+        const unlockedTargets = config.wingmen
+            .filter((item) => isChapterClearedOrReached(item.unlockStage))
+            .map((item) => item.id);
+        if (unlockedTargets.length) return unlockedTargets.slice(0, Math.min(2, unlockedTargets.length));
+        return config.wingmen[0] ? [config.wingmen[0].id] : [];
+    }
+
+    function grantWingmanShards(amount) {
+        const totalAmount = Math.max(0, Math.round(Number(amount) || 0));
+        if (!totalAmount) return;
+        const targets = getWingmanRewardTargets();
+        if (!targets.length) return;
+        const baseAmount = Math.floor(totalAmount / targets.length);
+        let remainder = totalAmount - (baseAmount * targets.length);
+        targets.forEach((wingId) => {
+            const shardAmount = baseAmount + (remainder > 0 ? 1 : 0);
+            if (remainder > 0) remainder -= 1;
+            if (shardAmount > 0) addShards(wingId, shardAmount);
+        });
+    }
+
     function canStarUnit(unitId, currentStars) {
         const cost = getStarUpgradeCost(currentStars);
         if (!cost) return false;
@@ -4713,7 +4829,7 @@
             case 'm2': return state.save.stats.eliteKills;
             case 'm3': return isWingSlotUnlocked(1) ? 1 : 0;
             case 'm4': return Math.max(0, getHighestClearedChapterIndex() + 1);
-            case 'm5': return getUnitLevel(state.save.chassisLevels, state.save.selectedChassisId);
+            case 'm5': return getHighestChassisLevel();
             case 'm6': return state.save.stats.rareCrafts;
             case 'm7': return Math.max(0, getHighestClearedChapterIndex() + 1);
             case 'm8': return countThreeStarUnits();
@@ -4827,13 +4943,17 @@
         const power = getCurrentPower();
         const gap = chapter.recommended - power;
         const epicModules = countOwnedModulesByMinimumRarity('epic');
+        const stageNumber = Math.max(1, Number(String(chapter?.id || '').split('-')[1]) || 1);
         if (chapter.chapter <= 1) return 'starter';
-        if (chapter.chapter === 2) return gap > 900 ? 'rush' : 'accelerator';
+        if (chapter.chapter === 2) {
+            if (stageNumber >= 3 && gap > 1100) return 'rush';
+            return 'accelerator';
+        }
         if (chapter.chapter === 3) {
-            if (gap > 1700 || epicModules <= 0) return 'sovereign';
+            if (stageNumber >= 2 && (gap > 1800 || epicModules <= 0)) return 'sovereign';
             return 'rush';
         }
-        if (gap > 2200 || epicModules < 2) return 'nexus';
+        if (gap > 2600 || epicModules < 2) return 'nexus';
         return 'sovereign';
     }
 

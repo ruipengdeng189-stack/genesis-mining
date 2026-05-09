@@ -193,10 +193,10 @@
         ],
         moduleCrafting: {
             dailyFree: 1,
-            baseCreditCost: 360,
+            baseCreditCost: 300,
             baseAlloyCost: 8,
-            surgeAfterCrafts: 4,
-            surgeCreditCost: 560,
+            surgeAfterCrafts: 6,
+            surgeCreditCost: 450,
             surgeAlloyCost: 12,
             rarePity: 10,
             epicPity: 30
