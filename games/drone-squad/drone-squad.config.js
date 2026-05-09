@@ -27,10 +27,10 @@
             bossSpawnSecond: 78,
             freeSortiesPerDay: 3,
             sortieCostByChapter: {
-                chapter1: 650,
-                chapter2: 980,
-                chapter3: 1580,
-                chapter4: 2380
+                chapter1: 120,
+                chapter2: 240,
+                chapter3: 420,
+                chapter4: 720
             },
             reviveChipDailyGrant: 1,
             waveScaling: {
@@ -193,11 +193,11 @@
         ],
         moduleCrafting: {
             dailyFree: 1,
-            baseCreditCost: 420,
-            baseAlloyCost: 10,
+            baseCreditCost: 360,
+            baseAlloyCost: 8,
             surgeAfterCrafts: 4,
-            surgeCreditCost: 760,
-            surgeAlloyCost: 16,
+            surgeCreditCost: 560,
+            surgeAlloyCost: 12,
             rarePity: 10,
             epicPity: 30
         },

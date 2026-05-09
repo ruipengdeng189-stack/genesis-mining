@@ -1,7 +1,6 @@
 (function () {
     const HUB_LANG_KEY = 'genesis_arcade_hub_lang_v1';
     const SAVE_KEY = 'genesis_drone_squad_save_v1';
-    const DAILY_SUPPLY_COOLDOWN_MS = 20 * 60 * 60 * 1000;
     const PAYMENT_API_BASE = '/api';
     const PAYMENT_GAME_ID = 'drone-squad';
     const PAYMENT_ORDER_STORAGE_KEY = 'genesis_drone_squad_payment_order_v1';
@@ -9,7 +8,13 @@
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
     const PAYMENT_ADDRESS_FIELDS = ['payAddress', 'pay_address', 'walletAddress', 'wallet_address', 'recipientAddress', 'recipient_address', 'receiveAddress', 'receive_address', 'receivingAddress', 'receiving_address', 'toAddress', 'to_address', 'address'];
-    const WING_SLOT_UNLOCK_STAGES = ['1-1', '1-2'];
+    const WING_SLOT_UNLOCK_STAGES = ['1-1', '1-3'];
+    const WING_COLOR_MAP = {
+        interceptorWing: '#64ffb2',
+        pierceWing: '#68b7ff',
+        magnetWing: '#ffd766',
+        aegisWing: '#bf8dff'
+    };
     const MODULE_RARITY_SCORE = { common: 1, rare: 2.2, epic: 4.8, legend: 8.6 };
     const STARTER_MODULES = [
         { uid: 'starter-burst', id: 'burstCore', rarity: 'common', level: 1 },
@@ -75,11 +80,16 @@
         if (!paymentCountdownTimer) {
             paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
         }
-        flushPendingPaymentClaims().catch(() => {});
         syncSoundToggle();
         renderAll();
+        Promise.resolve().then(async () => {
+            await syncCurrentPaymentOrderStatus({ silent: true }).catch(() => {});
+            await flushPendingPaymentClaims({ silent: true }).catch(() => {});
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+        });
         if (grantedDailyRevive) {
-            showToast(text(`Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`, `Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`), 'success');
+            showToast(text(`每日复活芯片 +${config.battle.reviveChipDailyGrant || 0}`, `Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`), 'success');
         }
     }
 
@@ -95,7 +105,7 @@
         soundButton.id = 'soundToggle';
         soundButton.type = 'button';
         soundButton.setAttribute('aria-pressed', 'true');
-        soundButton.textContent = 'SFX ON';
+        soundButton.textContent = text('\u97f3\u6548\u5f00', 'SFX ON');
         topLine.insertBefore(actionWrap, langToggle);
         actionWrap.appendChild(soundButton);
         actionWrap.appendChild(langToggle);
@@ -237,6 +247,8 @@
             case 'selectChapter': selectChapter(value); break;
             case 'castSkill': castSkill(); break;
             case 'choosePerk': chooseBattlePerk(value); break;
+            case 'battleRevive': confirmBattleRevive(); break;
+            case 'battleGiveUp': skipBattleRevive(); break;
             case 'closeBattleResult': closeBattleResult(value); break;
             case 'openTab':
                 if (tabMap[value] && !(state.battle.active && value !== 'sortie')) {
@@ -294,6 +306,7 @@
         renderPaymentModalChrome();
         renderPaymentOfferGrid();
         renderPaymentOrderUI();
+        syncSoundToggle();
     }
 
     function renderHero() {
@@ -621,8 +634,8 @@
                 </div>
 
                 <div class="ds-action-row ds-sortie-action-row" style="margin-top: 8px;">
-                    <button class="ghost-btn wide-btn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('释放技能', 'Cast Skill'))}</button>
-                    <button class="primary-btn wide-btn" type="button" data-action="startSortie" ${state.battle.active ? 'disabled' : ''}>${escapeHtml(getStartSortieButtonLabel(chapterIndex))}</button>
+                    <button class="ghost-btn wide-btn" id="battleCastSkillBtn" type="button" data-action="castSkill" ${state.battle.active ? '' : 'disabled'}>${escapeHtml(text('释放技能', 'Cast Skill'))}</button>
+                    <button class="primary-btn wide-btn" id="battleStartSortieBtn" type="button" data-action="startSortie" ${state.battle.active ? 'disabled' : ''}>${escapeHtml(getStartSortieButtonLabel(chapterIndex))}</button>
                 </div>
             </section>
         `;
@@ -1159,7 +1172,7 @@
             '3-1': { primaryResearch: 'energyLoop', primaryTarget: 3, secondaryResearch: 'weaponSync', secondaryTarget: 5, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('3-1 更看重 Boss 爆发，补输出和 Boss 增伤。', '3-1 focuses more on boss burst, so add damage and boss bonuses.') },
             '3-2': { primaryResearch: 'shieldVolume', primaryTarget: 5, secondaryResearch: 'bountyProtocol', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('3-2 更看重续航，护盾和收益一起拉。', '3-2 leans on sustain, so raise shield and income together.') },
             '3-3': { primaryResearch: 'weaponSync', primaryTarget: 6, secondaryResearch: 'shieldVolume', secondaryTarget: 6, wingmanId: 'interceptorWing', moduleId: 'hunterNode', note: text('3-3 爆发与生存并重，史诗模组起效。', '3-3: balance burst and survival; epic modules matter.') },
-            '4-1': { primaryResearch: 'shieldVolume', primaryTarget: 7, secondaryResearch: 'energyLoop', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('4-1 是后期生存关，优先星级与护盾。', '4-1: late survival check, prioritize stars and shield.') },
+            '4-1': { primaryResearch: 'shieldVolume', primaryTarget: 7, secondaryResearch: 'energyLoop', secondaryTarget: 4, wingmanId: 'aegisWing', moduleId: 'aegisShell', note: text('4-1 是后期生存关，优先星级与护盾。', '4-1 is a late survival stage, so prioritize stars and shield.') },
             '4-2': { primaryResearch: 'weaponSync', primaryTarget: 8, secondaryResearch: 'magnetField', secondaryTarget: 4, wingmanId: 'pierceWing', moduleId: 'pierceArray', note: text('4-2 精英密集，穿透和收取都要补。', '4-2: elites are dense, add pierce and pickup support.') },
             '4-3': { primaryResearch: 'weaponSync', primaryTarget: 9, secondaryResearch: 'shieldVolume', secondaryTarget: 8, wingmanId: 'pierceWing', moduleId: 'hunterNode', note: text('4-3 是终局 Boss 挑战，高星主机和 Boss 模组最关键。', '4-3 is an endgame boss challenge, so high-star chassis and boss modules matter most.') }
         };
@@ -1655,6 +1668,29 @@
         return '';
     }
 
+    function getPaymentOrderStatus(order = currentPaymentOrder) {
+        if (!order) return 'idle';
+        const status = String(order.status || 'pending').trim().toLowerCase();
+        if (order.rewardGranted || status === 'granted') return 'granted';
+        if (status === 'paid') return 'paid';
+        if (status === 'expired' || status === 'cancelled') return 'expired';
+        return 'pending';
+    }
+
+    function getPaymentOrderStatusLabel(order = currentPaymentOrder) {
+        const status = getPaymentOrderStatus(order);
+        if (status === 'granted') return text('已到账', 'Delivered');
+        if (status === 'paid') return text('已支付', 'Paid');
+        if (status === 'expired') return text('已失效', 'Expired');
+        return text('待支付', 'Pending');
+    }
+
+    function rememberVerifiedPaymentTxid(txid) {
+        const normalized = String(txid || '').trim().toLowerCase();
+        if (!PAYMENT_TXID_REGEX.test(normalized)) return;
+        state.save.payment.verifiedTxids = [normalized, ...(state.save.payment.verifiedTxids || []).filter((item) => item !== normalized)].slice(0, 100);
+    }
+
     function mapPaymentApiError(errorMessage) {
         const raw = String(errorMessage || '').trim();
         const lower = raw.toLowerCase();
@@ -1684,7 +1720,10 @@
         }
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload?.ok === false) {
-            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+            const error = new Error(mapPaymentApiError(payload?.error || payload?.message));
+            error.payload = payload;
+            error.status = response.status;
+            throw error;
         }
         return payload;
     }
@@ -1777,12 +1816,21 @@
     }
 
     async function createBackendPaymentOrder(offerId) {
-        const payload = await requestPaymentApi('/create-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
-        });
-        return buildClientPaymentOrder(payload?.order);
+        try {
+            const payload = await requestPaymentApi('/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ minerId: getPaymentMinerId(), offerId, gameId: PAYMENT_GAME_ID })
+            });
+            return buildClientPaymentOrder(payload?.order);
+        } catch (error) {
+            const code = String(error?.payload?.code || '');
+            const payloadOfferId = String(error?.payload?.order?.offerId || error?.payload?.order?.offer_id || '');
+            if ((code === 'CLAIM_REQUIRED' || code === 'PENDING_ORDER_EXISTS') && error?.payload?.order && payloadOfferId === offerId) {
+                return buildClientPaymentOrder(error.payload.order);
+            }
+            throw error;
+        }
     }
 
     async function verifyBackendPayment(orderId, txid) {
@@ -1801,6 +1849,29 @@
     async function checkBackendPaymentOrder(orderId) {
         const query = new URLSearchParams({ orderId: String(orderId || ''), minerId: getPaymentMinerId() });
         return requestPaymentApi(`/check-order?${query.toString()}`);
+    }
+
+    function mapPaymentApiError(errorMessage) {
+        const raw = String(errorMessage || '').trim();
+        const lower = raw.toLowerCase();
+        if (!raw) return text('支付校验失败，请稍后重试。', 'Payment verification failed. Please try again.');
+        if (lower.includes('txid not found')) return text('这笔 TXID 暂时还没在 TRON 主网查到，请稍后再试。', 'This txid was not found on TRON mainnet yet.');
+        if (lower.includes('not confirmed yet')) return text('这笔转账还未确认，请稍后再试。', 'This transfer is not confirmed yet. Try again shortly.');
+        if (lower.includes('execution failed')) return text('链上交易执行失败，无法发放奖励。', 'The on-chain transaction failed, so rewards cannot be granted.');
+        if (lower.includes('not a trc20 contract transfer')) return text('这不是 TRC20 合约转账。', 'This transaction is not a TRC20 transfer.');
+        if (lower.includes('not trc20 usdt')) return text('这笔支付不是 TRC20-USDT。', 'This transaction is not a TRC20-USDT payment.');
+        if (lower.includes('recipient address')) return text('收款地址不匹配，请按当前订单显示的地址支付。', 'Recipient address mismatch. Please pay to the address shown in the current order.');
+        if (lower.includes('amount mismatch')) return text('支付金额与当前订单的精确金额不一致。', 'The payment amount does not match the current exact order amount.');
+        if (lower.includes('before this order was created')) return text('这笔转账早于订单创建时间，不能用于当前订单。', 'This transfer happened before the order was created and cannot be used.');
+        if (lower.includes('after the order expired') || lower.includes('order expired')) return text('当前订单已过期，请重新创建订单后再支付。', 'This order has expired. Please create a new order before paying again.');
+        if (lower.includes('already been used by another order') || lower.includes('another txid')) return text('这笔 TXID 已被其他订单使用。', 'This txid has already been used by another order.');
+        if (lower.includes('minerid does not match order')) return text('当前订单与本地账号不匹配，请重新创建订单。', 'This order does not belong to the current player. Please create a new order.');
+        if (lower.includes('waiting for reward claim')) return text('你还有一笔已支付订单待同步到账，请先完成这笔订单。', 'You already have a paid order waiting to be restored. Finish that order first.');
+        if (lower.includes('pending order')) return text('你已有一笔未完成订单，请继续处理它或等它失效后再创建新的。', 'You already have an unfinished order. Resume it or wait for it to expire first.');
+        if (lower.includes('already active on this miner')) return text('该礼包已在当前账号生效，无需重复购买。', 'This pack is already active on the current account.');
+        if (lower.includes('order not found') || lower.includes('invalid offerid') || lower.includes('minerid is required')) return text('订单创建失败，请重新选择礼包。', 'Failed to create the payment order. Please select the pack again.');
+        if (lower.includes('supabase') || lower.includes('tron api failed') || lower.includes('missing environment variable') || lower.includes('failed')) return text('支付服务暂时不可用，请稍后再试。', 'The payment service is temporarily unavailable. Please try again later.');
+        return raw;
     }
 
     function renderPaymentOfferGrid() {
@@ -2125,6 +2196,8 @@
         ui.battleHudShield = document.getElementById('battleHudShield');
         ui.battleHudCharge = document.getElementById('battleHudCharge');
         ui.battleHudStatus = document.getElementById('battleHudStatus');
+        ui.battleCastSkillBtn = document.getElementById('battleCastSkillBtn');
+        ui.battleStartSortieBtn = document.getElementById('battleStartSortieBtn');
 
         if (!canvas.dataset.bound) {
             canvas.dataset.bound = 'true';
@@ -2148,6 +2221,7 @@
 
         resizeBattleCanvas();
         updateBattleHud();
+        refreshBattleActionButtons();
         renderStageCenter();
 
         if (state.battle.active) {
@@ -2159,14 +2233,14 @@
     }
 
     function handleStagePointerDown(event) {
-        if (!state.battle.active || state.battle.pendingPerks.length || state.battle.result) return;
+        if (!state.battle.active || state.battle.pendingPerks.length || state.battle.revivePrompt || state.battle.result) return;
         state.battle.pointerActive = true;
         syncPointerToBattle(event);
         try { ui.sortieCanvas.setPointerCapture(event.pointerId); } catch (error) {}
     }
 
     function handleStagePointerMove(event) {
-        if (!state.battle.active || !state.battle.pointerActive || state.battle.pendingPerks.length || state.battle.result) return;
+        if (!state.battle.active || !state.battle.pointerActive || state.battle.pendingPerks.length || state.battle.revivePrompt || state.battle.result) return;
         syncPointerToBattle(event);
     }
 
@@ -2271,7 +2345,7 @@
         const elapsed = Math.min(0.033, Math.max(0, (now - state.battle.lastFrameAt) / 1000));
         state.battle.lastFrameAt = now;
 
-        if (!state.battle.pausedByVisibility && !state.battle.pendingPerks.length && !state.battle.result) {
+        if (!state.battle.pausedByVisibility && !state.battle.pendingPerks.length && !state.battle.revivePrompt && !state.battle.result) {
             updateBattle(elapsed);
         }
 
@@ -2285,6 +2359,8 @@
         const battle = state.battle;
         battle.time += delta;
         battle.fireCooldown = Math.max(0, battle.fireCooldown - delta);
+        battle.wingCooldown = Math.max(0, battle.wingCooldown - delta);
+        updateBattleEffects(delta);
 
         if (battle.player.regen > 0) {
             battle.player.shield = Math.min(battle.player.maxShield, battle.player.shield + (battle.player.regen * delta));
@@ -2323,7 +2399,11 @@
         updateFloats(delta);
 
         if (battle.player.shield <= 0 && !battle.result) {
-            endBattle(false);
+            if (canUseBattleRevive()) {
+                promptBattleRevive();
+            } else {
+                endBattle(false);
+            }
         }
     }
 
@@ -2339,6 +2419,11 @@
         if (battle.fireCooldown <= 0) {
             firePlayerBullets();
             battle.fireCooldown = Math.max(0.12, 0.34 / battle.player.fireRate);
+        }
+
+        if (battle.wingCooldown <= 0 && battle.player.wingDamage > 0) {
+            fireWingSupportVolley();
+            battle.wingCooldown = Math.max(0.26, 0.72 / Math.max(1, battle.player.fireRate * 0.92));
         }
     }
 
@@ -2361,16 +2446,86 @@
         });
     }
 
-    function createBullet(x, y, vx, vy, damage, pierce) {
+    function createBullet(x, y, vx, vy, damage, pierce, options = {}) {
         return {
             x,
             y,
             vx,
             vy,
-            radius: 4,
+            radius: Number(options.radius || 4),
             damage,
-            pierce
+            pierce,
+            color: options.color || '#9bd4ff',
+            source: options.source || 'player'
         };
+    }
+
+    function getWingOffsets(count) {
+        if (count <= 1) return [{ x: -16, y: 8 }];
+        return [{ x: -18, y: 8 }, { x: 18, y: 8 }];
+    }
+
+    function getBattleWingAnchors(player = state.battle.player) {
+        if (!player) return [];
+        const equippedWingIds = state.save.selectedWingmen.filter((wingId) => wingId && wingmanMap[wingId]);
+        if (!equippedWingIds.length) return [];
+        const offsets = getWingOffsets(equippedWingIds.length);
+        return equippedWingIds.map((wingId, index) => {
+            const offset = offsets[index] || { x: 0, y: 8 };
+            const floatOffset = Math.sin((state.battle.time * 4.2) + (index * 1.2)) * 1.8;
+            return {
+                id: wingId,
+                x: player.x + offset.x,
+                y: player.y + offset.y + floatOffset,
+                color: WING_COLOR_MAP[wingId] || '#64ffb2'
+            };
+        });
+    }
+
+    function fireWingSupportVolley() {
+        const battle = state.battle;
+        const anchors = getBattleWingAnchors();
+        if (!anchors.length) return;
+        const baseDamage = Math.max(10, battle.player.wingDamage / Math.max(1, anchors.length));
+        anchors.forEach((anchor, index) => {
+            let damage = baseDamage;
+            let pierce = 0;
+            let vx = anchors.length === 1 ? 0 : (index === 0 ? -34 : 34);
+            if (anchor.id === 'interceptorWing') {
+                damage *= 0.96;
+            } else if (anchor.id === 'pierceWing') {
+                damage *= 0.92;
+                pierce = Math.max(1, battle.player.pierce);
+                vx *= 0.4;
+            } else if (anchor.id === 'magnetWing') {
+                damage *= 0.8;
+            } else if (anchor.id === 'aegisWing') {
+                damage *= 0.84;
+            }
+            battle.bullets.push(createBullet(anchor.x, anchor.y - 10, vx, -382, damage, pierce, {
+                color: anchor.color,
+                radius: 4,
+                source: 'wing'
+            }));
+        });
+        playSfx('shoot', {
+            cooldownKey: 'ds-wing-shoot',
+            cooldownMs: 90,
+            freq: 1180,
+            toFreq: 760
+        });
+    }
+
+    function updateBattleEffects(delta) {
+        if (state.battle.screenFlash > 0) {
+            state.battle.screenFlash = Math.max(0, state.battle.screenFlash - delta);
+        }
+        if (state.battle.skillPulse) {
+            state.battle.skillPulse.age += delta;
+            if (state.battle.skillPulse.age >= state.battle.skillPulse.duration) {
+                state.battle.skillPulse = null;
+            }
+        }
     }
 
     function syncBattleChargeReady() {
@@ -2614,7 +2769,7 @@
         const enemy = state.battle.enemies[enemyIndex];
         if (!enemy) return;
         state.battle.enemies.splice(enemyIndex, 1);
-        if (enemy.isElite) state.battle.eliteKills += 1;
+        if (enemy.isElite && !enemy.isBoss) state.battle.eliteKills += 1;
         playSfx(enemy.isBoss ? 'bossDown' : 'enemyDown', {
             boss: enemy.isBoss,
             cooldownKey: enemy.isBoss ? 'ds-boss-down' : enemy.isElite ? 'ds-elite-down' : 'ds-enemy-down',
@@ -2671,6 +2826,7 @@
     }
 
     function damagePlayer(amount) {
+        if ((state.battle.time || 0) < (state.battle.invulnerableUntil || 0)) return;
         state.battle.player.shield = Math.max(0, state.battle.player.shield - amount);
         playSfx(state.battle.player.shield > 0 ? 'shieldHit' : 'hit', {
             cooldownKey: state.battle.player.shield > 0 ? 'ds-player-shield' : 'ds-player-hit',
@@ -2678,16 +2834,75 @@
         });
     }
 
+    function canUseBattleRevive() {
+        return !!state.battle.active
+            && !state.battle.result
+            && !state.battle.revivedThisRun
+            && Number(state.save.reviveChips || 0) > 0;
+    }
+
+    function promptBattleRevive() {
+        if (!canUseBattleRevive()) return;
+        state.battle.revivePrompt = true;
+        state.battle.pointerActive = false;
+        state.battle.player.shield = 0;
+        pushBattleNotice(text('可使用复活芯片继续作战', 'Use a revive chip to keep fighting'), 'warning');
+        refreshBattleActionButtons();
+        renderStageCenter();
+    }
+
+    function confirmBattleRevive() {
+        if (!state.battle.revivePrompt || !canUseBattleRevive()) return;
+        state.save.reviveChips = Math.max(0, Number(state.save.reviveChips || 0) - 1);
+        state.battle.revivePrompt = false;
+        state.battle.revivedThisRun = true;
+        state.battle.invulnerableUntil = state.battle.time + 1.6;
+        state.battle.enemyShots = [];
+        state.battle.player.shield = Math.max(state.battle.player.maxShield * 0.6, state.battle.player.maxShield * 0.45 + 24);
+        state.battle.player.x = clampNumber(state.battle.viewportWidth / 2, state.battle.player.x, 18, state.battle.viewportWidth - 18);
+        state.battle.pointerX = state.battle.player.x;
+        state.battle.pointerY = state.battle.player.y;
+        state.battle.screenFlash = Math.max(state.battle.screenFlash || 0, 0.34);
+        addBattleCharge(35);
+        createFloat(state.battle.player.x, state.battle.player.y - 24, text('复活成功', 'Revived'), '#64ffb2');
+        playSfx('goal', { cooldownKey: 'ds-revive', cooldownMs: 320, freq: 620, toFreq: 980 });
+        showToast(text('已消耗 1 个复活芯片，继续作战。', 'Used 1 revive chip. Back in action.'), 'success');
+        saveProgress();
+        renderResourceStrip();
+        renderHeroSummary();
+        refreshBattleActionButtons();
+        renderStageCenter();
+    }
+
+    function skipBattleRevive() {
+        if (!state.battle.revivePrompt) return;
+        state.battle.revivePrompt = false;
+        endBattle(false);
+    }
+
     function castSkill() {
-        if (!state.battle.active || state.battle.charge < 100 || state.battle.pendingPerks.length || state.battle.result) return;
+        if (!state.battle.active || state.battle.charge < 100 || state.battle.pendingPerks.length || state.battle.revivePrompt || state.battle.result) return;
+        const player = state.battle.player;
+        if (!player) return;
         setBattleCharge(0);
         playSfx('ultimate');
+        state.battle.screenFlash = 0.28;
+        state.battle.skillPulse = {
+            x: player.x,
+            y: player.y - 8,
+            radius: player.radius * 1.4,
+            maxRadius: Math.max(state.battle.viewportWidth || 320, state.battle.viewportHeight || 360) * 0.86,
+            age: 0,
+            duration: 0.72
+        };
+        createFloat(player.x, player.y - 26, text('技能释放', 'Skill Burst'), '#bf8dff');
         pushBattleNotice(text('超载脉冲释放', 'Overload pulse released'), 'accent');
         for (let index = state.battle.enemies.length - 1; index >= 0; index -= 1) {
             const enemy = state.battle.enemies[index];
-            const damage = (state.battle.player.attack * 4.8) + 120;
-            enemy.hp -= enemy.isBoss ? damage * state.battle.player.bossDamageMultiplier : damage;
-            createFloat(enemy.x, enemy.y - 12, `-${Math.round(damage)}`, '#bf8dff');
+            const damage = (player.attack * 4.8) + 120;
+            const resolvedDamage = enemy.isBoss ? damage * player.bossDamageMultiplier : damage;
+            enemy.hp -= resolvedDamage;
+            createFloat(enemy.x, enemy.y - 12, `-${Math.round(resolvedDamage)}`, '#bf8dff');
             if (enemy.hp <= 0) defeatEnemy(index);
         }
     }
@@ -2861,6 +3076,8 @@
         drawEnemyShots(context);
         drawEnemies(context);
         drawPlayer(context);
+        drawBattleSkillPulse(context);
+        drawBattleScreenFlash(context, width, height);
         drawFloats(context);
         drawBattleNotice(context, width, height);
     }
@@ -2897,9 +3114,13 @@
         }
         const centerX = width / 2;
         const centerY = height * 0.72;
+        const equippedWingIds = state.save.selectedWingmen.filter((wingId) => wingId && wingmanMap[wingId]);
+        const offsets = getWingOffsets(equippedWingIds.length);
         drawPlayerShape(context, centerX, centerY, 14, '#68b7ff');
-        drawWingShape(context, centerX - 24, centerY + 4, 10, '#64ffb2');
-        drawWingShape(context, centerX + 24, centerY + 4, 10, '#64ffb2');
+        equippedWingIds.forEach((wingId, index) => {
+            const offset = offsets[index] || { x: 0, y: 8 };
+            drawWingShape(context, centerX + offset.x, centerY + offset.y, 9, WING_COLOR_MAP[wingId] || '#64ffb2');
+        });
         context.fillStyle = '#dce7ff';
         context.font = '600 14px Inter';
         context.textAlign = 'center';
@@ -2912,14 +3133,21 @@
     function drawPlayer(context) {
         const player = state.battle.player;
         if (!player) return;
-        drawPlayerShape(context, player.x, player.y, player.radius, '#68b7ff');
-        if (state.battle.mods.volley) {
-            drawWingShape(context, player.x - 18, player.y + 8, 8, '#64ffb2');
-            drawWingShape(context, player.x + 18, player.y + 8, 8, '#64ffb2');
-        } else {
-            drawWingShape(context, player.x - 18, player.y + 8, 7, '#64ffb2');
-            drawWingShape(context, player.x + 18, player.y + 8, 7, '#64ffb2');
+        const wingRadius = state.battle.mods.volley ? 8 : 7;
+        const invulnerable = (state.battle.time || 0) < (state.battle.invulnerableUntil || 0);
+        if (invulnerable) {
+            context.save();
+            context.globalAlpha = 0.32;
+            context.fillStyle = '#64ffb2';
+            context.beginPath();
+            context.arc(player.x, player.y, player.radius + 10, 0, Math.PI * 2);
+            context.fill();
+            context.restore();
         }
+        drawPlayerShape(context, player.x, player.y, player.radius, '#68b7ff');
+        getBattleWingAnchors(player).forEach((anchor) => {
+            drawWingShape(context, anchor.x, anchor.y, wingRadius, anchor.color);
+        });
     }
 
     function drawPlayerShape(context, x, y, radius, color) {
@@ -2983,12 +3211,42 @@
     }
 
     function drawBullets(context) {
-        context.fillStyle = '#9bd4ff';
         state.battle.bullets.forEach((bullet) => {
+            context.fillStyle = bullet.color || '#9bd4ff';
             context.beginPath();
             context.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
             context.fill();
         });
+    }
+
+    function drawBattleSkillPulse(context) {
+        const pulse = state.battle.skillPulse;
+        if (!pulse) return;
+        const progress = Math.max(0, Math.min(1, pulse.age / Math.max(0.001, pulse.duration)));
+        const radius = pulse.radius + ((pulse.maxRadius - pulse.radius) * progress);
+        const alpha = Math.max(0, 0.44 * (1 - progress));
+        context.save();
+        context.globalCompositeOperation = 'lighter';
+        context.strokeStyle = `rgba(191, 141, 255, ${alpha})`;
+        context.lineWidth = 4 + ((1 - progress) * 6);
+        context.beginPath();
+        context.arc(pulse.x, pulse.y, radius, 0, Math.PI * 2);
+        context.stroke();
+        context.fillStyle = `rgba(191, 141, 255, ${alpha * 0.28})`;
+        context.beginPath();
+        context.arc(pulse.x, pulse.y, radius * 0.82, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+    }
+
+    function drawBattleScreenFlash(context, width, height) {
+        if (!state.battle.screenFlash) return;
+        const alpha = Math.max(0, Math.min(0.22, state.battle.screenFlash * 0.78));
+        if (alpha <= 0) return;
+        context.save();
+        context.fillStyle = `rgba(222, 201, 255, ${alpha})`;
+        context.fillRect(0, 0, width, height);
+        context.restore();
     }
 
     function drawEnemyShots(context) {
@@ -3052,6 +3310,7 @@
 
     function updateBattleHud() {
         if (!ui.battleHudShield || !ui.battleHudCharge || !ui.battleHudStatus) return;
+        refreshBattleActionButtons();
         if (!state.battle.active && !state.battle.result) {
             ui.battleHudShield.textContent = text('待机', 'Standby');
             ui.battleHudCharge.textContent = '0%';
@@ -3065,11 +3324,55 @@
             return;
         }
 
+        if (state.battle.revivePrompt) {
+            ui.battleHudShield.textContent = text('等待复活', 'Revive');
+            ui.battleHudCharge.textContent = `${Math.round(state.battle.charge)}%`;
+            ui.battleHudStatus.textContent = text('请选择继续或结束', 'Choose continue or end');
+            return;
+        }
         ui.battleHudShield.textContent = `${Math.max(0, Math.round(state.battle.player.shield))}/${Math.round(state.battle.player.maxShield)}`;
         ui.battleHudCharge.textContent = `${Math.round(state.battle.charge)}%`;
         ui.battleHudStatus.textContent = state.battle.bossSpawned
             ? (state.battle.bossDefeated ? text('Boss 击破', 'Boss Down') : text('Boss 交战', 'Boss Fight'))
             : `${text('波次', 'Wave')} ${Math.max(1, state.battle.nextEliteIndex + 1)}`;
+    }
+
+    function refreshBattleActionButtons() {
+        if (ui.battleCastSkillBtn) {
+            if (!state.battle.active || state.battle.result) {
+                ui.battleCastSkillBtn.disabled = true;
+                ui.battleCastSkillBtn.textContent = text('释放技能', 'Cast Skill');
+            } else if (state.battle.pendingPerks.length) {
+                ui.battleCastSkillBtn.disabled = true;
+                ui.battleCastSkillBtn.textContent = text('选择强化', 'Choose Upgrade');
+            } else if (state.battle.revivePrompt) {
+                ui.battleCastSkillBtn.disabled = true;
+                ui.battleCastSkillBtn.textContent = text('等待选择', 'Awaiting Choice');
+            } else {
+                const charge = Math.max(0, Math.round(state.battle.charge || 0));
+                const skillReady = charge >= 100;
+                ui.battleCastSkillBtn.disabled = !skillReady;
+                ui.battleCastSkillBtn.textContent = skillReady
+                    ? text('释放技能', 'Cast Skill')
+                    : text(`技能 ${charge}%`, `Skill ${charge}%`);
+            }
+        }
+
+        if (ui.battleStartSortieBtn) {
+            if (state.battle.revivePrompt) {
+                ui.battleStartSortieBtn.disabled = true;
+                ui.battleStartSortieBtn.textContent = text('等待复活', 'Revive Prompt');
+            } else if (state.battle.active && !state.battle.result) {
+                ui.battleStartSortieBtn.disabled = true;
+                ui.battleStartSortieBtn.textContent = text('战斗中', 'In Battle');
+            } else if (state.battle.result) {
+                ui.battleStartSortieBtn.disabled = true;
+                ui.battleStartSortieBtn.textContent = text('结算中', 'Settled');
+            } else {
+                ui.battleStartSortieBtn.disabled = false;
+                ui.battleStartSortieBtn.textContent = getStartSortieButtonLabel(getChapterIndex(getSelectedChapter().id));
+            }
+        }
     }
 
     function renderStageCenter() {
@@ -3078,7 +3381,20 @@
         let viewKey = 'active';
         let markup = '';
 
-        if (state.battle.pendingPerks.length) {
+        if (state.battle.revivePrompt) {
+            viewKey = `revive:${state.save.reviveChips}:${state.battle.revivedThisRun ? 'used' : 'ready'}`;
+            markup = `
+                <div class="ds-stage-overlay-card">
+                    <div class="eyebrow">${escapeHtml(text('战斗受损', 'Critical Damage'))}</div>
+                    <h3 style="margin:0;">${escapeHtml(text('是否使用复活芯片继续作战？', 'Use a revive chip to continue?'))}</h3>
+                    <div class="ds-inline-note">${escapeHtml(text(`当前持有 ${state.save.reviveChips} 个复活芯片，本局可使用 1 次。`, `You have ${state.save.reviveChips} revive chips. You can use 1 in this sortie.`))}</div>
+                    <div class="ds-stage-overlay-actions">
+                        <button class="ghost-btn" type="button" data-action="battleGiveUp">${escapeHtml(text('结束本局', 'End Run'))}</button>
+                        <button class="primary-btn" type="button" data-action="battleRevive">${escapeHtml(text('消耗 1 个继续', 'Use 1 Chip'))}</button>
+                    </div>
+                </div>
+            `;
+        } else if (state.battle.pendingPerks.length) {
             viewKey = `perk:${state.battle.pendingPerks.map((perk) => perk.id).join('|')}`;
             markup = `
                 <div class="ds-stage-overlay-card">
@@ -3590,6 +3906,364 @@
         }
     }
 
+    function renderPaymentOrderUI() {
+        if (!ui.paymentAmount || !ui.paymentOrderId || !ui.paymentExactAmount || !ui.paymentExpiry || !ui.paymentWallet) return;
+        renderPaymentModalChrome();
+        const offer = getSelectedPaymentOffer();
+        const order = doesPaymentOrderMatchOffer(currentPaymentOrder, offer) ? currentPaymentOrder : null;
+        const orderStatus = getPaymentOrderStatus(order);
+        ui.paymentAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : `${offer.price} USDT`;
+        ui.paymentOrderId.textContent = order?.id || '--';
+        ui.paymentExactAmount.textContent = order ? formatPaymentUsdt(order.exactAmount) : '--';
+        ui.paymentExpiry.textContent = order ? getPaymentOrderCountdown(order) : '--:--';
+        ui.paymentWallet.textContent = resolvePaymentAddress(order) || '--';
+        if (ui.paymentMeta) {
+            const baseMeta = text('TRON (TRC20) · OKX 钱包', 'TRON (TRC20) · OKX Wallet');
+            ui.paymentMeta.textContent = order ? `${baseMeta} · ${getPaymentOrderStatusLabel(order)}` : baseMeta;
+        }
+        if (ui.paymentTxidInput && order?.txid && !String(ui.paymentTxidInput.value || '').trim()) {
+            ui.paymentTxidInput.value = String(order.txid).trim().toLowerCase();
+        }
+        if (orderStatus === 'granted' && state.save.payment.pendingClaims?.[order?.id]) {
+            delete state.save.payment.pendingClaims[order.id];
+            saveProgress();
+        }
+    }
+
+    function refreshPaymentVerificationState() {
+        if (!ui.paymentStatus || !ui.paymentVerifyBtn || !ui.paymentCopyAddressBtn || !ui.paymentCopyAmountBtn) return;
+        const offer = getSelectedPaymentOffer();
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        const orderStatus = getPaymentOrderStatus(activeOrder);
+        const hasOrder = !!activeOrder;
+        const orderExpired = isPaymentOrderExpired(activeOrder);
+        let txid = getNormalizedPaymentTxid();
+        if (!txid && activeOrder?.txid) {
+            txid = String(activeOrder.txid).trim().toLowerCase();
+        }
+        const txidValid = PAYMENT_TXID_REGEX.test(txid);
+        const canVerifyCurrentOrder = hasOrder && txidValid;
+        ui.paymentStatus.classList.remove('is-error', 'is-success');
+        ui.paymentCopyAddressBtn.disabled = !hasOrder;
+        ui.paymentCopyAmountBtn.disabled = !hasOrder;
+
+        if (paymentVerificationState === 'creating') {
+            ui.paymentStatus.textContent = text('正在生成链上订单…', 'Creating on-chain order…');
+            ui.paymentVerifyBtn.textContent = text('生成中…', 'Creating…');
+            ui.paymentVerifyBtn.disabled = true;
+            ui.paymentCopyAddressBtn.disabled = true;
+            ui.paymentCopyAmountBtn.disabled = true;
+            return;
+        }
+
+        if (paymentVerificationState === 'verifying') {
+            ui.paymentStatus.textContent = text('正在校验链上支付…', 'Verifying payment on-chain…');
+            ui.paymentVerifyBtn.textContent = text('校验中…', 'Verifying…');
+            ui.paymentVerifyBtn.disabled = true;
+            ui.paymentCopyAddressBtn.disabled = true;
+            ui.paymentCopyAmountBtn.disabled = true;
+            return;
+        }
+
+        if (orderStatus === 'granted') {
+            ui.paymentStatus.textContent = paymentVerificationNotice || text('该订单已完成到账。', 'This order has already been delivered.');
+            ui.paymentStatus.classList.add('is-success');
+            ui.paymentVerifyBtn.textContent = text('已到账', 'Delivered');
+            ui.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        if (paymentVerificationState === 'verified') {
+            ui.paymentStatus.textContent = paymentVerificationNotice || text('支付已校验通过，奖励已到账。', 'Payment verified and rewards granted.');
+            ui.paymentStatus.classList.add('is-success');
+            ui.paymentVerifyBtn.textContent = orderStatus === 'paid' ? text('继续同步', 'Continue Sync') : text('已到账', 'Delivered');
+            ui.paymentVerifyBtn.disabled = orderStatus !== 'paid';
+            return;
+        }
+
+        if (orderStatus === 'paid') {
+            ui.paymentStatus.textContent = paymentVerificationNotice || text('已检测到已支付订单，点击下方按钮完成到账同步。', 'A paid order was found. Tap the button below to finish delivery sync.');
+            ui.paymentStatus.classList.add('is-success');
+            ui.paymentVerifyBtn.textContent = text('恢复到账', 'Restore Delivery');
+            ui.paymentVerifyBtn.disabled = !canVerifyCurrentOrder;
+            return;
+        }
+
+        if (orderExpired) {
+            ui.paymentStatus.textContent = txidValid
+                ? text('当前订单已过期；如果你在有效期内完成了支付，仍可继续用这笔 TXID 校验。', 'The order has expired, but you can still verify this txid if the payment was completed before expiry.')
+                : text('当前订单已过期；未支付请重新创建订单，已支付可继续粘贴 TXID 校验。', 'The order has expired. Create a new order if you did not pay, or paste the txid if you already paid in time.');
+            ui.paymentStatus.classList.add('is-error');
+            ui.paymentVerifyBtn.textContent = text(`校验 ${localize(offer.name)}`, `Verify ${localize(offer.name)}`);
+            ui.paymentVerifyBtn.disabled = !canVerifyCurrentOrder;
+            return;
+        }
+
+        if (paymentVerificationError) {
+            ui.paymentStatus.textContent = paymentVerificationError;
+            ui.paymentStatus.classList.add('is-error');
+            ui.paymentVerifyBtn.textContent = text(`校验 ${localize(offer.name)}`, `Verify ${localize(offer.name)}`);
+            ui.paymentVerifyBtn.disabled = !canVerifyCurrentOrder;
+            return;
+        }
+
+        if (txid && !txidValid) {
+            ui.paymentStatus.textContent = text('TXID 格式不正确，请粘贴 64 位链上交易哈希。', 'TXID format looks invalid. Please paste the 64-character on-chain txid.');
+            ui.paymentStatus.classList.add('is-error');
+            ui.paymentVerifyBtn.textContent = text(`校验 ${localize(offer.name)}`, `Verify ${localize(offer.name)}`);
+            ui.paymentVerifyBtn.disabled = true;
+            return;
+        }
+
+        ui.paymentStatus.textContent = paymentVerificationNotice || text('先创建订单，再去 OKX 钱包完成支付，最后把交易哈希粘贴到这里校验。', 'Create an order, complete the payment in OKX Wallet, then paste the txid here.');
+        ui.paymentVerifyBtn.textContent = text(`校验 ${localize(offer.name)}`, `Verify ${localize(offer.name)}`);
+        ui.paymentVerifyBtn.disabled = !canVerifyCurrentOrder;
+    }
+
+    async function syncCurrentPaymentOrderStatus({ silent = true } = {}) {
+        if (!currentPaymentOrder?.id || currentPaymentOrder.id === '--') return null;
+        try {
+            const payload = await checkBackendPaymentOrder(currentPaymentOrder.id);
+            const syncedOrder = buildClientPaymentOrder(payload?.order || currentPaymentOrder);
+            if (syncedOrder.minerId && syncedOrder.minerId !== getPaymentMinerId()) {
+                setCurrentPaymentOrder(null);
+                if (!silent) {
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = text('检测到缓存订单归属不一致，已自动清除。', 'The cached order belongs to a different player and was cleared.');
+                    refreshPaymentVerificationState();
+                }
+                return null;
+            }
+
+            const syncedStatus = getPaymentOrderStatus(syncedOrder);
+            if (syncedStatus === 'expired') {
+                setCurrentPaymentOrder(null);
+                if (!silent) {
+                    paymentVerificationState = 'idle';
+                    paymentVerificationNotice = '';
+                    paymentVerificationError = text('当前订单已失效，请重新创建订单。', 'This order is no longer valid. Please create a new one.');
+                    renderPaymentOrderUI();
+                    refreshPaymentVerificationState();
+                }
+                return null;
+            }
+
+            if (syncedStatus === 'granted' && state.save.payment.pendingClaims?.[syncedOrder.id]) {
+                delete state.save.payment.pendingClaims[syncedOrder.id];
+                saveProgress();
+            }
+
+            setCurrentPaymentOrder(syncedOrder);
+
+            if (!silent) {
+                paymentVerificationState = syncedStatus === 'granted' ? 'verified' : 'idle';
+                paymentVerificationError = '';
+                paymentVerificationNotice = syncedStatus === 'paid'
+                    ? text('已检测到已支付订单，继续校验即可完成到账。', 'A paid order was found. Verify it to finish delivery.')
+                    : syncedStatus === 'granted'
+                        ? text('该订单已完成到账。', 'This order has already been delivered.')
+                        : '';
+            }
+
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+            return syncedOrder;
+        } catch (error) {
+            if (!silent) {
+                paymentVerificationState = 'idle';
+                paymentVerificationNotice = '';
+                paymentVerificationError = error?.message || text('订单同步失败，请稍后再试。', 'Order sync failed. Please try again later.');
+                refreshPaymentVerificationState();
+            }
+            return null;
+        }
+    }
+
+    async function flushPendingPaymentClaims({ silent = true } = {}) {
+        const pendingEntries = Object.entries(state.save.payment.pendingClaims || {});
+        if (!pendingEntries.length) return 0;
+        let syncedCount = 0;
+        for (const [orderId, txid] of pendingEntries) {
+            if (!orderId || !txid) {
+                delete state.save.payment.pendingClaims[orderId];
+                continue;
+            }
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete state.save.payment.pendingClaims[orderId];
+                if (currentPaymentOrder?.id === orderId) {
+                    setCurrentPaymentOrder({
+                        ...currentPaymentOrder,
+                        status: 'granted',
+                        rewardGranted: true,
+                        txid
+                    });
+                }
+                syncedCount += 1;
+            } catch (error) {
+                if (!silent) {
+                    console.warn('Drone Squad payment claim sync failed.', { orderId, error });
+                }
+            }
+        }
+        saveProgress();
+        if (syncedCount) {
+            renderPaymentOrderUI();
+            refreshPaymentVerificationState();
+        }
+        return syncedCount;
+    }
+
+    function grantPaymentRewards({ orderId, txid, offerId, queueClaim = true, silent = false, render = true }) {
+        const offer = offerMap[offerId] || getSelectedPaymentOffer();
+        if (!offer || !orderId || state.save.payment.claimedOrders[orderId]) return false;
+
+        const beforeTier = getSponsorTier();
+        const normalizedTxid = PAYMENT_TXID_REGEX.test(String(txid || '').trim()) ? String(txid).trim().toLowerCase() : '';
+
+        grantReward(offer.reward);
+        applyPermanentBonus(offer.permanent);
+        state.save.payment.passUnlocked = true;
+        state.save.payment.purchaseCount = Number(state.save.payment.purchaseCount || 0) + 1;
+        state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
+        state.save.payment.claimedOrders[orderId] = true;
+
+        if (queueClaim && normalizedTxid) {
+            state.save.payment.pendingClaims[orderId] = normalizedTxid;
+        } else {
+            delete state.save.payment.pendingClaims[orderId];
+        }
+
+        if (normalizedTxid) {
+            rememberVerifiedPaymentTxid(normalizedTxid);
+        }
+
+        const afterTier = getSponsorTier();
+        const tierPromoted = beforeTier.id !== afterTier.id;
+        const seasonReady = config.seasonPremiumTrack.filter((node) => !state.save.seasonClaimed.includes(`premium:${node.id}`) && state.save.seasonXp >= node.xp).length;
+        saveProgress();
+
+        if (!silent) {
+            showToast(
+                tierPromoted
+                    ? text(`充值完成：${localize(offer.name)} 已到账，赞助档位提升到 ${localize(afterTier.title)}。${seasonReady > 0 ? ` 另有 ${seasonReady} 个赞助赛季奖励可领。` : ''}`, `Top-up complete: ${localize(offer.name)} granted and sponsor tier promoted to ${localize(afterTier.title)}.${seasonReady > 0 ? ` ${seasonReady} sponsor rewards are now ready.` : ''}`)
+                    : text(`充值完成：${localize(offer.name)} 奖励已到账。${seasonReady > 0 ? ` 当前有 ${seasonReady} 个赞助赛季奖励可领。` : ''}`, `Top-up complete: ${localize(offer.name)} rewards granted.${seasonReady > 0 ? ` ${seasonReady} sponsor season rewards are now ready.` : ''}`),
+                'success'
+            );
+        }
+
+        if (render) renderAll();
+        return true;
+    }
+
+    async function handlePaymentConfirm() {
+        if (paymentVerificationState === 'creating' || paymentVerificationState === 'verifying') return;
+
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        let txid = getNormalizedPaymentTxid();
+        if (!txid && activeOrder?.txid) {
+            txid = String(activeOrder.txid).trim().toLowerCase();
+            if (ui.paymentTxidInput) ui.paymentTxidInput.value = txid;
+        }
+
+        if (!PAYMENT_TXID_REGEX.test(txid)) {
+            paymentVerificationError = text('TXID 格式不正确，请检查后重新输入。', 'Invalid TXID format. Please check and try again.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if (!activeOrder) {
+            paymentVerificationError = text('当前没有可校验的订单，请先创建订单。', 'There is no active order to verify. Please create one first.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        const knownActiveTxid = String(activeOrder.txid || '').trim().toLowerCase();
+        const isRetryForCurrentOrder = knownActiveTxid === txid || !!state.save.payment.pendingClaims?.[activeOrder.id];
+        if ((state.save.payment.verifiedTxids || []).includes(txid) && !isRetryForCurrentOrder) {
+            paymentVerificationError = text('这笔 TXID 已经使用过，不能重复发奖。', 'This TXID has already been used and cannot grant rewards again.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        if (activeOrder.status === 'expired' || activeOrder.status === 'cancelled') {
+            paymentVerificationError = text('当前订单已失效，请重新创建订单。', 'This order is no longer valid. Please create a new one.');
+            paymentVerificationNotice = '';
+            refreshPaymentVerificationState();
+            return;
+        }
+
+        const orderId = activeOrder.id;
+        paymentVerificationState = 'verifying';
+        paymentVerificationError = '';
+        paymentVerificationNotice = '';
+        refreshPaymentVerificationState();
+
+        try {
+            const verificationResult = await verifyBackendPayment(orderId, txid);
+            const orderPayload = verificationResult?.order || {};
+            const resolvedOrder = buildClientPaymentOrder({
+                ...activeOrder,
+                ...orderPayload,
+                txid: orderPayload?.txid || txid
+            });
+            const resolvedOfferId = String(resolvedOrder.offerId || activeOrder.offerId || selectedPaymentOfferId);
+            const hadLocalReward = !!state.save.payment.claimedOrders[orderId];
+            setCurrentPaymentOrder(resolvedOrder);
+
+            if (hadLocalReward) {
+                try {
+                    await claimBackendPayment(orderId, txid);
+                    delete state.save.payment.pendingClaims[orderId];
+                    setCurrentPaymentOrder({ ...resolvedOrder, status: 'granted', rewardGranted: true, txid });
+                    paymentVerificationNotice = text('该订单到账记录已同步完成。', 'Delivery sync for this order is complete.');
+                } catch (error) {
+                    setCurrentPaymentOrder({ ...resolvedOrder, status: resolvedOrder.status || 'paid', rewardGranted: false, txid });
+                    paymentVerificationNotice = text('本地奖励已到账；后台到账记录会继续自动同步。', 'Rewards are already available locally; backend delivery sync will keep retrying automatically.');
+                }
+                paymentVerificationState = 'verified';
+                saveProgress();
+                refreshPaymentVerificationState();
+                return;
+            }
+
+            if (resolvedOrder.rewardGranted) {
+                delete state.save.payment.pendingClaims[orderId];
+                setCurrentPaymentOrder({ ...resolvedOrder, status: 'granted', rewardGranted: true, txid });
+                paymentVerificationState = 'verified';
+                paymentVerificationNotice = text('该订单已在后台完成到账记录，本地不会重复发放。', 'This order was already delivered on the backend, so rewards will not be granted twice.');
+                saveProgress();
+                refreshPaymentVerificationState();
+                return;
+            }
+
+            grantPaymentRewards({ orderId, txid, offerId: resolvedOfferId, queueClaim: true, render: false });
+            paymentVerificationState = 'verified';
+
+            try {
+                await claimBackendPayment(orderId, txid);
+                delete state.save.payment.pendingClaims[orderId];
+                setCurrentPaymentOrder({ ...resolvedOrder, status: 'granted', rewardGranted: true, txid });
+                paymentVerificationNotice = text('链上校验成功，奖励已到账。', 'On-chain verification succeeded and rewards were granted.');
+            } catch (error) {
+                setCurrentPaymentOrder({ ...resolvedOrder, status: resolvedOrder.status || 'paid', rewardGranted: false, txid });
+                paymentVerificationNotice = text('支付已校验通过，奖励已到账；后台到账记录会继续自动同步。', 'Payment was verified and rewards were granted; backend delivery sync will keep retrying automatically.');
+            }
+
+            renderAll();
+            refreshPaymentVerificationState();
+        } catch (error) {
+            paymentVerificationState = 'idle';
+            paymentVerificationNotice = '';
+            paymentVerificationError = error?.message || text('支付校验失败，请稍后再试。', 'Payment verification failed. Please try again.');
+            refreshPaymentVerificationState();
+        }
+    }
+
     function consumeSortieCost(chapter) {
         resetDailySortieWindow();
         if (state.save.freeSortiesUsedToday < getDailyFreeSortiesLimit()) {
@@ -3650,12 +4324,17 @@
         }
     }
 
+    function getDailySupplyCooldownMs() {
+        const hours = Math.max(1, Number(shopMap.dailySupply?.freeCooldownHours || 20));
+        return hours * 60 * 60 * 1000;
+    }
+
     function canClaimDailySupply() {
-        return (Date.now() - Number(state.save.dailySupplyAt || 0)) >= DAILY_SUPPLY_COOLDOWN_MS;
+        return (Date.now() - Number(state.save.dailySupplyAt || 0)) >= getDailySupplyCooldownMs();
     }
 
     function getDailySupplyCooldownText() {
-        const remaining = Math.max(0, DAILY_SUPPLY_COOLDOWN_MS - (Date.now() - Number(state.save.dailySupplyAt || 0)));
+        const remaining = Math.max(0, getDailySupplyCooldownMs() - (Date.now() - Number(state.save.dailySupplyAt || 0)));
         if (!remaining) return text('可领取', 'Ready');
         const hours = Math.floor(remaining / (60 * 60 * 1000));
         const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
@@ -4054,14 +4733,14 @@
             case 'm1': return text('先用前三次免费出击熟悉拖拽闪避节奏。', 'Use your first three free sorties to learn the drag-dodge rhythm.');
             case 'm2': return text('每局会遇到三次精英敌人。', 'Elites arrive three times during a run.');
             case 'm3': return text('通关 1-2 后会解锁第二个僚机位。', 'Clearing 1-2 unlocks the second wing slot.');
-            case 'm4': return text('通关 1-3 后，下一阶段会更看重主力养成。', 'After 1-3, the next stage starts checking your main upgrades more closely.');
+            case 'm4': return text('通关 1-3 后，下一阶段会更看重主力养成。', 'After 1-3, the next stage leans more on your main upgrades.');
             case 'm5': return text('主机等级始终是最直接的战力提升。', 'Chassis levels are always your most direct power gain.');
             case 'm6': return text('先用免费制造，再多做几次，就能开始看到稀有模组。', 'Use the free craft, then craft a few more to start seeing rare modules.');
             case 'm7': return text('2-2 是第一个明显吃合金的阶段。', '2-2 is the first stage where alloy spending ramps up clearly.');
             case 'm8': return text('尽量把主机和两架僚机都推进到 3 星。', 'Push the chassis and both wingmen to 3 stars.');
             case 'm9': return text('第一个首领关是前期机库养成的关键检验。', 'The first boss is the key test for your early hangar.');
             case 'm10': return text('3-3 是前中期完整内容的第一条终点线，之后进入后期章节。', '3-3 is the first full-version finish line before late-game chapters begin.');
-            case 'm11': return text('4-1 会开始同时检查护盾、等级和每日养成是否跟上。', '4-1 starts checking shield, levels, and whether your daily investment kept up.');
+            case 'm11': return text('4-1 会开始同时检查护盾、等级和每日养成是否跟上。', '4-1 starts favoring stronger shield, levels, and steady daily upgrades.');
             case 'm12': return text('史诗模组主要来自保底循环、更高赛季奖励和付费礼包。', 'Epic modules mostly come from pity cycles, higher season rewards, and premium packs.');
             case 'm13': return text('研究是永久成长，会直接提升战斗属性和刷资源效率。', 'Research is permanent growth that directly improves combat stats and farming efficiency.');
             case 'm14': return text('主机等级是后期最稳定、也最省资源的战力提升来源。', 'Chassis levels are the most stable late-game power source and one of the cheapest ways to keep progressing.');
@@ -4136,11 +4815,11 @@
     }
 
     function getOfferImpactText(offer) {
-        if (offer.id === 'starter') return text('最适合前期快速成型双翼阵容，顺利推进到 1-3，并提前开启赞助赛季收益。', 'Best for getting your dual-wing setup online early, clearing 1-3 smoothly, and opening sponsor season value.');
-        if (offer.id === 'accelerator') return text('最适合在第 2 章前期补足合金和研究资源，让每日养成更顺畅。', 'Best for refilling early Chapter 2 alloy and research so daily growth stays smooth.');
-        if (offer.id === 'rush') return text('最适合在 2-3 到 3-1 这一段补足穿透和输出，尽快稳住中期模组强度。', 'Best for boosting pierce and damage across 2-3 to 3-1 and locking in your midgame module strength.');
-        if (offer.id === 'sovereign') return text('最适合第 3 章到 4-1 前提升续航与 Boss 伤害，让推进更稳。', 'Best for stronger sustain and boss damage through Chapter 3 and the push into 4-1.');
-        return text('最适合第 4 章后期补主力模组和高阶碎片，并缩短后期养成周期。', 'Best for Chapter 4 progression, module catch-up, and a shorter late-game growth cycle.');
+        if (offer.id === 'starter') return text('最适合前期快速成型双翼阵容，顺利推进到 1-3，并提前开启赞助赛季收益。', 'Great for getting your dual-wing setup online early, clearing 1-3 smoothly, and opening sponsor season rewards.');
+        if (offer.id === 'accelerator') return text('最适合在第 2 章前期补足合金和研究资源，让每日养成更顺畅。', 'Great for refilling early Chapter 2 alloy and research so daily growth stays smooth.');
+        if (offer.id === 'rush') return text('最适合在 2-3 到 3-1 这一段补足穿透和输出，尽快稳住中期模组强度。', 'Great for adding pierce and damage across 2-3 to 3-1 while stabilizing your midgame module strength.');
+        if (offer.id === 'sovereign') return text('最适合第 3 章到 4-1 前提升续航与 Boss 伤害，让推进更稳。', 'Great for stronger sustain and boss damage through Chapter 3 and the push into 4-1.');
+        return text('最适合第 4 章后期补主力模组和高阶碎片，并缩短后期养成周期。', 'Great for Chapter 4 progression, stronger core modules, and a shorter late-game growth cycle.');
     }
 
     function getRecommendedOfferId() {
@@ -4200,6 +4879,12 @@
             charge: 0,
             chargeReadyMarked: false,
             fireCooldown: 0,
+            wingCooldown: 0,
+            screenFlash: 0,
+            skillPulse: null,
+            revivePrompt: false,
+            revivedThisRun: false,
+            invulnerableUntil: 0,
             nextSpawnAt: 0,
             nextEliteIndex: 0,
             nextUpgradeIndex: 0,
@@ -4299,6 +4984,12 @@
         if (!next.moduleInventory.length) {
             next.moduleInventory = STARTER_MODULES.map(normalizeModule).filter(Boolean);
         }
+        const shouldRestoreStarterLoadout = !save?.selectedModules
+            || ((!save?.selectedModules?.core && !save?.selectedModules?.shield) && Math.max(0, Number(next.unlockedChapterIndex) || 0) <= 1)
+            || ((!next.selectedModules.core && !next.selectedModules.shield) && Math.max(0, Number(next.stats?.sorties) || 0) <= 3);
+        if (shouldRestoreStarterLoadout) {
+            ensureStarterModuleLoadout(next);
+        }
         return next;
     }
 
@@ -4314,7 +5005,7 @@
 
     function createBaseSave() {
         const base = clone(config.baseSave);
-        return {
+        const next = {
             ...base,
             tab: 'sortie',
             credits: base.credits,
@@ -4363,6 +5054,25 @@
                 passUnlocked: false
             }
         };
+        ensureStarterModuleLoadout(next);
+        return next;
+    }
+
+    function ensureStarterModuleLoadout(saveState) {
+        if (!saveState?.selectedModules || !Array.isArray(saveState.moduleInventory)) return;
+        [
+            { slot: 'core', starterUid: 'starter-burst', starterId: 'burstCore' },
+            { slot: 'shield', starterUid: 'starter-shell', starterId: 'aegisShell' }
+        ].forEach(({ slot, starterUid, starterId }) => {
+            const equippedUid = String(saveState.selectedModules[slot] || '');
+            const equippedModule = saveState.moduleInventory.find((item) => item.uid === equippedUid);
+            if (equippedModule) return;
+            const starterModule = saveState.moduleInventory.find((item) => item.uid === starterUid)
+                || saveState.moduleInventory.find((item) => item.id === starterId);
+            if (starterModule) {
+                saveState.selectedModules[slot] = starterModule.uid;
+            }
+        });
     }
 
     function saveProgress() {
@@ -4373,7 +5083,7 @@
         if (!wingId || !wingmanMap[wingId]) return false;
         const unlockIndex = getChapterIndex(wingmanMap[wingId].unlockStage);
         if (saveState.unlockedChapterIndex < unlockIndex) return false;
-        if (slotIndex === 1 && saveState.unlockedChapterIndex < getChapterIndex('1-2')) return false;
+        if (slotIndex === 1 && saveState.unlockedChapterIndex < getChapterIndex('1-3')) return false;
         return true;
     }
 
@@ -4393,7 +5103,11 @@
     }
 
     function syncSoundToggle() {
-        sfx?.syncToggle(ui.soundToggle);
+        sfx?.syncToggle(ui.soundToggle, {
+            on: text('音效开', 'SFX ON'),
+            off: text('音效关', 'SFX OFF')
+        });
+        ui.soundToggle?.setAttribute('aria-label', text('切换音效', 'Toggle sound effects'));
     }
 
     function createUid(prefix) {
@@ -4416,8 +5130,10 @@
 
     const DRONE_SQUAD_ZH_TEXT_FALLBACKS = {
         '2-2 is the first real alloy pressure wall.': '2-2 是第一个明显吃合金的阶段。',
+        'After 1-3, the next stage leans more on your main upgrades.': '通关 1-3 后，下一阶段会更看重主力养成。',
         '3-3 is the first full-version finish line before late-game chapters begin.': '3-3 是前中期完整内容的第一条终点线，之后进入后期章节。',
         '4-1 starts checking shield, levels, and whether your daily investment kept up.': '4-1 开始同时检查护盾、等级和每日投入是否跟上。',
+        '4-1 starts favoring stronger shield, levels, and steady daily upgrades.': '4-1 会开始更看重护盾、等级和稳定的每日养成。',
         '4-3 is the current endgame wall and wants a high-star chassis, boss damage, and epic modules.': '4-3 是当前终局挑战，推荐高星主机、首领增伤和史诗模组。',
         'After 1-3, the first real power wall starts forming.': '通关 1-3 后，下一阶段会更看重主力养成。',
         'Alloy': '合金',
@@ -4431,6 +5147,11 @@
         'Best for Chapter 4 endgame walls, epic module catch-up, and shorter late pity cycles.': '最适合第 4 章后期补主力模组和高阶碎片，并缩短后期养成周期。',
         'Best for solving early Chapter 2 alloy and research shortages so daily growth keeps pace.': '最适合在第 2 章前期补足合金和研究资源，让日常养成更顺畅。',
         'Best for unlocking dual-wing tempo, clearing 1-3, and opening sponsor season value.': '最适合解锁双翼节奏、通关 1-3，并开启赞助赛季收益。',
+        'Great for getting your dual-wing setup online early, clearing 1-3 smoothly, and opening sponsor season rewards.': '最适合前期快速成型双翼阵容，顺利推进到 1-3，并提前开启赞助赛季收益。',
+        'Great for refilling early Chapter 2 alloy and research so daily growth stays smooth.': '最适合在第 2 章前期补足合金和研究资源，让每日养成更顺畅。',
+        'Great for adding pierce and damage across 2-3 to 3-1 while stabilizing your midgame module strength.': '最适合在 2-3 到 3-1 这一段补足穿透和输出，尽快稳住中期模组强度。',
+        'Great for stronger sustain and boss damage through Chapter 3 and the push into 4-1.': '最适合第 3 章到 4-1 前提升续航与 Boss 伤害，让推进更稳。',
+        'Great for Chapter 4 progression, stronger core modules, and a shorter late-game growth cycle.': '最适合第 4 章后期补主力模组和高阶碎片，并缩短后期养成周期。',
         'Boss': '首领',
         'Boss Dmg': '首领增伤',
         'Boss Slot': '首领槽',
@@ -4441,6 +5162,7 @@
         'Chassis Fleet': '主机编队',
         'Chassis levels are always your most direct power gain.': '主机等级始终是最直接的战力提升。',
         'Chassis levels are the most stable late-game power source and the cheapest wall breaker.': '主机等级是后期最稳定、也最省资源的战力提升来源。',
+        '4-1 is a late survival stage, so prioritize stars and shield.': '4-1 是后期生存关，优先星级与护盾。',
         'Chips / Alloy': '芯片 / 合金',
         'Claim': '领取',
         'Claim Reward': '领取奖励',
