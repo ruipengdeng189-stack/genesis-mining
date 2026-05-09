@@ -1168,7 +1168,7 @@
                 },
                 {
                     stageId: '4-6',
-                    expectedPower: 29200,
+                    expectedPower: 30600,
                     cause: {
                         zh: '閺堚偓缂?Boss 閺囧婀呴柌宥呭帠閼冲€熷Ν婵傚繋绗岄弨璺虹啲瀵邦亞骞嗛敍宀€绮撶仦鈧惍鏃傗敀鐟曚礁鐣弫鎾４閻滎垬鈧?',
                         en: 'The final boss leans harder on charge cadence and end-of-run loops, so your endgame research needs to be fully closed out.'

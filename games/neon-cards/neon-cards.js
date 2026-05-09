@@ -34,6 +34,9 @@
         modal: null,
         toastTimer: 0
     };
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_neon_cards_sfx_v1'
+    });
 
     const ui = {};
 
@@ -45,11 +48,31 @@
 
     function init() {
         state.tab = tabMap[state.save.tab] ? state.save.tab : 'clash';
+        ensureSoundToggleButton();
         cacheUi();
         bindEvents();
         resetFreeClashWindow();
+        syncSoundToggle();
         renderAll();
         Promise.resolve().then(() => flushPendingPaymentClaims().catch(() => {}));
+    }
+
+    function ensureSoundToggleButton() {
+        if (document.getElementById('soundToggle')) return;
+        const topLine = document.querySelector('.nc-topline');
+        const langToggle = topLine?.querySelector('.lang-toggle');
+        if (!topLine || !langToggle) return;
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'topbar-actions';
+        const soundButton = document.createElement('button');
+        soundButton.className = 'ghost-btn';
+        soundButton.id = 'soundToggle';
+        soundButton.type = 'button';
+        soundButton.setAttribute('aria-pressed', 'true');
+        soundButton.textContent = 'SFX ON';
+        topLine.insertBefore(actionWrap, langToggle);
+        actionWrap.appendChild(soundButton);
+        actionWrap.appendChild(langToggle);
     }
 
     function cacheUi() {
@@ -70,6 +93,7 @@
         ui.modalCloseBtn = document.getElementById('modalCloseBtn');
         ui.toast = document.getElementById('toast');
         ui.langButtons = Array.from(document.querySelectorAll('[data-lang-switch]'));
+        ui.soundToggle = document.getElementById('soundToggle');
     }
 
     function bindEvents() {
@@ -79,6 +103,11 @@
                 try { localStorage.setItem(HUB_LANG_KEY, state.lang); } catch (error) {}
                 renderAll();
             });
+        });
+        ui.soundToggle?.addEventListener('click', () => {
+            const nextEnabled = sfx?.toggle();
+            syncSoundToggle();
+            if (nextEnabled) playSfx('confirm');
         });
 
         ui.tabBar.addEventListener('click', (event) => {
@@ -1723,6 +1752,14 @@
         }, 2200);
     }
 
+    function playSfx(name, payload) {
+        sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        sfx?.syncToggle(ui.soundToggle);
+    }
+
     function renderHeroSummary() {
         if (!ui.heroSummary) return;
         if (state.tab === 'clash') {
@@ -2311,6 +2348,7 @@
         state.save.lastResult = null;
         state.battle = createBattleState(chapter);
         saveProgress();
+        playSfx('battleStart');
         renderAll();
         queueBattleStageScroll();
         startBattleLoop();
@@ -2325,6 +2363,7 @@
         const cooldown = Math.max(0, battle.cooldowns[cardId] || 0);
         const affordable = battle.energy >= card.cost;
         battle.selectedCardId = nextSelected;
+        if (nextSelected) playSfx('select');
         markBattleCardFeedback(cardId, nextSelected ? (cooldown <= 0.05 && affordable ? 'good' : 'warning') : 'good');
         if (battle.lanes.length === 1 && nextSelected) {
             if (cooldown > 0.05) {
@@ -2397,6 +2436,7 @@
             markBattleArena('good', 0.9);
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
             markBattleCardFeedback(card.id, 'good');
+            playSfx('shoot', { cooldownKey: `nc-unit-${card.id}`, cooldownMs: 120 });
         } else {
             battle.energy -= card.cost;
             battle.cooldowns[card.id] = getBattleCardCooldown(card);
@@ -2408,6 +2448,7 @@
             markBattleBanner(localize(card.name), text(`${getBattleLaneLabel(laneId)} 战术生效`, `${getBattleLaneLabel(laneId)} tactic released`), tacticTone);
             markBattleCardFeedback(card.id, tacticTone === 'warning' ? 'warning' : 'good');
             applyBattleTactic(card.id, lane);
+            playSfx(card.id === 'shieldNet' ? 'skillShield' : card.id === 'empLock' ? 'skillEmp' : 'ultimate');
         }
 
         syncBattleSelectedCard(card.id);
@@ -2424,6 +2465,7 @@
         applyLeaderSkill(battle.focusLaneId);
         battle.leaderCharge = 0;
         battle.leaderReadyMarked = false;
+        playSfx('ultimate');
         pushLaneEvent('all', '&#9889;', text('Leader Burst', 'Leader Burst'), 'good');
         markBattleArena('good', 1.25);
         const leaderName = leaderMap[state.save.selectedLeaderId]
@@ -2439,6 +2481,7 @@
         const boost = getBattleBoostDef(boostId);
         if (!boost) return;
         applyBattleBoost(boostId);
+        playSfx('upgrade');
         battle.reinforcementPending = false;
         battle.reinforcementChoices = [];
         battle.boosts.push(boostId);
@@ -2768,6 +2811,7 @@
 
         if (battle.leaderCharge >= 100 && !battle.leaderReadyMarked) {
             battle.leaderReadyMarked = true;
+            playSfx('skillReady', { cooldownKey: 'nc-leader-ready', cooldownMs: 420 });
             markBattleArena('good', 0.9);
             markBattleBanner(
                 text('领袖技就绪', 'Leader Skill Ready'),
@@ -2783,6 +2827,7 @@
         if (battle.time >= battle.nextWaveAt && battle.wave < 4) {
             battle.wave += 1;
             battle.nextWaveAt += battle.waveInterval || 16;
+            playSfx('wave', { cooldownKey: 'nc-wave', cooldownMs: 320 });
             pushLaneEvent('all', '&#10039;', `${text('Wave', 'Wave')} ${battle.wave}`, 'warning');
             markBattleArena('warning', 1.3);
             markBattleBanner(`Wave ${battle.wave}`, 'Enemy pressure is rising. Stabilize your focus lane first.', 'warning');
@@ -2832,6 +2877,7 @@
         if (!lane.bossSpawned && isBossStage(battle.chapter) && lane.id === 'mid' && battle.time >= bossMoment) {
             lane.bossSpawned = true;
             lane.enemy.push(createEnemyBattleUnit(lane, 'boss'));
+            playSfx('bossWarning');
             markLanePulse(lane.id, 'warning');
             markLaneImpact(lane.id, 'warning', 'enemy', 1.2);
             pushLaneEvent(lane.id, '&#9888;', text('首领', 'Boss'), 'warning', 2.6);
@@ -2851,6 +2897,11 @@
         lane.friendly = lane.friendly.filter((unit) => unit.hp > 0);
         lane.enemy = lane.enemy.filter((unit) => {
             if (unit.hp > 0) return true;
+            playSfx(unit.isBoss ? 'bossDown' : 'enemyDown', {
+                boss: unit.isBoss,
+                cooldownKey: unit.isBoss ? 'nc-boss-down' : `nc-${lane.id}-enemy-down`,
+                cooldownMs: unit.isBoss ? 640 : 96
+            });
             if (unit.isBoss) {
                 state.battle.bossDefeated = true;
                 pushLaneEvent(lane.id, '&#10003;', text('首领击破', 'Boss Down'), 'good', 2.4);
@@ -2903,6 +2954,10 @@
                         target.hitUntil = battle.time + 0.24;
                         const totalLoss = applyBattleDamage(target, damage);
                         if (totalLoss > 0 && ((!target.floatUntil || target.floatUntil <= battle.time) || totalLoss >= 24 || target.hp <= 0)) {
+                            playSfx(side === 'ally' ? 'hit' : 'shieldHit', {
+                                cooldownKey: side === 'ally' ? 'nc-ally-hit' : 'nc-enemy-hit',
+                                cooldownMs: 90
+                            });
                             pushBattleFloater(lane.id, {
                                 text: `-${Math.round(totalLoss)}`,
                                 tone: side === 'ally' ? 'good' : 'warning',
@@ -2944,6 +2999,11 @@
                         const damage = unit.attack * (side === 'ally' ? (1 + attackBonus) : 1) * (unit.isBoss ? 1.14 : 0.82);
                         if (side === 'ally') {
                             lane.enemyCoreHp = Math.max(0, lane.enemyCoreHp - damage);
+                            playSfx('hit', {
+                                cooldownKey: `nc-${lane.id}-enemy-core-hit`,
+                                cooldownMs: 120,
+                                pan: 0.26
+                            });
                             markLaneImpact(lane.id, 'good', 'ally', 0.35);
                             if (!lane.enemyCoreFloatUntil || lane.enemyCoreFloatUntil <= battle.time) {
                                 pushBattleFloater(lane.id, {
@@ -2957,6 +3017,11 @@
                             }
                         } else {
                             lane.playerCoreHp = Math.max(0, lane.playerCoreHp - damage);
+                            playSfx('shieldHit', {
+                                cooldownKey: `nc-${lane.id}-ally-core-hit`,
+                                cooldownMs: 120,
+                                pan: -0.26
+                            });
                             markLaneImpact(lane.id, 'warning', 'enemy', 0.35);
                             if (!lane.playerCoreFloatUntil || lane.playerCoreFloatUntil <= battle.time) {
                                 pushBattleFloater(lane.id, {
@@ -3037,6 +3102,7 @@
         };
 
         saveProgress();
+        playSfx(win ? 'victory' : 'defeat');
         showToast(
             retreated
                 ? text('Battle retreated with partial rewards.', 'Battle retreated with partial rewards.')

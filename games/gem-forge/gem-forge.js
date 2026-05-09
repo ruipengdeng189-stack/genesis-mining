@@ -52,6 +52,9 @@
         forgeTiming: createForgeTimingState(),
         activeRelicCelebration: null
     };
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_gem_forge_sfx_v1'
+    });
 
     const ui = {};
     let currentPaymentOrder = null;
@@ -89,14 +92,34 @@
     }
 
     function init() {
+        ensureSoundToggleButton();
         cacheUi();
         bindEvents();
         restoreStoredPaymentOrder();
         syncHeat();
+        syncSoundToggle();
         renderAll();
         syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true }).catch(() => {});
         flushPendingPaymentClaims().catch(() => {});
         paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
+    }
+
+    function ensureSoundToggleButton() {
+        if (document.getElementById('soundToggle')) return;
+        const topLine = document.querySelector('.gf-topline');
+        const langToggle = topLine?.querySelector('.lang-toggle');
+        if (!topLine || !langToggle) return;
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'topbar-actions';
+        const soundButton = document.createElement('button');
+        soundButton.className = 'ghost-btn';
+        soundButton.id = 'soundToggle';
+        soundButton.type = 'button';
+        soundButton.setAttribute('aria-pressed', 'true');
+        soundButton.textContent = 'SFX ON';
+        topLine.insertBefore(actionWrap, langToggle);
+        actionWrap.appendChild(soundButton);
+        actionWrap.appendChild(langToggle);
     }
 
     function cacheUi() {
@@ -140,6 +163,7 @@
         ui.relicStats = document.getElementById('gfRelicStats');
         ui.relicRewards = document.getElementById('gfRelicRewards');
         ui.relicAction = document.getElementById('gfRelicAction');
+        ui.soundToggle = document.getElementById('soundToggle');
     }
 
     function bindEvents() {
@@ -150,6 +174,11 @@
                 queueUiMotion('tab', 280);
                 renderAll();
             });
+        });
+        ui.soundToggle?.addEventListener('click', () => {
+            const nextEnabled = sfx?.toggle();
+            syncSoundToggle();
+            if (nextEnabled) playSfx('confirm');
         });
 
         ui.tabBar.addEventListener('click', (event) => {
@@ -301,6 +330,7 @@
         state.forgeTiming.direction = Math.random() > 0.5 ? 1 : -1;
         state.forgeTiming.speed = FORGE_TIMING_SPEED_MIN + Math.random() * (FORGE_TIMING_SPEED_MAX - FORGE_TIMING_SPEED_MIN);
         state.forgeTiming.lastTickAt = performance.now();
+        playSfx('forgeStart');
         renderAll();
         state.forgeTiming.frameId = window.requestAnimationFrame(stepForgeTiming);
     }
@@ -3446,6 +3476,10 @@
         const pityLabel = getPityLabel(result.pityType);
         const controlLabel = String(result.controlLabel || '');
         const relic = result.relic ? normalizeForgeRelic(result.relic) : null;
+        playSfx(relic ? 'relic' : 'forgeResult', {
+            cooldownKey: relic ? 'gf-relic-drop' : `gf-forge-tier-${result.tier || 1}`,
+            cooldownMs: relic ? 640 : 180
+        });
         state.save.lastResult = {
             type: relic ? 'relic' : 'smelt',
             title: relic
@@ -3538,6 +3572,7 @@
             tags: [familyName, `T${tier}`, `${text('熔尘', 'Dust')} +${formatCompact(dustGain)}`]
         };
         showToast(text(`已回收 ${familyName} T${tier}，返还 ${formatCompact(dustGain)} 熔尘。`, `Recycled ${familyName} T${tier} for ${formatCompact(dustGain)} dust.`));
+        playSfx('salvage');
         saveProgress();
         renderAll();
     }
@@ -5196,6 +5231,7 @@
             tags: [familyName, `T${tier} → T${tier + 1}`, text('战力提升', 'Power Up'), `${text('成本', 'Cost')} ${formatResourceCost(cost, { dust: false })}`]
         };
         showToast(text(`合成成功，已支付 ${formatResourceCost(cost, { dust: false })}。`, `Fusion complete. Paid ${formatResourceCost(cost, { dust: false })}.`));
+        playSfx('fuse');
         saveProgress();
         renderAll();
     }, 'forge', 420);
@@ -5223,6 +5259,7 @@
             tags: [familyName, `T${tier}`, text('永久加成', 'Permanent Bonus'), `${text('成本', 'Cost')} ${formatResourceCost(cost)}`]
         };
         showToast(text(`觉醒完成，已支付 ${formatResourceCost(cost)}。`, `Awakening complete. Paid ${formatResourceCost(cost)}.`));
+        playSfx('awaken');
         saveProgress();
         renderAll();
     }, 'upgrade', 440);
@@ -7602,5 +7639,13 @@
             ui.toast.classList.remove('show');
             ui.toast.dataset.tone = 'neutral';
         }, 2200);
+    }
+
+    function playSfx(name, payload) {
+        sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        sfx?.syncToggle(ui.soundToggle);
     }
 }());

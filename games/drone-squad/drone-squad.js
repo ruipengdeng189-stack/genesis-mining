@@ -45,6 +45,9 @@
         modal: null,
         battle: createBattleState()
     };
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_drone_squad_sfx_v1'
+    });
 
     const ui = {};
     let currentPaymentOrder = null;
@@ -64,6 +67,7 @@
 
     function init() {
         state.tab = tabMap[state.save.tab] ? state.save.tab : 'sortie';
+        ensureSoundToggleButton();
         cacheUi();
         bindEvents();
         const grantedDailyRevive = applyDailyReviveGrant({ silent: true });
@@ -72,10 +76,29 @@
             paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
         }
         flushPendingPaymentClaims().catch(() => {});
+        syncSoundToggle();
         renderAll();
         if (grantedDailyRevive) {
             showToast(text(`Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`, `Daily revive chip +${config.battle.reviveChipDailyGrant || 0}.`), 'success');
         }
+    }
+
+    function ensureSoundToggleButton() {
+        if (document.getElementById('soundToggle')) return;
+        const topLine = document.querySelector('.ds-topline');
+        const langToggle = topLine?.querySelector('.lang-toggle');
+        if (!topLine || !langToggle) return;
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'topbar-actions';
+        const soundButton = document.createElement('button');
+        soundButton.className = 'ghost-btn';
+        soundButton.id = 'soundToggle';
+        soundButton.type = 'button';
+        soundButton.setAttribute('aria-pressed', 'true');
+        soundButton.textContent = 'SFX ON';
+        topLine.insertBefore(actionWrap, langToggle);
+        actionWrap.appendChild(soundButton);
+        actionWrap.appendChild(langToggle);
     }
 
     function cacheUi() {
@@ -118,6 +141,7 @@
         ui.paymentVerifyBtn = document.getElementById('dsPaymentVerifyBtn');
         ui.toast = document.getElementById('toast');
         ui.langButtons = Array.from(document.querySelectorAll('[data-lang-switch]'));
+        ui.soundToggle = document.getElementById('soundToggle');
     }
 
     function bindEvents() {
@@ -127,6 +151,11 @@
                 try { localStorage.setItem(HUB_LANG_KEY, state.lang); } catch (error) {}
                 renderAll();
             });
+        });
+        ui.soundToggle?.addEventListener('click', () => {
+            const nextEnabled = sfx?.toggle();
+            syncSoundToggle();
+            if (nextEnabled) playSfx('confirm');
         });
 
         ui.tabBar.addEventListener('click', (event) => {
@@ -2212,6 +2241,7 @@
             until: 1.8
         };
 
+        playSfx('battleStart');
         renderAll();
         pushBattleNotice(text('\\u9996\\u6ce2\\u654c\\u4eba\\u63a5\\u8fd1\\u4e2d', 'First wave approaching'), 'accent');
         startBattleLoop();
@@ -2322,7 +2352,13 @@
             battle.bullets.push(createBullet(battle.player.x + 12, battle.player.y - 14, 70, -410, bulletDamage * 0.82, battle.player.pierce));
         }
 
-        state.battle.charge = Math.min(100, state.battle.charge + (0.65 * battle.player.chargeRate));
+        addBattleCharge(0.65 * battle.player.chargeRate);
+        playSfx('shoot', {
+            cooldownKey: 'ds-player-shoot',
+            pan: ((battle.player.x / Math.max(1, battle.viewportWidth)) * 2) - 1,
+            freq: battle.mods.volley ? 940 : 860,
+            toFreq: battle.mods.volley ? 680 : 620
+        });
     }
 
     function createBullet(x, y, vx, vy, damage, pierce) {
@@ -2335,6 +2371,30 @@
             damage,
             pierce
         };
+    }
+
+    function syncBattleChargeReady() {
+        const battle = state.battle;
+        if (!battle?.active) return;
+        const readyNow = battle.charge >= 100;
+        if (readyNow && !battle.chargeReadyMarked) {
+            battle.chargeReadyMarked = true;
+            playSfx('skillReady', { cooldownKey: 'ds-skill-ready', cooldownMs: 420 });
+            return;
+        }
+        if (!readyNow && battle.chargeReadyMarked) {
+            battle.chargeReadyMarked = false;
+        }
+    }
+
+    function setBattleCharge(nextValue) {
+        if (!state.battle) return;
+        state.battle.charge = clampNumber(nextValue, state.battle.charge || 0, 0, 100);
+        syncBattleChargeReady();
+    }
+
+    function addBattleCharge(amount) {
+        setBattleCharge((state.battle?.charge || 0) + Number(amount || 0));
     }
 
     function updateBullets(delta) {
@@ -2358,6 +2418,11 @@
                 const bossAdjustedDamage = enemy.isBoss ? damage * battle.player.bossDamageMultiplier : damage;
                 enemy.hp -= bossAdjustedDamage;
                 createFloat(enemy.x, enemy.y - enemy.radius, `-${Math.round(bossAdjustedDamage)}`, enemy.isBoss ? '#ffd766' : '#68b7ff');
+                playSfx(enemy.isBoss ? 'shieldHit' : 'hit', {
+                    cooldownKey: enemy.isBoss ? 'ds-boss-hit' : 'ds-hit',
+                    cooldownMs: enemy.isBoss ? 120 : 72,
+                    pan: ((enemy.x / Math.max(1, battle.viewportWidth)) * 2) - 1
+                });
                 bullet.pierce -= 1;
 
                 if (enemy.hp <= 0) {
@@ -2488,6 +2553,7 @@
                 isElite: true,
                 isBoss: false
             });
+            playSfx('wave', { cooldownKey: 'ds-elite-spawn', cooldownMs: 360 });
             return;
         }
         battle.enemies.push({
@@ -2507,6 +2573,7 @@
         const battle = state.battle;
         const chapterIndex = getChapterIndex(battle.chapter.id);
         const baseScale = 1 + (battle.chapter.chapter * 0.42) + (chapterIndex * 0.1);
+        playSfx('bossWarning');
         battle.bossSpawned = true;
         battle.enemies = battle.enemies.filter((enemy) => enemy.isElite);
         battle.enemyShots = [];
@@ -2536,6 +2603,11 @@
                 enemy.damage
             ));
         });
+        playSfx('enemyShoot', {
+            cooldownKey: enemy.isBoss ? 'ds-boss-shoot' : 'ds-enemy-shoot',
+            cooldownMs: enemy.isBoss ? 240 : 180,
+            pan: ((enemy.x / Math.max(1, state.battle.viewportWidth)) * 2) - 1
+        });
     }
 
     function defeatEnemy(enemyIndex) {
@@ -2543,6 +2615,11 @@
         if (!enemy) return;
         state.battle.enemies.splice(enemyIndex, 1);
         if (enemy.isElite) state.battle.eliteKills += 1;
+        playSfx(enemy.isBoss ? 'bossDown' : 'enemyDown', {
+            boss: enemy.isBoss,
+            cooldownKey: enemy.isBoss ? 'ds-boss-down' : enemy.isElite ? 'ds-elite-down' : 'ds-enemy-down',
+            cooldownMs: enemy.isBoss ? 620 : enemy.isElite ? 180 : 90
+        });
         if (enemy.isBoss) {
             state.battle.bossDefeated = true;
             state.save.stats.bossesKilled += 1;
@@ -2586,19 +2663,25 @@
             return;
         }
         if (pickup.type === 'charge') {
-            state.battle.charge = Math.min(100, state.battle.charge + pickup.value);
+            addBattleCharge(pickup.value);
             createFloat(pickup.x, pickup.y, `+${pickup.value}%`, '#68b7ff');
+            playSfx('goal', { cooldownKey: 'ds-charge-pickup', cooldownMs: 90 });
             return;
         }
     }
 
     function damagePlayer(amount) {
         state.battle.player.shield = Math.max(0, state.battle.player.shield - amount);
+        playSfx(state.battle.player.shield > 0 ? 'shieldHit' : 'hit', {
+            cooldownKey: state.battle.player.shield > 0 ? 'ds-player-shield' : 'ds-player-hit',
+            cooldownMs: 140
+        });
     }
 
     function castSkill() {
         if (!state.battle.active || state.battle.charge < 100 || state.battle.pendingPerks.length || state.battle.result) return;
-        state.battle.charge = 0;
+        setBattleCharge(0);
+        playSfx('ultimate');
         pushBattleNotice(text('超载脉冲释放', 'Overload pulse released'), 'accent');
         for (let index = state.battle.enemies.length - 1; index >= 0; index -= 1) {
             const enemy = state.battle.enemies[index];
@@ -2659,6 +2742,7 @@
 
         state.battle.pendingPerks = [];
         renderStageCenter();
+        playSfx('upgrade');
         showToast(text('\u5f3a\u5316\u5df2\u751f\u6548\u3002', 'Upgrade applied.'), 'success');
     }
 
@@ -2681,6 +2765,7 @@
             firstClear: reward.firstClear || null
         };
         saveProgress();
+        playSfx(win ? 'victory' : 'defeat');
         drawBattleCanvas();
         updateBattleHud();
         renderStageCenter();
@@ -4113,6 +4198,7 @@
             floats: [],
             time: 0,
             charge: 0,
+            chargeReadyMarked: false,
             fireCooldown: 0,
             nextSpawnAt: 0,
             nextEliteIndex: 0,
@@ -4300,6 +4386,14 @@
         state.toastTimer = window.setTimeout(() => {
             ui.toast.classList.remove('show');
         }, 1800);
+    }
+
+    function playSfx(name, payload) {
+        sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        sfx?.syncToggle(ui.soundToggle);
     }
 
     function createUid(prefix) {

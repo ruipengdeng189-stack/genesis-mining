@@ -44,6 +44,9 @@
         feedbackSeed: 0,
         run: null
     };
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_cipher_match_sfx_v1'
+    });
 
     const FX_TIMINGS = {
         swap: 180,
@@ -67,6 +70,7 @@
         state.tab = tabMap[state.save.tab] ? state.save.tab : 'run';
         cacheUi();
         bindEvents();
+        syncSoundToggle();
         renderAll();
         Promise.resolve().then(() => flushPendingPaymentClaims().catch(() => {}));
     }
@@ -89,6 +93,7 @@
         ui.modalCloseBtn = document.getElementById('modalCloseBtn');
         ui.toast = document.getElementById('toast');
         ui.langButtons = Array.from(document.querySelectorAll('[data-lang-switch]'));
+        ui.soundToggle = document.getElementById('soundToggle');
     }
 
     function bindEvents() {
@@ -101,6 +106,11 @@
                 }
                 renderAll();
             });
+        });
+        ui.soundToggle?.addEventListener('click', () => {
+            const nextEnabled = sfx?.toggle();
+            syncSoundToggle();
+            if (nextEnabled) playSfx('confirm');
         });
 
         ui.tabBar.addEventListener('click', (event) => {
@@ -1730,9 +1740,11 @@
         saveProgress();
         renderAll();
         showToast(tutorialEntryFree ? text('教学关免费进入。', 'Tutorial entry is free.') : text('解码开始。', 'Run started.'), 'good');
+        playSfx('battleStart');
     }
 
     function previewTap() {
+        playSfx('select');
         showToast(
             text('先点“开打”进入战斗；开局后点 2 个相邻格交换，凑 3 个相同即可消除。', 'Tap Start to enter battle; then swap 2 adjacent tiles and match 3 to clear.'),
             'good'
@@ -1750,6 +1762,7 @@
             run.feedback = null;
             run.notice = text('已选中第一格，再点相邻方块交换。', 'First tile selected. Tap an adjacent tile to swap.');
             saveProgress();
+            playSfx('select', { pan: ((index % config.board.size) / Math.max(1, config.board.size - 1)) * 2 - 1 });
             renderAll();
             return;
         }
@@ -1759,6 +1772,7 @@
             run.feedback = makeFeedback('warn', text('已取消', 'Selection Cleared'), text('重新选择一组相邻方块。', 'Pick another adjacent pair.'));
             run.notice = text('已取消选择。', 'Selection cleared.');
             saveProgress();
+            playSfx('select');
             renderAll();
             return;
         }
@@ -1768,6 +1782,7 @@
             run.feedback = makeFeedback('warn', text('相邻交换', 'Adjacent Only'), text('只能交换上下左右相邻的两格。', 'Only adjacent tiles can be swapped.'));
             run.notice = text('请选择相邻方块。', 'Choose an adjacent tile to swap.');
             saveProgress();
+            playSfx('error');
             renderAll();
             return;
         }
@@ -1783,6 +1798,7 @@
             run.feedback = makeFeedback('warn', text('未形成 3 连', 'No Match'), text('这次交换无效，换一组相邻方块。', 'That swap did not form a 3-match.'));
             run.notice = text('未形成 3 连，换一组相邻方块。', 'No 3-match. Try another adjacent pair.');
             saveProgress();
+            playSfx('noMatch');
             renderAll();
             return;
         }
@@ -1796,6 +1812,7 @@
             swap: [sourceIndex, index],
             swapMap: createSwapFxMap(sourceIndex, index, config.board.size)
         };
+        playSfx('swap');
         renderAll();
         await wait(FX_TIMINGS.swap);
         if (state.run !== run || !run.active) return;
@@ -1812,6 +1829,10 @@
         const boardBeforeCollapse = run.board.slice();
         const result = resolveBoard(run.board);
         const summary = applyBoardResult(result);
+        playSfx(result.cascades > 1 ? 'cascade' : 'match', {
+            count: result.cascades,
+            size: result.biggestGroup
+        });
         run.bestCascade = Math.max(run.bestCascade || 0, result.cascades || 0);
         run.feedback = buildMatchFeedback(result, summary, run);
         run.notice = result.cascades > 1
@@ -1819,6 +1840,7 @@
             : text('有效交换成功，继续压低目标。', 'Successful swap. Keep pushing your goals.');
         const dropping = getChangedIndices(boardBeforeCollapse, run.board);
         const goalHits = getGoalHitTypes(summary.goalDelta);
+        if (goalHits.length) playSfx('goal', { cooldownKey: 'cm-goal', cooldownMs: 120 });
         run.fx = (dropping.length || goalHits.length)
             ? {
                 kind: dropping.length ? 'drop' : 'goal',
@@ -1828,6 +1850,7 @@
                 shieldHit: !!summary.goalDelta?.shield
             }
             : null;
+        if (dropping.length) playSfx('drop', { cooldownKey: 'cm-drop', cooldownMs: 120 });
         const clearedStage = areGoalsComplete(run.goals);
         renderAll();
         await wait(dropping.length ? FX_TIMINGS.drop : goalHits.length ? 260 : 40);
@@ -1846,6 +1869,7 @@
             run.feedback = bossCounter.feedback;
             run.notice = bossCounter.notice;
             run.fx = { kind: 'boss' };
+            playSfx('bossWarning');
             renderAll();
             await wait(FX_TIMINGS.boss);
             if (state.run !== run || !run.active) return;
@@ -2007,6 +2031,7 @@
             shieldHit: !!skillGoalDelta.shield,
             moveGain
         };
+        playSfx('ultimate');
         run.feedback = makeFeedback(
             'good',
             text('技能释放', 'Skill Cast'),
@@ -2042,6 +2067,7 @@
         if (!run) return;
         const continueCost = getContinueCost();
         run.failed = true;
+        playSfx('defeat');
         run.feedback = makeFeedback('danger', text('步数耗尽', 'Out of Moves'), text('可补 5 步继续，或直接退出调整构筑。', 'Buy 5 more moves or retreat to adjust your deck.'), { icon: '!', persist: true });
         run.notice = text('步数耗尽，可继续购买步数或结束本局。', 'Out of moves. Buy more or retreat.');
         openModal({
@@ -2084,6 +2110,7 @@
         closeModal();
         saveProgress();
         renderAll();
+        playSfx('purchase');
         showToast(text('继续成功。', 'Continue purchased.'), 'good');
     }
 
@@ -2134,6 +2161,7 @@
             }
 
             state.run = null;
+            playSfx('victory');
             openModal({
                 eyebrow: text('通关结算', 'Stage Clear'),
                 title: `${chapter.id} · ${localize(chapter.name)}`,
@@ -4251,6 +4279,14 @@
         state.toastTimer = window.setTimeout(() => {
             ui.toast.className = 'cm-toast';
         }, 1800);
+    }
+
+    function playSfx(name, payload) {
+        sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        sfx?.syncToggle(ui.soundToggle);
     }
 
     async function copyText(value, successText) {

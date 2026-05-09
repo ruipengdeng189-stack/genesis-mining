@@ -4086,12 +4086,16 @@
         if (name === 'skill') {
             playTone({ frequency: 520, frequencyEnd: 780, duration: 0.11, type: 'triangle', volume: 0.026 });
             playTone({ frequency: 780, frequencyEnd: 980, duration: 0.12, type: 'sine', volume: 0.02, delay: 0.04 });
+            playTone({ frequency: 1040, frequencyEnd: 1320, duration: 0.09, type: 'triangle', volume: 0.014, delay: 0.08 });
         }
         if (name === 'overclock') {
             playTone({ frequency: 440, frequencyEnd: 880, duration: 0.14, type: 'sawtooth', volume: 0.03 });
             playTone({ frequency: 660, frequencyEnd: 1320, duration: 0.18, type: 'triangle', volume: 0.025, delay: 0.03 });
         }
-        if (name === 'hit') playTone({ frequency: 240, frequencyEnd: 70, duration: 0.2, type: 'sawtooth', volume: 0.04 });
+        if (name === 'hit') {
+            playTone({ frequency: 240, frequencyEnd: 74, duration: 0.18, type: 'sawtooth', volume: 0.034 });
+            playTone({ frequency: 120, frequencyEnd: 84, duration: 0.12, type: 'triangle', volume: 0.015, delay: 0.02 });
+        }
         if (name === 'reward') {
             playTone({ frequency: 660, frequencyEnd: 880, duration: 0.12, type: 'triangle', volume: 0.028 });
             playTone({ frequency: 880, frequencyEnd: 1320, duration: 0.16, type: 'triangle', volume: 0.024, delay: 0.05 });
@@ -4104,6 +4108,7 @@
         if (name === 'start') {
             playTone({ frequency: 520, frequencyEnd: 760, duration: 0.12, type: 'sawtooth', volume: 0.026 });
             playTone({ frequency: 760, frequencyEnd: 1180, duration: 0.18, type: 'triangle', volume: 0.022, delay: 0.06 });
+            playTone({ frequency: 1180, frequencyEnd: 1440, duration: 0.12, type: 'sine', volume: 0.014, delay: 0.12 });
         }
     }
 

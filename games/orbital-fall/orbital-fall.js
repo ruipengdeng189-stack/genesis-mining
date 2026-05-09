@@ -72,6 +72,9 @@
         paymentOpen: false,
         battle: createBattleState()
     };
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_orbital_fall_sfx_v1'
+    });
 
     const ui = {};
     let paymentCountdownTimer = 0;
@@ -93,6 +96,7 @@
         if (!paymentCountdownTimer) {
             paymentCountdownTimer = window.setInterval(updatePaymentExpiryUI, 1000);
         }
+        syncSoundToggle();
         renderAll();
     }
 
@@ -131,6 +135,7 @@
         ui.paymentVerifyBtn = document.getElementById('paymentVerifyBtn');
         ui.toast = document.getElementById('toast');
         ui.langButtons = Array.from(document.querySelectorAll('[data-lang-switch]'));
+        ui.soundToggle = document.getElementById('soundToggle');
     }
 
     function bindEvents() {
@@ -142,6 +147,11 @@
                 } catch (error) {}
                 renderAll();
             });
+        });
+        ui.soundToggle?.addEventListener('click', () => {
+            const nextEnabled = sfx?.toggle();
+            syncSoundToggle();
+            if (nextEnabled) playSfx('confirm');
         });
 
         ui.tabBar.addEventListener('click', (event) => {
@@ -657,6 +667,8 @@
         const suggestedOffer = pressurePoint?.recommendedOffer ? offerMap[pressurePoint.recommendedOffer] : offerMap[selectedPaymentOfferId] || config.paymentOffers[0];
         const pendingOrder = getPendingOrder();
         const pendingOffer = pendingOrder ? offerMap[pendingOrder.offerId] : null;
+        const pendingOrderStatus = String(pendingOrder?.status || '').toLowerCase();
+        const pendingOrderNeedsClaim = pendingOrderStatus === 'paid' && !!pendingOrder?.txid;
 
         return `
             <div class="of-panel-stack is-shop-panel">
@@ -691,14 +703,14 @@
                                 <div class="of-order-brief">
                                     <div class="of-card-head">
                                         <span class="of-badge-icon">⌛</span>
-                                        <strong>${escapeHtml(text('待处理订单', 'Pending Order'))}</strong>
+                                        <strong>${escapeHtml(pendingOrderNeedsClaim ? text('待领取订单', 'Rewards Ready') : text('待处理订单', 'Pending Order'))}</strong>
                                     </div>
                                     <div class="of-action-row">
                                         <span class="of-chip is-accent">${escapeHtml(localize(pendingOffer?.name || { zh: '当前礼包', en: 'Current Pack' }))}</span>
-                                        <span class="of-chip">${escapeHtml(getPaymentExpiryLabel(pendingOrder))}</span>
+                                        <span class="of-chip">${escapeHtml(pendingOrderNeedsClaim ? text('已支付', 'Paid') : getPaymentExpiryLabel(pendingOrder))}</span>
                                     </div>
                                     <div class="of-copy is-tight">${escapeHtml(`${pendingOrder.orderId || pendingOrder.id || '--'} · ${formatPaymentAmount(pendingOrder.exactAmount)} USDT`)}</div>
-                                    <button class="ghost-btn of-btn-compact" type="button" data-action="openPayment" data-value="${escapeHtml(pendingOrder.offerId || suggestedOffer?.id || 'starter')}">${escapeHtml(text('继续支付', 'Continue Payment'))}</button>
+                                    <button class="ghost-btn of-btn-compact" type="button" data-action="openPayment" data-value="${escapeHtml(pendingOrder.offerId || suggestedOffer?.id || 'starter')}">${escapeHtml(pendingOrderNeedsClaim ? text('恢复奖励', 'Restore Rewards') : text('继续支付', 'Continue Payment'))}</button>
                                 </div>
                             ` : ''}
                             <div class="of-card-grid of-card-grid--dense of-card-grid--offers">
@@ -723,8 +735,9 @@
                 </div>
                 <div class="of-chip-row">
                     <span class="of-chip">${escapeHtml(text(`${loop.stageCount} 局`, `${loop.stageCount} Runs`))}</span>
-                    <span class="of-chip">${escapeHtml(text(`${loop.missionCount} 任务`, `${loop.missionCount} Missions`))}</span>
-                    <span class="of-chip is-good">${escapeHtml(text(`${loop.bonusRunCount} 加成`, `${loop.bonusRunCount} Bonus`))}</span>
+                    <span class="of-chip">${escapeHtml(text(`${loop.missionCount} 待领任务`, `${loop.missionCount} Missions Left`))}</span>
+                    <span class="of-chip is-good">${escapeHtml(text(`剩余加成 ${loop.bonusRunCount}`, `${loop.bonusRunCount} Bonus Left`))}</span>
+                    <span class="of-chip ${loop.dailySupplyReady ? 'is-good' : ''}">${escapeHtml(loop.dailySupplyReady ? text('日补可领', 'Supply Ready') : text('日补已领', 'Supply Claimed'))}</span>
                 </div>
                 <div class="of-chip-row">${renderRewardChips(loop.totalReward)}</div>
                 <div class="of-copy is-tight">${escapeHtml(localize(route.note))}</div>
@@ -967,6 +980,8 @@
         const owned = isOfferOwned(offer.id);
         const recommended = getRelevantPressurePoint(getSelectedChapter().id)?.recommendedOffer === offer.id;
         const pendingOrder = getPendingOrderForOffer(offer.id);
+        const pendingOrderStatus = String(pendingOrder?.status || '').toLowerCase();
+        const pendingOrderNeedsClaim = pendingOrderStatus === 'paid' && !!pendingOrder?.txid;
         return `
             <div class="of-slot-card is-dense-tile is-offer-preview ${recommended ? 'is-selected' : ''}">
                 <div class="of-card-head">
@@ -975,7 +990,7 @@
                 </div>
                 <div class="of-action-row">
                     <span class="of-chip is-accent">${escapeHtml(`${Number(offer.price || 0).toFixed(0)} USDT`)}</span>
-                    <span class="of-chip ${pendingOrder ? 'is-accent' : owned ? 'is-good' : recommended ? 'is-good' : ''}">${escapeHtml(pendingOrder ? text('待处理', 'Pending') : owned ? text('已生效', 'Active') : recommended ? text('推荐', 'Recommended') : text('可查看', 'Viewable'))}</span>
+                    <span class="of-chip ${pendingOrder ? 'is-accent' : owned ? 'is-good' : recommended ? 'is-good' : ''}">${escapeHtml(pendingOrder ? (pendingOrderNeedsClaim ? text('待领取', 'Ready') : text('待处理', 'Pending')) : owned ? text('已生效', 'Active') : recommended ? text('推荐', 'Recommended') : text('可查看', 'Viewable'))}</span>
                 </div>
                 <div class="of-chip-row">
                     ${offer.unlocksPremiumSeason ? `<span class="of-chip">${escapeHtml(text('含高级线', 'Premium Line'))}</span>` : ''}
@@ -984,7 +999,7 @@
                 <div class="of-copy is-tight is-2line">${escapeHtml(localize(offer.permanentText || offer.permanent || { zh: '一条长期收益', en: 'One long-term benefit' }))}</div>
                 <div class="of-copy is-tight is-2line">${escapeHtml(getOfferFitHint(offer))}</div>
                 <button class="primary-btn of-btn-compact" type="button" data-action="openPayment" data-value="${escapeHtml(offer.id)}">
-                    ${escapeHtml(owned ? text('已拥有', 'Owned') : pendingOrder ? text('继续订单', 'Continue') : text('查看', 'View'))}
+                    ${escapeHtml(owned ? text('已拥有', 'Owned') : pendingOrder ? (pendingOrderNeedsClaim ? text('恢复奖励', 'Restore') : text('继续订单', 'Continue')) : text('查看', 'View'))}
                 </button>
             </div>
         `;
@@ -1163,6 +1178,7 @@
                 invuln: 0
             },
             charge: 0,
+            chargeReadyMarked: false,
             bulletTimer: 0,
             spawnTimer: 0,
             eliteTimer: 0,
@@ -1201,6 +1217,33 @@
         state.battle.active = active;
     }
 
+    function syncBattleChargeReadyState() {
+        const battle = state.battle;
+        if (!battle?.active) return;
+        const need = Math.max(1, Number(battle.runtime?.ultimateChargeNeed || 100));
+        const readyNow = battle.charge >= need;
+        if (readyNow && !battle.chargeReadyMarked) {
+            battle.chargeReadyMarked = true;
+            playSfx('skillReady', { cooldownKey: 'of-skill-ready', cooldownMs: 420 });
+            return;
+        }
+        if (!readyNow && battle.chargeReadyMarked) {
+            battle.chargeReadyMarked = false;
+        }
+    }
+
+    function setBattleCharge(nextValue) {
+        const battle = state.battle;
+        if (!battle) return;
+        const need = Math.max(1, Number(battle.runtime?.ultimateChargeNeed || 100));
+        battle.charge = Math.max(0, Math.min(need, Number.isFinite(Number(nextValue)) ? Number(nextValue) : 0));
+        syncBattleChargeReadyState();
+    }
+
+    function addBattleCharge(amount) {
+        setBattleCharge((state.battle?.charge || 0) + Number(amount || 0));
+    }
+
     function startBattle() {
         const chapter = getSelectedChapter();
         if (!isStageUnlocked(chapter.id)) {
@@ -1219,6 +1262,7 @@
         state.battle.player.shield = runtime.maxShield;
         state.battle.player.speed = runtime.moveSpeed;
         state.battle.charge = 0;
+        state.battle.chargeReadyMarked = false;
         state.battle.spawnTimer = Math.max(0.26, Number(runtime.spawnIntervalStart || 0.3) * 0.48);
         state.battle.eliteTimer = runtime.firstEliteAt;
         state.battle.choiceCounts = {};
@@ -1226,6 +1270,7 @@
         state.save.stats.runs += 1;
         state.save.stats.lastStageId = chapter.id;
         saveProgress();
+        playSfx('battleStart');
         renderAll();
         showToast(localize(runtime.openingHint || {
             zh: '开局拖动战机走位，火力会自动追击最近敌人。',
@@ -1334,8 +1379,14 @@
         return runtime;
     }
 
+    function getBattleTuningConfig() {
+        const root = config.battleTuning && typeof config.battleTuning === 'object' ? config.battleTuning : null;
+        if (root) return root;
+        return (config.balance && config.balance.battleTuning) || {};
+    }
+
     function resolveChapterCombatTuning(chapter) {
-        const battleTuning = (config.balance && config.balance.battleTuning) || {};
+        const battleTuning = getBattleTuningConfig();
         const defaults = battleTuning.combatDefaults || {};
         const stageTuning = battleTuning.stageCombatTuning || {};
         const kindDefaults = defaults[chapter.kind] || defaults.normal || {};
@@ -1346,7 +1397,7 @@
     }
 
     function getStageEliteWindow(chapter) {
-        const battleTuning = (config.balance && config.balance.battleTuning) || {};
+        const battleTuning = getBattleTuningConfig();
         const windows = Array.isArray(battleTuning.eliteSpawnWindows) ? battleTuning.eliteSpawnWindows : [];
         const fallback = chapter.kind === 'boss' ? [0.58, 0.74] : chapter.kind === 'elite' ? [0.38, 0.56] : [0.45, 0.62];
         const chapterNo = Number(chapter.chapter || 1);
@@ -1510,6 +1561,12 @@
             createPlayerBullet(target, i * 18);
             createPlayerBullet(target, -i * 18);
         }
+        playSfx('shoot', {
+            cooldownKey: 'of-player-shoot',
+            pan: ((battle.player.x / Math.max(1, battle.width)) * 2) - 1,
+            freq: runtime.sideShots > 0 ? 940 : 860,
+            toFreq: runtime.sideShots > 0 ? 660 : 620
+        });
     }
 
     function createPlayerBullet(target, offsetX) {
@@ -1607,6 +1664,7 @@
             phase: Math.random() * Math.PI * 2,
             flash: 0
         });
+        playSfx('wave', { cooldownKey: 'of-elite-spawn', cooldownMs: 360 });
     }
 
     function spawnBossEnemy() {
@@ -1630,6 +1688,7 @@
             flash: 0
         });
         pushEffect({ type: 'ring', x: state.battle.width * 0.5, y: 120, radius: 20, maxRadius: 180, life: 0.7, color: '#ff9e63' });
+        playSfx('bossWarning');
         showToast(text('首领已进入战场，准备释放大招。', 'Boss entered the field. Save your ultimate.'), 'warning');
     }
 
@@ -1697,6 +1756,11 @@
             radius: enemy.boss ? 6 : 5,
             damage: enemy.damage * 0.65
         });
+        playSfx('enemyShoot', {
+            cooldownKey: enemy.boss ? 'of-boss-shoot' : 'of-enemy-shoot',
+            cooldownMs: enemy.boss ? 260 : 180,
+            pan: ((enemy.x / Math.max(1, state.battle.width)) * 2) - 1
+        });
     }
 
     function updateBullets(delta) {
@@ -1737,6 +1801,10 @@
                 enemy.hp -= damage;
                 enemy.flash = 1;
                 pushEffect({ type: 'spark', x: bullet.x, y: bullet.y, radius: bullet.crit ? 14 : 10, life: 0.22, color: bullet.crit ? '#ffe38c' : '#ffb07a' });
+                playSfx(enemy.boss ? 'shieldHit' : 'hit', {
+                    cooldownKey: enemy.boss ? 'of-boss-hit' : 'of-hit',
+                    cooldownMs: enemy.boss ? 120 : 72
+                });
 
                 if (runtime.splashRadius > 0) {
                     battle.enemies.forEach((other) => {
@@ -1837,7 +1905,7 @@
         }
 
         const chargeGain = runtime.chargePerSecond * (1 + (battle.choiceCounts['ultimate-charge'] || 0) * 0.16);
-        battle.charge = Math.min(runtime.ultimateChargeNeed, battle.charge + chargeGain * delta);
+        addBattleCharge(chargeGain * delta);
 
         if (runtime.controlPulse > 0) {
             battle.runtime.controlPulseTimer = (battle.runtime.controlPulseTimer || 2.8) - delta;
@@ -1953,6 +2021,7 @@
         const runtime = state.battle.runtime;
         state.battle.choiceOpen = false;
         state.battle.choiceCounts[choiceId] = (state.battle.choiceCounts[choiceId] || 0) + 1;
+        playSfx('upgrade');
 
         switch (choiceId) {
             case 'attack-rate':
@@ -2002,8 +2071,9 @@
         }
 
         const runtime = battle.runtime;
-        battle.charge = 0;
+        setBattleCharge(0);
         pushEffect({ type: 'ring', x: battle.player.x, y: battle.player.y, radius: 16, maxRadius: 180, life: 0.54, color: '#ffb273' });
+        playSfx('ultimate');
 
         switch (runtime.ultimateId) {
             case 'phase-dash':
@@ -2056,9 +2126,14 @@
     function onEnemyDefeated(enemy) {
         const battle = state.battle;
         battle.kills += 1;
-        battle.charge = Math.min(battle.runtime.ultimateChargeNeed, battle.charge + battle.runtime.chargeOnKill);
+        addBattleCharge(battle.runtime.chargeOnKill);
         if (enemy.elite) battle.eliteKills += 1;
         if (enemy.boss) battle.bossKilled = true;
+        playSfx(enemy.boss ? 'bossDown' : 'enemyDown', {
+            boss: enemy.boss,
+            cooldownKey: enemy.boss ? 'of-boss-down' : (enemy.elite ? 'of-elite-down' : 'of-enemy-down'),
+            cooldownMs: enemy.boss ? 640 : enemy.elite ? 180 : 90
+        });
 
         const runtime = battle.runtime;
         const baseValue = enemy.boss ? 24 : enemy.elite ? 12 : 5;
@@ -2083,6 +2158,10 @@
             life: 0.7,
             color: enemy.boss ? '#ffdf9b' : '#eef4ff'
         });
+
+        if (enemy.boss && battle.runtime.chapter.kind === 'boss' && !battle.result) {
+            onBattleVictory();
+        }
     }
 
     function spawnDrop(x, y, value, count) {
@@ -2110,6 +2189,10 @@
         if (remaining > 0) {
             player.hp -= remaining;
         }
+        playSfx(remaining > 0 ? 'hit' : 'shieldHit', {
+            cooldownKey: remaining > 0 ? 'of-player-hit' : 'of-player-shield',
+            cooldownMs: remaining > 0 ? 140 : 120
+        });
     }
 
     function toggleBattlePause() {
@@ -2121,12 +2204,16 @@
 
     function continueBattle() {
         if (!state.battle.result || state.battle.result.type !== 'defeat') return;
+        const pendingDefeatReward = cloneReward(state.battle.result.reward || {});
+        revokeReward(pendingDefeatReward);
         const continueMeta = getBattleContinueMeta();
         if (!continueMeta.canContinue) {
+            applyReward(pendingDefeatReward);
             showToast(text('继续所需资源不足，先回整备升级一下。', 'Not enough resources to continue. Upgrade first and try again.'), 'warning');
             return;
         }
         if (state.battle.continueUsed >= (config.economy?.continueCosts || []).length) {
+            applyReward(pendingDefeatReward);
             showToast(text('本局继续次数已用完。', 'No continues left this run.'), 'warning');
             return;
         }
@@ -2140,7 +2227,7 @@
         state.battle.player.hp = Math.max(state.battle.player.maxHp * 0.42, state.battle.player.hp + state.battle.player.maxHp * 0.32);
         state.battle.player.shield = Math.max(state.battle.player.maxShield * 0.45, state.battle.player.maxShield * 0.6);
         state.battle.player.invuln = 1.2;
-        state.battle.charge = state.battle.runtime.ultimateChargeNeed;
+        setBattleCharge(state.battle.runtime.ultimateChargeNeed);
         state.battle.result = null;
         state.battle.paused = false;
         trimBattleThreat();
@@ -2176,7 +2263,7 @@
         state.save.stats.totalKills += state.battle.kills;
         state.save.stats.eliteKills += state.battle.eliteKills;
         state.save.stats.bossKills += state.battle.bossKilled ? 1 : 0;
-        state.save.stats.survivalSeconds += Math.round(Number(state.battle.runtime.chapter.duration || 0));
+        state.save.stats.survivalSeconds += getBattleElapsedSeconds();
         saveProgress();
         state.battle.result = {
             type: 'victory',
@@ -2185,6 +2272,7 @@
             reward,
             nextStageId: getNextChapterId(state.battle.runtime.chapter.id)
         };
+        playSfx('victory');
         showToast(text('关卡完成，奖励已发放。', 'Stage clear, rewards granted.'), 'success');
     }
 
@@ -2204,6 +2292,7 @@
             reward,
             retreat: isRetreat
         };
+        playSfx('defeat');
         showToast(isRetreat ? text('已撤离并保留部分结算。', 'Retreated with partial rewards.') : text('战机损毁，先升级后再来挑战。', 'Ship destroyed. Upgrade and try again.'), 'warning');
     }
 
@@ -2227,7 +2316,12 @@
         const chapter = state.battle.runtime.chapter;
         const base = { ...(chapter.reward || {}) };
         const bonusRuns = getDailyBonusRunInfo();
-        let multiplier = isVictory ? 1 : isRetreat ? 0.35 : 0.46;
+        const elapsedRatio = getBattleProgressRatio();
+        let multiplier = isVictory
+            ? 1
+            : isRetreat
+                ? lerp(0.12, 0.38, elapsedRatio)
+                : lerp(0.16, 0.52, elapsedRatio);
         const growthMultiplier = 1 + Number(state.battle.runtime.rewardGrowthRate || 0);
         if (isVictory && bonusRuns.left > 0) {
             multiplier += 0.15;
@@ -2606,11 +2700,7 @@
 
     function renderBattleVfxHtml() {
         if (!state.battle.ui.vfx) return;
-        const fragments = [];
-        if (state.battle.bossSpawned && !state.battle.bossKilled) {
-            fragments.push(`<div class="of-battle-hint" style="top:auto;bottom:12px;">${escapeHtml(text('首领在场：优先走位，满能量后直接放大招。', 'Boss active: keep moving and cast as soon as charged.'))}</div>`);
-        }
-        state.battle.ui.vfx.innerHTML = fragments.join('');
+        state.battle.ui.vfx.innerHTML = '';
     }
 
     function selectChapter(chapterId) {
@@ -2798,9 +2888,16 @@
         if (!offer) return;
         const order = getPendingOrderForOffer(offer.id);
         const orderStatus = String(order?.status || '').toLowerCase();
+        const expiresAtMs = order?.expiresAt ? new Date(order.expiresAt).getTime() : 0;
+        const isExpired = !!(order && (orderStatus === 'expired' || (expiresAtMs > 0 && expiresAtMs <= Date.now()) || isPendingOrderExpired(order)));
+        const activeOrder = isExpired ? null : order;
+        const activeOrderStatus = String(activeOrder?.status || '').toLowerCase();
         const owned = isOfferOwned(offer.id);
         const activePendingOrder = getActivePendingPaymentOrder();
         const isLockedToOtherOrder = !!(activePendingOrder && activePendingOrder.offerId && activePendingOrder.offerId !== offer.id);
+        const isRecoverablePaidOrder = activeOrderStatus === 'paid' && !!activeOrder?.txid;
+        const canCopyOrder = !!activeOrder && activeOrderStatus === 'pending';
+        const canVerifyOrder = !owned && !!activeOrder && activeOrderStatus === 'pending';
 
         ui.paymentEyebrow.textContent = text('链上支付', 'On-Chain Payment');
         ui.paymentTitle.textContent = text('支付中心', 'Payment Hub');
@@ -2827,43 +2924,59 @@
         }).join('');
 
         if (ui.paymentImpact) {
-            ui.paymentImpact.innerHTML = renderPaymentImpact(offer, order, activePendingOrder);
+            ui.paymentImpact.innerHTML = renderPaymentImpact(offer, activeOrder, activePendingOrder);
         }
 
-        ui.paymentAmount.textContent = order ? `${formatPaymentAmount(order.exactAmount)} USDT` : `${Number(offer.price || 0).toFixed(2)} USDT`;
-        ui.paymentMeta.textContent = order
-            ? `${order.network || 'TRON (TRC20)'} · ${text('按精确金额支付', 'Pay exact amount')}`
+        ui.paymentAmount.textContent = activeOrder ? `${formatPaymentAmount(activeOrder.exactAmount)} USDT` : `${Number(offer.price || 0).toFixed(2)} USDT`;
+        ui.paymentMeta.textContent = activeOrder
+            ? `${activeOrder.network || 'TRON (TRC20)'} · ${text(activeOrderStatus === 'paid' ? '支付已确认，恢复即可到账' : '按精确金额支付', activeOrderStatus === 'paid' ? 'Payment confirmed · restore rewards' : 'Pay exact amount')}`
             : `TRON (TRC20) · ${text('先建单获取精确金额', 'Create order to get exact amount')}`;
         ui.paymentOrderLabel.textContent = text('订单', 'Order');
-        ui.paymentOrderId.textContent = order?.orderId || order?.id || '--';
+        ui.paymentOrderId.textContent = activeOrder?.orderId || activeOrder?.id || '--';
         ui.paymentExactLabel.textContent = text('金额', 'Amount');
-        ui.paymentExactAmount.textContent = order ? `${formatPaymentAmount(order.exactAmount)} USDT` : text('建单后显示', 'Shown after create');
+        ui.paymentExactAmount.textContent = activeOrder ? `${formatPaymentAmount(activeOrder.exactAmount)} USDT` : text('建单后显示', 'Shown after create');
         ui.paymentExpiryLabel.textContent = text('时效', 'Time Left');
         ui.paymentAddressLabel.textContent = text('地址', 'Address');
-        ui.paymentWallet.textContent = getPaymentAddress(order) || text('建单后显示地址', 'Address appears after create');
-        ui.paymentCreateBtn.textContent = orderStatus === 'paid'
+        ui.paymentWallet.textContent = getPaymentAddress(activeOrder) || text('建单后显示地址', 'Address appears after create');
+        ui.paymentCreateBtn.textContent = isRecoverablePaidOrder
             ? text('恢复奖励', 'Restore Rewards')
-            : order
+            : activeOrder
                 ? text('查单', 'Check')
                 : text('建单', 'Create');
         ui.paymentCopyAddressBtn.textContent = text('复制地址', 'Copy Address');
         ui.paymentCopyAmountBtn.textContent = text('复制金额', 'Copy Amount');
         ui.paymentTxidLabel.textContent = text('粘贴 TXID', 'Paste TXID');
-        ui.paymentTxidInput.placeholder = text('输入或粘贴交易哈希', 'Enter or paste the transaction hash');
+        ui.paymentTxidInput.placeholder = isExpired
+            ? text('订单已过期，请重新建单', 'This order expired. Create a new one.')
+            : isRecoverablePaidOrder
+                ? text('已检测到付款，点恢复奖励即可', 'Payment found. Tap Restore Rewards.')
+                : activeOrder
+                    ? text('输入或粘贴交易哈希', 'Enter or paste the transaction hash')
+                    : text('先建单再粘贴 TXID', 'Create an order before pasting TXID');
         ui.paymentTxidHint.textContent = text('订单、地址、金额和时效需完全一致。', 'Order, address, amount, and time must match.');
-        ui.paymentVerifyBtn.textContent = owned ? text('已生效', 'Already Applied') : text('校验并领取', 'Verify & Claim');
+        ui.paymentVerifyBtn.textContent = owned
+            ? text('已生效', 'Already Applied')
+            : isRecoverablePaidOrder
+                ? text('等待恢复', 'Use Restore')
+                : text('校验并领取', 'Verify & Claim');
         ui.paymentCreateBtn.disabled = owned || isLockedToOtherOrder;
-        ui.paymentCopyAddressBtn.disabled = !order;
-        ui.paymentCopyAmountBtn.disabled = !order;
-        ui.paymentVerifyBtn.disabled = owned || !order;
+        ui.paymentCopyAddressBtn.disabled = !canCopyOrder;
+        ui.paymentCopyAmountBtn.disabled = !canCopyOrder;
+        ui.paymentVerifyBtn.disabled = !canVerifyOrder;
+        ui.paymentTxidInput.disabled = owned || !activeOrder || isRecoverablePaidOrder;
+        if (ui.paymentTxidInput.disabled && (!activeOrder || owned || isRecoverablePaidOrder)) {
+            ui.paymentTxidInput.value = '';
+        }
 
         const statusText = isLockedToOtherOrder
             ? text('当前有其他待处理订单，请先完成那一笔。', 'Another pending order is still active. Finish that one first.')
             : owned
             ? text('该礼包已生效。', 'This pack is active.')
-            : orderStatus === 'paid'
+            : isExpired
+                ? text('订单已过期，请重新创建。', 'This order expired. Please create a new one.')
+            : isRecoverablePaidOrder
                 ? text('这笔支付已确认，点击恢复奖励即可到账。', 'This payment is confirmed. Tap Restore Rewards to apply it.')
-            : order
+            : activeOrder
                 ? text('订单已生成，支付后粘贴 TXID。', 'Order ready. Paste TXID after payment.')
                 : text('先建单，再支付并校验。', 'Create order, then pay and verify.');
         ui.paymentStatus.textContent = statusText;
@@ -2895,7 +3008,22 @@
         }
         const remainingMs = Math.max(0, new Date(order.expiresAt).getTime() - Date.now());
         if (remainingMs <= 0) {
-            ui.paymentExpiry.textContent = '00:00';
+            if (
+                state.save.payment.pendingOrder
+                && String(state.save.payment.pendingOrder.orderId || state.save.payment.pendingOrder.id || '') === String(order.orderId || order.id || '')
+            ) {
+                state.save.payment.pendingOrder = null;
+                if (ui.paymentTxidInput) ui.paymentTxidInput.value = '';
+                persistCurrentPaymentOrder();
+                saveProgress();
+                paymentStatusTone = 'warning';
+                refreshPaymentUi();
+                if (ui.paymentStatus) {
+                    ui.paymentStatus.textContent = text('订单已过期，请重新创建。', 'This order expired. Please create a new one.');
+                }
+                return;
+            }
+            ui.paymentExpiry.textContent = text('已过期', 'Expired');
             return;
         }
         const minutes = Math.floor(remainingMs / 60000);
@@ -3129,6 +3257,7 @@
 
             if (String(remote.status || '').toLowerCase() === 'expired') {
                 state.save.payment.pendingOrder = null;
+                if (ui.paymentTxidInput) ui.paymentTxidInput.value = '';
                 persistCurrentPaymentOrder();
                 saveProgress();
                 paymentStatusTone = 'warning';
@@ -3386,7 +3515,7 @@
 
     function isPendingOrderExpired(order) {
         if (!order?.expiresAt) return true;
-        return (new Date(order.expiresAt).getTime() + 1000) < Date.now();
+        return new Date(order.expiresAt).getTime() <= Date.now();
     }
 
     function normalizeOrder(order) {
@@ -3565,24 +3694,28 @@
     function estimateDailyLoopReward(route) {
         if (!route) return null;
         const totalReward = createRewardBucket();
-        const bonusRunCount = Number(config.economy?.dailyFreeRunCount || 0) + Number(state.save.payment.permanent.dailyFreeRuns || 0);
+        const bonusRunInfo = getDailyBonusRunInfo();
+        const bonusRunCount = Number(bonusRunInfo.left || 0);
         (route.stageIds || []).forEach((stageId, index) => {
             const chapter = chapterMap[stageId];
             if (!chapter) return;
             addRewardToBucket(totalReward, estimateVictoryRewardForChapter(chapter, index < bonusRunCount));
         });
-        (route.missionIds || []).forEach((missionId) => {
+        const pendingMissionIds = (route.missionIds || []).filter((missionId) => !state.save.missionClaimed.includes(missionId));
+        pendingMissionIds.forEach((missionId) => {
             const mission = missionMap[missionId];
             if (mission?.reward) addRewardToBucket(totalReward, mission.reward);
         });
         const dailyItem = shopMap[route.shopDailyId || 'dailySupply'];
-        if (dailyItem?.reward) addRewardToBucket(totalReward, dailyItem.reward);
+        const dailySupplyReady = canClaimDailySupply();
+        if (dailyItem?.reward && dailySupplyReady) addRewardToBucket(totalReward, dailyItem.reward);
         return {
             route,
             totalReward,
             stageCount: Array.isArray(route.stageIds) ? route.stageIds.length : 0,
-            missionCount: Array.isArray(route.missionIds) ? route.missionIds.length : 0,
-            bonusRunCount
+            missionCount: pendingMissionIds.length,
+            bonusRunCount,
+            dailySupplyReady
         };
     }
 
@@ -3617,23 +3750,26 @@
 
     function getShopFocusSuggestion(pressurePoint, route) {
         const fallbackItems = (route?.shopFocus || []).map((id) => shopMap[id]).filter(Boolean);
-        if (!pressurePoint?.goalCost) {
+        const focusEstimate = estimatePressurePointRecovery(pressurePoint);
+        const targetCost = !isCostBucketEmpty(focusEstimate?.remainingCost)
+            ? focusEstimate.remainingCost
+            : normalizeCostBucket(pressurePoint?.goalCost);
+        if (!targetCost || isCostBucketEmpty(targetCost)) {
             return {
                 items: fallbackItems.slice(0, 3),
-                copy: text('先领日补给，再按背包情况补合金或信号。', 'Take daily supply first, then top up alloy or signal as needed.')
+                copy: text('当前这档整备已经够用，先把日补给和后续储备拿满。', 'This checkpoint is already covered. Keep daily supply and future stock topped up.')
             };
         }
 
-        const goalCost = pressurePoint.goalCost || {};
         const gaps = {
-            credits: Math.max(0, Number(goalCost.credits || 0) - Number(state.save.credits || 0)),
-            alloy: Math.max(0, Number(goalCost.alloy || 0) - Number(state.save.alloy || 0)),
-            signal: Math.max(0, Number(goalCost.signal || 0) - Number(state.save.signal || 0))
+            credits: Math.max(0, Number(targetCost.credits || 0) - Number(state.save.credits || 0)),
+            alloy: Math.max(0, Number(targetCost.alloy || 0) - Number(state.save.alloy || 0)),
+            signal: Math.max(0, Number(targetCost.signal || 0) - Number(state.save.signal || 0))
         };
         const weighted = Object.entries(gaps).map(([key, value]) => ({
             key,
             value,
-            ratio: value / Math.max(1, Number(goalCost[key] || 1))
+            ratio: value / Math.max(1, Number(targetCost[key] || 1))
         })).sort((left, right) => right.ratio - left.ratio);
         const primaryGap = weighted[0]?.key || 'alloy';
 
@@ -3844,6 +3980,14 @@
         if (reward.premiumSeason) state.save.payment.premiumSeason = true;
     }
 
+    function revokeReward(reward) {
+        state.save.credits = Math.max(0, Number(state.save.credits || 0) - Number(reward.credits || 0));
+        state.save.alloy = Math.max(0, Number(state.save.alloy || 0) - Number(reward.alloy || 0));
+        state.save.signal = Math.max(0, Number(state.save.signal || 0) - Number(reward.signal || 0));
+        state.save.seasonXp = Math.max(0, Number(state.save.seasonXp || 0) - Number(reward.seasonXp || 0));
+        state.save.eliteKeys = Math.max(0, Number(state.save.eliteKeys || 0) - Number(reward.eliteKeys || 0));
+    }
+
     function getSelectedChapter() {
         return chapterMap[state.save.selectedChapterId] || config.chapters[0];
     }
@@ -3909,7 +4053,11 @@
         const currentIndex = chapterIndexMap[chapter.id] ?? 0;
         const pointIndex = chapterIndexMap[pressurePoint.stageId] ?? currentIndex;
         if (currentIndex + 1 < pointIndex) return getPrepGuidance(chapter);
-        return localize(pressurePoint.playerHint || pressurePoint.cause || { zh: '先把主输出和生存升上来，再回来开打会更稳。', en: 'Upgrade damage and survivability for a smoother run.' });
+        const focusCopy = pressurePoint.playerHint || pressurePoint.cause || { zh: '先把主输出和生存升上来，再回来开打会更稳。', en: 'Upgrade damage and survivability for a smoother run.' };
+        if (state.lang === 'zh' && looksCorruptedLocalizedText(focusCopy?.zh || '')) {
+            return getRunFocusZhFallback(pressurePoint);
+        }
+        return localize(focusCopy);
     }
 
     function renderRunFocusGoal(chapter, pressurePoint) {
@@ -3918,7 +4066,11 @@
         const pointIndex = chapterIndexMap[pressurePoint.stageId] ?? currentIndex;
         if (currentIndex + 1 < pointIndex) return '';
 
-        const goalTags = Array.isArray(pressurePoint.goalTags) ? pressurePoint.goalTags : [];
+        const goalTags = (Array.isArray(pressurePoint.goalTags) ? pressurePoint.goalTags : []).filter((tag) => {
+            if (state.lang !== 'zh') return true;
+            if (tag && typeof tag === 'object') return !looksCorruptedLocalizedText(tag.zh || '');
+            return !looksCorruptedLocalizedText(String(tag || ''));
+        });
         const focusTags = getPressurePointFocusTags(pressurePoint);
         const focusEstimate = estimatePressurePointRecovery(pressurePoint);
         const goalCost = !isCostBucketEmpty(focusEstimate?.remainingCost)
@@ -3941,6 +4093,17 @@
             ` : ''}
             ${goalCost ? `<div class="of-chip-row"><span class="of-chip is-warning">${escapeHtml(text('近期补齐', 'Next spend'))} ${escapeHtml(formatCostInline(goalCost))}</span></div>` : ''}
         `;
+    }
+
+    function getRunFocusZhFallback(pressurePoint) {
+        const focusTags = getPressurePointFocusTags(pressurePoint).slice(0, 2);
+        if (focusTags.length) {
+            return `先补 ${focusTags.join(' / ')}，再回来开打会更稳。`;
+        }
+        if (pressurePoint?.goalCost && !isCostBucketEmpty(pressurePoint.goalCost)) {
+            return '先把近期整备缺口补齐，再回来开打会更稳。';
+        }
+        return '先补主输出和生存，再回来开打会更稳。';
     }
 
     function renderRecoveryKeyHint() {
@@ -4480,6 +4643,14 @@
         state.battle.effects.push(effect);
     }
 
+    function playSfx(name, payload) {
+        sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        sfx?.syncToggle(ui.soundToggle);
+    }
+
     function getStageDensityProgress() {
         const duration = Number(state.battle.runtime?.chapter?.duration || 1);
         return clamp(1 - state.battle.timeRemaining / Math.max(1, duration), 0, 1);
@@ -4488,6 +4659,16 @@
     function getDayKey() {
         const date = new Date();
         return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    }
+
+    function getBattleElapsedSeconds() {
+        const duration = Number(state.battle.runtime?.chapter?.duration || 0);
+        return Math.max(0, Math.round(duration - Number(state.battle.timeRemaining || 0)));
+    }
+
+    function getBattleProgressRatio() {
+        const duration = Math.max(1, Number(state.battle.runtime?.chapter?.duration || 1));
+        return clamp((duration - Number(state.battle.timeRemaining || 0)) / duration, 0, 1);
     }
 
     function typeIcon(type) {

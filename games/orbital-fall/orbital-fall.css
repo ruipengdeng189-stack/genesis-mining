@@ -1227,6 +1227,11 @@ body[data-of-battle='idle'] .of-panel-card {
     font: inherit;
 }
 
+.of-payment-input:disabled {
+    opacity: 0.56;
+    cursor: not-allowed;
+}
+
 .of-toast {
     position: fixed;
     left: 50%;

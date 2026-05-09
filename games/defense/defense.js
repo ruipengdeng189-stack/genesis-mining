@@ -823,6 +823,9 @@
         battleLoopStarted: false,
         battle: createEmptyBattle(initialSave)
     };
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_defense_sfx_v1'
+    });
 
     const ui = {};
     let currentPaymentOrder = null;
@@ -837,12 +840,14 @@
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
+        state.soundEnabled = sfx?.isEnabled?.() ?? state.soundEnabled;
         cacheDom();
         bindStaticEvents();
         markHubOpen();
         applyLanguage();
         restoreStoredPaymentOrder();
         updateStartPanel();
+        syncSoundToggle();
         renderAll();
         registerDebugApi();
         syncCurrentPaymentOrderStatus({ recoverRewards: true, silent: true }).catch(() => {});
@@ -939,7 +944,9 @@
         });
 
         ui.soundToggle.addEventListener('click', () => {
-            state.soundEnabled = !state.soundEnabled;
+            state.soundEnabled = sfx?.toggle?.() ?? !state.soundEnabled;
+            syncSoundToggle();
+            if (state.soundEnabled) playSfx('confirm');
             renderActionBar();
         });
 
@@ -1491,6 +1498,13 @@
             chained: !!chained
         });
         if (state.battle.shotTraces.length > 40) state.battle.shotTraces.shift();
+        playSfx('shoot', {
+            cooldownKey: `defense-shot-${chained ? 'chain' : towerId}`,
+            cooldownMs: chained ? 90 : 72,
+            pan: ((fromX / CANVAS_WIDTH) * 2) - 1,
+            freq: towerId === 'rail' ? 980 : towerId === 'rocket' ? 420 : towerId === 'laser' ? 900 : 760,
+            toFreq: towerId === 'rocket' ? 260 : towerId === 'frost' ? 520 : 620
+        });
     }
 
     function pushSkillBurst(skillId) {
@@ -1501,6 +1515,7 @@
             duration
         });
         if (state.battle.skillBursts.length > 8) state.battle.skillBursts.shift();
+        playSfx(skillId === 'emp' ? 'skillEmp' : skillId === 'overclock' ? 'skillOverclock' : 'skillShield');
     }
 
     function pushHitBurst(x, y, tone = 'wave', scale = 1) {
@@ -1513,6 +1528,10 @@
             duration: 0.26
         });
         if (state.battle.hitBursts.length > 28) state.battle.hitBursts.shift();
+        playSfx(tone === 'shield' ? 'shieldHit' : 'hit', {
+            cooldownKey: tone === 'shield' ? 'defense-shield-hit' : 'defense-hit',
+            cooldownMs: tone === 'shield' ? 110 : 68
+        });
     }
 
     function pushDefeatBurst(enemy) {
@@ -1527,10 +1546,19 @@
             elite: !!enemy.elite
         });
         if (state.battle.defeatBursts.length > 16) state.battle.defeatBursts.shift();
+        playSfx(enemy.boss ? 'bossDown' : 'enemyDown', {
+            boss: !!enemy.boss,
+            cooldownKey: enemy.boss ? 'defense-boss-down' : enemy.elite ? 'defense-elite-down' : 'defense-enemy-down',
+            cooldownMs: enemy.boss ? 620 : enemy.elite ? 180 : 90
+        });
     }
 
     function triggerCoreImpact(damage, shieldAbsorbed = 0) {
         const severity = Math.min(1.8, Math.max(damage, shieldAbsorbed * 0.6) / 20);
+        playSfx(shieldAbsorbed > 0 && damage <= 0 ? 'shieldHit' : 'hit', {
+            cooldownKey: shieldAbsorbed > 0 && damage <= 0 ? 'defense-core-shield' : 'defense-core-hit',
+            cooldownMs: 140
+        });
         state.battle.coreImpactTimer = Math.max(state.battle.coreImpactTimer, 0.5 + severity * 0.24);
         state.battle.coreImpactSeverity = Math.max(state.battle.coreImpactSeverity, severity);
         state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.2 + severity * 0.14);
@@ -1540,6 +1568,7 @@
 
     function triggerWaveClearCelebration() {
         state.battle.waveClearTimer = Math.max(state.battle.waveClearTimer, 1.2);
+        playSfx('upgrade');
         state.battle.screenShakeTimer = Math.max(state.battle.screenShakeTimer, 0.18);
         state.battle.screenShakeStrength = Math.max(state.battle.screenShakeStrength, 4.2);
         pushBattleAlert(
@@ -1569,6 +1598,7 @@
     function announceSkillReady() {
         if (!state.battle.running || state.battle.finished) return;
         state.battle.skillReadyPulse = Math.max(state.battle.skillReadyPulse, 1.8);
+        playSfx('skillReady');
         triggerBattleBanner(t('skillReadyBanner').replace('{skill}', t(SKILLS[state.save.selectedSkill].nameKey)), 'skill', 1.1);
         pushBattleAlert(
             getLocalized({
@@ -1703,7 +1733,7 @@
     }
 
     function renderActionBar() {
-        ui.soundToggle.textContent = state.soundEnabled ? 'SFX ON' : 'SFX OFF';
+        syncSoundToggle();
         const skill = SKILLS[state.save.selectedSkill];
         const skillReady = state.battle.skillCooldown <= 0;
         ui.skillBtn.textContent = skillReady
@@ -1714,6 +1744,14 @@
         ui.skillBtn.classList.toggle('is-skill-ready', skillReady && state.battle.running && !state.battle.paused && !state.battle.awaitingUpgrade);
         ui.skillBtn.classList.toggle('is-skill-ready-fresh', skillReady && state.battle.skillReadyPulse > 0 && state.battle.running);
         ui.skillBtn.classList.toggle('is-boss-pressure', state.battle.bossAlertTimer > 0 && state.battle.running);
+    }
+
+    function playSfx(name, payload) {
+        sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        sfx?.syncToggle(ui.soundToggle);
     }
 
     function renderLaneStrip() {
@@ -6669,6 +6707,7 @@
         hideOverlay(ui.pauseOverlay);
         hideOverlay(ui.upgradeOverlay);
         hideOverlay(ui.startOverlay);
+        playSfx('battleStart');
         startWave(1);
         const sponsorIntroText = getSponsorBattleIntroText(sponsorTier);
         if (sponsorIntroText) {
@@ -6696,6 +6735,7 @@
             waveNumber >= TOTAL_WAVES ? 'boss' : 'wave',
             waveNumber >= TOTAL_WAVES ? 2 : 1.5
         );
+        playSfx(waveNumber >= TOTAL_WAVES ? 'bossWarning' : 'wave');
         triggerEdgeFlash(waveNumber >= TOTAL_WAVES ? 'boss' : 'wave', waveNumber >= TOTAL_WAVES ? 1.2 : 0.6);
         pushBattleAlert(
             waveNumber >= TOTAL_WAVES
@@ -6817,6 +6857,7 @@
         state.battle.laneSkillGlow = SKILL_READY_GLOW_MS;
         state.battle.skillReadyPulse = 0;
         saveProgress();
+        playSfx('select', { cooldownKey: 'defense-skill-confirm', cooldownMs: 120 });
         renderAll();
     }
 
@@ -6952,11 +6993,13 @@
             pushBattleAlert(laneAlert.text, laneAlert.tone, laneAlert.duration);
             state.battle.laneAlertTimers[spawn.lane] = spawn.type === 'boss' ? 1.8 : 1.15;
         }
+        if (spawn.type === 'elite') playSfx('wave', { cooldownKey: 'defense-elite-spawn', cooldownMs: 360 });
         if (spawn.type === 'boss') {
             state.battle.bossAlertTimer = 3.2;
             state.battle.skillReadyPulse = Math.max(state.battle.skillReadyPulse, 1.4);
             triggerBattleBanner(t('bossIncomingText'), 'boss', 2.2);
             triggerEdgeFlash('boss', 1.5);
+            playSfx('bossWarning');
             showToast(t('toastBossIncoming'));
         }
     }
@@ -7198,6 +7241,7 @@
         state.battle.upgradeRerollsLeft = Math.max(0, (Number(state.battle.upgradeRerollsLeft) || 0) - 1);
         state.battle.pendingChoices = pickUpgradeChoices({ excludeIds: currentChoiceIds });
         renderUpgradeChoiceGrid();
+        playSfx('select');
         showToast(getLocalized({
             zh: `已重抽强化，剩余 ${state.battle.upgradeRerollsLeft} 次`,
             en: `Upgrades rerolled, ${state.battle.upgradeRerollsLeft} left`
@@ -7217,6 +7261,7 @@
         const choice = UPGRADE_CHOICES.find((item) => item.id === choiceId);
         if (!choice) return;
         choice.apply(state.battle);
+        playSfx('upgrade');
         hideOverlay(ui.upgradeOverlay);
         state.battle.awaitingUpgrade = false;
         state.battle.pendingChoices = [];
@@ -7282,6 +7327,7 @@
             powerRating: getPowerRating(state.save)
         };
         saveProgress();
+        playSfx(win ? 'victory' : 'defeat');
         renderResultOverlay();
         renderAll();
         showToast(t(finishToastKey));
