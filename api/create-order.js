@@ -15,6 +15,14 @@ const OFFER_CATALOGS = {
     nexus: { name: 'Citadel Core', baseAmount: 9.99 },
     throne: { name: 'Genesis Arsenal', baseAmount: 12.99 },
   },
+  'gem-forge': {
+    starter: { name: 'Spark Starter', baseAmount: 1.0 },
+    accelerator: { name: 'Forge Booster', baseAmount: 2.99 },
+    rush: { name: 'Progress Pack', baseAmount: 3.99 },
+    sovereign: { name: 'Prism Dominion', baseAmount: 5.99 },
+    nexus: { name: 'Prism Nexus', baseAmount: 9.99 },
+    throne: { name: 'Genesis Anvil', baseAmount: 12.99 },
+  },
   'drone-squad': {
     starter: { name: 'Starter Flight Pack', baseAmount: 6.0 },
     accelerator: { name: 'Accelerator Pack', baseAmount: 15.0 },

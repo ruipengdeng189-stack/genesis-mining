@@ -1,7 +1,7 @@
 (function () {
     const HUB_LANG_KEY = 'genesis_arcade_hub_lang_v1';
     const SAVE_KEY = 'genesis_gem_forge_save_v1';
-    const DAILY_SUPPLY_COOLDOWN_MS = 20 * 60 * 60 * 1000;
+    const DAILY_SUPPLY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
     const SLOT_ORDER = ['main', 'echo', 'resonance'];
     const SMELT_HEAT_COST = 4;
     const POWER_PER_GEM_SCORE = 0.3;
@@ -12,6 +12,7 @@
     const PAYMENT_TXID_REGEX = /^[A-Fa-f0-9]{64}$/;
     const PAYMENT_ORDER_DISPLAY_DECIMALS = 4;
     const PAYMENT_ORDER_WINDOW_MS = 15 * 60 * 1000;
+    const PAYMENT_THRESHOLD_EPSILON = 0.011;
     const PAYMENT_ADDRESS_FIELDS = ['payAddress', 'pay_address', 'walletAddress', 'wallet_address', 'recipientAddress', 'recipient_address', 'receiveAddress', 'receive_address', 'receivingAddress', 'receiving_address', 'toAddress', 'to_address', 'address'];
     const FORGE_TIMING_TARGET = 0.5;
     const FORGE_TIMING_PERFECT_WINDOW = 0.045;
@@ -34,6 +35,7 @@
 
     const config = window.GENESIS_GEM_FORGE_CONFIG;
     if (!config) return;
+    applyGemForgeEconomyRebalance();
 
     const tabMap = Object.fromEntries(config.tabs.map((tab) => [tab.id, tab]));
     const familyMap = Object.fromEntries(config.gemFamilies.map((family) => [family.id, family]));
@@ -67,6 +69,78 @@
     let paymentOrderRequestPromise = null;
 
     document.addEventListener('DOMContentLoaded', init);
+
+    function applyGemForgeEconomyRebalance() {
+        const offerOverrides = {
+            starter: {
+                reward: { gold: 900, dust: 36, catalyst: 4 },
+                focusShards: 8,
+                permanent: { heatCap: 8, rareRate: 0.01, contractStability: 18 }
+            },
+            accelerator: {
+                reward: { gold: 2400, dust: 96, catalyst: 9 },
+                focusShards: 14,
+                permanent: { heatCap: 14, rareRate: 0.018, dustYield: 0.04, contractStability: 32 }
+            },
+            rush: {
+                reward: { gold: 4200, dust: 168, catalyst: 16 },
+                focusShards: 22,
+                permanent: { heatCap: 20, rareRate: 0.026, dustYield: 0.06, catalystYield: 0.03, contractStability: 52 }
+            },
+            sovereign: {
+                reward: { gold: 7600, dust: 300, catalyst: 28 },
+                focusShards: 30,
+                permanent: { heatCap: 28, rareRate: 0.038, dustYield: 0.09, catalystYield: 0.05, contractStability: 78 }
+            },
+            nexus: {
+                reward: { gold: 11600, dust: 480, catalyst: 44 },
+                focusShards: 40,
+                permanent: { heatCap: 36, rareRate: 0.052, dustYield: 0.13, catalystYield: 0.08, contractStability: 110 }
+            },
+            throne: {
+                reward: { gold: 15400, dust: 680, catalyst: 62 },
+                focusShards: 52,
+                permanent: { heatCap: 46, rareRate: 0.068, dustYield: 0.17, catalystYield: 0.11, contractStability: 148 }
+            }
+        };
+        const sponsorTierOverrides = {
+            spark: { heatCapBonus: 8, rareRateBonus: 0.01, dustYieldBonus: 0.03, catalystYieldBonus: 0.02, contractStabilityBonus: 45, contractSlotBonus: 1 },
+            relay: { heatCapBonus: 18, rareRateBonus: 0.03, dustYieldBonus: 0.08, catalystYieldBonus: 0.05, contractStabilityBonus: 105, contractSlotBonus: 1 },
+            dominion: { heatCapBonus: 32, rareRateBonus: 0.055, dustYieldBonus: 0.16, catalystYieldBonus: 0.09, contractStabilityBonus: 210, contractSlotBonus: 2 },
+            genesis: { heatCapBonus: 48, rareRateBonus: 0.08, dustYieldBonus: 0.24, catalystYieldBonus: 0.14, contractStabilityBonus: 340, contractSlotBonus: 2 }
+        };
+        const milestoneOverrides = {
+            tier1: {
+                reward: { gold: 600, dust: 28, catalyst: 3 },
+                permanent: { heatCap: 4, rareRate: 0.006, contractStability: 12 }
+            },
+            tier2: {
+                reward: { gold: 2200, dust: 88, catalyst: 8 },
+                permanent: { heatCap: 8, dustYield: 0.03, catalystYield: 0.015, contractStability: 20 }
+            },
+            tier3: {
+                reward: { gold: 5600, dust: 220, catalyst: 20 },
+                permanent: { heatCap: 12, rareRate: 0.014, dustYield: 0.04, contractStability: 36 }
+            },
+            tier4: {
+                reward: { gold: 12800, dust: 520, catalyst: 48 },
+                permanent: { heatCap: 18, rareRate: 0.022, dustYield: 0.06, catalystYield: 0.03, contractStability: 56 }
+            }
+        };
+
+        config.paymentOffers = (config.paymentOffers || []).map((offer) => {
+            const override = offerOverrides[offer.id];
+            return override ? { ...offer, ...override } : offer;
+        });
+        config.sponsorTiers = (config.sponsorTiers || []).map((tier) => {
+            const override = sponsorTierOverrides[tier.id];
+            return override ? { ...tier, ...override } : tier;
+        });
+        config.paymentMilestones = (config.paymentMilestones || []).map((milestone) => {
+            const override = milestoneOverrides[milestone.id];
+            return override ? { ...milestone, ...override } : milestone;
+        });
+    }
 
     function ensureRelicCelebrationUi() {
         if (document.getElementById('gfRelicModal')) return;
@@ -136,6 +210,7 @@
         ui.paymentModal = document.getElementById('gfPaymentModal');
         ui.paymentOfferGrid = document.getElementById('gfPaymentOfferGrid');
         ui.paymentCloseBtn = document.getElementById('gfPaymentCloseBtn');
+        ui.paymentEyebrow = document.getElementById('gfPaymentEyebrow');
         ui.paymentTitle = document.getElementById('gfPaymentTitle');
         ui.paymentDesc = document.getElementById('gfPaymentDesc');
         ui.paymentAmount = document.getElementById('gfPaymentAmount');
@@ -573,6 +648,28 @@
         return config.paymentOffers.find((offer) => offer.id === selectedPaymentOfferId) || config.paymentOffers[0];
     }
 
+    function hasPaymentOffer(offerId) {
+        return config.paymentOffers.some((offer) => offer.id === offerId);
+    }
+
+    function doesPaymentOrderMatchOffer(order, offer = getSelectedPaymentOffer()) {
+        if (!order || !offer) return false;
+        if (String(order.offerId || '') !== String(offer.id || '')) return false;
+        const expectedBaseAmount = Number(offer.price || 0);
+        if (!(expectedBaseAmount > 0)) return true;
+        const orderBaseAmount = Number(order.baseAmount || 0);
+        if (orderBaseAmount > 0) {
+            return Math.abs(orderBaseAmount - expectedBaseAmount) < 0.0001;
+        }
+        const exactAmount = Number(order.exactAmount || 0);
+        return exactAmount >= expectedBaseAmount && exactAmount < (expectedBaseAmount + 0.01);
+    }
+
+    function getActivePaymentOrderForSelectedOffer() {
+        const offer = getSelectedPaymentOffer();
+        return doesPaymentOrderMatchOffer(currentPaymentOrder, offer) ? currentPaymentOrder : null;
+    }
+
     function getPaymentMinerId() {
         if (state.save.payment.minerId) return state.save.payment.minerId;
         state.save.payment.minerId = `GEMFORGE_${Math.random().toString(16).slice(2, 10).toUpperCase()}${Date.now().toString(16).slice(-6).toUpperCase()}`;
@@ -626,7 +723,10 @@
 
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload?.ok === false) {
-            throw new Error(mapPaymentApiError(payload?.error || payload?.message));
+            const error = new Error(mapPaymentApiError(payload?.error || payload?.message));
+            error.payload = payload;
+            error.status = response.status;
+            throw error;
         }
         return payload;
     }
@@ -641,7 +741,8 @@
             minerId: String(order?.minerId || order?.miner_id || getPaymentMinerId()),
             createdAt: typeof createdAtRaw === 'number' ? createdAtRaw : (Date.parse(createdAtRaw || '') || Date.now()),
             expiresAt: typeof expiresAtRaw === 'number' ? expiresAtRaw : (Date.parse(expiresAtRaw || '') || (Date.now() + PAYMENT_ORDER_WINDOW_MS)),
-            exactAmount: Number(order?.exactAmount || order?.baseAmount || 0),
+            baseAmount: Number(order?.baseAmount ?? order?.base_amount ?? 0),
+            exactAmount: Number(order?.exactAmount ?? order?.exact_amount ?? order?.baseAmount ?? order?.base_amount ?? 0),
             payAddress: resolvePaymentAddress(order),
             network: String(order?.network || 'TRON (TRC20)'),
             status: String(order?.status || 'pending'),
@@ -792,6 +893,7 @@
                     orderId: syncedOrder.id,
                     txid: syncedOrder.txid,
                     offerId: syncedOrder.offerId,
+                    baseAmount: syncedOrder.baseAmount,
                     queueClaim: !(syncedOrder.rewardGranted || syncedOrder.status === 'granted')
                 });
 
@@ -933,9 +1035,9 @@
 
     function renderPaymentOrderUI() {
         const offer = getSelectedPaymentOffer();
-        const order = currentPaymentOrder && currentPaymentOrder.offerId === offer.id ? currentPaymentOrder : null;
+        const order = getActivePaymentOrderForSelectedOffer();
 
-        if (ui.paymentTitle) ui.paymentTitle.textContent = text('宝石熔炉充值中心', 'Gem Forge Top-Up Center');
+        if (ui.paymentTitle) ui.paymentTitle.textContent = text('宝石熔炉补给中心', 'Gem Forge Pack Center');
         if (ui.paymentDesc) ui.paymentDesc.textContent = text('创建链上订单后，使用 OKX 钱包按精确金额支付，再粘贴交易哈希（TXID）校验并发放奖励。', 'Create an on-chain order, pay the exact amount in OKX Wallet, then paste the txid to verify and grant rewards.');
         if (ui.paymentOrderLabel) ui.paymentOrderLabel.textContent = text('订单号', 'Order ID');
         if (ui.paymentExactLabel) ui.paymentExactLabel.textContent = text('精确金额', 'Exact Amount');
@@ -966,8 +1068,9 @@
         if (!ui.paymentStatus || !ui.paymentVerifyBtn || !ui.paymentCopyAddressBtn || !ui.paymentCopyAmountBtn) return;
         const txid = getNormalizedPaymentTxid();
         const txidValid = PAYMENT_TXID_REGEX.test(txid);
-        const hasOrder = !!currentPaymentOrder;
-        const orderExpired = isPaymentOrderExpired(currentPaymentOrder);
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        const hasOrder = !!activeOrder;
+        const orderExpired = isPaymentOrderExpired(activeOrder);
 
         ui.paymentStatus.classList.remove('is-error', 'is-success');
 
@@ -1035,8 +1138,9 @@
     }
 
     function updatePaymentExpiryUI() {
-        if (ui.paymentExpiry && currentPaymentOrder) {
-            ui.paymentExpiry.textContent = getPaymentOrderCountdown(currentPaymentOrder);
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        if (ui.paymentExpiry && activeOrder) {
+            ui.paymentExpiry.textContent = getPaymentOrderCountdown(activeOrder);
         }
         if (ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
             refreshPaymentVerificationState();
@@ -1045,7 +1149,7 @@
 
     async function syncPaymentOrderForSelectedOffer(force = false, clearInput = false) {
         const offer = getSelectedPaymentOffer();
-        if (!force && currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !isPaymentOrderExpired(currentPaymentOrder)) {
+        if (!force && doesPaymentOrderMatchOffer(currentPaymentOrder, offer) && !isPaymentOrderExpired(currentPaymentOrder)) {
             renderPaymentOrderUI();
             refreshPaymentVerificationState();
             return currentPaymentOrder;
@@ -1072,6 +1176,20 @@
             })
             .catch((error) => {
                 if (requestId === paymentOrderNonce) {
+                    const code = String(error?.payload?.code || '');
+                    const recoveredOrder = error?.payload?.order;
+                    const recoveredOfferId = String(recoveredOrder?.offerId || recoveredOrder?.offer_id || '');
+                    if ((code === 'CLAIM_REQUIRED' || code === 'PENDING_ORDER_EXISTS') && recoveredOrder && hasPaymentOffer(recoveredOfferId)) {
+                        selectedPaymentOfferId = recoveredOfferId;
+                        setCurrentPaymentOrder(recoveredOrder);
+                        paymentVerificationState = 'idle';
+                        paymentVerificationError = '';
+                        paymentVerificationNotice = text('已恢复你尚未完成的订单，请先完成这笔礼包的支付校验。', 'Your unfinished order was restored. Please finish this pack first.');
+                        renderPaymentOfferGrid();
+                        renderPaymentOrderUI();
+                        refreshPaymentVerificationState();
+                        return currentPaymentOrder;
+                    }
                     setCurrentPaymentOrder(null);
                     paymentVerificationState = 'idle';
                     paymentVerificationNotice = '';
@@ -1092,7 +1210,22 @@
     function selectPaymentOffer(offerId, { refreshOrder = true } = {}) {
         const offer = config.paymentOffers.find((item) => item.id === offerId);
         if (!offer) return;
+        if (
+            currentPaymentOrder
+            && !isPaymentOrderSettledLocally(currentPaymentOrder)
+            && !isPaymentOrderExpired(currentPaymentOrder)
+            && String(currentPaymentOrder.offerId || '') !== offer.id
+        ) {
+            paymentVerificationError = '';
+            paymentVerificationNotice = text('当前有一笔未完成的订单，请先完成这笔礼包的支付校验。', 'There is an unfinished order. Please finish this pack first.');
+            refreshPaymentVerificationState();
+            showToast(text('请先完成当前订单，再切换其他礼包。', 'Finish the current order before switching packs.'));
+            return;
+        }
         selectedPaymentOfferId = offer.id;
+        if (currentPaymentOrder && currentPaymentOrder.offerId === offer.id && !doesPaymentOrderMatchOffer(currentPaymentOrder, offer)) {
+            setCurrentPaymentOrder(null);
+        }
         renderPaymentOfferGrid();
         renderPaymentOrderUI();
         if (refreshOrder && ui.paymentModal && !ui.paymentModal.classList.contains('is-hidden')) {
@@ -1103,20 +1236,28 @@
 
     async function openPaymentModal(offerId = null) {
         if (!ui.paymentModal) return;
+        const previousSelectedOfferId = selectedPaymentOfferId;
         if (!currentPaymentOrder) restoreStoredPaymentOrder();
         const hasRecoverableOrder = !!currentPaymentOrder && !isPaymentOrderSettledLocally(currentPaymentOrder);
 
-        if (hasRecoverableOrder) {
+        if (hasRecoverableOrder && hasPaymentOffer(currentPaymentOrder.offerId)) {
             selectedPaymentOfferId = currentPaymentOrder.offerId;
-        } else if (offerId && config.paymentOffers.some((offer) => offer.id === offerId)) {
+        } else if (offerId && hasPaymentOffer(offerId)) {
             selectedPaymentOfferId = offerId;
-        } else if (config.paymentOffers.some((offer) => offer.id === getRecommendedPaymentOfferId())) {
+        } else if (hasPaymentOffer(previousSelectedOfferId)) {
+            selectedPaymentOfferId = previousSelectedOfferId;
+        } else if (currentPaymentOrder?.offerId && hasPaymentOffer(currentPaymentOrder.offerId)) {
+            selectedPaymentOfferId = currentPaymentOrder.offerId;
+        } else if (hasPaymentOffer(getRecommendedPaymentOfferId())) {
             selectedPaymentOfferId = getRecommendedPaymentOfferId();
-        } else if (!config.paymentOffers.some((offer) => offer.id === selectedPaymentOfferId)) {
+        } else if (!hasPaymentOffer(selectedPaymentOfferId)) {
             selectedPaymentOfferId = config.paymentOffers[0]?.id || 'starter';
         }
 
         flushPendingPaymentClaims().catch(() => {});
+        if (currentPaymentOrder && currentPaymentOrder.offerId === getSelectedPaymentOffer().id && !doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer())) {
+            setCurrentPaymentOrder(null);
+        }
         renderPaymentOfferGrid();
         resetPaymentVerificationState(true);
         renderPaymentOrderUI();
@@ -1132,7 +1273,7 @@
                 paymentVerificationState !== 'verified' && (
                     !currentPaymentOrder
                     || isPaymentOrderSettledLocally(currentPaymentOrder)
-                    || currentPaymentOrder.offerId !== selectedPaymentOfferId
+                    || !doesPaymentOrderMatchOffer(currentPaymentOrder, getSelectedPaymentOffer())
                     || isPaymentOrderExpired(currentPaymentOrder)
                 )
             ) {
@@ -1203,14 +1344,15 @@
     }
 
     async function copyPaymentAddress() {
-        const wallet = resolvePaymentAddress(currentPaymentOrder) || String(ui.paymentWallet?.textContent || '').trim();
-        if (!wallet || wallet === '--') {
-            paymentVerificationError = '';
-            paymentVerificationNotice = text('当前订单还没有可用收款地址，请稍后重试。', 'The current order does not have a receiving address yet. Please try again shortly.');
-            paymentVerificationState = 'idle';
-            refreshPaymentVerificationState();
-            return;
+        let order = getActivePaymentOrderForSelectedOffer();
+        if (!order) {
+            try {
+                order = await syncPaymentOrderForSelectedOffer(true, false);
+            } catch (error) {
+                return;
+            }
         }
+        const wallet = resolvePaymentAddress(order);
         const copied = await copyTextToClipboard(wallet);
         paymentVerificationError = '';
         paymentVerificationNotice = copied
@@ -1221,7 +1363,7 @@
     }
 
     async function copyPaymentAmount() {
-        let order = currentPaymentOrder && !isPaymentOrderExpired(currentPaymentOrder) ? currentPaymentOrder : null;
+        let order = getActivePaymentOrderForSelectedOffer();
         if (!order) {
             try {
                 order = await syncPaymentOrderForSelectedOffer(true, false);
@@ -1238,17 +1380,18 @@
         refreshPaymentVerificationState();
     }
 
-    function grantPaymentRewards({ orderId, txid, offerId, queueClaim = true }) {
+    function grantPaymentRewards({ orderId, txid, offerId, baseAmount = null, queueClaim = true }) {
         const offer = config.paymentOffers.find((item) => item.id === offerId) || getSelectedPaymentOffer();
         if (!offer || !orderId || state.save.payment.claimedOrders[orderId]) return false;
 
         const beforeTier = getSponsorTier();
         const normalizedTxid = PAYMENT_TXID_REGEX.test(String(txid || '').trim()) ? String(txid).trim().toLowerCase() : '';
+        const settledBaseAmount = Math.max(0, Number(baseAmount ?? currentPaymentOrder?.baseAmount ?? offer.price) || 0);
 
         grantReward(offer.reward);
         state.save.payment.passUnlocked = true;
         state.save.payment.purchaseCount += 1;
-        state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + Number(offer.price || 0)) * 100) / 100;
+        state.save.payment.totalSpent = Math.round((Number(state.save.payment.totalSpent || 0) + settledBaseAmount) * 100) / 100;
         applyPermanentBonus(offer.permanent);
         grantFocusShards(getCurrentContract().focus, Number(offer.focusShards || 0));
         state.save.payment.claimedOrders[orderId] = true;
@@ -1273,8 +1416,8 @@
         saveProgress();
         showToast(
             tierPromotion
-                ? text(`充值成功：${localize(offer.name)} 已到账，赞助档位提升到 ${localize(afterTier.title)}。${milestoneReadyCount > 0 ? ` 另有 ${milestoneReadyCount} 个里程碑奖励待领取。` : ''}`, `Top-up complete: ${localize(offer.name)} granted and sponsor tier promoted to ${localize(afterTier.title)}.${milestoneReadyCount > 0 ? ` ${milestoneReadyCount} milestone rewards are now ready.` : ''}`)
-                : text(`充值成功：${localize(offer.name)} 奖励已到账。${milestoneReadyCount > 0 ? ` 另有 ${milestoneReadyCount} 个里程碑奖励待领取。` : ''}`, `Top-up complete: ${localize(offer.name)} rewards granted.${milestoneReadyCount > 0 ? ` ${milestoneReadyCount} milestone rewards are now ready.` : ''}`)
+                ? text(`支付成功：${localize(offer.name)} 已到账，赞助档位提升到 ${localize(afterTier.title)}。${milestoneReadyCount > 0 ? ` 另有 ${milestoneReadyCount} 个里程碑奖励待领取。` : ''}`, `Payment complete: ${localize(offer.name)} granted and sponsor tier promoted to ${localize(afterTier.title)}.${milestoneReadyCount > 0 ? ` ${milestoneReadyCount} milestone rewards are now ready.` : ''}`)
+                : text(`支付成功：${localize(offer.name)} 奖励已到账。${milestoneReadyCount > 0 ? ` 另有 ${milestoneReadyCount} 个里程碑奖励待领取。` : ''}`, `Payment complete: ${localize(offer.name)} rewards granted.${milestoneReadyCount > 0 ? ` ${milestoneReadyCount} milestone rewards are now ready.` : ''}`)
         );
         renderAll();
         return true;
@@ -1298,21 +1441,22 @@
             return;
         }
 
-        if (!currentPaymentOrder) {
+        const activeOrder = getActivePaymentOrderForSelectedOffer();
+        if (!activeOrder) {
             paymentVerificationError = text('当前没有可校验的订单，请先创建订单。', 'There is no active order to verify. Please create one first.');
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
-        if (currentPaymentOrder.status === 'expired' || currentPaymentOrder.status === 'cancelled') {
+        if (activeOrder.status === 'expired' || activeOrder.status === 'cancelled') {
             paymentVerificationError = text('当前订单已失效，请重新创建订单。', 'This order is no longer valid. Please create a new one.');
             paymentVerificationNotice = '';
             refreshPaymentVerificationState();
             return;
         }
 
-        const orderId = currentPaymentOrder.id;
+        const orderId = activeOrder.id;
         paymentVerificationState = 'verifying';
         paymentVerificationError = '';
         paymentVerificationNotice = '';
@@ -1322,17 +1466,17 @@
             const verificationResult = await verifyBackendPayment(orderId, txid);
             const orderPayload = verificationResult?.order || {};
             const resolvedOrder = buildClientPaymentOrder({
-                ...currentPaymentOrder,
+                ...activeOrder,
                 ...orderPayload,
                 txid: orderPayload?.txid || txid
             });
-            const resolvedOfferId = String(resolvedOrder.offerId || currentPaymentOrder.offerId || selectedPaymentOfferId);
+            const resolvedOfferId = String(resolvedOrder.offerId || activeOrder.offerId || selectedPaymentOfferId);
             const hadLocalReward = !!state.save.payment.claimedOrders[orderId];
             setCurrentPaymentOrder(resolvedOrder);
 
             if (resolvedOrder.rewardGranted || hadLocalReward) {
                 if (resolvedOrder.rewardGranted && !hadLocalReward) {
-                    grantPaymentRewards({ orderId, txid: resolvedOrder.txid || txid, offerId: resolvedOfferId, queueClaim: false });
+                    grantPaymentRewards({ orderId, txid: resolvedOrder.txid || txid, offerId: resolvedOfferId, baseAmount: resolvedOrder.baseAmount, queueClaim: false });
                 }
                 if (resolvedOrder.rewardGranted && state.save.payment.pendingClaims[orderId]) {
                     delete state.save.payment.pendingClaims[orderId];
@@ -1346,7 +1490,7 @@
                 return;
             }
 
-            grantPaymentRewards({ orderId, txid, offerId: resolvedOfferId });
+            grantPaymentRewards({ orderId, txid, offerId: resolvedOfferId, baseAmount: resolvedOrder.baseAmount });
             paymentVerificationState = 'verified';
 
             try {
@@ -1372,12 +1516,17 @@
     function applyLangState() {
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN';
         document.title = state.lang === 'en' ? 'Gem Forge' : '宝石熔炉';
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription) {
+            metaDescription.setAttribute('content', state.lang === 'en' ? 'Gem Forge - Smelt, Fuse, Ascend, Awaken' : '宝石熔炉 - 熔炼、合成、升阶、觉醒');
+        }
         const backToHubLink = document.getElementById('backToHubLink');
         if (backToHubLink) backToHubLink.textContent = state.lang === 'en' ? '← Back To Hub' : '← 返回大厅';
         const langToggle = document.querySelector('.lang-toggle');
         if (langToggle) langToggle.setAttribute('aria-label', text('语言切换', 'Language'));
         if (ui.tabBar) ui.tabBar.setAttribute('aria-label', text('宝石熔炉页签', 'Gem Forge tabs'));
         if (ui.paymentCloseBtn) ui.paymentCloseBtn.setAttribute('aria-label', text('关闭支付', 'Close payment'));
+        if (ui.paymentEyebrow) ui.paymentEyebrow.textContent = text('链上支付', 'On-Chain Payment');
         ui.heroEyebrow.textContent = state.lang === 'en' ? 'GENESIS GEM FORGE' : '创世宝石熔炉';
         ui.heroTitle.textContent = localize(config.meta.title);
         ui.heroSubtitle.textContent = localize(config.meta.subtitle);
@@ -3088,7 +3237,15 @@
         });
         next.missionClaimed = Array.isArray(next.missionClaimed) ? Array.from(new Set(next.missionClaimed)) : [];
         next.seasonClaimed = Array.isArray(next.seasonClaimed) ? Array.from(new Set(next.seasonClaimed)) : [];
+        next.permanent.heatCap = Math.max(0, Number(next.permanent?.heatCap) || 0);
+        next.permanent.rareRate = Math.max(0, Number(next.permanent?.rareRate) || 0);
+        next.permanent.dustYield = Math.max(0, Number(next.permanent?.dustYield) || 0);
+        next.permanent.catalystYield = Math.max(0, Number(next.permanent?.catalystYield) || 0);
+        next.permanent.contractStability = Math.max(0, Math.round(Number(next.permanent?.contractStability) || 0));
         next.payment.minerId = typeof next.payment?.minerId === 'string' ? next.payment.minerId : '';
+        next.payment.purchaseCount = Math.max(0, Math.round(Number(next.payment?.purchaseCount) || 0));
+        next.payment.totalSpent = Math.round(Math.max(0, Number(next.payment?.totalSpent) || 0) * 100) / 100;
+        next.payment.passUnlocked = !!next.payment?.passUnlocked;
         next.payment.lastPayAddress = typeof next.payment?.lastPayAddress === 'string' ? next.payment.lastPayAddress : '';
         next.payment.milestoneClaims = next.payment?.milestoneClaims && typeof next.payment.milestoneClaims === 'object' ? { ...next.payment.milestoneClaims } : {};
         next.payment.claimedOrders = next.payment?.claimedOrders && typeof next.payment.claimedOrders === 'object' ? { ...next.payment.claimedOrders } : {};
@@ -3870,7 +4027,7 @@
         if (!claimable.length) {
             const summary = getMilestoneSummary();
             return showToast(summary.nextThreshold > 0
-                ? text(`当前没有可领取的累充奖励，距离下一档还差 $${summary.nextGap.toFixed(2)}。`, `No payment milestones are ready. $${summary.nextGap.toFixed(2)} more to the next tier.`)
+                ? text(`当前没有可领取的累充奖励，距离下一档还需 $${summary.nextGap.toFixed(2)}。`, `No payment milestones are ready. $${summary.nextGap.toFixed(2)} more to the next tier.`)
                 : text('当前没有可领取的累充奖励。', 'There are no payment milestones ready right now.'));
         }
         claimable.forEach((item) => {
@@ -4171,7 +4328,7 @@
     function getMilestoneView(milestone) {
         if (!milestone) return null;
         const claimed = !!state.save.payment.milestoneClaims[milestone.id];
-        const claimable = !claimed && Number(state.save.payment.totalSpent || 0) >= milestone.threshold;
+        const claimable = !claimed && hasReachedPaymentThreshold(state.save.payment.totalSpent, milestone.threshold);
         return { ...milestone, claimed, claimable };
     }
 
@@ -4179,8 +4336,8 @@
         const views = config.paymentMilestones.map(getMilestoneView);
         const claimable = views.filter((item) => item.claimable);
         const claimed = views.filter((item) => item.claimed);
-        const next = views.find((item) => !item.claimed) || null;
-        const spent = Number(state.save.payment.totalSpent || 0);
+        const next = views.find((item) => !item.claimed && !item.claimable) || null;
+        const spent = getPaymentProgressValue(state.save.payment.totalSpent);
         return {
             totalCount: views.length,
             claimedCount: claimed.length,
@@ -4221,14 +4378,22 @@
         return item.priceType === 'gold' ? state.save.gold >= price : state.save.dust >= price;
     }
 
+    function getPaymentProgressValue(rawSpent) {
+        return Math.round(Math.max(0, Number(rawSpent) || 0) * 100) / 100;
+    }
+
+    function hasReachedPaymentThreshold(rawSpent, threshold) {
+        return getPaymentProgressValue(rawSpent) + PAYMENT_THRESHOLD_EPSILON >= Math.max(0, Number(threshold) || 0);
+    }
+
     function getSponsorTier(saveSnapshot = state.save) {
-        const spent = Number(saveSnapshot.payment?.totalSpent || 0);
-        return config.sponsorTiers.slice().sort((a, b) => a.threshold - b.threshold).filter((tier) => spent >= tier.threshold).pop() || config.sponsorTiers[0];
+        const spent = getPaymentProgressValue(saveSnapshot.payment?.totalSpent || 0);
+        return config.sponsorTiers.slice().sort((a, b) => a.threshold - b.threshold).filter((tier) => hasReachedPaymentThreshold(spent, tier.threshold)).pop() || config.sponsorTiers[0];
     }
 
     function getProjectedSponsorTier(offer, saveSnapshot = state.save) {
-        const spent = Number(saveSnapshot.payment?.totalSpent || 0) + Number(offer.price || 0);
-        return config.sponsorTiers.slice().sort((a, b) => a.threshold - b.threshold).filter((tier) => spent >= tier.threshold).pop() || config.sponsorTiers[0];
+        const spent = getPaymentProgressValue(saveSnapshot.payment?.totalSpent || 0) + Number(offer.price || 0);
+        return config.sponsorTiers.slice().sort((a, b) => a.threshold - b.threshold).filter((tier) => hasReachedPaymentThreshold(spent, tier.threshold)).pop() || config.sponsorTiers[0];
     }
 
     function getPriorityWorkshopTarget() {
@@ -5678,8 +5843,8 @@
             const summary = projected.actionUnlocks > 0
                 ? text(`预计立刻打开 ${projected.actionUnlocks} 个可操作成长点。`, `Immediately opens ${projected.actionUnlocks} actionable growth steps.`)
                 : projected.currentGap > projected.projectedGap
-                    ? text(`预计缩小静态差距 ${formatCompact(projected.currentGap - projected.projectedGap)}，并立刻补一波资源。`, `Cuts the static gap by ${formatCompact(projected.currentGap - projected.projectedGap)} and instantly refills resources.`)
-                    : text('直接补金币 / 熔尘 / 催化，并抬高常驻赞助属性。', 'Directly refills gold / dust / catalyst and raises permanent sponsor stats.');
+                    ? text(`预计减少 ${formatCompact(projected.currentGap - projected.projectedGap)} 当前待补，并立刻补一波资源。`, `Reduces the current need by ${formatCompact(projected.currentGap - projected.projectedGap)} and instantly refills resources.`)
+                    : text('直接补金币 / 熔尘 / 催化，并抬高常驻成长属性。', 'Directly refills gold / dust / catalyst and raises permanent growth bonuses.');
             return `
                 <button
                     class="gf-payment-offer ${offer.id === selectedPaymentOfferId ? 'is-active' : ''}"
@@ -5693,7 +5858,7 @@
                     <p>${summary}</p>
                     <div class="gf-chip-row">
                         <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
-                        <span class="gf-chip">${text('当前差距', 'Gap')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
+                        <span class="gf-chip">${text('当前待补', 'Need')} ${formatCompact(projected.currentGap)} → ${formatCompact(projected.projectedGap)}</span>
                         ${(offer.focusShards || 0) > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(offer.focusShards || 0)}</span>` : ''}
                         ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
                         ${renderOfferActionDeltaChips(projected)}
@@ -6033,7 +6198,7 @@
                     <div class="gf-card-number">${formatCompact(effectivePower)}</div>
                 </div>
                 ${renderKpiGrid([
-                    { label: gap > 0 ? text('合同缺口', 'Contract Gap') : text('推进状态', 'Push Status'), value: gap > 0 ? formatCompact(gap) : text('可推进', 'Ready') },
+                    { label: gap > 0 ? text('合同待补', 'Contract Need') : text('推进状态', 'Push Status'), value: gap > 0 ? formatCompact(gap) : text('可推进', 'Ready') },
                     { label: text('热量恢复', 'Heat Regen'), value: `${formatCompact(getHeatRegenPerSecond())}/s` },
                     { label: text('珍藏保底', 'Relic Pity'), value: relicSummary.pityRemain <= 0 ? text('本炉', 'Now') : formatCompact(relicSummary.pityRemain) },
                     { label: text('焦点觉醒', 'Awakened'), value: formatCompact(focusAwakened) }
@@ -6249,7 +6414,7 @@
                         { label: text('基础战力', 'Base'), value: formatCompact(currentPower.total) },
                         { label: text('稳定补正', 'Stability'), value: `+${formatCompact(passives.contractStability)}` },
                         { label: text('推荐线', 'Recommended'), value: formatCompact(currentContract.recommended) },
-                        { label: text('缺口', 'Gap'), value: formatCompact(Math.max(0, currentContract.recommended - effectivePower)) }
+                        { label: text('待补', 'Need'), value: formatCompact(Math.max(0, currentContract.recommended - effectivePower)) }
                     ])}
                     <div class="gf-chip-row" style="margin-top:12px;">
                         ${currentContract.focus.map((familyId) => `<span class="gf-chip">${localize(familyMap[familyId].name)}</span>`).join('')}
@@ -6598,7 +6763,7 @@
             ? { action: 'openPayment', value: getRecommendedPaymentOfferId(), label: text('开启赞助', 'Unlock Sponsor'), cls: 'primary-btn' }
             : claimableSponsor.length > 0
                 ? { action: 'claimAllSeason', value: '', label: text(`领取赞助 ${claimableSponsor.length}`, `Claim ${claimableSponsor.length}`), cls: 'primary-btn' }
-                : { action: 'openPayment', value: getRecommendedPaymentOfferId(), label: text('继续充值', 'Top Up'), cls: 'ghost-btn' };
+                : { action: 'openPayment', value: getRecommendedPaymentOfferId(), label: text('打开礼包', 'Open Pack'), cls: 'ghost-btn' };
 
         ui.panelContent.innerHTML = `
             ${renderPanelHead(
@@ -6621,7 +6786,7 @@
                         <span class="gf-chip">${text('下一档', 'Next')} · ${nextFree ? nextFree.id : text('已满', 'Done')}</span>
                     </div>
                     <div class="gf-chip-row" style="margin-top:12px;">
-                        <span class="gf-chip">${text('还差', 'Gap')} · ${nextFree ? formatCompact(Math.max(0, nextFree.xp - state.save.seasonXp)) : '0'}</span>
+                        <span class="gf-chip">${text('待补', 'Need')} · ${nextFree ? formatCompact(Math.max(0, nextFree.xp - state.save.seasonXp)) : '0'}</span>
                         ${nextFree ? renderRewardChips(nextFree.reward, { limit: 2 }) : `<span class="gf-chip is-success">${text('免费轨已全部完成', 'Free track completed')}</span>`}
                     </div>
                     <div class="gf-action-row" style="margin-top:12px;">
@@ -6644,7 +6809,7 @@
                     <div class="gf-chip-row" style="margin-top:12px;">
                         <span class="gf-chip">${text('热量上限', 'Heat Cap')} +${formatCompact(sponsorTier.heatCapBonus)}</span>
                         <span class="gf-chip">${text('稀有率', 'Rare Rate')} +${formatPercent(sponsorTier.rareRateBonus)}</span>
-                        <span class="gf-chip">${text('还差 XP', 'XP Gap')} · ${nextSponsor ? formatCompact(Math.max(0, nextSponsor.xp - state.save.seasonXp)) : '0'}</span>
+                        <span class="gf-chip">${text('待补 XP', 'Need XP')} · ${nextSponsor ? formatCompact(Math.max(0, nextSponsor.xp - state.save.seasonXp)) : '0'}</span>
                     </div>
                     <div class="gf-action-row" style="margin-top:12px;">
                         <button class="${sponsorAction.cls}" type="button" data-action="${sponsorAction.action}" data-value="${sponsorAction.value}">${sponsorAction.label}</button>
@@ -6737,7 +6902,7 @@
                     <div class="gf-chip-row" style="margin-top:12px;">
                         <span class="gf-chip is-strong">${text('待领', 'Ready')} · ${milestoneSummary.claimableCount}</span>
                         <span class="gf-chip">${text('下一档', 'Next')} · ${milestoneSummary.nextThreshold > 0 ? `$${milestoneSummary.nextThreshold.toFixed(2)}` : text('已满', 'Maxed')}</span>
-                        <span class="gf-chip">${text('还差', 'Gap')} · ${milestoneSummary.nextThreshold > 0 ? `$${milestoneSummary.nextGap.toFixed(2)}` : '0'}</span>
+                        <span class="gf-chip">${text('待补', 'Need')} · ${milestoneSummary.nextThreshold > 0 ? `$${milestoneSummary.nextGap.toFixed(2)}` : '0'}</span>
                     </div>
                     <div class="gf-chip-row" style="margin-top:12px;">
                         <span class="gf-chip">${text('热量上限', 'Heat Cap')} +${formatCompact(sponsorTier.heatCapBonus)}</span>
@@ -6756,7 +6921,7 @@
                     <article class="gf-compact-row ${item.claimable ? 'is-ready' : ''}">
                         <div class="gf-compact-main">
                             <div class="gf-compact-title">${text('里程碑', 'Milestone')} · $${item.threshold.toFixed(2)}</div>
-                            <div class="gf-compact-sub">${item.claimable ? text('这档已可领取，先收下再决定是否继续充值。', 'This tier is ready. Claim it first, then decide whether to top up further.') : text('这一档会补资源并给永久加成，适合推进吃力时跨一档补强。', 'This tier adds resources and permanent stats, ideal when progression feels tight.')}</div>
+                            <div class="gf-compact-sub">${item.claimable ? text('这档已可领取，先收下再决定是否继续打开下一档礼包。', 'This tier is ready. Claim it first, then decide whether to open another pack.') : text('这一档会补资源并给永久加成，适合推进吃力时补一波成长。', 'This tier adds resources and permanent stats, ideal when progression starts to feel tight.')}</div>
                             <div class="gf-chip-row">
                                 ${renderRewardChips(item.reward, { limit: 2 })}
                                 ${renderPermanentChips(item.permanent, { limit: 1 })}
@@ -6764,7 +6929,7 @@
                         </div>
                         <div class="gf-compact-side">
                             <strong>${item.claimed ? text('已领', 'Claimed') : item.claimable ? text('可领', 'Ready') : text('未达', 'Pending')}</strong>
-                            <button class="${item.claimable ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="${item.claimable ? 'claimMilestone' : 'openPayment'}" data-value="${item.claimable ? item.id : milestoneSummary.recommendedOfferId}">${item.claimable ? text('领取', 'Claim') : text('去补', 'Top Up')}</button>
+                            <button class="${item.claimable ? 'primary-btn' : 'ghost-btn'}" type="button" data-action="${item.claimable ? 'claimMilestone' : 'openPayment'}" data-value="${item.claimable ? item.id : milestoneSummary.recommendedOfferId}">${item.claimable ? text('领取', 'Claim') : text('打开礼包', 'Open Pack')}</button>
                         </div>
                     </article>
                 `).join('')}
@@ -7063,7 +7228,7 @@
         return {
             contractId: contract.id,
             currentTier: getSponsorTier(saveSnapshot),
-            projectedTier: getSponsorTier(projected),
+            projectedTier: getProjectedSponsorTier(offer, saveSnapshot),
             powerGain: Math.max(0, Math.round(projectedEffectivePower - currentEffectivePower)),
             stabilityGain: Math.max(0, Math.round(projectedStability - currentStability)),
             currentGap,
@@ -7085,8 +7250,8 @@
         const projected = getProjectedOfferImpact(offer);
         const offerSummary = projected.currentGap > projected.projectedGap
             ? text(
-                '预计缩小当前差距 ' + formatCompact(projected.currentGap - projected.projectedGap) + '，并同步补当前焦点碎片。',
-                'Cuts the active gap by ' + formatCompact(projected.currentGap - projected.projectedGap) + ' and also refills current focus shards.'
+                '预计减少当前待补 ' + formatCompact(projected.currentGap - projected.projectedGap) + '，并同步补当前焦点碎片。',
+                'Reduces the current need by ' + formatCompact(projected.currentGap - projected.projectedGap) + ' and also refills current focus shards.'
             )
             : text(
                 '直接补金币 / 熔尘 / 催化剂，并抬高合同稳定与常驻成长。',
@@ -7132,7 +7297,7 @@
         const summary = locked
             ? text('先开赞助，再买这类后段补给。', 'Unlock sponsor before buying this mid-late supply.')
             : ready
-                ? text('可直接补当前缺口，并顺带给本章焦点符印加碎片。', 'Fix the current shortage and also feed shards into the active contract focus.')
+                ? text('可直接补当前待补，并顺带给本章焦点符印加碎片。', 'Helps cover the current need and also feeds shards into the active contract focus.')
                 : item.priceType === 'gold'
                     ? text('金币不够时先去合同页回金。', 'Farm contracts first when gold is short.')
                     : text('熔尘不够时先回熔炉补材料。', 'Return to the forge when dust is short.');
@@ -7248,7 +7413,7 @@
             ? (unlockedNext
                 ? text('\u5df2\u901a\u5173\u5e76\u89e3\u9501\u4e0b\u4e00\u6863\uff0c\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u5df2\u5230\u8d26\u3002\u5148\u8865\u7126\u70b9\u7b26\u5370\uff0c\u518d\u7ee7\u7eed\u63a8\u8fdb\u3002', 'You crossed the recommended line, claimed the contract rewards plus focus-sigil shards, and unlocked the next contract. Raise the current focus sigils first, then keep pushing.')
                 : text('\u672c\u6863\u5df2\u7a33\u5b9a\u901a\u5173\uff0c\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u5df2\u5230\u8d26\u3002\u53ef\u7ee7\u7eed\u51b2\u7ebf\uff0c\u6216\u56de\u7194\u7089\u8865\u9ad8\u9636\u5b9d\u77f3\u3002', 'You cleared this contract cleanly and claimed both rewards and focus-sigil shards. This tier is now stable to farm, so you can push forward or return to the forge for higher-tier gems.'))
-            : text('\u5f53\u524d\u4ecd\u6709\u6218\u529b\u7f3a\u53e3\uff0c\u53ea\u53d1\u653e\u4fdd\u5e95\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u3002\u5efa\u8bae\u5148\u8865\u7b26\u5370\u3001\u5de5\u574a\u548c\u9ad8\u9636\u5b9d\u77f3\u3002', 'There is still a power gap, so only fallback rewards and focus-sigil shards were granted. Raise sigils, workshop, and higher-tier gems before retrying.');
+            : text('\u5f53\u524d\u8fd8\u9700\u518d\u63d0\u5347\u4e00\u70b9\uff0c\u5df2\u53d1\u653e\u4fdd\u5e95\u5956\u52b1\u4e0e\u7126\u70b9\u7b26\u5370\u788e\u7247\u3002\u5efa\u8bae\u5148\u8865\u7b26\u5370\u3001\u5de5\u574a\u548c\u9ad8\u9636\u5b9d\u77f3\u3002', 'You still need a bit more power, so fallback rewards and focus-sigil shards were granted. Raise sigils, workshop, and higher-tier gems before retrying.');
         const shardLabel = formatCompact(shardGrant);
 
         state.save.lastResult = {
@@ -7281,7 +7446,7 @@
         showToast(
             success
                 ? text('\u5408\u540c ' + contract.id + ' \u5b8c\u6210\uff0c\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + '\u3002', 'Contract ' + contract.id + ' cleared. Focus sigils +' + shardLabel + '.')
-                : text('\u5408\u540c ' + contract.id + ' \u4ecd\u6709\u7f3a\u53e3\uff0c\u4fdd\u5e95\u7ed9\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + '\u3002', 'Contract ' + contract.id + ' still has a gap. Focus sigils +' + shardLabel + ' as fallback.')
+                : text('\u5408\u540c ' + contract.id + ' \u8fd8\u9700\u518d\u8865\u4e00\u8f6e\uff0c\u4fdd\u5e95\u7ed9\u7126\u70b9\u7b26\u5370\u5404 +' + shardLabel + '\u3002', 'Contract ' + contract.id + ' needs one more boost. Focus sigils +' + shardLabel + ' were added as fallback.')
         );
         saveProgress();
         renderAll();
@@ -7304,8 +7469,8 @@
         if (spent >= 20) {
             return {
                 id: 'apex',
-                title: text('\u9ad8\u4ed8\u8d39\u7ebf', 'Apex Spend'),
-                summary: text('\u9ad8\u4ed8\u8d39\u9636\u6bb5\u5df2\u8fdb\u5165\u540e\u671f\u517b\u6210\uff0c\u5e94\u4ee5\u50ac\u5316\u3001\u9ad8\u9636\u89c9\u9192\u548c\u91cc\u7a0b\u7891\u4e3a\u4e3b\uff0c\u4f4e\u6863\u5305\u5df2\u7ecf\u4e0d\u591f\u63a8\u7ebf\u3002', 'You are in late monetized progression. Focus on catalyst, high-tier awakening, and milestone chaining because lower packs no longer move the wall enough.'),
+                title: text('高阶锻造', 'Apex Forge'),
+                summary: text('当前已进入后段培养，优先补催化、高阶觉醒和里程碑奖励，推进会更稳。', 'You are in late progression now. Prioritize catalyst, high-tier awakening, and milestone rewards for steadier pushes.'),
                 minOfferId: progressIndex >= 7 ? 'throne' : 'nexus',
                 reserveScalar: 1.28
             };
@@ -7313,8 +7478,8 @@
         if (spent >= 10) {
             return {
                 id: 'core',
-                title: text('\u6838\u5fc3\u4ed8\u8d39\u7ebf', 'Core Spend'),
-                summary: text('\u6838\u5fc3\u4ed8\u8d39\u9636\u6bb5\u8981\u628a\u8d5e\u52a9\u6863\u4f4d\u3001\u91cc\u7a0b\u7891\u548c\u5408\u540c\u7a33\u5b9a\u4e32\u5728\u4e00\u8d77\uff0c\u7528\u4e2d\u9ad8\u6863\u5305\u8de8\u8d44\u6e90\u65ad\u5c42\u3002', 'Core spenders should chain sponsor tiers, milestones, and contract stability together, using mid-high packs to bridge resource breaks.'),
+                title: text('核心成长', 'Core Growth'),
+                summary: text('当前适合把赞助等级、里程碑和合同稳定一起补齐，用中高档补给维持推进节奏。', 'This is a good time to stack sponsor level, milestones, and contract stability together so mid-high packs keep your momentum smooth.'),
                 minOfferId: progressIndex >= 6 ? 'nexus' : 'sovereign',
                 reserveScalar: 1.2
             };
@@ -7322,8 +7487,8 @@
         if (spent >= 4) {
             return {
                 id: 'light',
-                title: text('\u8f7b\u4ed8\u8d39\u7ebf', 'Light Spend'),
-                summary: text('\u8f7b\u4ed8\u8d39\u9636\u6bb5\u9002\u5408\u7528\u4e2d\u6863\u5305\u63a8\u5f00 2-2 \u81f3 3-1 \u7684\u91d1\u5e01\u3001\u7194\u5c18\u548c\u50ac\u5316\u65ad\u5c42\u3002', 'Light spenders should use mid packs to break the gold, dust, and catalyst wall around 2-2 to 3-1.'),
+                title: text('进阶推进', 'Mid Push'),
+                summary: text('当前适合用中档补给补金币、熔尘和催化，让 2-2 到 3-1 的推进更顺。', 'Mid packs fit well here, helping refill gold, dust, and catalyst so the 2-2 to 3-1 stretch feels smoother.'),
                 minOfferId: progressIndex >= 4 ? 'sovereign' : 'rush',
                 reserveScalar: 1.12
             };
@@ -7331,16 +7496,16 @@
         if (spent >= 1) {
             return {
                 id: 'starter',
-                title: text('\u9996\u5145\u7ebf', 'Starter Spend'),
-                summary: text('\u9996\u5145\u540e\u5e94\u91cd\u70b9\u8865\u91d1\u5e01\u3001\u7a33\u5b9a\u4e0e\u7126\u70b9\u7b26\u5370\uff0c\u7528\u5c0f\u989d\u4ed8\u8d39\u5c3d\u5feb\u8de8\u8fc7\u7b2c\u4e00\u9053\u771f\u6b63\u5361\u70b9\u3002', 'After the first top-up, lean on gold, stability, and focus sigils to cross the first real wall quickly.'),
+                title: text('起步增强', 'Starter Boost'),
+                summary: text('首次补给后，优先补金币、稳定和焦点符印，前几章推进会明显更顺。', 'After the first top-up, focus on gold, stability, and focus sigils to make the first chapters noticeably smoother.'),
                 minOfferId: progressIndex >= 3 ? 'rush' : 'accelerator',
                 reserveScalar: 1.06
             };
         }
         return {
             id: 'free',
-            title: text('\u514d\u8d39\u7ebf', 'Free Line'),
-            summary: text('\u514d\u8d39\u7ebf\u5148\u5403\u6389\u624b\u4e0a\u80fd\u76f4\u63a5\u6210\u957f\u7684\u5185\u5bb9\uff0c\u5982\u679c\u60f3\u7f29\u77ed\u5361\u70b9\uff0c\u9996\u5145\u6700\u6709\u611f\u7684\u4f5c\u7528\u662f\u63d0\u5347\u5408\u540c\u7a33\u5b9a\u548c\u91d1\u5e01\u5468\u8f6c\u3002', 'The free line should first consume all immediately usable growth. If you want to shorten walls, the first top-up matters most for contract stability and gold turnover.'),
+            title: text('自然成长', 'Natural Growth'),
+            summary: text('先把手头能直接提升的内容吃满；如果想更快推进，小额补给最适合补稳定和金币周转。', 'Use every immediately available upgrade first. If you want faster progress, a small pack helps most with stability and gold flow.'),
             minOfferId: progressIndex >= 2 ? 'accelerator' : 'starter',
             reserveScalar: 1
         };
@@ -7446,8 +7611,8 @@
         );
 
         let pressureId = 'power';
-        let title = text('\u6218\u529b\u4ecd\u6709\u7f3a\u53e3', 'Power Gap Remains');
-        let summary = text('\u5f53\u524d\u6700\u76f4\u63a5\u7684\u63a8\u8fdb\u95ee\u9898\uff0c\u4ecd\u7136\u662f\u5408\u540c\u6709\u6548\u6218\u529b\u4e0d\u591f\u3002', 'The main issue right now is still not having enough effective contract power.');
+        let title = text('当前还需提升战力', 'More Power Needed');
+        let summary = text('当前最直接的提升方向，仍然是把合同有效战力补到推荐线。', 'The clearest next step is still raising effective contract power to the recommended line.');
         let freeTab = 'sigils';
         let freeLabel = text('\u53bb\u8865\u7b26\u5370', 'Raise Sigils');
         let freeShort = text('\u8865\u7b26\u5370', 'Sigils');
@@ -7469,7 +7634,7 @@
         } else if (sigilReadyCount > 0) {
             pressureId = 'sigil';
             title = text('\u7b26\u5370\u53ef\u5347\uff0c\u4f18\u5148\u8865\u4e3b\u5370', 'Sigils Are Ready');
-            summary = text('\u5f53\u524d\u81f3\u5c11\u6709 ' + sigilReadyCount + ' \u4e2a\u7b26\u5370\u5df2\u7ecf\u80fd\u89e3\u9501\u6216\u5347\u7ea7\uff0c\u5148\u8865\u672c\u7ae0\u7126\u70b9\u7b26\u5370\uff0c\u901a\u5e38\u662f\u6700\u5feb\u7684\u8fc7\u7ebf\u65b9\u5f0f\u3002', 'At least ' + sigilReadyCount + ' sigils can already be unlocked or upgraded. Focus sigils are usually the fastest path to clear the current wall.');
+            summary = text('\u5f53\u524d\u81f3\u5c11\u6709 ' + sigilReadyCount + ' \u4e2a\u7b26\u5370\u5df2\u7ecf\u80fd\u89e3\u9501\u6216\u5347\u7ea7\uff0c\u5148\u8865\u672c\u7ae0\u7126\u70b9\u7b26\u5370\uff0c\u901a\u5e38\u662f\u6700\u5feb\u7684\u8fc7\u7ebf\u65b9\u5f0f\u3002', 'At least ' + sigilReadyCount + ' sigils can already be unlocked or upgraded. Focus sigils are usually the fastest way to get over the line.');
             freeTab = 'sigils';
             freeLabel = text('\u53bb\u8865\u7b26\u5370', 'Raise Sigils');
             freeShort = text('\u8865\u7b26\u5370', 'Sigils');
@@ -7482,8 +7647,8 @@
             freeShort = text('\u8865\u5de5\u574a', 'Workshop');
         } else if (catalystPressure >= dustPressure && catalystPressure >= goldPressure && state.save.contractIndex >= 4) {
             pressureId = 'catalyst';
-            title = text('\u50ac\u5316\u5f00\u59cb\u5361\u5173', 'Catalyst Starts Gating');
-            summary = text('\u8fdb\u5165 ' + contract.id + ' \u540e\uff0c\u50ac\u5316\u4f1a\u540c\u65f6\u5361\u4f4f\u9ad8\u9636\u5408\u6210\u548c T3+ \u89c9\u9192\uff0c\u5f53\u524d\u66f4\u50cf\u662f\u201c\u6750\u6599\u95e8\u69db\u201d\u800c\u4e0d\u662f\u7eaf\u6218\u529b\u95e8\u69db\u3002', 'From ' + contract.id + ' onward, catalyst starts gating both high-tier fusion and T3+ awakening. The wall is now more about materials than pure power.');
+            title = text('催化剂更重要了', 'Catalyst Matters More');
+            summary = text('\u8fdb\u5165 ' + contract.id + ' \u540e\uff0c\u50ac\u5316\u4f1a\u540c\u65f6\u5f71\u54cd\u9ad8\u9636\u5408\u6210\u548c T3+ \u89c9\u9192\uff0c\u73b0\u5728\u66f4\u9002\u5408\u5148\u8865\u6750\u6599\u518d\u63a8\u8fdb\u3002', 'From ' + contract.id + ' onward, catalyst affects both high-tier fusion and T3+ awakening, so topping up materials first is usually the smoother move.');
             freeTab = 'contracts';
             freeLabel = text('\u53bb\u5237\u5408\u540c\u56de\u6536', 'Farm Contracts');
             freeShort = text('\u8865\u50ac\u5316', 'Catalyst');
@@ -7497,7 +7662,7 @@
         } else if (goldPressure > 0) {
             pressureId = 'gold';
             title = text('\u91d1\u5e01\u5f00\u59cb\u5403\u7d27', 'Gold Is Tight');
-            summary = text('\u5f53\u524d\u4e3b\u8981\u88ab\u91d1\u5e01\u50a8\u5907\u5361\u4f4f\uff1a\u7b26\u5370\u3001\u5de5\u574a\u3001\u5408\u6210\u548c\u89c9\u9192\u90fd\u5728\u5403\u91d1\uff0c\u4f46\u624b\u5934\u8d44\u91d1\u8fd8\u4e0d\u591f\u628a\u6210\u957f\u94fe\u63a5\u8d77\u6765\u3002', 'Gold is the main bottleneck now: sigils, workshop, fusion, and awakening all compete for gold, but your current reserve cannot keep the growth chain connected.');
+            summary = text('\u5f53\u524d\u91d1\u5e01\u538b\u529b\u6700\u5927\uff1a\u7b26\u5370\u3001\u5de5\u574a\u3001\u5408\u6210\u548c\u89c9\u9192\u90fd\u5728\u5403\u91d1\uff0c\u5148\u8865\u91d1\u5e01\u5468\u8f6c\u4f1a\u66f4\u987a\u3002', 'Gold is under the most pressure right now. Sigils, workshop, fusion, and awakening all spend it, so restoring gold flow first will feel smoother.');
             freeTab = 'contracts';
             freeLabel = text('\u53bb\u8dd1\u5408\u540c\u56de\u91d1\u5e01', 'Farm Gold');
             freeShort = text('\u8865\u91d1\u5e01', 'Gold');
@@ -7565,13 +7730,13 @@
                     <div class="gf-compact-title">${diagnosis.title}</div>
                     <div class="gf-compact-sub">${diagnosis.summary}</div>
                     <div class="gf-chip-row">
-                        <span class="gf-chip">${text('\u5408\u540c', 'Contract')} 路 ${diagnosis.contractId}</span>
-                        <span class="gf-chip is-strong">${text('\u4ed8\u8d39\u8282\u594f', 'Spend Lane')} 路 ${diagnosis.spendLaneTitle}</span>
-                        ${diagnosis.powerGap > 0 ? `<span class="gf-chip is-warning">${text('\u5dee\u8ddd', 'Gap')} 路 ${formatCompact(diagnosis.powerGap)}</span>` : `<span class="gf-chip is-success">${text('\u5df2\u5920\u7ebf', 'Ready')}</span>`}
-                        <span class="gf-chip">${text('\u514d\u8d39\u8def\u7ebf', 'Free')} 路 ${diagnosis.freeShort}</span>
+                        <span class="gf-chip">${text('\u5408\u540c', 'Contract')} · ${diagnosis.contractId}</span>
+                        <span class="gf-chip is-strong">${text('\u6210\u957f\u9636\u6bb5', 'Growth Stage')} · ${diagnosis.spendLaneTitle}</span>
+                        ${diagnosis.powerGap > 0 ? `<span class="gf-chip is-warning">${text('\u5f53\u524d\u5f85\u8865', 'Need')} · ${formatCompact(diagnosis.powerGap)}</span>` : `<span class="gf-chip is-success">${text('\u5df2\u5920\u7ebf', 'Ready')}</span>`}
+                        <span class="gf-chip">${text('\u4e0b\u4e00\u6b65', 'Next')} · ${diagnosis.freeShort}</span>
                     </div>
                     <div class="gf-chip-row">
-                        <span class="gf-chip is-warning">${diagnosis.primaryPressureLabel} 路 ${formatCompact(diagnosis.primaryPressureValue)}</span>
+                        <span class="gf-chip is-warning">${text('\u5f53\u524d\u91cd\u70b9', 'Current Focus')} · ${diagnosis.primaryPressureLabel} ${formatCompact(diagnosis.primaryPressureValue)}</span>
                         ${diagnosis.goldPressure > 0 ? `<span class="gf-chip">${text('\u91d1\u5e01', 'Gold')} ${formatCompact(diagnosis.goldPressure)}</span>` : ''}
                         ${diagnosis.dustPressure > 0 ? `<span class="gf-chip">${text('\u7194\u5c18', 'Dust')} ${formatCompact(diagnosis.dustPressure)}</span>` : ''}
                         ${diagnosis.catalystPressure > 0 ? `<span class="gf-chip">${text('\u50ac\u5316', 'Catalyst')} ${formatCompact(diagnosis.catalystPressure)}</span>` : ''}
@@ -7603,7 +7768,7 @@
             ${renderPanelHead(
                 text('\u5f53\u524d\u63a8\u8fdb', 'Current Route'),
                 '',
-                `<div class="gf-chip is-strong">${text('\u5f53\u524d\u5408\u540c', 'Contract')} 路 ${contract.id}</div>`
+                `<div class="gf-chip is-strong">${text('\u5f53\u524d\u5408\u540c', 'Contract')} · ${contract.id}</div>`
             )}
             <div class="gf-kpi-grid">
                 <div class="gf-kpi-card"><span>${text('\u6709\u6548\u6218\u529b', 'Effective')}</span><strong>${formatCompact(effectivePower)}</strong></div>
@@ -7612,14 +7777,179 @@
                 <div class="gf-kpi-card"><span>${text('\u6700\u9ad8\u5408\u540c', 'Best')}</span><strong>${config.contracts[state.save.bestContractIndex].id}</strong></div>
             </div>
             <div class="gf-chip-row gf-summary-status-row" style="margin-top:12px;">
-                <span class="gf-chip is-strong">${powerGap > 0 ? text('\u8fd8\u5dee ' + formatCompact(powerGap), 'Gap ' + formatCompact(powerGap)) : text('\u5df2\u5920\u7ebf', 'Ready')}</span>
-                <span class="gf-chip">${text('\u4e0b\u4e00\u6b65', 'Next')} 路 ${diagnosis.freeShort}</span>
-                <span class="gf-chip is-success">${text('\u7a33\u5b9a\u8865\u6b63', 'Stability')} 路 +${formatCompact(Math.max(0, effectivePower - power.total))}</span>
-                <span class="gf-chip is-success">${text('\u4ed8\u8d39\u8282\u594f', 'Spend Lane')} 路 ${diagnosis.spendLaneTitle}</span>
-                <span class="gf-chip">${text('\u4e3b\u7f3a\u53e3', 'Main Sink')} 路 ${diagnosis.primaryPressureLabel} ${formatCompact(diagnosis.primaryPressureValue)}</span>
-                <span class="gf-chip">${text('\u63a8\u8350\u793c\u5305', 'Pack')} 路 ${diagnosis.recommendedOfferName}</span>
+                <span class="gf-chip is-strong">${powerGap > 0 ? text('\u5f53\u524d\u5f85\u8865 ' + formatCompact(powerGap), 'Need ' + formatCompact(powerGap)) : text('\u5df2\u5920\u7ebf', 'Ready')}</span>
+                <span class="gf-chip">${text('\u4e0b\u4e00\u6b65', 'Next')} · ${diagnosis.freeShort}</span>
+                <span class="gf-chip is-success">${text('\u7a33\u5b9a\u8865\u6b63', 'Stability')} · +${formatCompact(Math.max(0, effectivePower - power.total))}</span>
+                <span class="gf-chip is-success">${text('\u6210\u957f\u9636\u6bb5', 'Growth Stage')} · ${diagnosis.spendLaneTitle}</span>
+                <span class="gf-chip">${text('\u5f53\u524d\u91cd\u70b9', 'Current Focus')} · ${diagnosis.primaryPressureLabel} ${formatCompact(diagnosis.primaryPressureValue)}</span>
+                <span class="gf-chip">${text('\u63a8\u8350\u8865\u7ed9', 'Recommended Pack')} · ${diagnosis.recommendedOfferName}</span>
             </div>
         `;
+    };
+
+    renderWorkshopCompactRow = function renderWorkshopCompactRowFinal(item) {
+        const level = getWorkshopLevel(item.id);
+        const cost = getWorkshopUpgradeCost(item.id);
+        const currentEffect = getWorkshopEffect(item.id);
+        const nextEffect = getWorkshopEffect(item.id, level + 1);
+        const maxed = level >= item.maxLevel;
+        const ready = canUpgradeWorkshop(item.id) && !maxed;
+        const buttonAttrs = maxed
+            ? 'type="button" disabled'
+            : `type="button" data-action="upgradeWorkshop" data-value="${item.id}"`;
+
+        return `
+            <article class="gf-compact-row ${ready ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(item.name)} 路 Lv.${level}</div>
+                    <div class="gf-compact-sub">${maxed
+                        ? text(`当前效果 ${formatWorkshopEffect(item.id, currentEffect)}，该路线已封顶。`, `Current effect ${formatWorkshopEffect(item.id, currentEffect)}. This line is maxed.`)
+                        : text(`当前 ${formatWorkshopEffect(item.id, currentEffect)} → 下级 ${formatWorkshopEffect(item.id, nextEffect)}`, `Current ${formatWorkshopEffect(item.id, currentEffect)} → Next ${formatWorkshopEffect(item.id, nextEffect)}`)}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip">${text('金币', 'Gold')} 路 ${maxed ? '-' : formatCompact(cost.gold)}</span>
+                        <span class="gf-chip">${text('熔尘', 'Dust')} 路 ${maxed ? '-' : formatCompact(cost.dust)}</span>
+                        <span class="gf-chip ${ready ? 'is-success' : maxed ? 'is-strong' : 'is-warning'}">${maxed ? text('已封顶', 'Maxed') : ready ? text('可升级', 'Ready') : text('资源不足', 'Need res')}</span>
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${maxed ? text('已满', 'Maxed') : `Lv.${level + 1}`}</strong>
+                    <button class="${ready ? 'primary-btn' : 'ghost-btn'}" ${buttonAttrs}>${maxed ? text('已封顶', 'Maxed') : text('升级', 'Upgrade')}</button>
+                </div>
+            </article>
+        `;
+    };
+
+    renderSigilCompactRow = function renderSigilCompactRowFinal(sigil) {
+        const level = getSigilLevel(sigil.id);
+        const unlocked = level > 0;
+        const equipped = state.save.selectedSigils.includes(sigil.id);
+        const slotLocked = sigil.slot === 'resonance' && state.save.bestContractIndex < 2;
+        const shardOwned = getSigilShardCount(sigil.id);
+        const unlockCost = getSigilUnlockCost(sigil.id);
+        const upgradeCost = getSigilUpgradeCost(sigil.id);
+        const focus = getCurrentContract().focus.includes(sigil.family);
+        const unlockReady = !unlocked && state.save.gold >= unlockCost.gold && shardOwned >= unlockCost.shards;
+        const upgradeReady = unlocked && level < 8 && state.save.gold >= upgradeCost.gold && shardOwned >= upgradeCost.shards;
+        const primaryLabel = unlocked
+            ? (level >= 8
+                ? text('已满', 'Maxed')
+                : text(`升 ${formatCompact(upgradeCost.gold)}G`, `Up ${formatCompact(upgradeCost.gold)}G`))
+            : text(`解 ${formatCompact(unlockCost.gold)}G`, `Unlock ${formatCompact(unlockCost.gold)}G`);
+        const detail = unlocked
+            ? text(`碎片 ${formatCompact(shardOwned)}/${formatCompact(upgradeCost.shards)} 路 金币 ${formatCompact(state.save.gold)}/${formatCompact(upgradeCost.gold)}`, `Shards ${formatCompact(shardOwned)}/${formatCompact(upgradeCost.shards)} 路 Gold ${formatCompact(state.save.gold)}/${formatCompact(upgradeCost.gold)}`)
+            : text(`碎片 ${formatCompact(shardOwned)}/${formatCompact(unlockCost.shards)} 路 金币 ${formatCompact(state.save.gold)}/${formatCompact(unlockCost.gold)} 路 ${getSlotName(sigil.slot)}`, `Shards ${formatCompact(shardOwned)}/${formatCompact(unlockCost.shards)} 路 Gold ${formatCompact(state.save.gold)}/${formatCompact(unlockCost.gold)} 路 ${getSlotName(sigil.slot)}`);
+        const equipDisabled = !unlocked || equipped || slotLocked;
+        const equipAttrs = equipDisabled
+            ? 'type="button" disabled'
+            : `type="button" data-action="equipSigil" data-value="${sigil.id}"`;
+        const upgradeDisabled = unlocked ? (!upgradeReady || level >= 8) : !unlockReady;
+        const primaryAttrs = upgradeDisabled
+            ? 'type="button" disabled'
+            : `type="button" data-action="${unlocked ? 'upgradeSigil' : 'unlockSigil'}" data-value="${sigil.id}"`;
+
+        return `
+            <article class="gf-compact-row ${equipped || focus ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(sigil.name)} 路 ${localize(familyMap[sigil.family].name)}</div>
+                    <div class="gf-compact-sub">${detail}</div>
+                    <div class="gf-chip-row">
+                        <span class="gf-chip">${getSlotName(sigil.slot)}</span>
+                        <span class="gf-chip">${text('战力', 'Power')} 路 ${formatCompact(getSigilPower(sigil.id))}</span>
+                        ${focus ? `<span class="gf-chip is-success">${text('本章焦点', 'Focus')}</span>` : ''}
+                        ${equipped ? `<span class="gf-chip is-strong">${text('已装', 'Equipped')}</span>` : ''}
+                        ${slotLocked ? `<span class="gf-chip is-warning">${text('槽位未开', 'Slot Locked')}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>${unlocked ? `Lv.${level}` : text('未解', 'Locked')}</strong>
+                    <div class="gf-action-row">
+                        <button class="ghost-btn" ${equipAttrs}>${equipped ? text('已装', 'Equipped') : text('装备', 'Equip')}</button>
+                        <button class="primary-btn" ${primaryAttrs}>${primaryLabel}</button>
+                    </div>
+                </div>
+            </article>
+        `;
+    };
+
+    const getGemForgeSpendLaneBase = getGemForgeSpendLane;
+    getGemForgeSpendLane = function getGemForgeSpendLaneCopyPolished() {
+        const lane = { ...getGemForgeSpendLaneBase() };
+        if (lane.id === 'starter') {
+            lane.summary = text(
+                '首次打开礼包后，优先补金币、稳定和焦点符印，前几章推进会明显更顺。',
+                'After the first pack, focus on gold, stability, and focus sigils to make the first chapters noticeably smoother.'
+            );
+        }
+        return lane;
+    };
+
+    const getGrowthDiagnosisBase = getGrowthDiagnosis;
+    getGrowthDiagnosis = function getGrowthDiagnosisCopyPolished() {
+        const diagnosis = { ...getGrowthDiagnosisBase() };
+        const rows = getGemInventoryRows();
+        const fuseReadyCount = rows.filter((row) => row.canFuse).length;
+        const awakenReadyCount = rows.filter((row) => row.canAwaken).length;
+        if (diagnosis.pressureId === 'forge') {
+            diagnosis.summary = text(
+                `你手上已经有 ${fuseReadyCount} 条可合成和 ${awakenReadyCount} 条可觉醒库存，先把现成成长吃满，通常比马上开礼包更划算。`,
+                `You already have ${fuseReadyCount} fuse-ready and ${awakenReadyCount} awaken-ready rows. Use this growth first; it is usually more efficient than opening a pack right away.`
+            );
+        }
+        if (diagnosis.pressureId === 'catalyst') {
+            diagnosis.summary = text(
+                `进入 ${diagnosis.contractId} 后，催化会同时影响高阶合成和 T3+ 觉醒，现在更适合先补材料再推进。`,
+                `From ${diagnosis.contractId} onward, catalyst affects both high-tier fusion and T3+ awakening, so refilling materials first is usually the smoother move.`
+            );
+        }
+        return diagnosis;
+    };
+
+    renderPaymentOffer = function renderPaymentOfferFinal(offer) {
+        const projected = getProjectedOfferImpact(offer);
+        const activeOrder = currentPaymentOrder
+            && doesPaymentOrderMatchOffer(currentPaymentOrder, offer)
+            && !isPaymentOrderSettledLocally(currentPaymentOrder)
+            && !isPaymentOrderExpired(currentPaymentOrder)
+            ? currentPaymentOrder
+            : null;
+        const offerSummary = projected.currentGap > projected.projectedGap
+            ? text(
+                '预计减少当前待补 ' + formatCompact(projected.currentGap - projected.projectedGap) + '，并同步补当前焦点碎片。',
+                'Reduces the current need by ' + formatCompact(projected.currentGap - projected.projectedGap) + ' and also refills current focus shards.'
+            )
+            : text(
+                '直接补金币 / 熔尘 / 催化剂，并抬高合同稳定与常驻成长。',
+                'Directly refills gold / dust / catalyst while lifting contract stability and permanent growth.'
+            );
+        return `
+            <article class="gf-compact-row ${projected.powerGain > 0 || activeOrder ? 'is-ready' : ''}">
+                <div class="gf-compact-main">
+                    <div class="gf-compact-title">${localize(offer.name)}</div>
+                    <div class="gf-compact-sub">${offerSummary}</div>
+                    <div class="gf-chip-row">
+                        ${renderRewardChips(offer.reward, { limit: 2 })}
+                        <span class="gf-chip is-strong">${text('战力', 'Power')} +${formatCompact(projected.powerGain)}</span>
+                        ${projected.stabilityGain > 0 ? `<span class="gf-chip is-success">${text('稳定补正', 'Stability')} +${formatCompact(projected.stabilityGain)}</span>` : ''}
+                        ${(offer.focusShards || 0) > 0 ? `<span class="gf-chip is-success">${text('焦点碎片', 'Focus Shards')} +${formatCompact(offer.focusShards || 0)}</span>` : ''}
+                        ${projected.reachGain > 0 ? `<span class="gf-chip is-success">${text('预计推进', 'Reach')} +${projected.reachGain}</span>` : ''}
+                        ${activeOrder ? `<span class="gf-chip">${text('订单进行中', 'Order Active')} 路 ${formatPaymentUsdt(activeOrder.exactAmount)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="gf-compact-side">
+                    <strong>$${offer.price.toFixed(2)}</strong>
+                    <button class="primary-btn" type="button" data-action="buyOffer" data-value="${offer.id}">${activeOrder ? text('继续', 'Continue') : text('链上支付', 'Pay')}</button>
+                </div>
+            </article>
+        `;
+    };
+
+    const renderSeasonTabBase = renderSeasonTab;
+    renderSeasonTab = function renderSeasonTabCopyPolished() {
+        renderSeasonTabBase();
+        if (!ui.panelContent) return;
+        ui.panelContent.innerHTML = ui.panelContent.innerHTML
+            .replace(/\u9996\u5145\u540e\u5f00\u542f/g, '\u6253\u5f00\u4efb\u610f\u793c\u5305\u540e\u5f00\u542f')
+            .replace(/Unlocks after first top-up/g, 'Unlocks after opening any pack');
     };
 
     function readLang() { try { return localStorage.getItem(HUB_LANG_KEY) === 'en' ? 'en' : 'zh'; } catch (error) { return 'zh'; } }

@@ -107,14 +107,14 @@
         ],
         contracts: [
             { id: '1-1', name: { zh: '暖炉启封', en: 'Warm Kiln' }, recommended: 180, reward: { gold: 160, dust: 14, catalyst: 2, seasonXp: 24 }, focus: ['ember', 'tide'] },
-            { id: '1-2', name: { zh: '合金试压', en: 'Alloy Pressure' }, recommended: 360, reward: { gold: 230, dust: 18, catalyst: 2, seasonXp: 30 }, focus: ['tide', 'volt'] },
-            { id: '1-3', name: { zh: '棱镜试炼', en: 'Prism Trial' }, recommended: 640, reward: { gold: 320, dust: 24, catalyst: 3, seasonXp: 40 }, focus: ['volt', 'ember'] },
-            { id: '2-1', name: { zh: '晶压炉室', en: 'Crystal Press' }, recommended: 1080, reward: { gold: 440, dust: 34, catalyst: 4, seasonXp: 54 }, focus: ['ember', 'void'] },
-            { id: '2-2', name: { zh: '余烬反应堆', en: 'Ember Reactor' }, recommended: 1620, reward: { gold: 620, dust: 44, catalyst: 5, seasonXp: 70 }, focus: ['ember', 'volt'] },
-            { id: '2-3', name: { zh: '共鸣熔芯', en: 'Resonance Core' }, recommended: 2360, reward: { gold: 860, dust: 58, catalyst: 7, seasonXp: 92 }, focus: ['tide', 'void'] },
-            { id: '3-1', name: { zh: '虚空镜厅', en: 'Void Mirror' }, recommended: 3380, reward: { gold: 1160, dust: 78, catalyst: 9, seasonXp: 118 }, focus: ['void', 'volt'] },
-            { id: '3-2', name: { zh: '符印之心', en: 'Sigil Heart' }, recommended: 4720, reward: { gold: 1520, dust: 102, catalyst: 12, seasonXp: 152 }, focus: ['void', 'ember'] },
-            { id: '3-3', name: { zh: '创世砧核', en: 'Genesis Anvil' }, recommended: 6480, reward: { gold: 1980, dust: 134, catalyst: 15, seasonXp: 192 }, focus: ['void', 'tide'] }
+            { id: '1-2', name: { zh: '合金试压', en: 'Alloy Pressure' }, recommended: 320, reward: { gold: 230, dust: 18, catalyst: 2, seasonXp: 30 }, focus: ['tide', 'volt'] },
+            { id: '1-3', name: { zh: '棱镜试炼', en: 'Prism Trial' }, recommended: 540, reward: { gold: 320, dust: 24, catalyst: 3, seasonXp: 40 }, focus: ['volt', 'ember'] },
+            { id: '2-1', name: { zh: '晶压炉室', en: 'Crystal Press' }, recommended: 860, reward: { gold: 440, dust: 34, catalyst: 4, seasonXp: 54 }, focus: ['ember', 'void'] },
+            { id: '2-2', name: { zh: '余烬反应堆', en: 'Ember Reactor' }, recommended: 1260, reward: { gold: 620, dust: 44, catalyst: 5, seasonXp: 70 }, focus: ['ember', 'volt'] },
+            { id: '2-3', name: { zh: '共鸣熔芯', en: 'Resonance Core' }, recommended: 1780, reward: { gold: 860, dust: 58, catalyst: 7, seasonXp: 92 }, focus: ['tide', 'void'] },
+            { id: '3-1', name: { zh: '虚空镜厅', en: 'Void Mirror' }, recommended: 2440, reward: { gold: 1160, dust: 78, catalyst: 9, seasonXp: 118 }, focus: ['void', 'volt'] },
+            { id: '3-2', name: { zh: '符印之心', en: 'Sigil Heart' }, recommended: 3260, reward: { gold: 1520, dust: 102, catalyst: 12, seasonXp: 152 }, focus: ['void', 'ember'] },
+            { id: '3-3', name: { zh: '创世砧核', en: 'Genesis Anvil' }, recommended: 4320, reward: { gold: 1980, dust: 134, catalyst: 15, seasonXp: 192 }, focus: ['void', 'tide'] }
         ],
         workshop: [
             {
@@ -289,49 +289,49 @@
                 id: 'starter',
                 price: 1.0,
                 name: { zh: '火种补给', en: 'Spark Starter' },
-                reward: { gold: 2400, dust: 90, catalyst: 10 },
-                focusShards: 16,
-                permanent: { heatCap: 24, rareRate: 0.035, contractStability: 90 }
+                reward: { gold: 900, dust: 36, catalyst: 4 },
+                focusShards: 8,
+                permanent: { heatCap: 8, rareRate: 0.01, contractStability: 18 }
             },
             {
                 id: 'accelerator',
                 price: 2.99,
                 name: { zh: '熔炉加速箱', en: 'Forge Booster' },
-                reward: { gold: 8800, dust: 300, catalyst: 26 },
-                focusShards: 30,
-                permanent: { heatCap: 42, rareRate: 0.06, dustYield: 0.1, contractStability: 180 }
+                reward: { gold: 2400, dust: 96, catalyst: 9 },
+                focusShards: 14,
+                permanent: { heatCap: 14, rareRate: 0.018, dustYield: 0.04, contractStability: 32 }
             },
             {
                 id: 'rush',
                 price: 3.99,
                 name: { zh: '进阶补给包', en: 'Progress Pack' },
-                reward: { gold: 15800, dust: 520, catalyst: 46 },
-                focusShards: 46,
-                permanent: { heatCap: 60, rareRate: 0.09, dustYield: 0.14, catalystYield: 0.05, contractStability: 300 }
+                reward: { gold: 4200, dust: 168, catalyst: 16 },
+                focusShards: 22,
+                permanent: { heatCap: 20, rareRate: 0.026, dustYield: 0.06, catalystYield: 0.03, contractStability: 52 }
             },
             {
                 id: 'sovereign',
                 price: 5.99,
                 name: { zh: '棱镜统御包', en: 'Prism Dominion' },
-                reward: { gold: 28600, dust: 940, catalyst: 82 },
-                focusShards: 66,
-                permanent: { heatCap: 88, rareRate: 0.13, dustYield: 0.2, catalystYield: 0.09, contractStability: 460 }
+                reward: { gold: 7600, dust: 300, catalyst: 28 },
+                focusShards: 30,
+                permanent: { heatCap: 28, rareRate: 0.038, dustYield: 0.09, catalystYield: 0.05, contractStability: 78 }
             },
             {
                 id: 'nexus',
                 price: 9.99,
                 name: { zh: '棱核中枢包', en: 'Prism Nexus' },
-                reward: { gold: 43800, dust: 1460, catalyst: 124 },
-                focusShards: 92,
-                permanent: { heatCap: 108, rareRate: 0.17, dustYield: 0.26, catalystYield: 0.13, contractStability: 680 }
+                reward: { gold: 11600, dust: 480, catalyst: 44 },
+                focusShards: 40,
+                permanent: { heatCap: 36, rareRate: 0.052, dustYield: 0.13, catalystYield: 0.08, contractStability: 110 }
             },
             {
                 id: 'throne',
                 price: 12.99,
                 name: { zh: '创世砧核', en: 'Genesis Anvil' },
-                reward: { gold: 56800, dust: 1960, catalyst: 168 },
-                focusShards: 124,
-                permanent: { heatCap: 132, rareRate: 0.2, dustYield: 0.32, catalystYield: 0.18, contractStability: 900 }
+                reward: { gold: 15400, dust: 680, catalyst: 62 },
+                focusShards: 52,
+                permanent: { heatCap: 46, rareRate: 0.068, dustYield: 0.17, catalystYield: 0.11, contractStability: 148 }
             }
         ],
         sponsorTiers: [
@@ -345,26 +345,26 @@
             {
                 id: 'tier1',
                 threshold: 1,
-                reward: { gold: 1500, dust: 72, catalyst: 8 },
-                permanent: { heatCap: 10, rareRate: 0.012, contractStability: 40 }
+                reward: { gold: 600, dust: 28, catalyst: 3 },
+                permanent: { heatCap: 4, rareRate: 0.006, contractStability: 12 }
             },
             {
                 id: 'tier2',
                 threshold: 4,
-                reward: { gold: 5600, dust: 240, catalyst: 20 },
-                permanent: { heatCap: 16, dustYield: 0.04, catalystYield: 0.025, contractStability: 70 }
+                reward: { gold: 2200, dust: 88, catalyst: 8 },
+                permanent: { heatCap: 8, dustYield: 0.03, catalystYield: 0.015, contractStability: 20 }
             },
             {
                 id: 'tier3',
                 threshold: 10,
-                reward: { gold: 14800, dust: 560, catalyst: 48 },
-                permanent: { heatCap: 22, rareRate: 0.024, dustYield: 0.05, contractStability: 110 }
+                reward: { gold: 5600, dust: 220, catalyst: 20 },
+                permanent: { heatCap: 12, rareRate: 0.014, dustYield: 0.04, contractStability: 36 }
             },
             {
                 id: 'tier4',
                 threshold: 20,
-                reward: { gold: 33800, dust: 1260, catalyst: 112 },
-                permanent: { heatCap: 30, rareRate: 0.036, dustYield: 0.08, catalystYield: 0.05, contractStability: 160 }
+                reward: { gold: 12800, dust: 520, catalyst: 48 },
+                permanent: { heatCap: 18, rareRate: 0.022, dustYield: 0.06, catalystYield: 0.03, contractStability: 56 }
             }
         ],
         baseSave: {
