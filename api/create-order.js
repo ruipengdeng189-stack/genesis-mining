@@ -53,6 +53,7 @@ const OFFER_CATALOGS = {
     convoy: { name: 'Convoy Supply Pack', baseAmount: 15.0 },
     captain: { name: 'Captain Growth Pack', baseAmount: 30.0 },
     arsenal: { name: 'Frontier Arsenal Pack', baseAmount: 68.0 },
+    frontier: { name: 'Far Frontier Pack', baseAmount: 128.0 },
   },
 };
 

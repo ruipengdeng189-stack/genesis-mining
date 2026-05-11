@@ -25,10 +25,10 @@
     const COPY = {
         zh: {
             backToHub: '← 返回大厅',
-            sfxOn: 'SFX ON',
-            sfxOff: 'SFX OFF',
-            preview: '首章雏形',
-            summaryCopy: '大厅入口、章节推进、自动战斗与成长升级已接通，现在可以直接体验首章。',
+            sfxOn: '音效开启',
+            sfxOff: '音效关闭',
+            preview: '当前战区',
+            summaryCopy: '从章节推进、整备升级到礼包增益都已接通，可以直接开始当前战区。',
             currentStage: '当前关卡',
             clearCount: '已通关',
             nextTarget: '下一目标',
@@ -71,17 +71,17 @@
             claimed: '已领取',
             seasonTitle: '赛季轨道',
             seasonBody: '赛季按 XP 解锁，免费与高级奖励共用一套紧凑展示。',
-            shopTitle: '商店骨架',
-            shopBody: '软货币商品可直接购买；礼包先展示精确金额与奖励映射。',
+            shopTitle: '补给商店',
+            shopBody: '用软货币补齐眼前缺口，再按当前进度挑选更合适的礼包。',
             freeSupply: '免费补给',
             buy: '购买',
-            previewOrder: '查看',
-            laterConnectPayment: '稍后接支付闭环',
-            viewExactAmount: '查看精确金额示意',
+            previewOrder: '查看礼包',
+            laterConnectPayment: '支付说明',
+            viewExactAmount: '查看支付金额',
             cooldown: '冷却中',
             exactAmountHint: '创建订单后会生成当前礼包专属金额，并展示到账奖励与长期增益。',
             paymentNext: '完成转账并提交 TXID 后，系统会校验订单并发放奖励。',
-            battlePreview: '战斗页',
+            battlePreview: '列车战斗',
             integrity: '车体',
             shield: '护盾',
             heat: '热量',
@@ -115,7 +115,7 @@
             supplyClaimed: '补给已领取',
             missionClaimed: '任务奖励已到账',
             seasonClaimed: '赛季奖励已领取',
-            bundlePreview: '礼包预览',
+            bundlePreview: '精选礼包',
             bundleMock: '礼包会展示专属金额、到账内容与长期加成，便于你按当前进度选择。',
             eventChoose: '路线事件',
             lockedStageTip: '先完成前置关卡，再继续推进。',
@@ -127,10 +127,10 @@
             bonusReward: '额外收益',
             activeCrew: '当前编组',
             battleLogs: '战况回放',
-            premiumPreview: '高级线预览',
+            premiumPreview: '高级奖励',
             daySupplyReady: '免费补给已就绪',
             waitTemplate: '还需等待 {time}',
-            openOffer: '打开礼包预览',
+            openOffer: '查看礼包',
             safeRoute: '稳态路线',
             eliteStage: '精英',
             bossStage: 'Boss',
@@ -138,10 +138,10 @@
         },
         en: {
             backToHub: '← Back To Hub',
-            sfxOn: 'SFX ON',
-            sfxOff: 'SFX OFF',
-            preview: 'Preview Build',
-            summaryCopy: 'Hub entry, chapter flow, auto-battle, and growth upgrades are connected. Chapter one is now directly playable.',
+            sfxOn: 'SFX On',
+            sfxOff: 'SFX Off',
+            preview: 'Live Operation',
+            summaryCopy: 'Chapter flow, prep upgrades, and purchase perks are live, so you can jump straight into the current operation.',
             currentStage: 'Stage',
             clearCount: 'Clears',
             nextTarget: 'Next Target',
@@ -184,17 +184,17 @@
             claimed: 'Claimed',
             seasonTitle: 'Season Track',
             seasonBody: 'Season nodes unlock by XP, with free and premium rewards in one compact track.',
-            shopTitle: 'Shop Skeleton',
-            shopBody: 'Soft-currency goods are live; bundles show exact price and reward mapping.',
+            shopTitle: 'Supply Shop',
+            shopBody: 'Use soft currency to cover the immediate gap, then choose the offer that best matches your current pace.',
             freeSupply: 'Free Supply',
             buy: 'Buy',
-            previewOrder: 'View',
-            laterConnectPayment: 'Hook payment later',
-            viewExactAmount: 'View exact amount',
+            previewOrder: 'View Offer',
+            laterConnectPayment: 'Payment Info',
+            viewExactAmount: 'View Amount',
             cooldown: 'Cooldown',
             exactAmountHint: 'Creating an order reveals the exact amount for this offer, plus the reward and permanent bonus it unlocks.',
             paymentNext: 'After the transfer, submit the TXID to verify the order and grant the rewards.',
-            battlePreview: 'Battle Preview',
+            battlePreview: 'Battle',
             integrity: 'Integrity',
             shield: 'Shield',
             heat: 'Heat',
@@ -228,7 +228,7 @@
             supplyClaimed: 'Supply claimed',
             missionClaimed: 'Mission rewards claimed',
             seasonClaimed: 'Season rewards claimed',
-            bundlePreview: 'Offer Preview',
+            bundlePreview: 'Featured Offer',
             bundleMock: 'Each bundle shows its exact amount, instant rewards, and permanent bonus so you can choose by your current pace.',
             eventChoose: 'Route Event',
             lockedStageTip: 'Clear the previous stage first.',
@@ -240,10 +240,10 @@
             bonusReward: 'Bonus Yield',
             activeCrew: 'Active Crew',
             battleLogs: 'Battle Logs',
-            premiumPreview: 'Premium Preview',
+            premiumPreview: 'Premium Rewards',
             daySupplyReady: 'Free supply ready',
             waitTemplate: 'Wait {time}',
-            openOffer: 'Open offer preview',
+            openOffer: 'View Offer',
             safeRoute: 'Steady Route',
             eliteStage: 'Elite',
             bossStage: 'Boss',
@@ -321,7 +321,9 @@
                 dailyFreeClaims: 0,
                 fuelPayout: 0,
                 crewDiscount: 0,
-                eliteBossReward: 0
+                eliteBossReward: 0,
+                globalGrowth: 0,
+                relayPayout: 0
             }
         };
     }
@@ -524,7 +526,8 @@
         Object.values(state.researchLevels).forEach((level) => {
             total += (Number(level) || 0) * 26;
         });
-        return total;
+        const globalGrowth = Number(state.payment?.permanent?.globalGrowth || 0);
+        return Math.round(total * (1 + Math.max(0, globalGrowth)));
     }
 
     function getTotalClears() {
@@ -584,15 +587,17 @@
         const repairResearch = Number(state.researchLevels.repairGrid || 0);
         const salvageResearch = Number(state.researchLevels.salvageCharter || 0);
         const relayResearch = Number(state.researchLevels.relayDecoder || 0);
+        const globalGrowth = Number(state.payment?.permanent?.globalGrowth || 0);
+        const growthMul = 1 + Math.max(0, globalGrowth) * 0.5;
         const powerRatio = clamp(getCurrentPower() / Math.max(1, stage.recommended), 0.72, 1.34);
 
         return {
             powerRatio,
-            attackMul: 1 + (state.moduleLevels.mainGun - 1) * 0.09 + fireResearch * 0.035 + (hasActiveCrew('knox') ? 0.08 : 0),
-            defenseMul: 1 + (state.moduleLevels.armorCar - 1) * 0.08 + platingResearch * 0.04 + (hasActiveCrew('ves') ? 0.04 : 0),
-            repairMul: 1 + (state.moduleLevels.supportCar - 1) * 0.07 + repairResearch * 0.04 + (hasActiveCrew('lio') ? 0.06 : 0),
-            salvageMul: 1 + salvageResearch * 0.03 + (hasActiveCrew('suri') ? 0.07 : 0),
-            relayMul: 1 + relayResearch * 0.03,
+            attackMul: (1 + (state.moduleLevels.mainGun - 1) * 0.09 + fireResearch * 0.035 + (hasActiveCrew('knox') ? 0.08 : 0)) * growthMul,
+            defenseMul: (1 + (state.moduleLevels.armorCar - 1) * 0.08 + platingResearch * 0.04 + (hasActiveCrew('ves') ? 0.04 : 0)) * growthMul,
+            repairMul: (1 + (state.moduleLevels.supportCar - 1) * 0.07 + repairResearch * 0.04 + (hasActiveCrew('lio') ? 0.06 : 0)) * growthMul,
+            salvageMul: (1 + salvageResearch * 0.03 + (hasActiveCrew('suri') ? 0.07 : 0)) * growthMul,
+            relayMul: (1 + relayResearch * 0.03) * (1 + Math.max(0, globalGrowth) * 0.35),
             eventMul: 1 + (hasActiveCrew('mira') ? 0.06 : 0),
             progressMul: clamp(0.78 + powerRatio * 0.22, 0.78, 1.26),
             difficultyMul: clamp(1 + (1 - powerRatio) * 0.65, 0.82, 1.34),
@@ -1257,6 +1262,12 @@
         if (Number(state.payment?.permanent?.eliteBossReward || 0) > 0) {
             chips.push(text(`精英/Boss +${formatPercent(state.payment.permanent.eliteBossReward)}`, `Elite/Boss +${formatPercent(state.payment.permanent.eliteBossReward)}`));
         }
+        if (Number(state.payment?.permanent?.globalGrowth || 0) > 0) {
+            chips.push(text(`全局成长 +${formatPercent(state.payment.permanent.globalGrowth)}`, `Global Growth +${formatPercent(state.payment.permanent.globalGrowth)}`));
+        }
+        if (Number(state.payment?.permanent?.relayPayout || 0) > 0) {
+            chips.push(text(`中继 +${formatPercent(state.payment.permanent.relayPayout)}`, `Relay +${formatPercent(state.payment.permanent.relayPayout)}`));
+        }
         return chips;
     }
 
@@ -1786,6 +1797,9 @@
             ['scrap', 'fuelCells', 'coreChips', 'relayData', 'seasonXp'].forEach((key) => {
                 baseReward[key] = Math.round((baseReward[key] || 0) * bonusRate);
             });
+        }
+        if (Number(permanent.relayPayout || 0) > 0) {
+            baseReward.relayData = Math.round((baseReward.relayData || 0) * (1 + Number(permanent.relayPayout || 0)));
         }
         return mergeRewards(baseReward, battleState?.rewardBonus || {});
     }

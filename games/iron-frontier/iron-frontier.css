@@ -31,13 +31,13 @@ body.if-modal-open {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding: max(18px, env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom));
+    padding: max(14px, env(safe-area-inset-top)) 14px calc(82px + env(safe-area-inset-bottom));
     box-sizing: border-box;
 }
 
 .if-topbar {
     display: grid;
-    gap: 12px;
+    gap: 8px;
 }
 
 .if-topline {
@@ -60,9 +60,9 @@ body.if-modal-open {
 
 .if-hero-card {
     border-radius: 22px;
-    padding: 14px;
+    padding: 12px;
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .if-hero-copy h1,
@@ -73,10 +73,10 @@ body.if-modal-open {
 }
 
 .if-hero-copy p {
-    margin: 6px 0 0;
+    margin: 4px 0 0;
     color: rgba(233, 237, 247, 0.76);
-    font-size: 13px;
-    line-height: 1.45;
+    font-size: 12px;
+    line-height: 1.35;
 }
 
 .if-hero-chips,
@@ -99,11 +99,11 @@ body.if-modal-open {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px;
+    padding: 5px 9px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.06);
     color: rgba(244, 247, 255, 0.88);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.01em;
 }
@@ -111,12 +111,12 @@ body.if-modal-open {
 .if-resource-strip {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
 }
 
 .if-resource-card {
-    padding: 10px 10px 8px;
-    border-radius: 16px;
+    padding: 8px 8px 7px;
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -124,28 +124,28 @@ body.if-modal-open {
 .if-resource-label {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11px;
+    gap: 5px;
+    font-size: 10px;
     color: rgba(220, 228, 243, 0.65);
 }
 
 .if-resource-value {
-    margin-top: 6px;
+    margin-top: 4px;
     font-weight: 800;
-    font-size: 16px;
+    font-size: 15px;
 }
 
 .if-main {
     flex: 1;
     display: grid;
-    gap: 12px;
-    margin-top: 12px;
+    gap: 8px;
+    margin-top: 8px;
     min-height: 0;
 }
 
 .if-summary-card {
     border-radius: 18px;
-    padding: 14px;
+    padding: 12px;
 }
 
 .if-panel-card {
@@ -155,10 +155,10 @@ body.if-modal-open {
 }
 
 .if-panel-content {
-    height: calc(100vh - 300px);
+    height: calc(100vh - 274px);
     min-height: 420px;
     overflow: auto;
-    padding: 14px;
+    padding: 12px;
     box-sizing: border-box;
 }
 
@@ -176,14 +176,14 @@ body.if-modal-open {
     align-items: start;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
 }
 
 .if-panel-head p,
 .if-muted {
-    margin: 6px 0 0;
-    font-size: 12px;
-    line-height: 1.45;
+    margin: 4px 0 0;
+    font-size: 11px;
+    line-height: 1.4;
     color: rgba(228, 233, 244, 0.68);
 }
 
@@ -193,7 +193,7 @@ body.if-modal-open {
 .if-season-grid,
 .if-shop-grid {
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .if-summary-grid {
@@ -224,7 +224,7 @@ body.if-modal-open {
 .if-run-hero,
 .if-mini-card {
     border-radius: 18px;
-    padding: 12px;
+    padding: 10px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -235,8 +235,8 @@ body.if-modal-open {
 .if-module-title,
 .if-crew-title {
     display: block;
-    margin-top: 4px;
-    font-size: 16px;
+    margin-top: 3px;
+    font-size: 15px;
 }
 
 .if-stat-card span,
@@ -244,7 +244,7 @@ body.if-modal-open {
 .if-mini-label,
 .if-season-subtitle {
     color: rgba(224, 231, 244, 0.66);
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .if-run-layout {
@@ -390,9 +390,9 @@ body.if-modal-open {
     bottom: calc(14px + env(safe-area-inset-bottom));
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 8px;
-    padding: 10px;
-    border-radius: 24px;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 22px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(8, 11, 18, 0.92);
     backdrop-filter: blur(18px);
@@ -402,8 +402,8 @@ body.if-modal-open {
 .if-tab {
     min-width: 0;
     border: 0;
-    border-radius: 16px;
-    padding: 8px 6px;
+    border-radius: 14px;
+    padding: 7px 4px;
     color: rgba(217, 226, 241, 0.74);
     background: transparent;
     display: grid;
@@ -419,12 +419,12 @@ body.if-modal-open {
 }
 
 .if-tab-icon {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
 }
 
 .if-tab-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
 }
 
@@ -883,7 +883,7 @@ body.if-modal-open {
     }
 
     .if-panel-content {
-        height: calc(100vh - 356px);
+        height: calc(100vh - 328px);
     }
 }
 
@@ -895,7 +895,10 @@ body.if-modal-open {
 
     .if-card-grid,
     .if-shop-grid,
-    .if-stage-grid,
+    .if-stage-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .if-event-options,
     .if-chapter-strip {
         grid-template-columns: 1fr;
@@ -920,14 +923,14 @@ body.if-modal-open {
     }
 
     .if-panel-content {
-        height: calc(100vh - 392px);
+        height: calc(100vh - 352px);
     }
 }
 
 @media (max-width: 520px) {
     .if-shell {
         padding-top: max(12px, env(safe-area-inset-top));
-        padding-bottom: calc(86px + env(safe-area-inset-bottom));
+        padding-bottom: calc(80px + env(safe-area-inset-bottom));
     }
 
     .if-hero-card,
@@ -938,14 +941,20 @@ body.if-modal-open {
         padding: 12px;
     }
 
-    .if-resource-strip,
+    .if-resource-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .if-summary-grid,
-    .if-battle-hud {
+    .if-battle-hud,
+    .if-card-grid,
+    .if-shop-grid,
+    .if-stage-grid {
         grid-template-columns: 1fr 1fr;
     }
 
     .if-battle-field {
-        min-height: 260px;
+        min-height: 240px;
     }
 
     .if-train span {
