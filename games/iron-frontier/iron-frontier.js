@@ -301,6 +301,11 @@
     let paymentDraftTxid = '';
     let debugOfferId = '';
     let state = loadState();
+    const sfx = window.GenesisProceduralSfx?.createEngine({
+        storageKey: 'genesis_iron_frontier_sfx_v1',
+        defaultEnabled: Boolean(state.soundEnabled)
+    });
+    state.soundEnabled = !!sfx?.isEnabled?.();
 
     function deepClone(value) {
         return JSON.parse(JSON.stringify(value));
@@ -421,6 +426,21 @@
             localStorage.setItem(SAVE_KEY, JSON.stringify(state));
             localStorage.setItem(HUB_LANG_KEY, state.lang);
         } catch (error) {}
+    }
+
+    function playSfx(name, payload) {
+        return sfx?.play(name, payload);
+    }
+
+    function syncSoundToggle() {
+        state.soundEnabled = !!sfx?.isEnabled?.();
+        sfx?.syncToggle?.(nodes.soundToggle, {
+            on: t('sfxOn'),
+            off: t('sfxOff')
+        });
+        if (nodes.soundToggle) {
+            nodes.soundToggle.setAttribute('aria-label', text('切换音效', 'Toggle sound effects'));
+        }
     }
 
     function t(key) {
@@ -640,6 +660,7 @@
 
     function spend(cost) {
         if (!canAfford(cost)) {
+            playSfx('error');
             showToast(t('noResource'));
             return false;
         }
@@ -932,6 +953,7 @@
             document.execCommand('copy');
             document.body.removeChild(input);
         }
+        playSfx('confirm');
         showToast(successMessage);
     }
 
@@ -1042,6 +1064,7 @@
                     payAddress: order.payAddress
                 });
                 setPaymentNoticeForOffer(offer.id, text('已恢复已支付订单，奖励已到账。', 'Paid order restored and rewards granted.'), 'success');
+                playSfx('goal');
                 showToast(text('已恢复这笔已支付订单。', 'Recovered the paid order rewards.'));
             } else {
                 setPendingOrder(order);
@@ -1054,6 +1077,7 @@
                         : text('订单已创建，请按精确金额完成支付。', 'Order created. Please pay the exact amount.'),
                     'success'
                 );
+                playSfx('purchase');
                 showToast(
                     order.reused
                         ? text('已恢复待支付订单。', 'Pending order restored.')
@@ -1071,6 +1095,7 @@
                     payAddress: error.order.payAddress
                 });
                 setPaymentNoticeForOffer(offer.id, text('已恢复待补发订单，奖励已到账。', 'Recovered the paid order and applied rewards.'), 'success');
+                playSfx('goal');
                 showToast(text('已恢复这笔已支付订单。', 'Recovered the paid order.'));
             } else if (error.code === 'OFFER_ALREADY_OWNED' && error.order) {
                 if (!isOfferOwned(error.order.offerId)) {
@@ -1083,6 +1108,7 @@
                     });
                 }
                 setPaymentNoticeForOffer(error.order.offerId || offer.id, text('该礼包权益已恢复。', 'Pack ownership restored.'), 'success');
+                playSfx('goal');
                 showToast(text('已恢复这档礼包权益。', 'Restored this pack ownership.'));
                 activeOfferId = error.order.offerId || offer.id;
             } else if (error.order) {
@@ -1090,9 +1116,11 @@
                 rememberRecentOrder(error.order);
                 activeOfferId = error.order.offerId || offer.id;
                 setPaymentNoticeForOffer(activeOfferId, error.message || text('已有待处理订单，请先完成当前订单。', 'A pending order already exists.'), 'warning');
+                playSfx('confirm');
                 showToast(text('已恢复当前待处理订单。', 'Restored the current pending order.'));
             } else {
                 setPaymentNoticeForOffer(offer.id, error.message || text('订单创建失败。', 'Failed to create order.'), 'warning');
+                playSfx('error');
                 showToast(error.message || text('订单创建失败。', 'Failed to create order.'));
             }
         } finally {
@@ -1150,12 +1178,14 @@
                 setPendingOrder(remote);
                 rememberRecentOrder(remote);
                 if (String(remote.status || '').toLowerCase() === 'paid' && remote.txid) {
+                    playSfx('confirm');
                     setPaymentNoticeForOffer(offerId, text('检测到已支付订单，可直接恢复奖励。', 'A paid order is ready to restore.'), 'success');
                 } else {
                     setPaymentNoticeForOffer(offerId, text('订单仍待支付，完成转账后再校验即可。', 'Order is still pending. Complete the transfer, then verify it.'), 'info');
                 }
             }
         } catch (error) {
+            playSfx('error');
             setPaymentNoticeForOffer(offerId, error.message || text('订单状态检查失败。', 'Failed to check order status.'), 'warning');
         } finally {
             paymentBusyAction = '';
@@ -1183,9 +1213,11 @@
                 payAddress: order.payAddress
             });
             setPaymentNoticeForOffer(offerId, text('支付已确认，奖励已发放。', 'Payment confirmed and rewards granted.'), 'success');
+            playSfx('goal');
             showToast(text('奖励已到账。', 'Rewards granted.'));
             renderAll();
         } catch (error) {
+            playSfx('error');
             setPaymentNoticeForOffer(offerId, error.message || text('奖励恢复失败。', 'Failed to restore rewards.'), 'warning');
         } finally {
             paymentBusyAction = '';
@@ -1228,9 +1260,11 @@
             });
             paymentDraftTxid = '';
             setPaymentNoticeForOffer(offerId, text('支付校验完成，奖励已发放。', 'Payment verified and rewards granted.'), 'success');
+            playSfx('goal');
             showToast(text('支付已校验。', 'Payment verified.'));
             renderAll();
         } catch (error) {
+            playSfx('error');
             setPaymentNoticeForOffer(offerId, error.message || text('校验失败。', 'Verification failed.'), 'warning');
         } finally {
             paymentBusyAction = '';
@@ -1275,8 +1309,7 @@
         document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
         document.title = localize(CONFIG.meta.title);
         nodes.backToHubLink.textContent = t('backToHub');
-        nodes.soundToggle.textContent = state.soundEnabled ? t('sfxOn') : t('sfxOff');
-        nodes.soundToggle.setAttribute('aria-pressed', state.soundEnabled ? 'true' : 'false');
+        syncSoundToggle();
         nodes.heroEyebrow.textContent = localize(CONFIG.meta.eyebrow);
         nodes.heroTitle.textContent = localize(CONFIG.meta.title);
         nodes.heroSubtitle.textContent = localize(CONFIG.meta.subtitle);
@@ -1424,21 +1457,14 @@
                         <span class="if-chip">${t('powerGap')} ${powerGap}</span>
                         <span class="if-chip">${t('chapterProgress')} ${getChapterProgress(chapter).cleared}/${getChapterProgress(chapter).total}</span>
                     </div>
-                    <div class="if-btn-row">
+                    <div class="if-reward-row">
+                        ${buildRewardItems(stage.reward)}
+                    </div>
+                    <div class="if-run-actions">
                         <button class="primary-btn" type="button" data-action="open-battle" ${isStageUnlocked(stage.id) ? '' : 'disabled'}>${t('startRun')}</button>
-                    </div>
-                </div>
-                <div class="if-card-grid">
-                    <div class="if-mini-card">
-                        <div class="if-mini-label">${t('rewardPreview')}</div>
-                        <div class="if-reward-row">${buildRewardItems(stage.reward)}</div>
-                    </div>
-                    <div class="if-mini-card">
-                        <div class="if-mini-label">${t('loadout')}</div>
-                        <div class="if-mini-list">
-                            ${CONFIG.modules.map((module) => `<span class="if-cost-item">${module.icon} ${localize(module.name)} ${t('level')} ${state.moduleLevels[module.id]}</span>`).join('')}
-                            ${state.activeCrew.map((crewId) => `<span class="if-cost-item">${getCrew(crewId).icon} ${localize(getCrew(crewId).name)}</span>`).join('')}
-                        </div>
+                        <button class="ghost-btn" type="button" data-action="open-tab" data-tab-id="train">⚙️ ${text('整备', 'Train')}</button>
+                        <button class="ghost-btn" type="button" data-action="open-tab" data-tab-id="crew">👥 ${text('乘员', 'Crew')}</button>
+                        <button class="ghost-btn" type="button" data-action="open-tab" data-tab-id="workshop">🧪 ${text('研发', 'Lab')}</button>
                     </div>
                 </div>
                 <div class="if-stage-grid">
@@ -1456,9 +1482,6 @@
                                 </div>
                                 <div class="if-muted">${localize(item.name)}</div>
                                 <div class="if-stage-recommended">${t('power')} ${formatNumber(item.recommended)}</div>
-                                <div class="if-cost-row">
-                                    <span class="if-cost-item">${t('pressure')} · ${localize(item.pressure)}</span>
-                                </div>
                             </button>
                         `;
                     }).join('')}
@@ -1591,6 +1614,7 @@
     }
 
     function renderMissionsTab() {
+        const readyCount = CONFIG.missions.filter((mission) => !state.claimedMissions.includes(mission.id) && getMissionProgress(mission) >= mission.target).length;
         nodes.panelContent.innerHTML = `
             <div class="if-panel-head">
                 <div>
@@ -1598,8 +1622,13 @@
                     <h2>${t('missionsTitle')}</h2>
                     <p>${t('missionsBody')}</p>
                 </div>
+                <div class="if-chip-row">
+                    <span class="if-chip">🎯 ${text('可领', 'Ready')} ${readyCount}</span>
+                    <span class="if-chip">✅ ${text('已完成', 'Done')} ${state.claimedMissions.length}/${CONFIG.missions.length}</span>
+                    <span class="if-chip">🏁 ${t('clearCount')} ${formatNumber(getTotalClears())}</span>
+                </div>
             </div>
-            <div class="if-season-grid">
+            <div class="if-card-grid if-mission-grid">
                 ${CONFIG.missions.map((mission) => {
                     const progress = getMissionProgress(mission);
                     const claimed = state.claimedMissions.includes(mission.id);
@@ -1615,7 +1644,7 @@
                             </div>
                             <div class="if-reward-row">${buildRewardItems(mission.reward)}</div>
                             <div class="if-card-actions">
-                                <button class="ghost-btn" type="button" data-action="claim-mission" data-mission-id="${mission.id}" ${ready ? '' : 'disabled'}>${claimed ? t('claimed') : t('claim')}</button>
+                                <button class="ghost-btn if-compact-btn" type="button" data-action="claim-mission" data-mission-id="${mission.id}" ${ready ? '' : 'disabled'}>${claimed ? `✅ ${t('claimed')}` : (ready ? `🎁 ${t('claim')}` : `⏳ ${progress}/${mission.target}`)}</button>
                             </div>
                         </div>
                     `;
@@ -1625,6 +1654,8 @@
     }
 
     function renderSeasonTab() {
+        const readyCount = CONFIG.season.filter((node) => !node.premium && !state.claimedSeason.includes(node.id) && state.resources.seasonXp >= node.xp).length;
+        const premiumCount = CONFIG.season.filter((node) => node.premium).length;
         nodes.panelContent.innerHTML = `
             <div class="if-panel-head">
                 <div>
@@ -1633,17 +1664,18 @@
                     <p>${t('seasonBody')}</p>
                 </div>
                 <div class="if-chip-row">
-                    <span class="if-chip">XP ${formatNumber(state.resources.seasonXp)}</span>
-                    <span class="if-chip">${t('premiumPreview')}</span>
+                    <span class="if-chip">⚡ XP ${formatNumber(state.resources.seasonXp)}</span>
+                    <span class="if-chip">🎁 ${text('可领', 'Ready')} ${readyCount}</span>
+                    <span class="if-chip">💎 ${t('premiumPreview')} ${premiumCount}</span>
                 </div>
             </div>
-            <div class="if-season-grid">
+            <div class="if-card-grid if-season-node-grid">
                 ${CONFIG.season.map((node) => {
                     const claimed = state.claimedSeason.includes(node.id);
                     const ready = state.resources.seasonXp >= node.xp && !claimed;
                     const action = node.premium ? 'open-offer' : 'claim-season';
                     const actionAttr = node.premium ? 'data-offer-id="captain"' : `data-season-id="${node.id}"`;
-                    const buttonLabel = node.premium ? t('previewOrder') : (claimed ? t('claimed') : t('claim'));
+                    const buttonLabel = node.premium ? `💳 ${t('previewOrder')}` : (claimed ? `✅ ${t('claimed')}` : `🎁 ${t('claim')}`);
                     const disabledAttr = node.premium ? '' : (ready ? '' : 'disabled');
                     return `
                         <div class="if-season-card">
@@ -1654,9 +1686,12 @@
                                 </div>
                                 <span class="if-inline-pill">${claimed ? t('claimed') : (ready ? t('claim') : `XP ${node.xp}`)}</span>
                             </div>
+                            <div class="if-cost-row">
+                                <span class="if-cost-item">${node.premium ? `💎 ${t('premiumPreview')}` : `⚡ XP ${node.xp}`}</span>
+                            </div>
                             <div class="if-reward-row">${buildRewardItems(node.reward)}</div>
                             <div class="if-card-actions">
-                                <button class="ghost-btn" type="button" data-action="${action}" ${actionAttr} ${disabledAttr}>${buttonLabel}</button>
+                                <button class="ghost-btn if-compact-btn" type="button" data-action="${action}" ${actionAttr} ${disabledAttr}>${buttonLabel}</button>
                             </div>
                         </div>
                     `;
@@ -1669,6 +1704,7 @@
         const freeState = getFreeSupplyState();
         const pendingOrder = getPendingOrder();
         const perkChips = buildOwnedPerkChips();
+        const activePackCount = state.payment?.claimedOfferIds?.length || 0;
         nodes.panelContent.innerHTML = `
             <div class="if-panel-head">
                 <div>
@@ -1678,64 +1714,80 @@
                 </div>
                 <div class="if-chip-row">
                     <span class="if-chip">${text('累计充值', 'Spent')} ${Number(state.payment?.totalSpent || 0).toFixed(2)} USDT</span>
-                    <span class="if-chip">${text('已生效礼包', 'Active Packs')} ${formatNumber(state.payment?.claimedOfferIds?.length || 0)}</span>
+                    <span class="if-chip">${text('已生效礼包', 'Active Packs')} ${formatNumber(activePackCount)}</span>
                     ${pendingOrder ? `<span class="if-chip">${text('待处理订单', 'Pending')} ${escapeHtml(pendingOrder.offerId)}</span>` : ''}
                 </div>
             </div>
-            <div class="if-chip-row">
+            <div class="if-chip-row if-perk-row">
                 ${perkChips.length ? perkChips.map((item) => `<span class="if-chip">${item}</span>`).join('') : `<span class="if-chip">${text('礼包权益会在这里汇总显示', 'Pack perks will appear here')}</span>`}
             </div>
-            <div class="if-shop-grid">
-                ${CONFIG.softShop.map((offer) => {
-                    const isFree = offer.price === 0;
-                    const disabled = isFree ? freeState.remainingClaims <= 0 : !canAfford(offer.price);
-                    const title = isFree
-                        ? `${localize(offer.title)} · ${freeState.remainingClaims > 0 ? text(`剩余 ${freeState.remainingClaims}/${freeState.limit}`, `${freeState.remainingClaims}/${freeState.limit} left`) : formatRemaining(freeState.remainingMs)}`
-                        : localize(offer.title);
-                    return `
-                        <div class="if-shop-card">
-                            <div class="if-shop-head">
-                                <div>
-                                    <div class="if-mini-label">${localize(offer.tag)}</div>
-                                    <strong>${title}</strong>
-                                </div>
-                                <span class="if-inline-pill">${isFree ? `${t('freeSupply')} ${freeState.limit > 1 ? `x${freeState.limit}` : ''}` : formatShortCost(offer.price)}</span>
-                            </div>
-                            <div class="if-reward-row">${buildRewardItems(offer.reward)}</div>
-                            <div class="if-card-actions">
-                                <button class="ghost-btn" type="button" data-action="buy-soft-offer" data-offer-id="${offer.id}" ${disabled ? 'disabled' : ''}>${isFree ? (freeState.remainingClaims > 0 ? t('claim') : t('cooldown')) : t('buy')}</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-                ${CONFIG.bundles.map((offer) => {
-                    const owned = isOfferOwned(offer.id);
-                    const order = getPendingOrderForOffer(offer.id);
-                    const readyClaim = order && String(order.status || '').toLowerCase() === 'paid' && order.txid;
-                    const pill = owned
-                        ? text('已生效', 'Active')
-                        : readyClaim
-                            ? text('待恢复', 'Ready')
-                            : order
-                                ? text('待支付', 'Pending')
-                                : offer.exactPrice;
-                    return `
-                    <div class="if-shop-card ${owned ? 'is-owned' : ''}">
-                        <div class="if-shop-head">
-                            <div>
-                                <div class="if-mini-label">${t('bundlePreview')}</div>
-                                <strong>${localize(offer.title)}</strong>
-                            </div>
-                            <span class="if-inline-pill">${pill}</span>
-                        </div>
-                        <div class="if-reward-row">${buildRewardItems(offer.reward)}</div>
-                        <div class="if-cost-row"><span class="if-cost-item">${t('permanent')} · ${localize(offer.permanent)}</span></div>
-                        <div class="if-card-actions">
-                            <button class="ghost-btn" type="button" data-action="open-offer" data-offer-id="${offer.id}">${owned ? text('查看权益', 'View Perk') : order ? text('继续订单', 'Continue') : t('previewOrder')}</button>
-                        </div>
+            <div class="if-section-stack">
+                <section class="if-section-block">
+                    <div class="if-section-head">
+                        <div class="if-section-title">🧰 ${text('日常补给', 'Supplies')}</div>
+                        <span class="if-inline-pill">${text('免费补给', 'Free')} ${freeState.remainingClaims}/${freeState.limit}</span>
                     </div>
-                `;
-                }).join('')}
+                    <div class="if-shop-grid if-soft-grid">
+                        ${CONFIG.softShop.map((offer) => {
+                            const isFree = offer.price === 0;
+                            const disabled = isFree ? freeState.remainingClaims <= 0 : !canAfford(offer.price);
+                            const title = isFree
+                                ? `${localize(offer.title)} · ${freeState.remainingClaims > 0 ? text(`剩余 ${freeState.remainingClaims}/${freeState.limit}`, `${freeState.remainingClaims}/${freeState.limit} left`) : formatRemaining(freeState.remainingMs)}`
+                                : localize(offer.title);
+                            return `
+                                <div class="if-shop-card">
+                                    <div class="if-shop-head">
+                                        <div>
+                                            <div class="if-mini-label">${localize(offer.tag)}</div>
+                                            <strong>${title}</strong>
+                                        </div>
+                                        <span class="if-inline-pill">${isFree ? `${t('freeSupply')} ${freeState.limit > 1 ? `x${freeState.limit}` : ''}` : formatShortCost(offer.price)}</span>
+                                    </div>
+                                    <div class="if-reward-row">${buildRewardItems(offer.reward)}</div>
+                                    <div class="if-card-actions">
+                                        <button class="ghost-btn if-compact-btn" type="button" data-action="buy-soft-offer" data-offer-id="${offer.id}" ${disabled ? 'disabled' : ''}>${isFree ? (freeState.remainingClaims > 0 ? `🎁 ${t('claim')}` : `⏳ ${t('cooldown')}`) : `🛒 ${t('buy')}`}</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </section>
+                <section class="if-section-block">
+                    <div class="if-section-head">
+                        <div class="if-section-title">💎 ${text('增益礼包', 'Boost Packs')}</div>
+                        <span class="if-inline-pill">${text('已生效', 'Active')} ${formatNumber(activePackCount)}</span>
+                    </div>
+                    <div class="if-shop-grid if-bundle-grid">
+                        ${CONFIG.bundles.map((offer) => {
+                            const owned = isOfferOwned(offer.id);
+                            const order = getPendingOrderForOffer(offer.id);
+                            const readyClaim = order && String(order.status || '').toLowerCase() === 'paid' && order.txid;
+                            const pill = owned
+                                ? text('已生效', 'Active')
+                                : readyClaim
+                                    ? text('待恢复', 'Ready')
+                                    : order
+                                        ? text('待支付', 'Pending')
+                                        : offer.exactPrice;
+                            return `
+                            <div class="if-shop-card ${owned ? 'is-owned' : ''}">
+                                <div class="if-shop-head">
+                                    <div>
+                                        <div class="if-mini-label">${t('bundlePreview')}</div>
+                                        <strong>${localize(offer.title)}</strong>
+                                    </div>
+                                    <span class="if-inline-pill">${pill}</span>
+                                </div>
+                                <div class="if-cost-row"><span class="if-cost-item">✨ ${localize(offer.permanent)}</span></div>
+                                <div class="if-reward-row">${buildRewardItems(offer.reward)}</div>
+                                <div class="if-card-actions">
+                                    <button class="ghost-btn if-compact-btn" type="button" data-action="open-offer" data-offer-id="${offer.id}">${owned ? `✨ ${text('查看权益', 'View Perk')}` : order ? `💳 ${text('继续订单', 'Continue')}` : `💳 ${t('previewOrder')}`}</button>
+                                </div>
+                            </div>
+                        `;
+                        }).join('')}
+                    </div>
+                </section>
             </div>
         `;
     }
@@ -1807,6 +1859,7 @@
     function openBattle(stageId = state.selectedStageId) {
         const stage = getStage(stageId);
         if (!isStageUnlocked(stage.id)) {
+            playSfx('error');
             showToast(t('lockedStageTip'));
             return;
         }
@@ -1840,6 +1893,7 @@
         };
         nodes.battleOverlay.classList.remove('is-hidden');
         document.body.classList.add('if-modal-open');
+        playSfx('battleStart');
         renderBattle();
         startBattleLoop();
     }
@@ -1983,18 +2037,21 @@
             battleState.progress = clamp(battleState.progress + 4, 0, 100);
             battleState.overdriveTurns = Math.max(battleState.overdriveTurns, 2);
             battleState.skillCooldowns.overdrive = SKILL_COOLDOWNS.overdrive;
+            playSfx('skillOverclock');
             pushBattleLog(state.lang === 'zh' ? '主炮超载完成，推进与火力短时间同步拉高。' : 'Main gun overdrive spikes both pressure and pace.');
         }
         if (action === 'barrier') {
             battleState.shield = clamp(battleState.shield + 26 + Math.round((state.moduleLevels.armorCar - 1) * 4), 0, 100);
             battleState.barrierTurns = Math.max(battleState.barrierTurns, 2);
             battleState.skillCooldowns.barrier = SKILL_COOLDOWNS.barrier;
+            playSfx('skillShield');
             pushBattleLog(state.lang === 'zh' ? '护盾列车顶上前线，短时间压低承伤。' : 'Barrier car moves up and cuts incoming pressure.');
         }
         if (action === 'repair') {
             battleState.integrity = clamp(battleState.integrity + Math.round((16 + state.moduleLevels.supportCar * 2) * battleState.profile.repairMul), 0, 100);
             battleState.heat = clamp(battleState.heat - 20, 0, 100);
             battleState.skillCooldowns.repair = SKILL_COOLDOWNS.repair;
+            playSfx('goal', { cooldownKey: 'if-repair-sfx', cooldownMs: 180 });
             pushBattleLog(state.lang === 'zh' ? '支援车完成抢修，车体与热量都回到了更安全的区间。' : 'Support car repairs the train and cools the system down.');
         }
         if (action === 'ultimate') {
@@ -2002,6 +2059,7 @@
             battleState.heat = clamp(battleState.heat + 10, 0, 100);
             battleState.enemyCount = Math.max(2, battleState.enemyCount - 4);
             battleState.ultimateCharge = 0;
+            playSfx('ultimate');
             pushBattleLog(state.lang === 'zh' ? '轨炮扫清正前方整段轨道，敌群节奏被强行打断。' : 'Rail Burst clears the lane ahead and disrupts enemy rhythm.');
         }
         saveState();
@@ -2023,6 +2081,7 @@
         Object.entries(option.bonusReward || {}).forEach(([key, amount]) => {
             battleState.rewardBonus[key] = (battleState.rewardBonus[key] || 0) + amount;
         });
+        playSfx('confirm');
         pushBattleLog(localize(option.result));
         pushBattleLog(t('battleEventResolved'));
         battleState.activeEvent = null;
@@ -2057,12 +2116,15 @@
         battleState.result = { win, payout };
         saveState();
         renderBattle();
+        playSfx(win ? 'victory' : 'defeat');
         showToast(win ? t('battleWin') : t('battleFail'));
     }
 
     function advanceBattle(isManual = false) {
         if (!battleState || battleState.activeEvent || battleState.settled) return;
         const stage = getStage(battleState.stageId);
+        const prevShield = battleState.shield;
+        const prevIntegrity = battleState.integrity;
         battleState.wave += 1;
 
         Object.keys(battleState.skillCooldowns).forEach((skillId) => {
@@ -2101,6 +2163,12 @@
             100
         );
         battleState.enemyCount = Math.min(stage.type === 'boss' ? 12 : 10, (stage.type === 'boss' ? 5 : 3) + battleState.wave + Math.round(battleState.profile.difficultyMul * 1.5));
+        playSfx('shoot', { cooldownKey: isManual ? 'if-manual-burst' : 'if-auto-burst', cooldownMs: isManual ? 70 : 180 });
+        if (battleState.shield < prevShield) {
+            playSfx('shieldHit', { cooldownKey: 'if-shield-hit', cooldownMs: 140 });
+        } else if (battleState.integrity < prevIntegrity) {
+            playSfx('hit', { cooldownKey: 'if-integrity-hit', cooldownMs: 140 });
+        }
 
         if (battleState.heat >= 92) {
             battleState.integrity = Math.max(0, battleState.integrity - 4);
@@ -2112,6 +2180,7 @@
         }
 
         if (stage.type === 'boss' && battleState.progress >= 68 && battleState.wave >= 4) {
+            playSfx('bossWarning', { cooldownKey: 'if-boss-warning', cooldownMs: 700 });
             pushBattleLog(t('battleBossIncoming'));
         }
 
@@ -2120,6 +2189,7 @@
 
         if ((battleState.wave === 2 || battleState.wave === 4) && battleState.eventQueue.length) {
             battleState.activeEvent = battleState.eventQueue.shift();
+            playSfx('wave', { cooldownKey: `if-event-wave-${battleState.wave}`, cooldownMs: 300 });
             renderBattle();
             return;
         }
@@ -2238,6 +2308,7 @@
         if (action === 'select-chapter') {
             const chapterId = Number(actionNode.getAttribute('data-chapter') || 1);
             if (!isChapterUnlocked(chapterId)) {
+                playSfx('error');
                 showToast(t('chapterLockedTip'));
                 return;
             }
@@ -2246,19 +2317,31 @@
             state.selectedStageId = entryStage.id;
             saveState();
             renderAll();
+            playSfx('select');
             showToast(`${t('chapter')} ${chapterId}`);
             return;
         }
         if (action === 'select-stage') {
             const stageId = actionNode.getAttribute('data-stage-id');
             if (!isStageUnlocked(stageId)) {
+                playSfx('error');
                 showToast(t('lockedStageTip'));
                 return;
             }
             state.selectedStageId = stageId;
             saveState();
             renderAll();
+            playSfx('select');
             showToast(`${t('selected')} ${stageId}`);
+            return;
+        }
+        if (action === 'open-tab') {
+            const tabId = String(actionNode.getAttribute('data-tab-id') || '');
+            if (!CONFIG.tabs.some((tab) => tab.id === tabId)) return;
+            state.activeTab = tabId;
+            saveState();
+            renderAll();
+            playSfx('select');
             return;
         }
         if (action === 'open-battle') {
@@ -2274,6 +2357,7 @@
             state.stats.upgrades += 1;
             saveState();
             renderAll();
+            playSfx('upgrade');
             showToast(`${localize(definition.name)} ${t('upgraded')}`);
             return;
         }
@@ -2286,6 +2370,7 @@
             state.stats.upgrades += 1;
             saveState();
             renderAll();
+            playSfx('upgrade');
             showToast(`${localize(definition.name)} ${t('upgraded')}`);
             return;
         }
@@ -2294,6 +2379,7 @@
             const active = state.activeCrew.includes(crewId);
             if (active) {
                 if (state.activeCrew.length <= 1) {
+                    playSfx('error');
                     showToast(state.lang === 'zh' ? '至少保留 1 名上阵乘员。' : 'Keep at least 1 deployed crew.');
                     return;
                 }
@@ -2304,6 +2390,7 @@
             }
             saveState();
             renderAll();
+            playSfx('confirm');
             showToast(localize(getCrew(crewId).name));
             return;
         }
@@ -2317,6 +2404,7 @@
             state.stats.upgrades += 1;
             saveState();
             renderAll();
+            playSfx('upgrade');
             showToast(`${localize(definition.name)} ${t('researchUpgraded')}`);
             return;
         }
@@ -2328,6 +2416,7 @@
             addRewards(mission.reward);
             saveState();
             renderAll();
+            playSfx('goal');
             showToast(t('missionClaimed'));
             return;
         }
@@ -2339,6 +2428,7 @@
             addRewards(node.reward);
             saveState();
             renderAll();
+            playSfx('goal');
             showToast(t('seasonClaimed'));
             return;
         }
@@ -2357,6 +2447,7 @@
                 addRewards(offer.reward);
                 saveState();
                 renderAll();
+                playSfx('goal');
                 showToast(t('supplyClaimed'));
                 return;
             }
@@ -2364,23 +2455,30 @@
             addRewards(offer.reward);
             saveState();
             renderAll();
+            playSfx('purchase');
             showToast(localize(offer.title));
             return;
         }
         if (action === 'open-offer') {
+            playSfx('confirm');
             openOffer(actionNode.getAttribute('data-offer-id'));
         }
     }
 
     function bindEvents() {
         document.querySelectorAll('[data-lang-switch]').forEach((button) => {
-            button.addEventListener('click', () => setLanguage(button.getAttribute('data-lang-switch')));
+            button.addEventListener('click', () => {
+                playSfx('confirm');
+                setLanguage(button.getAttribute('data-lang-switch'));
+            });
         });
 
         nodes.soundToggle.addEventListener('click', () => {
-            state.soundEnabled = !state.soundEnabled;
+            const nextEnabled = sfx?.toggle?.();
+            state.soundEnabled = typeof nextEnabled === 'boolean' ? nextEnabled : !state.soundEnabled;
             saveState();
-            renderHero();
+            syncSoundToggle();
+            if (state.soundEnabled) playSfx('confirm');
             showToast(state.soundEnabled ? t('sfxOn') : t('sfxOff'));
         });
 
@@ -2390,6 +2488,7 @@
             state.activeTab = button.getAttribute('data-tab') || 'run';
             saveState();
             renderAll();
+            playSfx('select');
         });
 
         nodes.panelContent.addEventListener('click', (event) => {

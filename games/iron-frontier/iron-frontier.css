@@ -37,7 +37,7 @@ body.if-modal-open {
 
 .if-topbar {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .if-topline {
@@ -60,9 +60,9 @@ body.if-modal-open {
 
 .if-hero-card {
     border-radius: 22px;
-    padding: 12px;
+    padding: 10px;
     display: grid;
-    gap: 10px;
+    gap: 8px;
 }
 
 .if-hero-copy h1,
@@ -88,7 +88,7 @@ body.if-modal-open {
 .if-offer-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 }
 
 .if-chip,
@@ -99,11 +99,11 @@ body.if-modal-open {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 9px;
+    padding: 4px 8px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.06);
     color: rgba(244, 247, 255, 0.88);
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.01em;
 }
@@ -111,11 +111,11 @@ body.if-modal-open {
 .if-resource-strip {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
 }
 
 .if-resource-card {
-    padding: 8px 8px 7px;
+    padding: 7px 8px 6px;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -130,22 +130,22 @@ body.if-modal-open {
 }
 
 .if-resource-value {
-    margin-top: 4px;
+    margin-top: 3px;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
 }
 
 .if-main {
     flex: 1;
     display: grid;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 6px;
+    margin-top: 6px;
     min-height: 0;
 }
 
 .if-summary-card {
     border-radius: 18px;
-    padding: 12px;
+    padding: 10px;
 }
 
 .if-panel-card {
@@ -155,10 +155,10 @@ body.if-modal-open {
 }
 
 .if-panel-content {
-    height: calc(100vh - 274px);
+    height: calc(100vh - 264px);
     min-height: 420px;
     overflow: auto;
-    padding: 12px;
+    padding: 10px;
     box-sizing: border-box;
 }
 
@@ -176,13 +176,13 @@ body.if-modal-open {
     align-items: start;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .if-panel-head p,
 .if-muted {
     margin: 4px 0 0;
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.4;
     color: rgba(228, 233, 244, 0.68);
 }
@@ -193,7 +193,7 @@ body.if-modal-open {
 .if-season-grid,
 .if-shop-grid {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .if-summary-grid {
@@ -224,7 +224,7 @@ body.if-modal-open {
 .if-run-hero,
 .if-mini-card {
     border-radius: 18px;
-    padding: 10px;
+    padding: 9px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -249,19 +249,19 @@ body.if-modal-open {
 
 .if-run-layout {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .if-chapter-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
 }
 
 .if-chapter-btn {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 10px 12px;
+    padding: 9px 10px;
     background: rgba(255, 255, 255, 0.04);
     color: #f3f6ff;
     text-align: left;
@@ -298,7 +298,7 @@ body.if-modal-open {
 
 .if-run-hero {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .if-run-hero-top {
@@ -314,8 +314,17 @@ body.if-modal-open {
 .if-drawer-actions,
 .if-battle-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
+}
+
+.if-run-actions .primary-btn {
+    flex: 1 1 156px;
+}
+
+.if-run-actions .ghost-btn {
+    flex: 1 1 96px;
+    min-width: 0;
 }
 
 .if-stage-card {
@@ -356,7 +365,7 @@ body.if-modal-open {
 }
 
 .if-stage-recommended {
-    margin-top: 8px;
+    margin-top: 6px;
     font-family: 'Roboto Mono', monospace;
     font-size: 12px;
     color: rgba(255, 214, 145, 0.92);
@@ -371,14 +380,14 @@ body.if-modal-open {
 .if-cost-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 }
 
 .if-cost-item,
 .if-reward-item {
     font-size: 11px;
     color: rgba(229, 236, 248, 0.76);
-    padding: 4px 8px;
+    padding: 3px 7px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.04);
 }
@@ -390,9 +399,9 @@ body.if-modal-open {
     bottom: calc(14px + env(safe-area-inset-bottom));
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 6px;
-    padding: 8px;
-    border-radius: 22px;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(8, 11, 18, 0.92);
     backdrop-filter: blur(18px);
@@ -402,12 +411,12 @@ body.if-modal-open {
 .if-tab {
     min-width: 0;
     border: 0;
-    border-radius: 14px;
-    padding: 7px 4px;
+    border-radius: 12px;
+    padding: 6px 3px;
     color: rgba(217, 226, 241, 0.74);
     background: transparent;
     display: grid;
-    gap: 4px;
+    gap: 2px;
     justify-items: center;
     font: inherit;
     cursor: pointer;
@@ -419,13 +428,72 @@ body.if-modal-open {
 }
 
 .if-tab-icon {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
 }
 
 .if-tab-label {
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.if-mission-grid,
+.if-season-node-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.if-mission-card,
+.if-season-card,
+.if-shop-card {
+    display: grid;
+    gap: 8px;
+}
+
+.if-mission-card .if-reward-row,
+.if-season-card .if-reward-row,
+.if-shop-card .if-reward-row,
+.if-shop-card .if-cost-row {
+    margin-top: 0;
+}
+
+.if-card-actions {
+    justify-content: flex-end;
+}
+
+.if-compact-btn {
+    width: 100%;
+    min-height: 34px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.if-section-stack {
+    display: grid;
+    gap: 10px;
+}
+
+.if-section-block {
+    display: grid;
+    gap: 6px;
+}
+
+.if-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.if-section-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #f4f7ff;
+    letter-spacing: 0.02em;
+}
+
+.if-perk-row {
+    margin-bottom: 2px;
 }
 
 .if-battle-overlay,
@@ -883,7 +951,7 @@ body.if-modal-open {
     }
 
     .if-panel-content {
-        height: calc(100vh - 328px);
+        height: calc(100vh - 318px);
     }
 }
 
@@ -923,7 +991,7 @@ body.if-modal-open {
     }
 
     .if-panel-content {
-        height: calc(100vh - 352px);
+        height: calc(100vh - 342px);
     }
 }
 
