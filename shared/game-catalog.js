@@ -410,6 +410,48 @@
                       "zh":  "\u8f68\u9053\u5760\u843d",
                       "en":  "Orbital Fall"
                   }
+    },
+    {
+        "accent":  "#ffb357",
+        "genre":  {
+                      "zh":  "\u751f\u5b58 / \u7ecf\u8425",
+                      "en":  "Survival / Management"
+                  },
+        "id":  "iron-frontier",
+        "tags":  [
+                     {
+                         "zh":  "\u5217\u8f66",
+                         "en":  "Train"
+                     },
+                     {
+                         "zh":  "\u8def\u7ebf\u4e8b\u4ef6",
+                         "en":  "Route Events"
+                     },
+                     {
+                         "zh":  "\u5355\u5c4f\u6574\u5907",
+                         "en":  "Single-Screen Prep"
+                     }
+                 ],
+        "subtitle":  {
+                         "zh":  "\u5217\u8f66\u8fdc\u5f81 + \u6a21\u5757\u6574\u5907",
+                         "en":  "Rail Expedition + Module Prep"
+                     },
+        "description":  {
+                            "zh":  "\u9a7e\u9a76\u88c5\u7532\u5217\u8f66\u7a81\u56f4\u5e9f\u571f\u8def\u7ebf\uff0c\u5728\u5355\u5c4f\u6574\u5907\u3001\u8def\u7ebf\u9009\u62e9\u4e0e\u6218\u6597\u63a8\u8fdb\u4e4b\u95f4\u627e\u5230\u4f60\u7684\u8282\u594f\u3002",
+                            "en":  "Command an armored rail convoy through hostile routes, balancing compact prep, route decisions, and battle pacing in one clean flow."
+                        },
+        "icon":  "IF",
+        "href":  "/games/iron-frontier/",
+        "cover":  "/assets/hub/covers/cover-iron-frontier.svg",
+        "badge":  {
+                      "zh":  "\u5df2\u4e0a\u7ebf",
+                      "en":  "Live"
+                  },
+        "status":  "live",
+        "title":  {
+                      "zh":  "\u94c1\u8f68\u8fdc\u5f81",
+                      "en":  "Iron Frontier"
+                  }
     }
 ];
 }());

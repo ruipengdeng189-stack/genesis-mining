@@ -48,6 +48,12 @@ const OFFER_CATALOGS = {
     sovereign: { name: 'Sovereign Arsenal Pack', baseAmount: 68.0 },
     nexus: { name: 'Nexus Matrix Pack', baseAmount: 128.0 },
   },
+  'iron-frontier': {
+    starter: { name: 'Starter Rail Pack', baseAmount: 6.0 },
+    convoy: { name: 'Convoy Supply Pack', baseAmount: 15.0 },
+    captain: { name: 'Captain Growth Pack', baseAmount: 30.0 },
+    arsenal: { name: 'Frontier Arsenal Pack', baseAmount: 68.0 },
+  },
 };
 
 const ORDER_AMOUNT_DISPLAY_DECIMALS = 4;
