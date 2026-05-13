@@ -1492,6 +1492,11 @@
 
     function renderTrainTab() {
         const stage = getStage(state.selectedStageId);
+        const readyCount = CONFIG.modules.filter((item) => {
+            const level = state.moduleLevels[item.id];
+            const cost = getModuleUpgradeCost(item.id);
+            return level < item.maxLevel && canAfford(cost);
+        }).length;
         nodes.panelContent.innerHTML = `
             <div class="if-panel-head">
                 <div>
@@ -1500,11 +1505,13 @@
                     <p>${t('trainBody')}</p>
                 </div>
                 <div class="if-chip-row">
-                    <span class="if-chip">${t('power')} ${formatNumber(getCurrentPower())}</span>
+                    <span class="if-chip">⚔️ ${t('power')} ${formatNumber(getCurrentPower())}</span>
+                    <span class="if-chip">⚙️ ${text('可升', 'Ready')} ${readyCount}</span>
+                    <span class="if-chip">🎯 ${stage.id}</span>
                     ${buildCombatFocusChips(stage).map((item) => `<span class="if-chip">${item}</span>`).join('')}
                 </div>
             </div>
-            <div class="if-card-grid">
+            <div class="if-card-grid if-train-grid">
                 ${CONFIG.modules.map((item) => {
                     const level = state.moduleLevels[item.id];
                     const cost = getModuleUpgradeCost(item.id);
@@ -1517,12 +1524,11 @@
                                 </div>
                                 <span class="if-inline-pill">${level >= item.maxLevel ? t('maxLevel') : `${t('cost')} ${cost ? formatShortCost(cost) : '—'}`}</span>
                             </div>
-                            <div class="if-muted">${localize(item.summary)}</div>
                             <div class="if-cost-row">
                                 <span class="if-cost-item">${t('effect')} · ${localize(item.effect)}</span>
                             </div>
                             <div class="if-card-actions">
-                                <button class="ghost-btn" type="button" data-action="upgrade-module" data-module-id="${item.id}" ${level >= item.maxLevel ? 'disabled' : ''}>${t('upgrade')}</button>
+                                <button class="ghost-btn if-compact-btn" type="button" data-action="upgrade-module" data-module-id="${item.id}" ${level >= item.maxLevel ? 'disabled' : ''}>${level >= item.maxLevel ? `✅ ${t('maxLevel')}` : `⬆️ ${t('upgrade')}`}</button>
                             </div>
                         </div>
                     `;
@@ -1532,6 +1538,11 @@
     }
 
     function renderCrewTab() {
+        const readyCount = CONFIG.crew.filter((item) => {
+            const level = state.crewLevels[item.id];
+            const cost = getCrewUpgradeCost(item.id);
+            return level < item.maxLevel && canAfford(cost);
+        }).length;
         nodes.panelContent.innerHTML = `
             <div class="if-panel-head">
                 <div>
@@ -1540,12 +1551,13 @@
                     <p>${t('crewBody')}</p>
                 </div>
                 <div class="if-chip-row">
-                    <span class="if-chip">${t('activeCrew')}</span>
+                    <span class="if-chip">👥 ${t('activeCrew')} ${state.activeCrew.length}/3</span>
+                    <span class="if-chip">⬆️ ${text('可升', 'Ready')} ${readyCount}</span>
                     ${state.activeCrew.map((crewId) => `<span class="if-chip">${localize(getCrew(crewId).name)}</span>`).join('')}
                     ${Number(state.payment?.permanent?.crewDiscount || 0) > 0 ? `<span class="if-chip">${text('乘员消耗 -', 'Crew Cost -')}${formatPercent(state.payment.permanent.crewDiscount)}</span>` : ''}
                 </div>
             </div>
-            <div class="if-card-grid">
+            <div class="if-card-grid if-crew-grid">
                 ${CONFIG.crew.map((item) => {
                     const level = state.crewLevels[item.id];
                     const cost = getCrewUpgradeCost(item.id);
@@ -1559,13 +1571,13 @@
                                 </div>
                                 <span class="if-inline-pill">${active ? t('active') : localize(item.role)}</span>
                             </div>
-                            <div class="if-muted">${localize(item.summary)}</div>
                             <div class="if-cost-row">
                                 <span class="if-cost-item">${t('passive')} · ${localize(item.passive)}</span>
+                                ${level < item.maxLevel && cost ? `<span class="if-cost-item">${formatShortCost(cost)}</span>` : ''}
                             </div>
                             <div class="if-card-actions">
-                                <button class="ghost-btn" type="button" data-action="toggle-crew" data-crew-id="${item.id}">${active ? t('remove') : t('assign')}</button>
-                                <button class="ghost-btn" type="button" data-action="upgrade-crew" data-crew-id="${item.id}" ${level >= item.maxLevel ? 'disabled' : ''}>${level >= item.maxLevel ? t('maxLevel') : `${t('upgrade')} · ${formatShortCost(cost || {})}`}</button>
+                                <button class="ghost-btn if-compact-btn" type="button" data-action="toggle-crew" data-crew-id="${item.id}">${active ? `↩ ${t('remove')}` : `➕ ${t('assign')}`}</button>
+                                <button class="ghost-btn if-compact-btn" type="button" data-action="upgrade-crew" data-crew-id="${item.id}" ${level >= item.maxLevel ? 'disabled' : ''}>${level >= item.maxLevel ? `✅ ${t('maxLevel')}` : `⬆️ ${t('upgrade')}`}</button>
                             </div>
                         </div>
                     `;
@@ -1576,6 +1588,11 @@
 
     function renderWorkshopTab() {
         const stage = getStage(state.selectedStageId);
+        const readyCount = CONFIG.research.filter((item) => {
+            const level = state.researchLevels[item.id];
+            const cost = getResearchUpgradeCost(item.id);
+            return level < item.maxLevel && canAfford(cost);
+        }).length;
         nodes.panelContent.innerHTML = `
             <div class="if-panel-head">
                 <div>
@@ -1584,10 +1601,12 @@
                     <p>${t('workshopBody')}</p>
                 </div>
                 <div class="if-chip-row">
+                    <span class="if-chip">🧪 ${text('可研', 'Ready')} ${readyCount}</span>
+                    <span class="if-chip">🎯 ${stage.id}</span>
                     ${buildCombatFocusChips(stage).map((item) => `<span class="if-chip">${item}</span>`).join('')}
                 </div>
             </div>
-            <div class="if-card-grid">
+            <div class="if-card-grid if-workshop-grid">
                 ${CONFIG.research.map((item) => {
                     const level = state.researchLevels[item.id];
                     const cost = getResearchUpgradeCost(item.id);
@@ -1604,7 +1623,7 @@
                                 <span class="if-cost-item">${t('effect')} · ${localize(item.effect)}</span>
                             </div>
                             <div class="if-card-actions">
-                                <button class="ghost-btn" type="button" data-action="upgrade-research" data-research-id="${item.id}" ${level >= item.maxLevel ? 'disabled' : ''}>${t('upgrade')}</button>
+                                <button class="ghost-btn if-compact-btn" type="button" data-action="upgrade-research" data-research-id="${item.id}" ${level >= item.maxLevel ? 'disabled' : ''}>${level >= item.maxLevel ? `✅ ${t('maxLevel')}` : `⬆️ ${t('upgrade')}`}</button>
                             </div>
                         </div>
                     `;

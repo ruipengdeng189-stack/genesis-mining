@@ -439,13 +439,19 @@ body.if-modal-open {
 }
 
 .if-mission-grid,
-.if-season-node-grid {
+.if-season-node-grid,
+.if-train-grid,
+.if-crew-grid,
+.if-workshop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .if-mission-card,
 .if-season-card,
-.if-shop-card {
+.if-shop-card,
+.if-module-card,
+.if-crew-card,
+.if-research-card {
     display: grid;
     gap: 8px;
 }
@@ -453,12 +459,25 @@ body.if-modal-open {
 .if-mission-card .if-reward-row,
 .if-season-card .if-reward-row,
 .if-shop-card .if-reward-row,
-.if-shop-card .if-cost-row {
+.if-shop-card .if-cost-row,
+.if-module-card .if-cost-row,
+.if-crew-card .if-cost-row,
+.if-research-card .if-cost-row {
     margin-top: 0;
 }
 
 .if-card-actions {
     justify-content: flex-end;
+}
+
+.if-train-grid .if-card-actions,
+.if-workshop-grid .if-card-actions {
+    justify-content: stretch;
+}
+
+.if-crew-grid .if-card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .if-compact-btn {
@@ -967,6 +986,14 @@ body.if-modal-open {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .if-train-grid,
+    .if-crew-grid,
+    .if-workshop-grid,
+    .if-mission-grid,
+    .if-season-node-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .if-event-options,
     .if-chapter-strip {
         grid-template-columns: 1fr;
@@ -1018,6 +1045,14 @@ body.if-modal-open {
     .if-card-grid,
     .if-shop-grid,
     .if-stage-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .if-train-grid,
+    .if-crew-grid,
+    .if-workshop-grid,
+    .if-mission-grid,
+    .if-season-node-grid {
         grid-template-columns: 1fr 1fr;
     }
 
