@@ -842,7 +842,10 @@
         const totalMinutes = Math.ceil(ms / 60000);
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-        return t('waitTemplate').replace('{time}', `${hours}h ${minutes}m`);
+        const localizedTime = state.lang === 'zh'
+            ? `${hours}小时 ${minutes}分`
+            : `${hours}h ${minutes}m`;
+        return t('waitTemplate').replace('{time}', localizedTime);
     }
 
     function showToast(message) {
@@ -855,6 +858,7 @@
 
     function setLanguage(nextLang) {
         state.lang = nextLang === 'en' ? 'en' : 'zh';
+        paymentNotice = '';
         saveState();
         renderAll();
     }
@@ -902,27 +906,97 @@
         });
     }
 
+    function getOfferDisplayName(offerId, fallback = '') {
+        const offer = getOffer(offerId);
+        if (offer) return localize(offer.title);
+        return String(fallback || offerId || '--');
+    }
+
+    function getPaymentOrderStatusLabel(status) {
+        const normalized = String(status || '').trim().toLowerCase();
+        if (!normalized) return '--';
+        if (normalized === 'pending') return text('待支付', 'Pending');
+        if (normalized === 'paid') return text('已支付', 'Paid');
+        if (normalized === 'granted') return text('已发放', 'Granted');
+        if (normalized === 'expired') return text('已过期', 'Expired');
+        if (normalized === 'cancelled') return text('已取消', 'Cancelled');
+        return normalized;
+    }
+
+    function localizePaymentMessage(message) {
+        const raw = String(message || '').trim();
+        if (!raw || state.lang !== 'zh') return raw;
+        const exactMap = {
+            'minerId is required': '缺少玩家标识，请刷新后重试。',
+            'orderId is required': '缺少订单号，请重新打开礼包后重试。',
+            'invalid offerId': '礼包信息无效，请刷新页面后重试。',
+            'order not found': '未找到订单，请重新创建订单。',
+            'minerId does not match order': '当前订单不属于这个账号，请检查后重试。',
+            'order is cancelled': '订单已取消，请重新创建订单。',
+            'order has already been bound to another txid': '该订单已绑定其他 TXID，无法重复使用。',
+            'this txid has already been used by another order': '这个 TXID 已被其他订单使用。',
+            'txid not found on TRON mainnet': 'TRON 主网上未找到这个 TXID。',
+            'transaction is not confirmed yet': '这笔交易还未确认完成，请稍后再试。',
+            'transaction execution failed on chain': '链上交易执行失败。',
+            'transaction is not a TRC20 contract transfer': '这不是一笔有效的 TRC20 转账。',
+            'transaction contract is not TRC20 USDT': '这笔交易不是 USDT-TRC20 转账。',
+            'recipient address does not match your payment address': '收款地址不匹配，请核对转账地址。',
+            'unable to read confirmed block timestamp': '暂时无法读取链上确认时间，请稍后再试。',
+            'payment happened before this order was created': '付款时间早于订单创建时间，这笔付款不能用于当前订单。',
+            'payment happened after the order expired': '付款发生在订单过期之后，请重新创建订单。',
+            'order is not paid yet': '订单还未完成支付，请先转账后再恢复奖励。',
+            'This pack is already active on this miner.': '该礼包权益已经生效，无需重复购买。',
+            'You already have a verified order waiting for reward claim. Finish that recovery first.': '你有一笔已校验订单尚未恢复奖励，请先完成该订单。',
+            'You already have a pending order. Finish it or wait for it to expire before creating another one.': '你已有待支付订单，请先完成或等待其过期后再创建新订单。',
+            'No exact payment slot is available right now, please retry in one minute': '当前精确金额号段已占满，请 1 分钟后重试。',
+            'payment already verified for this order': '这笔订单已完成支付校验。',
+            'payment verified successfully': '支付校验成功。',
+            'reward already marked as granted': '这笔订单的奖励已经发放。',
+            'reward marked as granted': '奖励发放完成。'
+        };
+        if (exactMap[raw]) return exactMap[raw];
+        if (raw.startsWith('amount mismatch, expected ')) {
+            return raw.replace('amount mismatch, expected ', '金额不匹配，应支付 ');
+        }
+        if (raw.startsWith('Supabase request failed:') || raw.startsWith('Supabase query failed:')) {
+            return '订单服务暂时不可用，请稍后重试。';
+        }
+        if (raw.startsWith('TRON API failed:')) {
+            return '链上校验服务暂时不可用，请稍后重试。';
+        }
+        return raw;
+    }
+
     function grantPaymentRewards(payload) {
         const offer = getOffer(payload.offerId);
         if (!offer) return;
         const orderId = String(payload.orderId || '').trim();
-        if (orderId && state.payment.claimedOrders[orderId]) return;
-        if (!isOfferOwned(offer.id)) {
+        const txid = String(payload.txid || '').trim().toLowerCase();
+        const hasKnownGrantedOrder = Boolean(
+            (orderId && state.payment.claimedOrders[orderId])
+            || (orderId && state.payment.recentOrders.some((entry) => String(entry.orderId || entry.id || '').trim() === orderId && (entry.rewardGranted || String(entry.status || '').toLowerCase() === 'granted')))
+            || (txid && state.payment.verifiedTxids.some((entry) => String(entry || '').trim().toLowerCase() === txid))
+        );
+        if (hasKnownGrantedOrder) return;
+        const shouldGrantOwnership = !isOfferOwned(offer.id);
+        if (shouldGrantOwnership) {
             addRewards(offer.reward || {});
             applyPermanentBonus(offer.permanentBonus || {});
             state.payment.claimedOfferIds.push(offer.id);
         }
         if (orderId) state.payment.claimedOrders[orderId] = true;
-        if (payload.txid && !state.payment.verifiedTxids.includes(payload.txid)) state.payment.verifiedTxids.push(payload.txid);
-        state.payment.purchaseCount = Number(state.payment.purchaseCount || 0) + 1;
-        state.payment.totalSpent = roundFixed(Number(state.payment.totalSpent || 0) + Number(payload.exactAmount || offer.price || 0), 4);
+        if (txid && !state.payment.verifiedTxids.some((entry) => String(entry || '').trim().toLowerCase() === txid)) state.payment.verifiedTxids.push(txid);
+        if (shouldGrantOwnership) {
+            state.payment.purchaseCount = Number(state.payment.purchaseCount || 0) + 1;
+            state.payment.totalSpent = roundFixed(Number(state.payment.totalSpent || 0) + Number(payload.exactAmount || offer.price || 0), 4);
+        }
         state.payment.lastPayAddress = String(payload.payAddress || state.payment.pendingOrder?.payAddress || state.payment.lastPayAddress || '');
         rememberRecentOrder({
             orderId,
             offerId: offer.id,
-            offerName: localize(offer.title),
+            offerName: getOfferDisplayName(offer.id, payload.offerName || ''),
             exactAmount: payload.exactAmount || offer.price,
-            txid: payload.txid || '',
+            txid,
             status: 'granted',
             rewardGranted: true,
             payAddress: payload.payAddress || state.payment.pendingOrder?.payAddress || '',
@@ -965,7 +1039,7 @@
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) {
-            const error = new Error(payload.error || text('订单创建失败。', 'Failed to create order.'));
+            const error = new Error(localizePaymentMessage(payload.error) || text('订单创建失败。', 'Failed to create order.'));
             error.order = normalizeOrder(payload.order || null);
             error.code = String(payload.code || '');
             throw error;
@@ -984,7 +1058,7 @@
         const response = await fetch(`${PAYMENT_API_BASE}/verify-payment?${params.toString()}`);
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) {
-            throw new Error(payload.error || text('交易校验失败。', 'Verification failed.'));
+            throw new Error(localizePaymentMessage(payload.error) || text('交易校验失败。', 'Verification failed.'));
         }
         return payload;
     }
@@ -997,7 +1071,7 @@
         const response = await fetch(`${PAYMENT_API_BASE}/check-order?${params.toString()}`);
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) {
-            throw new Error(payload.error || text('订单检查失败。', 'Order check failed.'));
+            throw new Error(localizePaymentMessage(payload.error) || text('订单检查失败。', 'Order check failed.'));
         }
         return payload;
     }
@@ -1010,14 +1084,14 @@
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) {
-            throw new Error(payload.error || text('奖励发放失败。', 'Reward claim failed.'));
+            throw new Error(localizePaymentMessage(payload.error) || text('奖励发放失败。', 'Reward claim failed.'));
         }
         return payload;
     }
 
     function setPaymentNoticeForOffer(offerId, message, tone = 'info') {
         paymentNoticeOfferId = String(offerId || '');
-        paymentNotice = String(message || '');
+        paymentNotice = localizePaymentMessage(message) || '';
         paymentNoticeTone = tone;
     }
 
@@ -1308,6 +1382,10 @@
     function renderHero() {
         document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
         document.title = localize(CONFIG.meta.title);
+        document.querySelector('meta[name="description"]')?.setAttribute(
+            'content',
+            text('铁轨远征：在单屏整备、路线事件与列车战斗之间推进成长。', 'Iron Frontier: grow through single-screen prep, route events, and rail battles.')
+        );
         nodes.backToHubLink.textContent = t('backToHub');
         syncSoundToggle();
         nodes.heroEyebrow.textContent = localize(CONFIG.meta.eyebrow);
@@ -1324,8 +1402,13 @@
             </div>
         `).join('');
         nodes.drawerEyebrow.textContent = t('bundlePreview');
+        nodes.drawerTitle.textContent = getOfferDisplayName(CONFIG.bundles[0]?.id || '', localize(CONFIG.meta.title));
         nodes.offerLaterBtn.textContent = text('关闭', 'Close');
         nodes.offerMockPayBtn.textContent = text('创建订单', 'Create Order');
+        nodes.battleEyebrow.textContent = t('battlePreview');
+        nodes.battleStageTitle.textContent = t('currentStage');
+        nodes.battleCloseBtn.setAttribute('aria-label', text('关闭战斗', 'Close battle'));
+        nodes.offerCloseBtn.setAttribute('aria-label', text('关闭礼包', 'Close offer'));
         document.querySelector('[data-battle-action="overdrive"]').innerHTML = `<span>${t('skillOverdrive')}</span><small>${t('skillReady')}</small>`;
         document.querySelector('[data-battle-action="barrier"]').innerHTML = `<span>${t('skillBarrier')}</span><small>${t('skillReady')}</small>`;
         document.querySelector('[data-battle-action="repair"]').innerHTML = `<span>${t('skillRepair')}</span><small>${t('skillReady')}</small>`;
@@ -1734,7 +1817,7 @@
                 <div class="if-chip-row">
                     <span class="if-chip">${text('累计充值', 'Spent')} ${Number(state.payment?.totalSpent || 0).toFixed(2)} USDT</span>
                     <span class="if-chip">${text('已生效礼包', 'Active Packs')} ${formatNumber(activePackCount)}</span>
-                    ${pendingOrder ? `<span class="if-chip">${text('待处理订单', 'Pending')} ${escapeHtml(pendingOrder.offerId)}</span>` : ''}
+                    ${pendingOrder ? `<span class="if-chip">${text('待处理订单', 'Pending')} ${escapeHtml(getOfferDisplayName(pendingOrder.offerId, pendingOrder.offerName || pendingOrder.offerId))}</span>` : ''}
                 </div>
             </div>
             <div class="if-chip-row if-perk-row">
@@ -2242,6 +2325,7 @@
                 : order
                     ? text('检查状态', 'Check Status')
                     : text('创建订单', 'Create Order');
+        const liveStatusLabel = order ? getPaymentOrderStatusLabel(order.status) : '--';
         const orderAmount = order?.exactAmount ? `${formatPaymentAmount(order.exactAmount)} USDT` : offer.exactPrice;
         const expiresText = order
             ? (String(order.status || '').toLowerCase() === 'pending'
@@ -2283,7 +2367,7 @@
                     <div class="if-payment-info"><span>${text('订单号', 'Order')}</span><strong>${escapeHtml(order?.orderId || '--')}</strong></div>
                     <div class="if-payment-info"><span>${text('网络', 'Network')}</span><strong>${escapeHtml(order?.network || 'TRON (TRC20)')}</strong></div>
                     <div class="if-payment-info"><span>${text('剩余时间', 'Expires')}</span><strong>${escapeHtml(expiresText)}</strong></div>
-                    <div class="if-payment-info"><span>${text('当前状态', 'Live Status')}</span><strong>${escapeHtml(order?.status || '--')}</strong></div>
+                    <div class="if-payment-info"><span>${text('当前状态', 'Live Status')}</span><strong>${escapeHtml(liveStatusLabel)}</strong></div>
                 </div>
                 <div class="if-payment-address-block">
                     <span class="if-mini-label">${text('收款地址', 'Pay Address')}</span>
