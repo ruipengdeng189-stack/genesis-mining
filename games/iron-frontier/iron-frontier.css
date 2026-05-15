@@ -32,7 +32,7 @@ body.if-modal-open {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding: max(14px, env(safe-area-inset-top)) 14px calc(82px + env(safe-area-inset-bottom));
+    padding: max(14px, env(safe-area-inset-top)) 14px calc(90px + env(safe-area-inset-bottom));
     box-sizing: border-box;
 }
 
@@ -244,6 +244,59 @@ body.if-modal-open {
     gap: 10px;
 }
 
+.if-run-guide,
+.if-run-focus-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.if-run-guide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.if-guide-step,
+.if-run-focus-card {
+    border-radius: 18px;
+    padding: 10px 11px;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.if-guide-step {
+    display: grid;
+    gap: 4px;
+}
+
+.if-guide-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 179, 87, 0.14);
+}
+
+.if-guide-step strong,
+.if-run-focus-card strong {
+    font-size: 13px;
+}
+
+.if-guide-step span,
+.if-run-focus-card span {
+    color: rgba(224, 231, 244, 0.68);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
+.if-run-focus-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.if-run-focus-card {
+    display: grid;
+    gap: 4px;
+}
+
 .if-chapter-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -317,6 +370,12 @@ body.if-modal-open {
 .if-run-actions .ghost-btn {
     flex: 1 1 96px;
     min-width: 0;
+}
+
+.if-battle-actions {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
 }
 
 .if-stage-card {
@@ -514,26 +573,39 @@ body.if-modal-open {
     z-index: 30;
     background: rgba(2, 5, 10, 0.76);
     display: grid;
-    place-items: center;
+    align-items: start;
+    justify-items: center;
     padding: 16px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .if-battle-shell,
 .if-drawer-card {
     width: min(960px, 100%);
     border-radius: 24px;
+    margin: auto 0;
 }
 
 .if-battle-shell {
     max-height: calc(100vh - 32px);
     overflow: auto;
-    padding: 16px;
+    padding: 14px;
     display: grid;
-    gap: 12px;
+    gap: 10px;
+    grid-template-rows: auto auto minmax(360px, 1fr) auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .if-drawer-card {
+    max-height: calc(100vh - 32px);
+    overflow: hidden;
     padding: 16px;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 12px;
 }
 
 .if-battle-top,
@@ -547,31 +619,33 @@ body.if-modal-open {
 .if-battle-hud {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
+    gap: 6px;
 }
 
 .if-hud-card {
-    padding: 12px;
-    border-radius: 18px;
+    padding: 7px 8px;
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.045);
     border: 1px solid rgba(255, 255, 255, 0.06);
+    display: grid;
+    gap: 4px;
 }
 
 .if-hud-card span {
     display: block;
     color: rgba(220, 228, 243, 0.66);
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .if-hud-card strong {
     display: block;
-    margin: 6px 0 10px;
-    font-size: 16px;
+    margin: 0 0 4px;
+    font-size: 13px;
 }
 
 .if-meter {
     position: relative;
-    height: 8px;
+    height: 6px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.06);
     overflow: hidden;
@@ -600,26 +674,158 @@ body.if-modal-open {
 
 .if-battle-field {
     position: relative;
-    min-height: 320px;
+    min-height: 380px;
     border-radius: 24px;
     overflow: hidden;
     background:
-        radial-gradient(circle at center, rgba(255, 179, 87, 0.08), transparent 44%),
+        radial-gradient(circle at center, rgba(255, 179, 87, 0.12), transparent 42%),
+        radial-gradient(circle at 80% 18%, rgba(110, 183, 255, 0.08), transparent 22%),
         linear-gradient(180deg, rgba(15, 19, 28, 0.98), rgba(7, 10, 16, 0.98));
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.if-battle-field.is-presenting.is-hit,
+.if-battle-field.is-presenting.is-damage,
+.if-battle-field.is-presenting.is-fail,
+.if-battle-field.is-presenting.is-heat {
+    animation: if-battle-field-shake 360ms ease;
+}
+
+.if-battle-field.is-presenting.is-advance .if-train,
+.if-battle-field.is-presenting.is-boost .if-train {
+    transform: translateX(calc(var(--if-train-shift, 0px) + 18px));
+    filter: drop-shadow(0 0 16px rgba(255, 179, 87, 0.34));
+}
+
+.if-battle-field.is-presenting.is-shield .if-train span {
+    border-color: rgba(110, 183, 255, 0.78);
+    box-shadow: 0 0 24px rgba(110, 183, 255, 0.3);
+}
+
+.if-battle-field.is-presenting.is-repair .if-train {
+    filter: drop-shadow(0 0 16px rgba(120, 240, 168, 0.34));
+}
+
+.if-battle-field.is-presenting.is-event,
+.if-battle-field.is-presenting.is-boss {
+    box-shadow: inset 0 0 0 1px rgba(188, 146, 255, 0.24);
+}
+
+.if-battle-field.is-presenting.is-ultimate .if-threat-dot,
+.if-battle-field.is-presenting.is-win .if-threat-dot {
+    animation: if-threat-knock 420ms ease forwards;
+}
+
+.if-battle-fx {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.if-battle-fx.is-active {
+    animation: if-battle-fx-flash 520ms ease;
+}
+
+.if-battle-fx.is-guide {
+    background: radial-gradient(circle at center, rgba(255, 179, 87, 0.18), transparent 55%);
+}
+
+.if-battle-fx.is-boost,
+.if-battle-fx.is-ultimate {
+    background: linear-gradient(90deg, rgba(255, 179, 87, 0.2), rgba(255, 179, 87, 0));
+}
+
+.if-battle-fx.is-shield {
+    background: radial-gradient(circle at center, rgba(110, 183, 255, 0.18), transparent 55%);
+}
+
+.if-battle-fx.is-repair {
+    background: radial-gradient(circle at center, rgba(120, 240, 168, 0.16), transparent 55%);
+}
+
+.if-battle-fx.is-hit,
+.if-battle-fx.is-damage,
+.if-battle-fx.is-fail,
+.if-battle-fx.is-heat {
+    background: linear-gradient(180deg, rgba(255, 106, 106, 0.18), rgba(255, 106, 106, 0));
+}
+
+.if-battle-fx.is-event,
+.if-battle-fx.is-boss {
+    background: linear-gradient(180deg, rgba(188, 146, 255, 0.18), rgba(188, 146, 255, 0));
+}
+
+.if-battle-fx.is-win {
+    background: radial-gradient(circle at center, rgba(120, 240, 168, 0.18), transparent 55%);
+}
+
+.if-battle-route {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 58px;
+    display: grid;
+    grid-template-columns: repeat(var(--if-route-columns, 6), minmax(0, 1fr));
+    gap: 6px;
+}
+
+.if-route-node {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.if-route-node.is-done {
+    background: linear-gradient(90deg, rgba(255, 179, 87, 0.95), rgba(255, 232, 170, 0.82));
+    border-color: rgba(255, 214, 145, 0.34);
+}
+
+.if-route-node.is-current {
+    box-shadow: 0 0 0 1px rgba(255, 179, 87, 0.24), 0 0 14px rgba(255, 179, 87, 0.24);
+}
+
+.if-route-node.is-event {
+    border-color: rgba(188, 146, 255, 0.3);
+}
+
+.if-route-node.is-boss {
+    border-color: rgba(255, 122, 122, 0.4);
+}
+
+.if-battle-objective {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 80px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.if-battle-goal-card {
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(6, 10, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    color: rgba(243, 246, 255, 0.92);
+    font-size: 10px;
+    font-weight: 700;
+}
+
 .if-battle-rail {
     position: absolute;
-    inset: 54% 0 auto;
+    inset: 62% 0 auto;
     height: 2px;
     background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.14) 12%, rgba(255, 255, 255, 0.14) 88%, transparent 100%);
 }
 
 .if-train {
     position: absolute;
-    left: 12%;
-    bottom: 26%;
+    left: 10%;
+    bottom: 18%;
     display: flex;
     gap: 8px;
     transform: translateX(var(--if-train-shift, 0px));
@@ -646,24 +852,32 @@ body.if-modal-open {
     box-shadow: 0 0 22px rgba(110, 183, 255, 0.26);
 }
 
+.if-train.is-critical span {
+    border-color: rgba(255, 122, 122, 0.62);
+    box-shadow: 0 0 18px rgba(255, 106, 106, 0.26);
+}
+
 .if-threat-lane {
     position: absolute;
-    right: 10%;
-    top: 24%;
-    display: grid;
-    gap: 8px;
+    right: 12%;
+    bottom: 24%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     justify-items: end;
 }
 
 .if-threat-dot {
-    min-width: 54px;
-    padding: 8px 10px;
-    border-radius: 999px;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
     background: rgba(255, 106, 106, 0.12);
     border: 1px solid rgba(255, 119, 119, 0.28);
     color: #ffc7c7;
-    font-size: 11px;
-    text-align: center;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    animation: if-threat-pulse 1.4s ease-in-out infinite;
 }
 
 .if-threat-dot.is-boss {
@@ -675,20 +889,71 @@ body.if-modal-open {
 .if-battle-tip {
     position: absolute;
     left: 50%;
-    top: 16px;
+    top: 14px;
     transform: translateX(-50%);
-    max-width: min(720px, calc(100% - 32px));
-    padding: 10px 14px;
+    max-width: min(540px, calc(100% - 32px));
+    padding: 8px 12px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(6, 10, 18, 0.78);
     color: #f6f8ff;
-    font-size: 12px;
+    font-size: 11px;
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.if-battle-status-badge {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%) translateY(8px);
+    opacity: 0;
+    pointer-events: none;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(8, 11, 18, 0.86);
+    color: #fff5e8;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.if-battle-status-badge.is-active {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.if-battle-status-badge.is-boost,
+.if-battle-status-badge.is-ultimate,
+.if-battle-status-badge.is-guide,
+.if-battle-status-badge.is-advance {
+    border-color: rgba(255, 179, 87, 0.34);
+}
+
+.if-battle-status-badge.is-shield {
+    border-color: rgba(110, 183, 255, 0.4);
+}
+
+.if-battle-status-badge.is-repair,
+.if-battle-status-badge.is-win {
+    border-color: rgba(120, 240, 168, 0.36);
+}
+
+.if-battle-status-badge.is-hit,
+.if-battle-status-badge.is-damage,
+.if-battle-status-badge.is-fail,
+.if-battle-status-badge.is-heat {
+    border-color: rgba(255, 106, 106, 0.36);
+}
+
+.if-battle-status-badge.is-event,
+.if-battle-status-badge.is-boss {
+    border-color: rgba(188, 146, 255, 0.36);
 }
 
 .if-battle-bottom {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .if-battle-events {
@@ -705,9 +970,57 @@ body.if-modal-open {
 
 .if-event-card {
     border-radius: 18px;
-    padding: 12px;
+    padding: 11px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.if-battle-event-head,
+.if-event-option-top {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.if-battle-event-title {
+    display: block;
+    margin-top: 4px;
+    font-size: 16px;
+}
+
+.if-battle-brief-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.if-brief-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(243, 246, 255, 0.92);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.if-log-strip {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.if-log-chip {
+    border-radius: 12px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.035);
+    color: rgba(240, 244, 251, 0.78);
+    font-size: 11px;
+    line-height: 1.45;
 }
 
 .if-result-card {
@@ -755,6 +1068,39 @@ body.if-modal-open {
     color: #f3f6ff;
     text-align: left;
     cursor: pointer;
+    display: grid;
+    gap: 8px;
+}
+
+.if-event-option.is-aggressive {
+    border-color: rgba(255, 179, 87, 0.28);
+    background: linear-gradient(180deg, rgba(255, 179, 87, 0.12), rgba(255, 255, 255, 0.04));
+}
+
+.if-event-option.is-defensive {
+    border-color: rgba(110, 183, 255, 0.28);
+    background: linear-gradient(180deg, rgba(110, 183, 255, 0.1), rgba(255, 255, 255, 0.04));
+}
+
+.if-event-option.is-utility {
+    border-color: rgba(120, 240, 168, 0.24);
+    background: linear-gradient(180deg, rgba(120, 240, 168, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.if-event-option-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.if-event-delta-chip {
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(243, 246, 255, 0.88);
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .if-skill-btn:hover,
@@ -767,12 +1113,19 @@ body.if-modal-open {
 .if-skill-btn {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 12px 14px;
+    min-height: 68px;
+    padding: 10px 12px;
     background: rgba(255, 255, 255, 0.045);
     color: #f3f6ff;
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+    text-align: left;
+}
+
+.if-skill-btn span,
+.if-advance-btn span {
+    display: block;
 }
 
 .if-skill-btn small {
@@ -803,7 +1156,16 @@ body.if-modal-open {
 }
 
 .if-advance-btn {
-    margin-left: auto;
+    margin-left: 0;
+    grid-column: span 2;
+}
+
+.if-advance-btn small {
+    display: block;
+    margin-top: 4px;
+    color: rgba(255, 244, 232, 0.76);
+    font-size: 10px;
+    font-weight: 600;
 }
 
 .if-log-list {
@@ -822,7 +1184,11 @@ body.if-modal-open {
 .if-drawer-body {
     display: grid;
     gap: 12px;
-    margin-top: 12px;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 2px;
 }
 
 .if-payment-grid,
@@ -950,14 +1316,36 @@ body.if-modal-open {
     transform: translateX(-50%) translateY(0);
 }
 
+@keyframes if-battle-fx-flash {
+    0% { opacity: 0; }
+    18% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes if-battle-field-shake {
+    0%, 100% { transform: translateX(0); }
+    24% { transform: translateX(-6px); }
+    48% { transform: translateX(5px); }
+    72% { transform: translateX(-3px); }
+}
+
+@keyframes if-threat-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+}
+
+@keyframes if-threat-knock {
+    0% { transform: translateX(0) scale(1); opacity: 1; }
+    100% { transform: translateX(16px) scale(0.82); opacity: 0.35; }
+}
+
 .is-hidden {
     display: none !important;
 }
 
 @media (max-width: 980px) {
     .if-resource-strip,
-    .if-summary-grid,
-    .if-battle-hud {
+    .if-summary-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -987,6 +1375,19 @@ body.if-modal-open {
         grid-template-columns: 1fr;
     }
 
+    .if-run-guide,
+    .if-run-focus-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .if-battle-actions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .if-advance-btn {
+        grid-column: 1 / -1;
+    }
+
     .if-payment-grid,
     .if-payment-info-grid {
         grid-template-columns: 1fr;
@@ -1010,7 +1411,7 @@ body.if-modal-open {
 @media (max-width: 520px) {
     .if-shell {
         padding-top: max(12px, env(safe-area-inset-top));
-        padding-bottom: calc(80px + env(safe-area-inset-bottom));
+        padding-bottom: calc(88px + env(safe-area-inset-bottom));
     }
 
     .if-hero-card,
@@ -1026,11 +1427,14 @@ body.if-modal-open {
     }
 
     .if-summary-grid,
-    .if-battle-hud,
     .if-card-grid,
     .if-shop-grid,
     .if-stage-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .if-battle-hud {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .if-train-grid,
@@ -1042,7 +1446,7 @@ body.if-modal-open {
     }
 
     .if-battle-field {
-        min-height: 240px;
+        min-height: 340px;
     }
 
     .if-train span {
@@ -1050,8 +1454,25 @@ body.if-modal-open {
         height: 28px;
     }
 
+    .if-threat-dot {
+        width: 34px;
+        height: 34px;
+        font-size: 13px;
+    }
+
+    .if-battle-route {
+        top: 54px;
+    }
+
+    .if-battle-objective {
+        top: 74px;
+    }
+
+    .if-run-guide .if-guide-step:last-child {
+        grid-column: 1 / -1;
+    }
+
     .if-advance-btn {
-        margin-left: 0;
         width: 100%;
     }
 }

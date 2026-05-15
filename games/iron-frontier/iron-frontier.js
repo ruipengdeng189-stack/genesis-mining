@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const CONFIG = window.IRON_FRONTIER_CONFIG;
     if (!CONFIG) return;
 
@@ -16,7 +16,7 @@
         supportCar: 52,
         ultimate: 40
     };
-    const BATTLE_TICK_MS = 1100;
+    const BATTLE_TICK_MS = 1250;
     const SKILL_COOLDOWNS = {
         overdrive: 4,
         barrier: 5,
@@ -265,6 +265,10 @@
         battleOverlay: document.getElementById('battleOverlay'),
         battleEyebrow: document.getElementById('battleEyebrow'),
         battleStageTitle: document.getElementById('battleStageTitle'),
+        battleIntegrityLabel: document.getElementById('battleIntegrityLabel'),
+        battleShieldLabel: document.getElementById('battleShieldLabel'),
+        battleHeatLabel: document.getElementById('battleHeatLabel'),
+        battleProgressLabel: document.getElementById('battleProgressLabel'),
         battleIntegrityValue: document.getElementById('battleIntegrityValue'),
         battleShieldValue: document.getElementById('battleShieldValue'),
         battleHeatValue: document.getElementById('battleHeatValue'),
@@ -275,6 +279,10 @@
         battleProgressBar: document.getElementById('battleProgressBar'),
         battleTip: document.getElementById('battleTip'),
         battleField: document.getElementById('battleField'),
+        battleFx: document.getElementById('battleFx'),
+        battleWaveStrip: document.getElementById('battleWaveStrip'),
+        battleObjective: document.getElementById('battleObjective'),
+        battleStatusBadge: document.getElementById('battleStatusBadge'),
         battleTrain: document.getElementById('battleTrain'),
         battleThreatLane: document.getElementById('battleThreatLane'),
         battleEventArea: document.getElementById('battleEventArea'),
@@ -294,6 +302,8 @@
     let activeOfferId = '';
     let battleState = null;
     let battleLoopHandle = null;
+    let battleFxTimer = null;
+    let battleStatusTimer = null;
     let paymentBusyAction = '';
     let paymentNotice = '';
     let paymentNoticeTone = 'info';
@@ -1499,18 +1509,21 @@
         const battleProfile = getBattleProfile(stage);
         const status = state.stageClears[stage.id] ? t('cleared') : (isStageUnlocked(stage.id) ? t('unlocked') : t('locked'));
         const chapterStages = getChapterStages(chapter);
+        const goalState = getCurrentPower() >= stage.recommended
+            ? text('可直接开打', 'Ready To Launch')
+            : text('建议先补强', 'Prep First');
         nodes.panelContent.innerHTML = `
             <div class="if-run-layout">
                 <div class="if-panel-head">
                     <div>
                         <div class="eyebrow">${localize(CONFIG.tabs[0].label)} · ${t('chapter')} ${chapter}</div>
-                        <h2>${t('runTitle')}</h2>
-                        <p>${t('runBody')}</p>
+                        <h2>${text('怎么玩', 'How It Plays')}</h2>
+                        <p>${text('这是一款“列车自动推进 + 你手动放技能”的闯关游戏：把进度推到 100% 就过关，车体归零就失败。', 'This run is “auto-moving train + manual skill timing”: push progress to 100% to clear, and lose if integrity drops to 0.')}</p>
                     </div>
                     <div class="if-chip-row">
                         <span class="if-chip">${t('currentStage')} ${stage.id}</span>
                         <span class="if-chip">${t('power')} ${formatNumber(getCurrentPower())} / ${formatNumber(stage.recommended)}</span>
-                        <span class="if-chip">${powerState.label}</span>
+                        <span class="if-chip">${goalState}</span>
                     </div>
                 </div>
                 <div class="if-chapter-strip">
@@ -1525,20 +1538,57 @@
                         `;
                     }).join('')}
                 </div>
+                <div class="if-run-guide">
+                    <div class="if-guide-step">
+                        <div class="if-guide-icon">⚙️</div>
+                        <strong>${text('先整备', 'Prep First')}</strong>
+                        <span>${text('优先升车头、主炮、护甲', 'Upgrade locomotive, gun, and armor')}</span>
+                    </div>
+                    <div class="if-guide-step">
+                        <div class="if-guide-icon">🎮</div>
+                        <strong>${text('再开打', 'Enter Battle')}</strong>
+                        <span>${text('列车自动前进，你负责放技能', 'Train auto-pushes; you time the skills')}</span>
+                    </div>
+                    <div class="if-guide-step">
+                        <div class="if-guide-icon">🎁</div>
+                        <strong>${text('最后领奖', 'Collect Rewards')}</strong>
+                        <span>${text('通关拿资源，继续强化下一关', 'Clear stages, claim loot, and scale up')}</span>
+                    </div>
+                </div>
                 <div class="if-run-hero">
                     <div class="if-run-hero-top">
                         <div>
                             <div class="if-mini-label">${getStageTypeLabel(stage)}</div>
                             <strong>${stage.id} · ${localize(stage.name)}</strong>
-                            <div class="if-muted">${t('pressure')}：${localize(stage.pressure)} · ${t('rewardFocus')}：${localize(stage.rewardFocus)}</div>
+                            <div class="if-muted">${text('这一关的重点是看准时机放技能，稳住护盾并把列车推进终点。', 'This stage is about timing your skills, stabilizing shield, and pushing the train to the finish.')}</div>
                         </div>
                         <span class="if-inline-pill">${status}</span>
+                    </div>
+                    <div class="if-run-focus-grid">
+                        <div class="if-run-focus-card">
+                            <span>🎯 ${text('过关目标', 'Goal')}</span>
+                            <strong>${text('推进到 100%', 'Reach 100% Progress')}</strong>
+                        </div>
+                        <div class="if-run-focus-card">
+                            <span>💥 ${text('失败条件', 'Fail State')}</span>
+                            <strong>${text('车体归零', 'Integrity Hits 0')}</strong>
+                        </div>
+                        <div class="if-run-focus-card">
+                            <span>🤖 ${text('自动部分', 'Auto Layer')}</span>
+                            <strong>${text('列车自动开火推进', 'Train auto-fires and advances')}</strong>
+                        </div>
+                        <div class="if-run-focus-card">
+                            <span>🕹️ ${text('你的操作', 'Your Input')}</span>
+                            <strong>${text('超载 / 护盾 / 修复 / 轨炮', 'Overdrive / Barrier / Repair / Rail Burst')}</strong>
+                        </div>
                     </div>
                     <div class="if-route-chips">
                         <span class="if-chip">${t('routeNode')} ${battleProfile.segmentCount}</span>
                         <span class="if-chip">${t('eventChoose')} ×2</span>
                         <span class="if-chip">${t('powerGap')} ${powerGap}</span>
-                        <span class="if-chip">${t('chapterProgress')} ${getChapterProgress(chapter).cleared}/${getChapterProgress(chapter).total}</span>
+                        <span class="if-chip">${powerState.label}</span>
+                        <span class="if-chip">${t('pressure')} · ${localize(stage.pressure)}</span>
+                        <span class="if-chip">${t('rewardFocus')} · ${localize(stage.rewardFocus)}</span>
                     </div>
                     <div class="if-reward-row">
                         ${buildRewardItems(stage.reward)}
@@ -1565,6 +1615,10 @@
                                 </div>
                                 <div class="if-muted">${localize(item.name)}</div>
                                 <div class="if-stage-recommended">${t('power')} ${formatNumber(item.recommended)}</div>
+                                <div class="if-cost-row">
+                                    <span class="if-cost-item">🎯 ${text('推到 100%', 'Push to 100%')}</span>
+                                    <span class="if-cost-item">🧩 ${localize(item.pressure)}</span>
+                                </div>
                             </button>
                         `;
                     }).join('')}
@@ -1991,17 +2045,21 @@
             ultimateCharge: clamp(30 + (state.moduleLevels.ultimate - 1) * 10 + (state.researchLevels.relayDecoder || 0) * 4, 0, 100),
             settled: false,
             result: null,
-            rewardsApplied: false
+            rewardsApplied: false,
+            bossWarningShown: false
         };
         nodes.battleOverlay.classList.remove('is-hidden');
         document.body.classList.add('if-modal-open');
         playSfx('battleStart');
+        clearBattlePresentation();
         renderBattle();
+        cueBattlePresentation('guide', text('目标：推进到 100%', 'Goal: reach 100% progress'));
         startBattleLoop();
     }
 
     function closeBattle() {
         clearBattleLoop();
+        clearBattlePresentation();
         battleState = null;
         nodes.battleOverlay.classList.add('is-hidden');
         document.body.classList.remove('if-modal-open');
@@ -2040,7 +2098,104 @@
         applyButtonState(ultimateBtn, t('skillUltimate'), ultimateReady, battleState.activeEvent ? t('eventChoose') : t('ultimateCharge').replace('{value}', Math.round(battleState.ultimateCharge)), true);
 
         nodes.battleAdvanceBtn.disabled = Boolean(battleState.activeEvent || battleState.settled);
-        nodes.battleAdvanceBtn.textContent = battleState.activeEvent ? t('eventChoose') : t('manualBurst');
+        nodes.battleAdvanceBtn.innerHTML = battleState.activeEvent
+            ? `<span>${t('eventChoose')}</span><small>${text('先选事件', 'Resolve the event first')}</small>`
+            : `<span>${t('manualBurst')}</span><small>${text('手动补一段推进', 'Manual +3 progress burst')}</small>`;
+    }
+
+    function clearBattlePresentation() {
+        if (battleFxTimer) {
+            window.clearTimeout(battleFxTimer);
+            battleFxTimer = null;
+        }
+        if (battleStatusTimer) {
+            window.clearTimeout(battleStatusTimer);
+            battleStatusTimer = null;
+        }
+        if (nodes.battleFx) nodes.battleFx.className = 'if-battle-fx';
+        if (nodes.battleField) nodes.battleField.className = 'if-battle-field';
+        if (nodes.battleStatusBadge) {
+            nodes.battleStatusBadge.className = 'if-battle-status-badge';
+            nodes.battleStatusBadge.textContent = '';
+        }
+    }
+
+    function cueBattlePresentation(kind, label) {
+        if (!nodes.battleFx || !nodes.battleStatusBadge) return;
+        clearBattlePresentation();
+        void nodes.battleFx.offsetWidth;
+        nodes.battleFx.classList.add('is-active', `is-${kind}`);
+        if (nodes.battleField) nodes.battleField.classList.add('is-presenting', `is-${kind}`);
+        nodes.battleStatusBadge.textContent = label;
+        nodes.battleStatusBadge.classList.add('is-active', `is-${kind}`);
+        battleFxTimer = window.setTimeout(() => {
+            if (nodes.battleFx) nodes.battleFx.className = 'if-battle-fx';
+            if (nodes.battleField) nodes.battleField.className = 'if-battle-field';
+        }, 520);
+        battleStatusTimer = window.setTimeout(() => {
+            if (nodes.battleStatusBadge) {
+                nodes.battleStatusBadge.className = 'if-battle-status-badge';
+                nodes.battleStatusBadge.textContent = '';
+            }
+        }, 1400);
+    }
+
+    function renderBattleObjective(stage) {
+        if (!battleState || !nodes.battleObjective) return;
+        nodes.battleObjective.innerHTML = `
+            <div class="if-battle-goal-card">🎯 ${text('终点 100%', 'Goal 100%')}</div>
+            <div class="if-battle-goal-card">🛡️ ${text('护盾先掉', 'Shield First')}</div>
+            <div class="if-battle-goal-card">🌡️ ${battleState.heat >= 84 ? text('高热', 'High Heat') : text('热量稳', 'Heat Stable')}</div>
+        `;
+    }
+
+    function renderBattleRoute(stage) {
+        if (!battleState || !nodes.battleWaveStrip) return;
+        const currentNode = Math.min(battleState.profile.segmentCount, Math.max(1, battleState.wave + 1));
+        nodes.battleWaveStrip.style.setProperty('--if-route-columns', battleState.profile.segmentCount);
+        nodes.battleWaveStrip.innerHTML = Array.from({ length: battleState.profile.segmentCount }).map((_, index) => {
+            const node = index + 1;
+            const isDone = battleState.progress >= (node / battleState.profile.segmentCount) * 100;
+            const isCurrent = node === currentNode && !battleState.settled;
+            const isEvent = node === 2 || node === 4;
+            const isBoss = stage.type === 'boss' && node === battleState.profile.segmentCount;
+            return `<span class="if-route-node ${isDone ? 'is-done' : ''} ${isCurrent ? 'is-current' : ''} ${isEvent ? 'is-event' : ''} ${isBoss ? 'is-boss' : ''}"></span>`;
+        }).join('');
+    }
+
+    function renderBattleThreats(stage) {
+        if (!battleState || !nodes.battleThreatLane) return;
+        const visibleCount = Math.max(3, Math.min(stage.type === 'boss' ? 6 : 5, Math.ceil(battleState.enemyCount / 2)));
+        nodes.battleThreatLane.innerHTML = Array.from({ length: visibleCount }).map((_, index) => {
+            const isBoss = stage.type === 'boss' && index === 0;
+            const icon = isBoss ? '👑' : (battleState.heat >= 84 ? '⚠' : '◆');
+            return `<div class="if-threat-dot ${isBoss ? 'is-boss' : ''}"><span>${icon}</span></div>`;
+        }).join('');
+    }
+
+    function getBattleEventTone(option) {
+        if ((option.shield || 0) > 0 || (option.integrity || 0) > 0 || (option.barrier || 0) > 0 || (option.heat || 0) < 0) {
+            return { className: 'is-defensive', label: text('稳守', 'Safe') };
+        }
+        if ((option.progress || 0) > 0 || (option.overdrive || 0) > 0 || (option.heat || 0) > 0) {
+            return { className: 'is-aggressive', label: text('强推', 'Push') };
+        }
+        return { className: 'is-utility', label: text('补给', 'Utility') };
+    }
+
+    function buildBattleEventDeltaChips(option) {
+        const chips = [];
+        if ((option.progress || 0) !== 0) chips.push(`${option.progress > 0 ? '+' : ''}${option.progress} ${text('推进', 'Progress')}`);
+        if ((option.shield || 0) !== 0) chips.push(`${option.shield > 0 ? '+' : ''}${option.shield} ${text('护盾', 'Shield')}`);
+        if ((option.integrity || 0) !== 0) chips.push(`${option.integrity > 0 ? '+' : ''}${option.integrity} ${text('车体', 'Hull')}`);
+        if ((option.heat || 0) !== 0) chips.push(`${option.heat > 0 ? '+' : ''}${option.heat} ${text('热量', 'Heat')}`);
+        if ((option.overdrive || 0) > 0) chips.push(`+${option.overdrive}T ${text('超载', 'Overdrive')}`);
+        if ((option.barrier || 0) > 0) chips.push(`+${option.barrier}T ${text('护盾', 'Barrier')}`);
+        if ((option.chargeBoost || 0) > 0) chips.push(`+${Math.round(option.chargeBoost * 100)}% ${text('轨炮充能', 'Burst Charge')}`);
+        if ((option.salvageBoost || 0) > 0) chips.push(`+${Math.round(option.salvageBoost * 100)}% ${text('回收', 'Salvage')}`);
+        const bonusRewardEntries = Object.entries(option.bonusReward || {}).filter(([, amount]) => Number(amount || 0) > 0);
+        if (bonusRewardEntries.length) chips.push(`🎁 ${text('额外奖励', 'Bonus Loot')}`);
+        return chips.slice(0, 4);
     }
 
     function renderBattleInfoCard(stage) {
@@ -2049,7 +2204,7 @@
                 <div class="if-event-card if-result-card ${battleState.result.win ? '' : 'is-fail'}">
                     <div class="if-mini-label">${battleState.result.win ? t('battleVictoryTitle') : t('battleDefeatTitle')}</div>
                     <div class="if-result-title">${stage.id} · ${localize(stage.name)}</div>
-                    <div class="if-result-copy">${battleState.result.win ? t('battleWin') : t('partialReward')}</div>
+                    <div class="if-result-copy">${battleState.result.win ? text('列车成功突破当前战区，奖励已经结算。', 'The train broke through the zone and rewards are settled.') : text('本次撤退带回了部分回收物资，建议先补强再出发。', 'This retreat returned partial salvage. Strengthen up before the next run.')}</div>
                     <div class="if-reward-row">${buildRewardItems(battleState.result.payout)}</div>
                     <div class="if-btn-row">
                         <button class="ghost-btn" type="button" data-battle-action="result-close">${t('battleReturn')}</button>
@@ -2061,36 +2216,46 @@
 
         if (battleState.activeEvent) {
             return `
-                <div class="if-event-card">
-                    <div class="if-mini-label">${t('eventChoose')}</div>
-                    <strong>${localize(battleState.activeEvent.title)}</strong>
+                <div class="if-event-card if-battle-event-card">
+                    <div class="if-battle-event-head">
+                        <div class="if-mini-label">${t('eventChoose')}</div>
+                        <span class="if-inline-pill">${text('二选一', 'Pick 1')}</span>
+                    </div>
+                    <strong class="if-battle-event-title">${localize(battleState.activeEvent.title)}</strong>
+                    <div class="if-muted">${text('二选一，立刻影响这局推进 / 护盾 / 热量。', 'Pick one. It immediately changes this run’s pace, shield, or heat.')}</div>
                     <div class="if-battle-pill-strip">
                         <span class="if-inline-pill">${t('routeBonus')} ${Math.round((battleState.profile.eventMul - 1) * 100)}%</span>
                         <span class="if-inline-pill">${t('ultimateCharge').replace('{value}', Math.round(battleState.ultimateCharge))}</span>
                     </div>
                     <div class="if-event-options">
-                        ${battleState.activeEvent.options.map((option) => `
-                            <button class="if-event-option" type="button" data-battle-action="event-option" data-event-option="${option.id}">
-                                <strong>${localize(option.label)}</strong>
+                        ${battleState.activeEvent.options.map((option) => {
+                            const tone = getBattleEventTone(option);
+                            return `
+                            <button class="if-event-option ${tone.className}" type="button" data-battle-action="event-option" data-event-option="${option.id}">
+                                <div class="if-event-option-top">
+                                    <strong>${localize(option.label)}</strong>
+                                    <span class="if-inline-pill">${tone.label}</span>
+                                </div>
+                                <div class="if-event-option-chips">
+                                    ${buildBattleEventDeltaChips(option).map((chip) => `<span class="if-event-delta-chip">${chip}</span>`).join('')}
+                                </div>
                                 <div class="if-muted">${localize(option.result)}</div>
                             </button>
-                        `).join('')}
+                        `;}).join('')}
                     </div>
                 </div>
             `;
         }
 
         return `
-            <div class="if-event-card">
-                <div class="if-mini-label">${t('battleLogs')}</div>
-                <div class="if-battle-pill-strip">
-                    <span class="if-inline-pill">${t('chapter')} ${stage.chapter}</span>
-                    <span class="if-inline-pill">${t('routeNode')} ${battleState.wave}/${battleState.profile.segmentCount}</span>
-                    <span class="if-inline-pill">${t('ultimateCharge').replace('{value}', Math.round(battleState.ultimateCharge))}</span>
-                    <span class="if-inline-pill">${t('power')} ${formatNumber(getCurrentPower())}</span>
+            <div class="if-event-card if-battle-brief-card">
+                <div class="if-battle-brief-pills">
+                    <span class="if-brief-pill">🎯 ${text('推进', 'Progress')} ${Math.round(battleState.progress)}%</span>
+                    <span class="if-brief-pill">🧩 ${text('路段', 'Segment')} ${Math.min(battleState.wave + 1, battleState.profile.segmentCount)}/${battleState.profile.segmentCount}</span>
+                    <span class="if-brief-pill">⚡ ${text('轨炮', 'Burst')} ${Math.round(battleState.ultimateCharge)}%</span>
                 </div>
-                <div class="if-log-list">
-                    ${battleState.logs.map((entry) => `<div class="if-log-item">${entry}</div>`).join('')}
+                <div class="if-log-strip">
+                    <div class="if-log-chip">${battleState.logs[0] || text('主炮自动推进，你负责抓技能时机。', 'The train auto-pushes; you time the skills.')}</div>
                 </div>
             </div>
         `;
@@ -2101,13 +2266,23 @@
         const stage = getStage(battleState.stageId);
         const trainShift = Math.round((battleState.progress / 100) * 84);
         const tip = battleState.settled
-            ? (battleState.result?.win ? t('battleVictoryTitle') : t('battleDefeatTitle'))
+            ? (battleState.result?.win ? text('已突破终点，准备结算奖励。', 'Finish reached. Rewards ready to settle.') : text('车体已撑不住，建议回整备补强。', 'Integrity collapsed. Return to prep and strengthen up.'))
             : battleState.activeEvent
-                ? `${t('eventChoose')} · ${localize(battleState.activeEvent.title)}`
-                : (battleState.heat >= 90 ? t('battleOverheat') : (getCurrentPower() < stage.recommended ? t('battleUnderpowered') : (stage.type === 'boss' && battleState.progress >= 65 ? t('battleBossIncoming') : localize(stage.pressure))));
+                ? text('出现路线事件，先做一次选择。', 'A route event appeared. Choose one option first.')
+                : (battleState.heat >= 90
+                    ? text('热量过高，优先修复或停用超载。', 'Heat is too high. Repair or stop overdrive.')
+                    : (getCurrentPower() < stage.recommended
+                        ? text('当前战力略低，建议谨慎使用护盾与修复。', 'Power is slightly low. Use barrier and repair carefully.')
+                        : (stage.type === 'boss' && battleState.progress >= 65
+                            ? text('Boss 压力上来了，留好护盾和轨炮。', 'Boss pressure is rising. Save barrier and Rail Burst.')
+                            : text('主炮会自动推进，你要负责抓技能时机。', 'The main gun auto-pushes. Your job is timing the skills.'))));
 
         nodes.battleEyebrow.textContent = `${t('battlePreview')} · ${getStageTypeLabel(stage)}`;
         nodes.battleStageTitle.textContent = `${stage.id} · ${localize(stage.name)}`;
+        nodes.battleIntegrityLabel.textContent = text('❤️ 车体', '❤️ Hull');
+        nodes.battleShieldLabel.textContent = text('🛡 护盾', '🛡 Shield');
+        nodes.battleHeatLabel.textContent = text('🌡 热量', '🌡 Heat');
+        nodes.battleProgressLabel.textContent = text('🏁 进度', '🏁 Progress');
         nodes.battleIntegrityValue.textContent = `${Math.round(battleState.integrity)}%`;
         nodes.battleShieldValue.textContent = `${Math.round(battleState.shield)}%`;
         nodes.battleHeatValue.textContent = `${Math.round(battleState.heat)}%`;
@@ -2120,9 +2295,10 @@
         nodes.battleTrain.style.setProperty('--if-train-shift', `${trainShift}px`);
         nodes.battleTrain.classList.toggle('is-boosting', battleState.overdriveTurns > 0);
         nodes.battleTrain.classList.toggle('is-barrier', battleState.barrierTurns > 0);
-        nodes.battleThreatLane.innerHTML = Array.from({ length: Math.max(3, Math.min(stage.type === 'boss' ? 12 : 10, battleState.enemyCount)) })
-            .map((_, index) => `<div class="if-threat-dot ${stage.type === 'boss' && index < 3 ? 'is-boss' : ''}">${stage.type === 'boss' ? 'B' : 'EN'}-${index + 1}</div>`)
-            .join('');
+        nodes.battleTrain.classList.toggle('is-critical', battleState.integrity <= 35);
+        renderBattleRoute(stage);
+        renderBattleObjective(stage);
+        renderBattleThreats(stage);
         nodes.battleEventArea.innerHTML = renderBattleInfoCard(stage);
         renderBattleButtons();
     }
@@ -2140,6 +2316,7 @@
             battleState.overdriveTurns = Math.max(battleState.overdriveTurns, 2);
             battleState.skillCooldowns.overdrive = SKILL_COOLDOWNS.overdrive;
             playSfx('skillOverclock');
+            cueBattlePresentation('boost', text('超载推进', 'Overdrive'));
             pushBattleLog(state.lang === 'zh' ? '主炮超载完成，推进与火力短时间同步拉高。' : 'Main gun overdrive spikes both pressure and pace.');
         }
         if (action === 'barrier') {
@@ -2147,6 +2324,7 @@
             battleState.barrierTurns = Math.max(battleState.barrierTurns, 2);
             battleState.skillCooldowns.barrier = SKILL_COOLDOWNS.barrier;
             playSfx('skillShield');
+            cueBattlePresentation('shield', text('护盾展开', 'Barrier Up'));
             pushBattleLog(state.lang === 'zh' ? '护盾列车顶上前线，短时间压低承伤。' : 'Barrier car moves up and cuts incoming pressure.');
         }
         if (action === 'repair') {
@@ -2154,6 +2332,7 @@
             battleState.heat = clamp(battleState.heat - 20, 0, 100);
             battleState.skillCooldowns.repair = SKILL_COOLDOWNS.repair;
             playSfx('goal', { cooldownKey: 'if-repair-sfx', cooldownMs: 180 });
+            cueBattlePresentation('repair', text('紧急修复', 'Emergency Repair'));
             pushBattleLog(state.lang === 'zh' ? '支援车完成抢修，车体与热量都回到了更安全的区间。' : 'Support car repairs the train and cools the system down.');
         }
         if (action === 'ultimate') {
@@ -2162,6 +2341,7 @@
             battleState.enemyCount = Math.max(2, battleState.enemyCount - 4);
             battleState.ultimateCharge = 0;
             playSfx('ultimate');
+            cueBattlePresentation('ultimate', text('轨炮清场', 'Rail Burst'));
             pushBattleLog(state.lang === 'zh' ? '轨炮扫清正前方整段轨道，敌群节奏被强行打断。' : 'Rail Burst clears the lane ahead and disrupts enemy rhythm.');
         }
         saveState();
@@ -2184,6 +2364,7 @@
             battleState.rewardBonus[key] = (battleState.rewardBonus[key] || 0) + amount;
         });
         playSfx('confirm');
+        cueBattlePresentation('event', text('事件生效', 'Event Applied'));
         pushBattleLog(localize(option.result));
         pushBattleLog(t('battleEventResolved'));
         battleState.activeEvent = null;
@@ -2219,6 +2400,7 @@
         saveState();
         renderBattle();
         playSfx(win ? 'victory' : 'defeat');
+        cueBattlePresentation(win ? 'win' : 'fail', win ? text('突破成功', 'Breakthrough') : text('本局撤退', 'Retreat'));
         showToast(win ? t('battleWin') : t('battleFail'));
     }
 
@@ -2227,6 +2409,7 @@
         const stage = getStage(battleState.stageId);
         const prevShield = battleState.shield;
         const prevIntegrity = battleState.integrity;
+        const prevHeat = battleState.heat;
         battleState.wave += 1;
 
         Object.keys(battleState.skillCooldowns).forEach((skillId) => {
@@ -2266,23 +2449,33 @@
         );
         battleState.enemyCount = Math.min(stage.type === 'boss' ? 12 : 10, (stage.type === 'boss' ? 5 : 3) + battleState.wave + Math.round(battleState.profile.difficultyMul * 1.5));
         playSfx('shoot', { cooldownKey: isManual ? 'if-manual-burst' : 'if-auto-burst', cooldownMs: isManual ? 70 : 180 });
+        if (isManual) {
+            cueBattlePresentation('advance', text('手动推进', 'Manual Push'));
+        }
         if (battleState.shield < prevShield) {
             playSfx('shieldHit', { cooldownKey: 'if-shield-hit', cooldownMs: 140 });
+            cueBattlePresentation('hit', text('护盾受击', 'Shield Hit'));
         } else if (battleState.integrity < prevIntegrity) {
             playSfx('hit', { cooldownKey: 'if-integrity-hit', cooldownMs: 140 });
+            cueBattlePresentation('damage', text('车体受损', 'Integrity Hit'));
         }
 
         if (battleState.heat >= 92) {
             battleState.integrity = Math.max(0, battleState.integrity - 4);
-            pushBattleLog(t('battleOverheat'));
+            if (prevHeat < 92) {
+                cueBattlePresentation('heat', text('过热警报', 'Overheat'));
+                pushBattleLog(t('battleOverheat'));
+            }
         } else {
             pushBattleLog(state.lang === 'zh'
                 ? `推进到第 ${battleState.wave} 段轨道，敌潮被持续压回。`
                 : `Advanced into segment ${battleState.wave}; the train keeps forcing the lane open.`);
         }
 
-        if (stage.type === 'boss' && battleState.progress >= 68 && battleState.wave >= 4) {
+        if (stage.type === 'boss' && battleState.progress >= 68 && battleState.wave >= 4 && !battleState.bossWarningShown) {
+            battleState.bossWarningShown = true;
             playSfx('bossWarning', { cooldownKey: 'if-boss-warning', cooldownMs: 700 });
+            cueBattlePresentation('boss', text('Boss 来袭', 'Boss Incoming'));
             pushBattleLog(t('battleBossIncoming'));
         }
 
@@ -2292,6 +2485,7 @@
         if ((battleState.wave === 2 || battleState.wave === 4) && battleState.eventQueue.length) {
             battleState.activeEvent = battleState.eventQueue.shift();
             playSfx('wave', { cooldownKey: `if-event-wave-${battleState.wave}`, cooldownMs: 300 });
+            cueBattlePresentation('event', text('路线事件', 'Route Event'));
             renderBattle();
             return;
         }
@@ -2691,3 +2885,5 @@
         openOffer(debugOfferId);
     }
 }());
+
+
